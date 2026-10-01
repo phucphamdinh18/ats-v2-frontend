@@ -127,7 +127,7 @@
         status("Đang chuyển sang Google…");
         const { error } = await client.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: window.location.origin + window.location.pathname }
+          options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } }
         });
         if (error) { status(error.message, true); login.disabled = false; }
       });
