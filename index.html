@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>ATS V2 · Kiểm tra đăng nhập</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #18324b; background: #f3f7fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #153852; color: white; padding: 22px max(20px, calc((100vw - 960px)/2)); }
+    header strong { font-size: 1.2rem; }
+    header small { display: block; margin-top: 4px; color: #d0e0ea; }
+    main { max-width: 960px; margin: 32px auto; padding: 0 20px; }
+    .card { background: white; border: 1px solid #dbe5ec; border-radius: 14px; padding: 24px; box-shadow: 0 4px 16px #19344d0b; margin-bottom: 16px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    h2 { font-size: 1.1rem; margin: 0 0 12px; }
+    p { line-height: 1.5; }
+    .muted { color: #5c6d7b; }
+    button { background: #156f79; color: white; border: 0; border-radius: 8px; padding: 11px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover { background: #0f5961; }
+    button.secondary { background: #e9f0f4; color: #234158; }
+    button:disabled { cursor: wait; opacity: .6; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .pill { display: inline-block; background: #e5f4f1; color: #17615c; border-radius: 20px; padding: 5px 10px; margin: 3px 5px 3px 0; }
+    #message { min-height: 24px; }
+    .error { color: #a12a2a; }
+    ul { padding-left: 20px; }
+    li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <header><strong>ATS V2</strong><small>Kiểm tra đăng nhập và quyền · Chưa mở dùng chính thức</small></header>
+  <main>
+    <section class="card">
+      <h1>Đăng nhập ATS mới</h1>
+      <p class="muted">Dùng tài khoản Google được Admin cấp quyền. Mỗi người chỉ thấy Job được phép xem.</p>
+      <div class="row">
+        <button id="login" type="button">Đăng nhập bằng Google</button>
+        <button id="logout" class="secondary" type="button" hidden>Đăng xuất</button>
+      </div>
+      <p id="message" role="status" aria-live="polite">Đang kiểm tra phiên đăng nhập…</p>
+    </section>
+    <section id="account" class="card" hidden>
+      <h2>Tài khoản và quyền</h2>
+      <p>Email: <strong id="email"></strong></p>
+      <p>Vai trò: <span id="roles"></span></p>
+      <p id="access-note" class="muted"></p>
+    </section>
+    <section id="jobs-panel" class="card" hidden>
+      <h2>Job tôi có thể xem</h2>
+      <ul id="jobs"></ul>
+      <p id="jobs-empty" class="muted" hidden>Chưa có Job trong phạm vi tài khoản này.</p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    "use strict";
+    const SUPABASE_URL = "https://izchulqhmhqevfmuvqlx.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3z9T_XwfGujrPObIj-8rbg_bjbpnXnt";
+    const message = document.getElementById("message");
+    const login = document.getElementById("login");
+    const logout = document.getElementById("logout");
+    const account = document.getElementById("account");
+    const jobsPanel = document.getElementById("jobs-panel");
+    const jobsList = document.getElementById("jobs");
+    const jobsEmpty = document.getElementById("jobs-empty");
+    let client;
+
+    function status(text, isError = false) {
+      message.textContent = text;
+      message.classList.toggle("error", isError);
+    }
+
+    async function showSession() {
+      const { data: { session }, error } = await client.auth.getSession();
+      if (error) throw error;
+      account.hidden = !session;
+      jobsPanel.hidden = !session;
+      login.hidden = !!session;
+      logout.hidden = !session;
+      if (!session) {
+        status("Vui lòng đăng nhập để kiểm tra quyền.");
+        return;
+      }
+      document.getElementById("email").textContent = session.user.email || "Không có email";
+      const [profileResult, rolesResult, jobsResult] = await Promise.all([
+        client.from("app_users").select("id,is_active").eq("id", session.user.id).maybeSingle(),
+        client.from("user_roles").select("role").eq("user_id", session.user.id),
+        client.from("jobs").select("id,job_code,title,status").order("job_code").limit(100)
+      ]);
+      for (const result of [profileResult, rolesResult, jobsResult]) {
+        if (result.error) throw result.error;
+      }
+      const active = profileResult.data?.is_active === true;
+      const roles = active ? (rolesResult.data || []).map(item => item.role) : [];
+      const rolesElement = document.getElementById("roles");
+      rolesElement.replaceChildren();
+      for (const role of roles) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = role;
+        rolesElement.append(pill);
+      }
+      if (!roles.length) rolesElement.textContent = "Chưa được cấp";
+      document.getElementById("access-note").textContent = active
+        ? "Quyền được kiểm tra trên Supabase; trang này chỉ hiển thị kết quả."
+        : "Tài khoản đã đăng nhập nhưng chưa được Admin kích hoạt trong ATS.";
+      jobsList.replaceChildren();
+      for (const job of active ? (jobsResult.data || []) : []) {
+        const item = document.createElement("li");
+        item.textContent = [job.job_code, job.title, job.status].filter(Boolean).join(" · ");
+        jobsList.append(item);
+      }
+      jobsEmpty.hidden = jobsList.childElementCount > 0;
+      status(active ? "Đã đăng nhập và tải phạm vi dữ liệu được phép xem." : "Đã đăng nhập; đang chờ Admin cấp quyền.");
+    }
+
+    if (!window.supabase?.createClient) {
+      login.disabled = true;
+      status("Không tải được thư viện đăng nhập. Hãy thử tải lại trang.", true);
+    } else {
+      client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+      login.addEventListener("click", async () => {
+        login.disabled = true;
+        status("Đang chuyển sang Google…");
+        const { error } = await client.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+        if (error) { status(error.message, true); login.disabled = false; }
+      });
+      logout.addEventListener("click", async () => {
+        const { error } = await client.auth.signOut();
+        if (error) { status(error.message, true); return; }
+        await showSession();
+      });
+      client.auth.onAuthStateChange(() => {
+        // Wait until auth finishes updating storage before fetching RLS data.
+        setTimeout(() => showSession().catch(err => status(err.message, true)), 0);
+      });
+      showSession().catch(err => status(err.message, true));
+    }
+  </script>
+</body>
+</html>
