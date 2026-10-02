@@ -28,6 +28,12 @@
     .error { color: #a12a2a; }
     ul { padding-left: 20px; }
     li { margin: 8px 0; }
+    label { display: block; font-weight: 600; margin: 12px 0 5px; }
+    input, select { width: 100%; max-width: 520px; border: 1px solid #b9cbd7; border-radius: 8px; padding: 10px 12px; font: inherit; color: inherit; background: white; }
+    form button { margin-top: 14px; }
+    .small { font-size: .9rem; }
+    .subsection { border-top: 1px solid #dbe5ec; margin-top: 24px; padding-top: 18px; }
+    .member { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
   </style>
 </head>
 <body>
@@ -53,6 +59,42 @@
       <ul id="jobs"></ul>
       <p id="jobs-empty" class="muted" hidden>Chưa có Job trong phạm vi tài khoản này.</p>
     </section>
+    <section id="admin-panel" class="card" hidden>
+      <h2>Quản trị Job và quyền</h2>
+      <p class="muted">Chỉ Admin thao tác tại đây. Supabase kiểm tra quyền lần nữa trước khi lưu.</p>
+      <form id="job-form">
+        <h3>Tạo Job nháp</h3>
+        <label for="job-title">Tên vị trí</label>
+        <input id="job-title" name="title" required minlength="3" maxlength="180" autocomplete="off">
+        <label for="job-unit">Bộ phận</label>
+        <input id="job-unit" name="business_unit" maxlength="120" autocomplete="off">
+        <label for="job-location">Địa điểm</label>
+        <input id="job-location" name="location" maxlength="120" autocomplete="off">
+        <p class="muted small">Job được tạo ở trạng thái nháp; chưa mở tuyển và chưa có Job ID chính thức.</p>
+        <button type="submit">Tạo Job nháp</button>
+      </form>
+      <div class="subsection">
+        <form id="member-form">
+          <h3>Gán người vào Job</h3>
+          <label for="admin-job">Job</label>
+          <select id="admin-job" required></select>
+          <label for="member-email">Email người dùng</label>
+          <input id="member-email" type="email" required maxlength="254" autocomplete="off">
+          <label for="member-role">Vai trò tại Job</label>
+          <select id="member-role">
+            <option value="TA_RECRUITER">TA / Recruiter</option>
+            <option value="HIRING_MANAGER">Hiring Manager</option>
+            <option value="INTERVIEWER">Interviewer</option>
+          </select>
+          <p class="muted small">Người này cần đăng nhập Google vào ATS ít nhất một lần. Interviewer chưa được quyền xem toàn bộ Job.</p>
+          <button id="assign-button" type="submit">Gán quyền</button>
+        </form>
+        <h3>Người đã được gán</h3>
+        <ul id="members"></ul>
+        <p id="members-empty" class="muted small">Chưa có người được gán.</p>
+      </div>
+      <p id="admin-message" role="status" aria-live="polite"></p>
+    </section>
     <section id="api-panel" class="card" hidden>
       <h2>Kiểm tra API và RLS</h2>
       <p class="muted">Kết quả truy vấn Supabase trực tiếp theo phiên đăng nhập hiện tại, không lọc theo email và không ẩn bằng giao diện.</p>
@@ -73,11 +115,81 @@
     const jobsEmpty = document.getElementById("jobs-empty");
     const apiPanel = document.getElementById("api-panel");
     const apiCounts = document.getElementById("api-counts");
+    const adminPanel = document.getElementById("admin-panel");
+    const adminMessage = document.getElementById("admin-message");
+    const jobForm = document.getElementById("job-form");
+    const memberForm = document.getElementById("member-form");
+    const adminJob = document.getElementById("admin-job");
+    const members = document.getElementById("members");
+    const membersEmpty = document.getElementById("members-empty");
     let client;
+    let currentRequestId = null;
 
     function status(text, isError = false) {
       message.textContent = text;
       message.classList.toggle("error", isError);
+    }
+
+    function adminStatus(text, isError = false) {
+      adminMessage.textContent = text;
+      adminMessage.classList.toggle("error", isError);
+    }
+
+    async function adminCall(body) {
+      const { data, error } = await client.functions.invoke("admin-jobs", { body });
+      if (error) {
+        let detail;
+        try { detail = await error.context?.json(); } catch { /* Network error. */ }
+        throw new Error(detail?.error || "Không kết nối được chức năng quản trị.");
+      }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    }
+
+    async function loadMembers() {
+      members.replaceChildren();
+      membersEmpty.hidden = false;
+      const jobId = adminJob.value;
+      if (!jobId) return;
+      const result = await adminCall({ action: "list_job_members", job_id: jobId });
+      for (const member of result.members || []) {
+        const li = document.createElement("li");
+        li.className = "member";
+        const label = document.createElement("span");
+        label.textContent = `${member.email} · ${member.role}`;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "secondary small";
+        remove.textContent = "Thu hồi";
+        remove.addEventListener("click", async () => {
+          if (!window.confirm(`Thu hồi quyền ${member.role} tại Job này của ${member.email}?`)) return;
+          remove.disabled = true;
+          try {
+            await adminCall({ action: "remove_job_member", job_id: jobId,
+              user_id: member.user_id, role: member.role });
+            adminStatus("Đã thu hồi quyền tại Job.");
+            await loadMembers();
+          } catch (err) { adminStatus(err.message, true); remove.disabled = false; }
+        });
+        li.append(label, remove);
+        members.append(li);
+      }
+      membersEmpty.hidden = members.childElementCount > 0;
+    }
+
+    function populateAdminJobs(jobs) {
+      const previous = adminJob.value;
+      adminJob.replaceChildren();
+      for (const job of jobs) {
+        if (!["DRAFT", "OPEN", "ON_HOLD"].includes(job.status)) continue;
+        const option = document.createElement("option");
+        option.value = job.id;
+        option.textContent = [job.job_code || "Nháp", job.title].join(" · ");
+        adminJob.append(option);
+      }
+      if ([...adminJob.options].some(option => option.value === previous)) adminJob.value = previous;
+      document.getElementById("assign-button").disabled = !adminJob.value;
+      loadMembers().catch(err => adminStatus(err.message, true));
     }
 
     async function showSession() {
@@ -86,6 +198,7 @@
       account.hidden = !session;
       jobsPanel.hidden = !session;
       apiPanel.hidden = !session;
+      adminPanel.hidden = true;
       login.hidden = !!session;
       logout.hidden = !session;
       if (!session) {
@@ -115,6 +228,10 @@
         rolesElement.append(pill);
       }
       if (!roles.length) rolesElement.textContent = "Chưa được cấp";
+      if (roles.includes("ADMIN")) {
+        adminPanel.hidden = false;
+        populateAdminJobs(jobsResult.data || []);
+      }
       document.getElementById("access-note").textContent = active
         ? "Quyền được kiểm tra trên Supabase; trang này chỉ hiển thị kết quả."
         : "Tài khoản đã đăng nhập nhưng chưa được Admin kích hoạt trong ATS.";
@@ -127,6 +244,44 @@
       jobsEmpty.hidden = jobsList.childElementCount > 0;
       status(active ? "Đã đăng nhập và tải phạm vi dữ liệu được phép xem." : "Đã đăng nhập; đang chờ Admin cấp quyền.");
     }
+
+    jobForm.addEventListener("input", () => { currentRequestId = null; });
+    jobForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!jobForm.reportValidity()) return;
+      const button = jobForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      currentRequestId ||= crypto.randomUUID();
+      adminStatus("Đang tạo Job nháp…");
+      try {
+        const result = await adminCall({ action: "create_job_draft", request_id: currentRequestId,
+          title: document.getElementById("job-title").value,
+          business_unit: document.getElementById("job-unit").value,
+          location: document.getElementById("job-location").value });
+        adminStatus(`Đã lưu Job nháp: ${result.job.job_title}.`);
+        jobForm.reset();
+        currentRequestId = null;
+        await showSession();
+      } catch (err) { adminStatus(err.message, true); }
+      finally { button.disabled = false; }
+    });
+    adminJob.addEventListener("change", () => loadMembers().catch(err => adminStatus(err.message, true)));
+    memberForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!memberForm.reportValidity() || !adminJob.value) return;
+      const button = document.getElementById("assign-button");
+      button.disabled = true;
+      adminStatus("Đang gán quyền…");
+      try {
+        const result = await adminCall({ action: "assign_job_member", job_id: adminJob.value,
+          email: document.getElementById("member-email").value,
+          role: document.getElementById("member-role").value });
+        adminStatus(result.member.added ? "Đã gán người vào Job." : "Người này đã có quyền tại Job.");
+        document.getElementById("member-email").value = "";
+        await loadMembers();
+      } catch (err) { adminStatus(err.message, true); }
+      finally { button.disabled = false; }
+    });
 
     if (!window.supabase?.createClient) {
       login.disabled = true;
