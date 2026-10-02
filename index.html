@@ -53,6 +53,11 @@
       <ul id="jobs"></ul>
       <p id="jobs-empty" class="muted" hidden>Chưa có Job trong phạm vi tài khoản này.</p>
     </section>
+    <section id="api-panel" class="card" hidden>
+      <h2>Kiểm tra API và RLS</h2>
+      <p class="muted">Kết quả truy vấn Supabase trực tiếp theo phiên đăng nhập hiện tại, không lọc theo email và không ẩn bằng giao diện.</p>
+      <p id="api-counts"></p>
+    </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -66,6 +71,8 @@
     const jobsPanel = document.getElementById("jobs-panel");
     const jobsList = document.getElementById("jobs");
     const jobsEmpty = document.getElementById("jobs-empty");
+    const apiPanel = document.getElementById("api-panel");
+    const apiCounts = document.getElementById("api-counts");
     let client;
 
     function status(text, isError = false) {
@@ -78,6 +85,7 @@
       if (error) throw error;
       account.hidden = !session;
       jobsPanel.hidden = !session;
+      apiPanel.hidden = !session;
       login.hidden = !!session;
       logout.hidden = !session;
       if (!session) {
@@ -85,14 +93,17 @@
         return;
       }
       document.getElementById("email").textContent = session.user.email || "Không có email";
-      const [profileResult, rolesResult, jobsResult] = await Promise.all([
+      const [profileResult, rolesResult, jobsResult, visibleProfilesResult, visibleRolesResult] = await Promise.all([
         client.from("app_users").select("id,is_active").eq("id", session.user.id).maybeSingle(),
         client.from("user_roles").select("role").eq("user_id", session.user.id),
-        client.from("jobs").select("id,job_code,title,status").order("job_code").limit(100)
+        client.from("jobs").select("id,job_code,title,status").order("job_code").limit(100),
+        client.from("app_users").select("id"),
+        client.from("user_roles").select("user_id,role")
       ]);
-      for (const result of [profileResult, rolesResult, jobsResult]) {
+      for (const result of [profileResult, rolesResult, jobsResult, visibleProfilesResult, visibleRolesResult]) {
         if (result.error) throw result.error;
       }
+      apiCounts.textContent = `Hồ sơ ATS đọc được: ${visibleProfilesResult.data.length} · Vai trò đọc được: ${visibleRolesResult.data.length} · Job đọc được: ${jobsResult.data.length}`;
       const active = profileResult.data?.is_active === true;
       const roles = active ? (rolesResult.data || []).map(item => item.role) : [];
       const rolesElement = document.getElementById("roles");
