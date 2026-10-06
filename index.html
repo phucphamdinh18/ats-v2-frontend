@@ -34,6 +34,13 @@
     .small { font-size: .9rem; }
     .subsection { border-top: 1px solid #dbe5ec; margin-top: 24px; padding-top: 18px; }
     .member { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .review-grid { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(280px, 2fr); gap: 20px; }
+    .review-grid li button { width: 100%; text-align: left; }
+    .review-grid dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; overflow-wrap: anywhere; }
+    .review-grid dt { font-weight: 600; }
+    .review-grid dd { margin: 0; }
+    #review-reason { width: 100%; min-height: 70px; font: inherit; padding: 10px; }
+    @media (max-width: 700px) { .review-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -95,6 +102,26 @@
       </div>
       <p id="admin-message" role="status" aria-live="polite"></p>
     </section>
+    <section id="review-panel" class="card" hidden>
+      <h2>TA duyệt bản nháp từ Drive</h2>
+      <p class="muted">Chỉ Admin và TA được xem. Mọi quyết định lưu cùng người duyệt; Job được duyệt vẫn là Job nháp.</p>
+      <div class="row">
+        <label for="review-kind">Loại <select id="review-kind"><option value="cv">CV</option><option value="jd">JD</option></select></label>
+        <label for="review-state">Trạng thái <select id="review-state"><option value="pending_review">Chờ duyệt</option><option value="approved">Đã duyệt</option><option value="rejected">Đã từ chối</option></select></label>
+        <button id="review-refresh" type="button" class="secondary">Tải lại</button>
+      </div>
+      <p id="review-message" role="status" aria-live="polite"></p>
+      <div class="review-grid">
+        <div><ul id="review-list"></ul><div class="row"><button id="review-prev" class="secondary" type="button">Trang trước</button><span id="review-page"></span><button id="review-next" class="secondary" type="button">Trang sau</button></div></div>
+        <div id="review-detail" hidden>
+          <h3 id="review-title"></h3><dl id="review-fields"></dl>
+          <p><a id="review-source" target="_blank" rel="noopener noreferrer">Mở tệp gốc trên Drive</a></p>
+          <label for="review-reason">Lý do / ghi chú quyết định (bắt buộc khi từ chối)</label>
+          <textarea id="review-reason" maxlength="1000"></textarea>
+          <div id="review-actions" class="row"><button id="review-approve" type="button">Duyệt</button><button id="review-reject" type="button" class="secondary">Từ chối</button></div>
+        </div>
+      </div>
+    </section>
     <section id="api-panel" class="card" hidden>
       <h2>Kiểm tra API và RLS</h2>
       <p class="muted">Kết quả truy vấn Supabase trực tiếp theo phiên đăng nhập hiện tại, không lọc theo email và không ẩn bằng giao diện.</p>
@@ -124,6 +151,12 @@
     const membersEmpty = document.getElementById("members-empty");
     let client;
     let currentRequestId = null;
+    const reviewPanel = document.getElementById("review-panel");
+    const reviewList = document.getElementById("review-list");
+    const reviewDetail = document.getElementById("review-detail");
+    const reviewMessage = document.getElementById("review-message");
+    let reviewPage = 0;
+    let selectedReview = null;
 
     function status(text, isError = false) {
       message.textContent = text;
@@ -145,6 +178,94 @@
       if (data?.error) throw new Error(data.error);
       return data;
     }
+
+    async function reviewCall(body) {
+      const { data, error } = await client.functions.invoke("ta-review", { body });
+      if (error) {
+        let detail;
+        try { detail = await error.context?.json(); } catch { /* Network error. */ }
+        throw new Error(detail?.error || "Không kết nối được chức năng duyệt.");
+      }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    }
+    function reviewStatus(text, isError = false) {
+      reviewMessage.textContent = text;
+      reviewMessage.classList.toggle("error", isError);
+    }
+    async function loadReviewList() {
+      selectedReview = null;
+      reviewDetail.hidden = true;
+      reviewList.replaceChildren();
+      reviewStatus("Đang tải bản nháp…");
+      const kind = document.getElementById("review-kind").value;
+      const state = document.getElementById("review-state").value;
+      const result = await reviewCall({ action: "list", kind, state, page: reviewPage });
+      for (const draft of result.drafts || []) {
+        const li = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary";
+        button.textContent = `${draft.full_name || draft.position || "Chưa có tên"} · ${draft.email || draft.business_unit || ""}`;
+        button.addEventListener("click", () => loadReviewDetail(kind, draft.id).catch(err => reviewStatus(err.message, true)));
+        li.append(button); reviewList.append(li);
+      }
+      document.getElementById("review-page").textContent = `Trang ${reviewPage + 1}`;
+      document.getElementById("review-prev").disabled = reviewPage === 0;
+      document.getElementById("review-next").disabled = (result.drafts || []).length < 50;
+      reviewStatus(reviewList.childElementCount ? "Chọn một bản nháp để xem chi tiết." : "Không có bản nháp ở trang này.");
+    }
+    async function loadReviewDetail(kind, id) {
+      const result = await reviewCall({ action: "detail", kind, id });
+      const { draft, intake, review } = result;
+      if (!intake || intake.kind !== kind) throw new Error("Dữ liệu tệp không khớp.");
+      selectedReview = { kind, id, state: draft.review_state, intakeState: intake.state };
+      document.getElementById("review-title").textContent = draft.full_name || draft.position || intake.original_name;
+      const fields = document.getElementById("review-fields");
+      fields.replaceChildren();
+      const values = kind === "cv"
+        ? [["Tên", draft.full_name], ["Email", draft.email], ["Điện thoại", draft.phone], ["Vị trí", draft.current_title], ["Vai trò", draft.primary_role], ["Kinh nghiệm (năm)", draft.total_experience_years], ["Cấp độ", draft.seniority], ["Kỹ năng", draft.skills?.join(", ")], ["Lĩnh vực", draft.domains?.join(", ")], ["Địa điểm", draft.location], ["Công ty", draft.current_company]]
+        : [["Vị trí", draft.position], ["Bộ phận", draft.business_unit], ["Job ID đề xuất", draft.proposed_job_id], ["Cấp độ", draft.seniority], ["Địa điểm", draft.location], ["Kỹ năng", draft.skills?.join(", ")], ["Lĩnh vực", draft.domains?.join(", ")], ["Tóm tắt", draft.summary]];
+      values.push(["Tệp", intake.original_name], ["Trạng thái intake", intake.state], ["Quyết định", review?.decision || "Chưa duyệt"], ["Lý do", review?.reason]);
+      for (const [label, value] of values) {
+        const dt = document.createElement("dt"); dt.textContent = label;
+        const dd = document.createElement("dd"); dd.textContent = value ?? "—";
+        fields.append(dt, dd);
+      }
+      const source = document.getElementById("review-source");
+      source.hidden = !/^https:\/\/drive\.google\.com\//.test(intake.drive_url || "");
+      if (!source.hidden) source.href = intake.drive_url;
+      document.getElementById("review-actions").hidden = draft.review_state !== "pending_review";
+      document.getElementById("review-approve").disabled = intake.state !== "ready_for_review";
+      document.getElementById("review-reason").value = "";
+      reviewDetail.hidden = false;
+      reviewStatus(intake.state === "possible_duplicate" ? "Có dấu hiệu trùng: chỉ có thể từ chối; cần xử lý trùng thủ công." : "Kiểm tra tệp gốc trước khi quyết định.");
+    }
+    async function decideReview(decision) {
+      const selection = selectedReview;
+      if (!selection || selection.state !== "pending_review") return;
+      const reason = document.getElementById("review-reason").value.trim();
+      if (decision === "rejected" && !reason) { reviewStatus("Nhập lý do từ chối.", true); return; }
+      const label = decision === "approved" ? "duyệt" : "từ chối";
+      if (!window.confirm(`Xác nhận ${label} bản nháp này? ${decision === "approved" ? (selection.kind === "cv" ? "Sẽ tạo Candidate." : "Sẽ tạo Job nháp.") : ""}`)) return;
+      const actions = [...document.querySelectorAll("#review-actions button")];
+      actions.forEach(button => { button.disabled = true; });
+      try {
+        await reviewCall({ action: "decide", kind: selection.kind, id: selection.id, decision, reason });
+        reviewStatus(`Đã ${label} bản nháp.`);
+        await loadReviewList();
+      } catch (err) { reviewStatus(err.message, true); }
+      finally { actions.forEach(button => { button.disabled = false; });
+        document.getElementById("review-approve").disabled = selection.intakeState !== "ready_for_review"; }
+    }
+    document.getElementById("review-approve").addEventListener("click", () => decideReview("approved"));
+    document.getElementById("review-reject").addEventListener("click", () => decideReview("rejected"));
+    document.getElementById("review-refresh").addEventListener("click", () => loadReviewList().catch(err => reviewStatus(err.message, true)));
+    for (const id of ["review-kind", "review-state"]) document.getElementById(id).addEventListener("change", () => {
+      reviewPage = 0; loadReviewList().catch(err => reviewStatus(err.message, true));
+    });
+    document.getElementById("review-prev").addEventListener("click", () => { reviewPage--; loadReviewList().catch(err => reviewStatus(err.message, true)); });
+    document.getElementById("review-next").addEventListener("click", () => { reviewPage++; loadReviewList().catch(err => reviewStatus(err.message, true)); });
 
     async function loadMembers() {
       members.replaceChildren();
@@ -199,6 +320,8 @@
       jobsPanel.hidden = !session;
       apiPanel.hidden = !session;
       adminPanel.hidden = true;
+      reviewPanel.hidden = true;
+      reviewDetail.hidden = true;
       login.hidden = !!session;
       logout.hidden = !session;
       if (!session) {
@@ -231,6 +354,10 @@
       if (roles.includes("ADMIN")) {
         adminPanel.hidden = false;
         populateAdminJobs(jobsResult.data || []);
+      }
+      if (roles.some(role => role === "ADMIN" || role === "TA_RECRUITER")) {
+        reviewPanel.hidden = false;
+        loadReviewList().catch(err => reviewStatus(err.message, true));
       }
       document.getElementById("access-note").textContent = active
         ? "Quyền được kiểm tra trên Supabase; trang này chỉ hiển thị kết quả."
