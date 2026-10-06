@@ -156,6 +156,7 @@
     const reviewDetail = document.getElementById("review-detail");
     const reviewMessage = document.getElementById("review-message");
     let reviewPage = 0;
+    let reviewRequest = 0;
     let selectedReview = null;
 
     function status(text, isError = false) {
@@ -194,13 +195,16 @@
       reviewMessage.classList.toggle("error", isError);
     }
     async function loadReviewList() {
+      const request = ++reviewRequest;
+      const page = reviewPage;
       selectedReview = null;
       reviewDetail.hidden = true;
       reviewList.replaceChildren();
       reviewStatus("Đang tải bản nháp…");
       const kind = document.getElementById("review-kind").value;
       const state = document.getElementById("review-state").value;
-      const result = await reviewCall({ action: "list", kind, state, page: reviewPage });
+      const result = await reviewCall({ action: "list", kind, state, page });
+      if (request !== reviewRequest) return;
       for (const draft of result.drafts || []) {
         const li = document.createElement("li");
         const button = document.createElement("button");
@@ -210,8 +214,8 @@
         button.addEventListener("click", () => loadReviewDetail(kind, draft.id).catch(err => reviewStatus(err.message, true)));
         li.append(button); reviewList.append(li);
       }
-      document.getElementById("review-page").textContent = `Trang ${reviewPage + 1}`;
-      document.getElementById("review-prev").disabled = reviewPage === 0;
+      document.getElementById("review-page").textContent = `Trang ${page + 1}`;
+      document.getElementById("review-prev").disabled = page === 0;
       document.getElementById("review-next").disabled = (result.drafts || []).length < 50;
       reviewStatus(reviewList.childElementCount ? "Chọn một bản nháp để xem chi tiết." : "Không có bản nháp ở trang này.");
     }
