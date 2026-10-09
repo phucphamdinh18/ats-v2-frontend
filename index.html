@@ -8,6 +8,7 @@
   <style>
     :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #18324b; background: #f3f7fa; }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; }
     header { background: #153852; color: white; padding: 22px max(20px, calc((100vw - 960px)/2)); }
     header strong { font-size: 1.2rem; }
@@ -116,9 +117,11 @@
         <div id="review-detail" hidden>
           <h3 id="review-title"></h3><dl id="review-fields"></dl>
           <p><a id="review-source" target="_blank" rel="noopener noreferrer">Mở tệp gốc trên Drive</a></p>
-          <label for="review-reason">Lý do / ghi chú quyết định (bắt buộc khi từ chối)</label>
-          <textarea id="review-reason" maxlength="1000"></textarea>
-          <div id="review-actions" class="row"><button id="review-approve" type="button">Duyệt</button><button id="review-reject" type="button" class="secondary">Từ chối</button></div>
+          <div id="review-decision">
+            <label for="review-reason">Lý do / ghi chú quyết định (bắt buộc khi từ chối)</label>
+            <textarea id="review-reason" maxlength="1000"></textarea>
+            <div id="review-actions" class="row"><button id="review-approve" type="button">Duyệt</button><button id="review-reject" type="button" class="secondary">Từ chối</button></div>
+          </div>
         </div>
       </div>
     </section>
@@ -239,11 +242,13 @@
       const source = document.getElementById("review-source");
       source.hidden = !/^https:\/\/drive\.google\.com\//.test(intake.drive_url || "");
       if (!source.hidden) source.href = intake.drive_url;
-      document.getElementById("review-actions").hidden = draft.review_state !== "pending_review";
+      document.getElementById("review-decision").hidden = draft.review_state !== "pending_review";
       document.getElementById("review-approve").disabled = intake.state !== "ready_for_review";
       document.getElementById("review-reason").value = "";
       reviewDetail.hidden = false;
-      reviewStatus(intake.state === "possible_duplicate" ? "Có dấu hiệu trùng: chỉ có thể từ chối; cần xử lý trùng thủ công." : "Kiểm tra tệp gốc trước khi quyết định.");
+      reviewStatus(draft.review_state === "pending_review"
+        ? (intake.state === "possible_duplicate" ? "Có dấu hiệu trùng: chỉ có thể từ chối; cần xử lý trùng thủ công." : "Kiểm tra tệp gốc trước khi quyết định.")
+        : `Bản nháp đã ${draft.review_state === "approved" ? "duyệt" : "từ chối"}; quyết định đã được lưu.`);
     }
     async function decideReview(decision) {
       const selection = selectedReview;
