@@ -82,6 +82,27 @@
         <button type="submit">Tạo Job nháp</button>
       </form>
       <div class="subsection">
+        <h3>Thử mở Job và tạo Application</h3>
+        <p class="muted small">Chỉ dùng Job TEST ONLY trong đợt kiểm thử. Admin kiểm tra tiêu đề và mã trước khi xác nhận; backend ghi audit. Hai Job DRAFT cũ không tự được chọn.</p>
+        <form id="open-job-form">
+          <label for="open-job">Job nháp</label>
+          <select id="open-job" required></select>
+          <label for="open-code">Mã Job</label>
+          <input id="open-code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9-]{2,39}" autocomplete="off" placeholder="TEST-ATS-APP-20261011">
+          <button type="submit">Mở Job</button>
+        </form>
+        <form id="application-form">
+          <label for="application-job">Job đang mở</label>
+          <select id="application-job" required></select>
+          <label for="application-candidate">Candidate ID</label>
+          <input id="application-candidate" required autocomplete="off" placeholder="UUID của Candidate giả">
+          <label for="application-source">Nguồn</label>
+          <input id="application-source" maxlength="120" autocomplete="off" placeholder="TEST ONLY">
+          <button type="submit">Tạo Application</button>
+        </form>
+        <p id="application-message" role="status" aria-live="polite"></p>
+      </div>
+      <div class="subsection">
         <form id="member-form">
           <h3>Gán người vào Job</h3>
           <label for="admin-job">Job</label>
@@ -152,8 +173,14 @@
     const adminJob = document.getElementById("admin-job");
     const members = document.getElementById("members");
     const membersEmpty = document.getElementById("members-empty");
+    const openJobForm = document.getElementById("open-job-form");
+    const openJob = document.getElementById("open-job");
+    const applicationForm = document.getElementById("application-form");
+    const applicationJob = document.getElementById("application-job");
+    const applicationMessage = document.getElementById("application-message");
     let client;
     let currentRequestId = null;
+    let applicationRequestId = null;
     const reviewPanel = document.getElementById("review-panel");
     const reviewList = document.getElementById("review-list");
     const reviewDetail = document.getElementById("review-detail");
@@ -181,6 +208,21 @@
       }
       if (data?.error) throw new Error(data.error);
       return data;
+    }
+
+    async function applicationCall(body) {
+      const { data, error } = await client.functions.invoke("applications", { body });
+      if (error) {
+        let detail;
+        try { detail = await error.context?.json(); } catch { /* Network error. */ }
+        throw new Error(detail?.error || "Không kết nối được chức năng Application.");
+      }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    }
+    function applicationStatus(text, isError = false) {
+      applicationMessage.textContent = text;
+      applicationMessage.classList.toggle("error", isError);
     }
 
     async function reviewCall(body) {
@@ -310,14 +352,35 @@
     function populateAdminJobs(jobs) {
       const previous = adminJob.value;
       adminJob.replaceChildren();
+      const previousDraft = openJob.value;
+      const previousOpen = applicationJob.value;
+      openJob.replaceChildren();
+      applicationJob.replaceChildren();
       for (const job of jobs) {
         if (!["DRAFT", "OPEN", "ON_HOLD"].includes(job.status)) continue;
         const option = document.createElement("option");
         option.value = job.id;
         option.textContent = [job.job_code || "Nháp", job.title].join(" · ");
         adminJob.append(option);
+        if (job.status === "DRAFT" && job.title.startsWith("[TEST ONLY]")) {
+          const draftOption = document.createElement("option");
+          draftOption.value = job.id;
+          draftOption.textContent = job.title;
+          draftOption.dataset.title = job.title;
+          openJob.append(draftOption);
+        }
+        if (job.status === "OPEN" && job.job_code?.startsWith("TEST-")) {
+          const openOption = document.createElement("option");
+          openOption.value = job.id;
+          openOption.textContent = `${job.job_code} · ${job.title}`;
+          applicationJob.append(openOption);
+        }
       }
       if ([...adminJob.options].some(option => option.value === previous)) adminJob.value = previous;
+      if ([...openJob.options].some(option => option.value === previousDraft)) openJob.value = previousDraft;
+      if ([...applicationJob.options].some(option => option.value === previousOpen)) applicationJob.value = previousOpen;
+      openJobForm.querySelector('button[type="submit"]').disabled = !openJob.value;
+      applicationForm.querySelector('button[type="submit"]').disabled = !applicationJob.value;
       document.getElementById("assign-button").disabled = !adminJob.value;
       loadMembers().catch(err => adminStatus(err.message, true));
     }
@@ -382,6 +445,7 @@
     }
 
     jobForm.addEventListener("input", () => { currentRequestId = null; });
+    applicationForm.addEventListener("input", () => { applicationRequestId = null; });
     jobForm.addEventListener("submit", async event => {
       event.preventDefault();
       if (!jobForm.reportValidity()) return;
@@ -402,6 +466,47 @@
       finally { button.disabled = false; }
     });
     adminJob.addEventListener("change", () => loadMembers().catch(err => adminStatus(err.message, true)));
+    openJobForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!openJobForm.reportValidity() || !openJob.value) return;
+      const option = openJob.selectedOptions[0];
+      const title = option?.dataset.title;
+      const code = document.getElementById("open-code").value.trim().toUpperCase();
+      if (!title || !window.confirm(`Mở tuyển Job ${title} với mã ${code}?`)) return;
+      const button = openJobForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      applicationStatus("Đang mở Job…");
+      try {
+        const result = await adminCall({ action: "open_job", job_id: openJob.value,
+          expected_title: title, job_code: code });
+        applicationStatus(`Job ${code} đã OPEN (${result.job.job_id}).`);
+        await showSession();
+      } catch (err) { applicationStatus(err.message, true); }
+      finally { button.disabled = false; }
+    });
+    applicationForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!applicationForm.reportValidity() || !applicationJob.value) return;
+      const candidateId = document.getElementById("application-candidate").value.trim();
+      const source = document.getElementById("application-source").value.trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(candidateId)) {
+        applicationStatus("Candidate ID không hợp lệ.", true); return;
+      }
+      const jobId = applicationJob.value;
+      if (!window.confirm(`Thêm Candidate ${candidateId} vào ${applicationJob.selectedOptions[0]?.textContent}?`)) return;
+      applicationRequestId ||= crypto.randomUUID();
+      const button = applicationForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      applicationStatus("Đang tạo Application…");
+      try {
+        const result = await applicationCall({ action: "create", request_id: applicationRequestId,
+          candidate_id: candidateId, job_id: jobId, source });
+        applicationStatus(`Application ${result.application.application_id} đã ${result.application.created ? "tạo" : "tồn tại từ request này"}.`);
+        applicationRequestId = null;
+        await showSession();
+      } catch (err) { applicationStatus(err.message, true); }
+      finally { button.disabled = false; }
+    });
     memberForm.addEventListener("submit", async event => {
       event.preventDefault();
       if (!memberForm.reportValidity() || !adminJob.value) return;
