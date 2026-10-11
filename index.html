@@ -101,6 +101,14 @@
           <button type="submit">Tạo Application</button>
         </form>
         <p id="application-message" role="status" aria-live="polite"></p>
+        <form id="screen-form">
+          <h3>Thử chuyển Application TEST ONLY</h3>
+          <p class="muted small">Chỉ kiểm thử Application giả đã tạo cho Job TEST ONLY. Hệ thống kiểm tra lại stage và Job trước khi gửi; quyết định và audit do backend lưu.</p>
+          <label for="screen-application">Application ID</label>
+          <input id="screen-application" value="7a703410-2bec-42e1-b153-e5a3f1a22de2" readonly>
+          <button type="submit">Chuyển NEW → SCREEN</button>
+          <p id="screen-message" role="status" aria-live="polite"></p>
+        </form>
       </div>
       <div class="subsection">
         <form id="member-form">
@@ -178,9 +186,13 @@
     const applicationForm = document.getElementById("application-form");
     const applicationJob = document.getElementById("application-job");
     const applicationMessage = document.getElementById("application-message");
+    const screenForm = document.getElementById("screen-form");
+    const screenMessage = document.getElementById("screen-message");
+    const screenFixtureId = "7a703410-2bec-42e1-b153-e5a3f1a22de2";
     let client;
     let currentRequestId = null;
     let applicationRequestId = null;
+    let screenRequestId = null;
     const reviewPanel = document.getElementById("review-panel");
     const reviewList = document.getElementById("review-list");
     const reviewDetail = document.getElementById("review-detail");
@@ -506,6 +518,35 @@
         await showSession();
       } catch (err) { applicationStatus(err.message, true); }
       finally { button.disabled = false; }
+    });
+    screenForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = screenForm.querySelector('button[type="submit"]');
+      button.disabled = true;
+      screenMessage.textContent = "Đang kiểm tra Application TEST ONLY…";
+      screenMessage.classList.remove("error");
+      try {
+        const { data: application, error } = await client.from("applications")
+          .select("id,job_id,stage,status").eq("id", screenFixtureId).single();
+        if (error) throw error;
+        if (!application || application.status !== "ACTIVE" ||
+            ![...applicationJob.options].some(option => option.value === application.job_id)) {
+          throw new Error("Application không thuộc Job TEST ONLY đang mở hoặc không ACTIVE.");
+        }
+        if (application.stage !== "NEW" && !(application.stage === "SCREEN" && screenRequestId)) {
+          throw new Error("Application không ở NEW; chỉ cho phép gửi lại cùng request trong phiên thử này.");
+        }
+        if (!window.confirm(`Chuyển Application TEST ONLY ${screenFixtureId} từ ${application.stage} sang SCREEN?`)) {
+          screenMessage.textContent = "Đã hủy chuyển stage."; return;
+        }
+        screenRequestId ||= crypto.randomUUID();
+        const result = await applicationCall({ action: "screen", request_id: screenRequestId,
+          application_id: screenFixtureId });
+        screenMessage.textContent = `Application ${screenFixtureId}: ${result.application.changed ? "đã chuyển sang SCREEN" : "gửi lại cùng request, không chuyển thêm"}.`;
+      } catch (err) {
+        screenMessage.textContent = err.message;
+        screenMessage.classList.add("error");
+      } finally { button.disabled = false; }
     });
     memberForm.addEventListener("submit", async event => {
       event.preventDefault();
