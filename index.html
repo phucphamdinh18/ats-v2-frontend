@@ -536,13 +536,17 @@
         if (application.stage !== "NEW" && !(application.stage === "SCREEN" && screenRequestId)) {
           throw new Error("Application không ở NEW; chỉ cho phép gửi lại cùng request trong phiên thử này.");
         }
-        if (!window.confirm(`Chuyển Application TEST ONLY ${screenFixtureId} từ ${application.stage} sang SCREEN?`)) {
+        const question = application.stage === "NEW"
+          ? `Chuyển Application TEST ONLY ${screenFixtureId} từ NEW sang SCREEN?`
+          : `Gửi lại cùng request cho Application TEST ONLY ${screenFixtureId} để kiểm tra không tạo event thứ hai?`;
+        if (!window.confirm(question)) {
           screenMessage.textContent = "Đã hủy chuyển stage."; return;
         }
         screenRequestId ||= crypto.randomUUID();
         const result = await applicationCall({ action: "screen", request_id: screenRequestId,
           application_id: screenFixtureId });
         screenMessage.textContent = `Application ${screenFixtureId}: ${result.application.changed ? "đã chuyển sang SCREEN" : "gửi lại cùng request, không chuyển thêm"}.`;
+        button.textContent = "Gửi lại cùng request";
       } catch (err) {
         screenMessage.textContent = err.message;
         screenMessage.classList.add("error");
