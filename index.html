@@ -332,6 +332,7 @@
       try {
         const result = await reviewCall({ action: "correct_title", kind: "jd", id: correctionFixtureId,
           expected_value: selection.expectedValue, value });
+        await loadReviewList();
         await loadReviewDetail("jd", correctionFixtureId);
         reviewStatus(result.correction.changed ? "Đã sửa JD giả; audit được lưu." : "Giá trị không đổi; không ghi audit mới.");
       } catch (err) { reviewStatus(err.message, true); }
