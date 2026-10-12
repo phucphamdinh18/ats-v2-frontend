@@ -146,6 +146,13 @@
         <div id="review-detail" hidden>
           <h3 id="review-title"></h3><dl id="review-fields"></dl>
           <p><a id="review-source" target="_blank" rel="noopener noreferrer">Mở tệp gốc trên Drive</a></p>
+          <form id="correction-form" hidden>
+            <h4>QA sửa vị trí JD giả</h4>
+            <p class="muted small">Chỉ draft TEST ONLY được chỉ định. Không có PDF nguồn; không dùng để duyệt Job.</p>
+            <label for="correction-title">Vị trí sau chỉnh sửa</label>
+            <input id="correction-title" required minlength="3" maxlength="200" autocomplete="off" value="[TEST ONLY] QA Correction 20261012">
+            <button type="submit">Lưu sửa JD giả</button>
+          </form>
           <div id="review-decision">
             <label for="review-reason">Lý do / ghi chú quyết định (bắt buộc khi từ chối)</label>
             <textarea id="review-reason" maxlength="1000"></textarea>
@@ -200,6 +207,7 @@
     let reviewPage = 0;
     let reviewRequest = 0;
     let selectedReview = null;
+    const correctionFixtureId = "231ee8a1-ab4e-418c-85b9-32af489fd23c";
 
     function status(text, isError = false) {
       message.textContent = text;
@@ -280,7 +288,8 @@
       const result = await reviewCall({ action: "detail", kind, id });
       const { draft, intake, review } = result;
       if (!intake || intake.kind !== kind) throw new Error("Dữ liệu tệp không khớp.");
-      selectedReview = { kind, id, state: draft.review_state, intakeState: intake.state };
+      selectedReview = { kind, id, state: draft.review_state, intakeState: intake.state,
+        expectedValue: kind === "jd" ? draft.position : draft.full_name };
       document.getElementById("review-title").textContent = draft.full_name || draft.position || intake.original_name;
       const fields = document.getElementById("review-fields");
       fields.replaceChildren();
@@ -296,14 +305,38 @@
       const source = document.getElementById("review-source");
       source.hidden = !/^https:\/\/drive\.google\.com\//.test(intake.drive_url || "");
       if (!source.hidden) source.href = intake.drive_url;
-      document.getElementById("review-decision").hidden = draft.review_state !== "pending_review";
+      const isCorrectionFixture = kind === "jd" && id === correctionFixtureId;
+      document.getElementById("correction-form").hidden = !isCorrectionFixture || draft.review_state !== "pending_review";
+      document.getElementById("review-decision").hidden = draft.review_state !== "pending_review" || isCorrectionFixture;
       document.getElementById("review-approve").disabled = intake.state !== "ready_for_review";
       document.getElementById("review-reason").value = "";
       reviewDetail.hidden = false;
       reviewStatus(draft.review_state === "pending_review"
-        ? (intake.state === "possible_duplicate" ? "Có dấu hiệu trùng: chỉ có thể từ chối; cần xử lý trùng thủ công." : "Kiểm tra tệp gốc trước khi quyết định.")
+        ? (isCorrectionFixture ? "JD giả chỉ dùng kiểm thử sửa tên; không duyệt Job."
+          : intake.state === "possible_duplicate" ? "Có dấu hiệu trùng: chỉ có thể từ chối; cần xử lý trùng thủ công." : "Kiểm tra tệp gốc trước khi quyết định.")
         : `Bản nháp đã ${draft.review_state === "approved" ? "duyệt" : "từ chối"}; quyết định đã được lưu.`);
     }
+    document.getElementById("correction-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const selection = selectedReview;
+      const form = event.currentTarget;
+      const value = document.getElementById("correction-title").value.trim();
+      if (!selection || selection.kind !== "jd" || selection.id !== correctionFixtureId ||
+          selection.state !== "pending_review" || selection.intakeState !== "ready_for_review" ||
+          !value.startsWith("[TEST ONLY]") || !form.reportValidity()) {
+        reviewStatus("Chỉ sửa JD giả đang chờ duyệt với nhãn TEST ONLY.", true); return;
+      }
+      if (!window.confirm(`Sửa vị trí của JD TEST ONLY ${correctionFixtureId} thành ${value}?`)) return;
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      try {
+        const result = await reviewCall({ action: "correct_title", kind: "jd", id: correctionFixtureId,
+          expected_value: selection.expectedValue, value });
+        await loadReviewDetail("jd", correctionFixtureId);
+        reviewStatus(result.correction.changed ? "Đã sửa JD giả; audit được lưu." : "Giá trị không đổi; không ghi audit mới.");
+      } catch (err) { reviewStatus(err.message, true); }
+      finally { button.disabled = false; }
+    });
     async function decideReview(decision) {
       const selection = selectedReview;
       if (!selection || selection.state !== "pending_review") return;
@@ -597,3 +630,4 @@
   </script>
 </body>
 </html>
+
