@@ -19,3 +19,5 @@ jobs:
           node-version: '24'
       - name: Check inline JavaScript syntax
         run: node tests/inline-script-syntax.cjs
+      - name: Test bounded correction QA UI
+        run: node --test tests/*.test.cjs
