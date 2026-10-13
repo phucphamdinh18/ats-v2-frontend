@@ -624,20 +624,42 @@
       finally { button.disabled = false; }
     });
 
+    async function loginWithGoogle() {
+      login.disabled = true;
+      status("Đang chuyển sang Google…");
+      let timeout;
+      let timedOut = false;
+      try {
+        const result = await Promise.race([
+          client.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: window.location.origin + window.location.pathname,
+              queryParams: { prompt: "select_account" } }
+          }),
+          new Promise((_, reject) => {
+            timeout = setTimeout(() => {
+              timedOut = true;
+              reject(new Error("Đăng nhập chưa phản hồi. Tải lại trang rồi thử lại."));
+            }, 15000);
+          })
+        ]);
+        if (result.error) throw result.error;
+      } catch (err) {
+        status(err?.message || "Không bắt đầu được đăng nhập. Vui lòng thử lại.", true);
+        // A timed-out OAuth request may still redirect; require reload instead
+        // of starting a second request in the same page.
+        login.disabled = timedOut;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
     if (!window.supabase?.createClient) {
       login.disabled = true;
       status("Không tải được thư viện đăng nhập. Hãy thử tải lại trang.", true);
     } else {
       client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-      login.addEventListener("click", async () => {
-        login.disabled = true;
-        status("Đang chuyển sang Google…");
-        const { error } = await client.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: "select_account" } }
-        });
-        if (error) { status(error.message, true); login.disabled = false; }
-      });
+      login.addEventListener("click", loginWithGoogle);
       logout.addEventListener("click", async () => {
         const { error } = await client.auth.signOut();
         if (error) { status(error.message, true); return; }
