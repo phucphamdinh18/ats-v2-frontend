@@ -2,7 +2,7 @@
 
 The Admin CV correction check below completed on 14 October after Google login
 became available. The historical 13 October preparation did not create a fixture
-or run a signed-in mutation. A separate TA check is now prepared, not executed.
+or run a signed-in mutation. The separate TA-only save and same-session permission-revocation checks also completed on 14 October.
 
 The form requires draft ID `a81a1a1e-287a-4ce7-9961-8b486e350c36`, kind `cv`,
 source URL `https://example.invalid/ats-cv-correction-e2e-20261013.pdf`, a TEST ONLY
@@ -13,7 +13,7 @@ them; they are synthetic correction tests without PDF sources.
 
 Correction submits the viewed old name/title and current draft kind/ID. A 409
 clears the selected draft and hides the form until the user reloads and opens
-the draft again, preventing a stale retry. Six Node tests execute the actual
+the draft again, preventing a stale retry. Seven correction tests execute the actual
 inline helper/request/submit/decision code with a mocked client and DOM. These
 tests are not a browser or valid-JWT E2E claim.
 
@@ -56,7 +56,47 @@ no Candidate/Job for the fixture, pending CV/JD 0/0, TA roles 0.
 5. Close only this fixture with a guarded rejection and a TEST ONLY QA reason,
    keeping its audit. Confirm it leaves the pending queue.
 
-## Next TA-only check prepared but not executed
+## TA-only check completed 14 October
+
+The owner confirmed the specific temporary TA grant, synthetic-CV edit and
+revocation. The existing test Google account signed in through the secure
+authentication flow before any grant; the ATS initially showed no role and
+0 profiles, 0 roles, 0 Jobs. No credentials or JWTs were read or logged.
+
+A guarded transaction required the exact existing Auth identity, no ATS profile
+or roles, active Admin, empty pending CV/JD queues and an absent TA fixture.
+It created the labelled TEST ONLY profile, one TA_RECRUITER role and only the
+synthetic intake/draft below. No Job membership, Auth account, PDF, Drive intake
+or AI request was added.
+
+After reload the ATS showed TA_RECRUITER only, 1 profile, 1 role and 0 Jobs.
+Through the published form the TA saved `[TEST ONLY] TA Correction 20261014`.
+List and detail updated; repeating unchanged returned no-op. Independent SQL
+confirmed exactly one correction, old NULL, the winning name and the test TA
+actor, with no additional audit for the no-op.
+
+While that form and Google session stayed open, a guarded transaction removed
+only the temporary role and deactivated the labelled QA profile. The role gate
+then returned false, active=false and role_count=0. The same session submitted
+a different TEST ONLY name and received the Edge permission message
+"Tài khoản không có quyền TA hoặc Admin." This is a real signed-in denied
+mutation through the UI. No network status code was captured.
+Reload showed "Chưa được cấp", no review panel, 1 retained own profile,
+0 roles and 0 Jobs. The inactive profile remains because correction audit
+references its actor; it grants no TA access.
+
+A guarded Admin RPC through SQL rejected only this synthetic CV after verifying
+the unchanged winning name, single TA correction audit and revoked access.
+This closure was not a new UI decision test. Final independent SELECT:
+rejected; stored name unchanged; one correction and one rejection audit;
+TA roles=0; inactive QA profile=1; fixture Candidates/Jobs=0/0;
+pending CV/JD=0/0. The preceding Admin/JD fixtures and audits remain closed.
+
+These specific correction QA checks are complete. They do not complete the
+entire ATS permission matrix or validate live CV ingestion, all future stages,
+interviews, offers, matching, or the forthcoming Next.js interface.
+
+## Historical TA-only checklist
 
 New draft `30d9c99f-9f76-4e3b-be16-0a9632646df1`, intake
 `787e953f-ddf4-4246-854d-cb988044bb1b`, source
@@ -83,5 +123,5 @@ does not grant any backend access. Approval stays blocked for all QA fixtures.
    all audits. Confirm no TA role or active profile added by this test remains
    and no Candidate/Job was created. This step requires no grant on a real Job.
 
-No role grant, profile creation, new fixture seed, or TA live mutation is part
-of this frontend preparation. The remaining live check still gates completion.
+The frontend preparation itself did not grant access or create a fixture. The
+separately authorized live check described above has now completed.
