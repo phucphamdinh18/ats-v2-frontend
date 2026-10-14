@@ -67,19 +67,21 @@ does not grant any backend access. Approval stays blocked for all QA fixtures.
 
 1. Obtain action-time confirmation before a temporary TA production grant.
    Resolve the existing approved test Auth account, require no Admin or other
-   roles, create only the temporary active profile and TA_RECRUITER role when
+   roles, create only the active QA profile and temporary TA_RECRUITER role when
    absent, and record the exact rows created for conditional cleanup.
 2. Seed the new synthetic fixture only after inspecting its absence and audits.
    Use NULL full_name and a unique example.invalid email. No Drive/AI intake.
 3. In the TA Google session, confirm TA-only, save a TEST ONLY name through the
    published UI, repeat unchanged, and independently verify a single TA audit.
-4. Revoke the temporary role/profile created in step 1 in a guaranteed cleanup
-   path. Keep the same TA Google session; try the edit left open before revoke.
+4. Revoke the temporary role and deactivate the QA profile created in step 1
+   in a guaranteed cleanup path. Retain the inactive profile because the new
+   correction audit references its actor; do not delete audit history to remove
+   the profile. Keep the same TA Google session; try the edit left open before revoke.
    Require an Edge permission rejection, zero new audit and unchanged value.
    Refresh the page and require the no-access state. Never log or extract JWTs.
 5. From the Admin session, conditionally reject only this new fixture, keeping
-   all audits. Confirm no TA role/profile added by this test remains and no
-   Candidate/Job was created. This step requires no grant on a real Job.
+   all audits. Confirm no TA role or active profile added by this test remains
+   and no Candidate/Job was created. This step requires no grant on a real Job.
 
 No role grant, profile creation, new fixture seed, or TA live mutation is part
 of this frontend preparation. The remaining live check still gates completion.
