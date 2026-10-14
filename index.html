@@ -208,14 +208,18 @@
     let reviewRequest = 0;
     let selectedReview = null;
     const correctionFixtures = {
-      cv: { id: "a81a1a1e-287a-4ce7-9961-8b486e350c36",
-        url: "https://example.invalid/ats-cv-correction-e2e-20261013.pdf" },
-      jd: { id: "231ee8a1-ab4e-418c-85b9-32af489fd23c",
-        url: "https://example.invalid/ats-correction-e2e-20261012.pdf" }
+      cv: [
+        { id: "a81a1a1e-287a-4ce7-9961-8b486e350c36",
+          url: "https://example.invalid/ats-cv-correction-e2e-20261013.pdf" },
+        { id: "30d9c99f-9f76-4e3b-be16-0a9632646df1",
+          url: "https://example.invalid/ats-ta-cv-correction-e2e-20261014.pdf" }
+      ],
+      jd: [{ id: "231ee8a1-ab4e-418c-85b9-32af489fd23c",
+        url: "https://example.invalid/ats-correction-e2e-20261012.pdf" }]
     };
     function correctionFixtureAllowed(kind, id, intake) {
-      const fixture = correctionFixtures[kind];
-      return Boolean(fixture && fixture.id === id && intake?.kind === kind &&
+      const fixture = correctionFixtures[kind]?.find(item => item.id === id);
+      return Boolean(fixture && intake?.kind === kind &&
         intake.drive_url === fixture.url && intake.original_name?.startsWith("[TEST ONLY]"));
     }
 
@@ -335,7 +339,7 @@
       const selection = selectedReview;
       const form = event.currentTarget;
       const value = document.getElementById("correction-title").value.trim();
-      if (!selection?.isCorrectionFixture || selection.id !== correctionFixtures[selection.kind]?.id ||
+      if (!selection?.isCorrectionFixture || !correctionFixtures[selection.kind]?.some(item => item.id === selection.id) ||
           selection.state !== "pending_review" || selection.intakeState !== "ready_for_review" ||
           !value.startsWith("[TEST ONLY]") || !form.reportValidity()) {
         reviewStatus("Chỉ sửa bản nháp giả đang chờ duyệt với nhãn TEST ONLY.", true); return;
