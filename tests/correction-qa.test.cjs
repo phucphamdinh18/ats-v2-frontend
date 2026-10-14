@@ -63,6 +63,27 @@ test('CV submit binds viewed expected value and refreshes list/detail after succ
   assert.equal(a.button.disabled, false);
 });
 
+test('Separate TA fixture requires its own exact source and remains correction-only', async () => {
+  const id = '30d9c99f-9f76-4e3b-be16-0a9632646df1';
+  const a = load({ selection: { kind: 'cv', id, state: 'pending_review',
+    intakeState: 'ready_for_review', expectedValue: null, isCorrectionFixture: true } });
+  const intake = { kind: 'cv', original_name: '[TEST ONLY] TA CV QA',
+    drive_url: 'https://example.invalid/ats-ta-cv-correction-e2e-20261014.pdf' };
+  assert.equal(a.context.correctionFixtureAllowed('cv', id, intake), true);
+  assert.equal(a.context.correctionFixtureAllowed('cv', fixtureId, intake), false);
+  assert.equal(a.context.correctionFixtureAllowed('cv', id, { ...intake,
+    drive_url: 'https://example.invalid/ats-cv-correction-e2e-20261013.pdf' }), false);
+  assert.equal(a.context.correctionFixtureAllowed('jd', id, intake), false);
+  assert.equal(a.context.correctionFixtureAllowed('cv', id, { ...intake,
+    original_name: 'Real CV.pdf' }), false);
+  await a.context.decideReview('approved');
+  assert.equal(a.calls.length, 0);
+  await a.submit();
+  assert.equal(a.calls.length, 1);
+  assert.equal(a.calls[0].body.id, id);
+  assert.equal(a.calls[0].body.expected_value, null);
+});
+
 test('QA corrections cannot target arbitrary, reviewed or unready drafts; cancelled submit is inert', async () => {
   const base = load().context.selectedReview;
   for (const options of [{ selection: { ...base, id: 'other' } },
