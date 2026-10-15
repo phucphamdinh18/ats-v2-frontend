@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -12,7 +13,9 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   oauth: vi.fn(),
   signOut: vi.fn(),
-  authCallback: null as null | (() => void),
+  review: vi.fn(),
+  authCallback: null as
+    null | ((event: string, session: { user: { id: string } } | null) => void),
 }));
 vi.mock("../lib/supabase", () => ({
   getClient: () => ({
@@ -21,17 +24,20 @@ vi.mock("../lib/supabase", () => ({
       getSession: mocks.session,
       signInWithOAuth: mocks.oauth,
       signOut: mocks.signOut,
-      onAuthStateChange: (fn: () => void) => {
+      onAuthStateChange: (
+        fn: (event: string, session: { user: { id: string } } | null) => void,
+      ) => {
         mocks.authCallback = fn;
         return { data: { subscription: { unsubscribe: vi.fn() } } };
       },
     },
   }),
-  reviewCall: vi.fn(),
+  reviewCall: mocks.review,
   ApiError: class extends Error {},
 }));
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.review.mockResolvedValue({ drafts: [] });
   mocks.session.mockResolvedValue({
     data: {
       session: { user: { id: "synthetic", email: "qa@example.invalid" } },
@@ -122,4 +128,44 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
       queryParams: { prompt: "select_account" },
     },
   });
+});
+
+it("same-user auth refresh preserves the current review kind while rechecking roles", async () => {
+  scope(true, ["ADMIN"]);
+  render(<Workspace />);
+  fireEvent.click(await screen.findByRole("button", { name: "Duyệt CV & JD" }));
+  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  await screen.findByRole("heading", { name: "Không có bản nháp" });
+  const callsBefore = mocks.session.mock.calls.length;
+  await act(async () => {
+    mocks.authCallback?.("SIGNED_IN", { user: { id: "synthetic" } });
+  });
+  await waitFor(() =>
+    expect(mocks.session.mock.calls.length).toBeGreaterThan(callsBefore),
+  );
+  expect(
+    screen
+      .getByRole("button", { name: "JD tuyển dụng" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  await act(async () => {
+    mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
+  });
+  expect(
+    screen
+      .getByRole("button", { name: "JD tuyển dụng" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+});
+it("silent same-user auth refresh removes review when current roles are revoked", async () => {
+  scope(true, ["ADMIN"]);
+  render(<Workspace />);
+  fireEvent.click(await screen.findByRole("button", { name: "Duyệt CV & JD" }));
+  await screen.findByRole("button", { name: "JD tuyển dụng" });
+  scope(false, []);
+  await act(async () => {
+    mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
+  });
+  await screen.findByRole("heading", { name: "Đang chờ cấp quyền" });
+  expect(screen.queryByRole("button", { name: "JD tuyển dụng" })).toBeNull();
 });

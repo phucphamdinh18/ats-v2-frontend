@@ -21,6 +21,7 @@ export default function Workspace() {
   const [status, setStatus] = useState("ALL");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
+  const authUser = useRef<string | null>(null);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
@@ -29,10 +30,12 @@ export default function Workspace() {
       "Quyền truy cập đã thay đổi hoặc phiên đã hết hạn. Hãy tải lại quyền.",
     );
   }, []);
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (quiet = false) => {
     const ticket = gate.current.next();
-    setLoading(true);
-    setAccess(null);
+    if (!quiet) {
+      setLoading(true);
+      setAccess(null);
+    }
     setError("");
     try {
       const client = getClient();
@@ -41,7 +44,12 @@ export default function Workspace() {
         error: sessionError,
       } = await client.auth.getSession();
       if (sessionError) throw sessionError;
-      if (!session) return;
+      if (!gate.current.current(ticket)) return;
+      authUser.current = session?.user.id || null;
+      if (!session) {
+        setAccess(null);
+        return;
+      }
       const [profile, roles] = await Promise.all([
         client
           .from("app_users")
@@ -75,12 +83,14 @@ export default function Workspace() {
           jobs,
         });
     } catch (err) {
-      if (gate.current.current(ticket))
+      if (gate.current.current(ticket)) {
+        setAccess(null);
         setError(
           err instanceof Error
             ? err.message
             : "Không tải được quyền truy cập ATS.",
         );
+      }
     } finally {
       if (gate.current.current(ticket)) setLoading(false);
     }
@@ -89,12 +99,23 @@ export default function Workspace() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cleanup = () => {};
     try {
-      const { data } = getClient().auth.onAuthStateChange(() => {
-        // Never await Supabase requests inside its auth storage lock.
+      const { data } = getClient().auth.onAuthStateChange((event, session) => {
+        // SIGNED_IN also fires when returning to a tab. Recheck permissions without
+        // destroying an unchanged user's draft selection or unsaved review form.
+        const nextUser = session?.user.id || null;
+        const quiet =
+          nextUser !== null &&
+          nextUser === authUser.current &&
+          event !== "SIGNED_OUT";
+        authUser.current = nextUser;
         gate.current.invalidate();
-        setAccess(null);
+        if (!quiet) {
+          setAccess(null);
+          setLoading(true);
+        }
+        // Never await Supabase requests inside its auth storage lock.
         clearTimeout(timer);
-        timer = setTimeout(() => void refresh(), 0);
+        timer = setTimeout(() => void refresh(quiet), 0);
       });
       cleanup = () => data.subscription.unsubscribe();
       void refresh();
