@@ -3,6 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
 import { authRedirect, canReview, RequestGate, type Job } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
+import { useLanguage } from "./language";
+import Icon from "./icon";
+import LoadingState from "./loading-state";
+import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
 type Access = {
   userId: string;
@@ -12,6 +16,8 @@ type Access = {
   jobs: Job[];
 };
 export default function Workspace() {
+  const { t, locale, setLocale } = useLanguage();
+  const [guideOpen, setGuideOpen] = useState(true);
   const [access, setAccess] = useState<Access | null>(null);
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
@@ -26,9 +32,7 @@ export default function Workspace() {
     gate.current.invalidate();
     setAccess(null);
     setTab("jobs");
-    setError(
-      "Quyền truy cập đã thay đổi hoặc phiên đã hết hạn. Hãy tải lại quyền.",
-    );
+    setError("scopeChanged");
   }, []);
   const refresh = useCallback(async (quiet = false) => {
     const ticket = gate.current.next();
@@ -85,11 +89,7 @@ export default function Workspace() {
     } catch (err) {
       if (gate.current.current(ticket)) {
         setAccess(null);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Không tải được quyền truy cập ATS.",
-        );
+        setError(err instanceof Error ? err.message : "requestFailed");
       }
     } finally {
       if (gate.current.current(ticket)) setLoading(false);
@@ -136,15 +136,7 @@ export default function Workspace() {
     setError("");
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const expired = new Promise<never>((_, reject) => {
-      timeout = setTimeout(
-        () =>
-          reject(
-            new Error(
-              "Đăng nhập phản hồi chậm. Hãy tải lại trang trước khi thử lại.",
-            ),
-          ),
-        15000,
-      );
+      timeout = setTimeout(() => reject(new Error("loginSlow")), 15000);
     });
     try {
       const redirectTo = authRedirect(
@@ -185,60 +177,119 @@ export default function Workspace() {
     (job) =>
       (status === "ALL" || job.status === status) &&
       `${job.title} ${job.job_code || ""}`
-        .toLocaleLowerCase("vi")
-        .includes(search.toLocaleLowerCase("vi")),
+        .toLocaleLowerCase(locale)
+        .includes(search.toLocaleLowerCase(locale)),
   );
+  const reviewAllowed = !!allowed && canReview(access.roles);
+  const adminAllowed = !!allowed && access.roles.includes("ADMIN");
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const adminUrl = process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL
+    ? new URL("qa.html", process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL).href
+    : basePath + "/qa.html";
   return (
     <div className="shell">
+      <a className="skip-link" href="#main-content">
+        {t.navigation}
+      </a>
       <aside className="sidebar">
-        <a
-          className="brand"
-          href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/`}
-        >
-          <span className="brand-mark">a</span> ATS <small>WORKSPACE</small>
+        <a className="brand" href={`${basePath}/`}>
+          <span className="brand-mark">
+            <Icon name="jobs" size={23} />
+          </span>
+          <span>
+            ATS<span className="brand-caption">{t.workspace}</span>
+          </span>
         </a>
-        <div className="workspace-label">KHÔNG GIAN TUYỂN DỤNG</div>
-        <nav aria-label="Điều hướng chính">
+        <div className="workspace-label">{t.workspace}</div>
+        <nav aria-label={t.navigation}>
           <button
             className={tab === "jobs" ? "nav active" : "nav"}
+            aria-current={tab === "jobs" ? "page" : undefined}
             onClick={() => setTab("jobs")}
           >
-            <span aria-hidden="true">▦</span> Vị trí tuyển dụng
+            <Icon name="jobs" />
+            {t.jobs}
           </button>
-          {allowed && canReview(access.roles) && (
+          {reviewAllowed && (
             <button
               className={tab === "review" ? "nav active" : "nav"}
+              aria-current={tab === "review" ? "page" : undefined}
               onClick={() => setTab("review")}
             >
-              <span aria-hidden="true">▤</span> Duyệt CV & JD
+              <Icon name="review" />
+              {t.review}
             </button>
           )}
         </nav>
+        <div className="sidebar-help">
+          <span className="help-icon">
+            <Icon name="help" />
+          </span>
+          <strong>{t.helpHint}</strong>
+          <p>{allowed ? t.guideIntro : t.loginNote}</p>
+          {allowed && (
+            <button
+              className="quiet"
+              onClick={() => {
+                setTab("jobs");
+                setGuideOpen(true);
+              }}
+            >
+              {t.help}
+              <Icon name="arrow" size={15} />
+            </button>
+          )}
+        </div>
         <div className="sidebar-note">
-          <span className="dot" /> ATS V2 độc lập
-          <br />
-          <small>Dữ liệu theo quyền của bạn</small>
+          <Icon name="shield" size={16} />
+          <span>{t.scoped}</span>
         </div>
       </aside>
       <div className="main">
         <header className="topbar">
-          <span>
-            Tuyển dụng <span className="slash">/</span>{" "}
-            {tab === "jobs" ? "Vị trí tuyển dụng" : "Duyệt CV & JD"}
-          </span>
-          <div className="account">
-            <span>{access?.email || "ATS Workspace"}</span>
+          <div className="breadcrumb">
+            {t.recruiting}
+            <span>/</span>
+            <strong>{tab === "jobs" ? t.jobs : t.review}</strong>
+          </div>
+          <div className="header-actions">
+            <label className="language-picker">
+              <Icon name="globe" size={17} />
+              <select
+                aria-label={t.language}
+                value={locale}
+                onChange={(e) =>
+                  setLocale(e.target.value === "en" ? "en" : "vi")
+                }
+              >
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </label>
             {access && (
-              <button className="quiet" onClick={logout} disabled={authBusy}>
-                Đăng xuất
-              </button>
+              <div className="account">
+                <span className="avatar" aria-hidden="true">
+                  {access.email[0]?.toUpperCase() || "A"}
+                </span>
+                <span className="account-email">{access.email}</span>
+                <button
+                  className="icon-button"
+                  aria-label={t.signOut}
+                  title={t.signOut}
+                  onClick={logout}
+                  disabled={authBusy}
+                >
+                  <Icon name="logout" size={18} />
+                </button>
+              </div>
             )}
           </div>
         </header>
         <main id="main-content">
           {error && (
             <div className="notice error" role="alert">
-              {error}{" "}
+              <Icon name="help" />
+              {friendlyError(error, t)}
               <button
                 className="quiet"
                 onClick={() =>
@@ -247,127 +298,252 @@ export default function Workspace() {
                     : void refresh()
                 }
               >
-                {loginStarted.current ? "Tải lại trang" : "Tải lại quyền"}
+                {loginStarted.current ? t.reload : t.refreshAccess}
               </button>
             </div>
           )}
           {loading ? (
-            <section className="empty" role="status">
-              <span className="spinner" />
-              Đang tải không gian làm việc…
-            </section>
+            <LoadingState label={t.loading} />
           ) : !access ? (
-            <section className="login-card">
-              <div className="eyebrow">CHÀO MỪNG ĐẾN ATS</div>
-              <h1>
-                Mỗi cơ hội bắt đầu
-                <br />
-                từ một kết nối.
-              </h1>
-              <p>
-                Đăng nhập để quản lý các vị trí tuyển dụng
-                <br />
-                và duyệt hồ sơ trong phạm vi được giao.
-              </p>
-              <button
-                className="primary"
-                disabled={authBusy || !!error}
-                onClick={login}
-              >
-                {authBusy ? "Đang chuyển tới Google…" : "Đăng nhập bằng Google"}
-              </button>
+            <section className="login-layout">
+              <div className="login-story">
+                <span className="eyebrow">{t.workspace}</span>
+                <h1>{t.loginTitle}</h1>
+                <p>{t.loginIntro}</p>
+                <ul className="login-benefits">
+                  {[t.loginFeature1, t.loginFeature2, t.loginFeature3].map(
+                    (text) => (
+                      <li key={text}>
+                        <span>
+                          <Icon name="check" size={16} />
+                        </span>
+                        {text}
+                      </li>
+                    ),
+                  )}
+                </ul>
+                <div className="login-trust">
+                  <Icon name="shield" size={18} />
+                  {t.securityNote}
+                </div>
+              </div>
+              <div className="login-card">
+                <span className="welcome-icon">
+                  <Icon name="team" size={26} />
+                </span>
+                <div className="eyebrow">{t.loginEyebrow}</div>
+                <h2>{t.signIn}</h2>
+                <p>{t.loginNote}</p>
+                <button
+                  className="primary google-button"
+                  disabled={authBusy || !!error}
+                  onClick={login}
+                >
+                  <span className="google-mark" aria-hidden="true">
+                    G
+                  </span>
+                  {authBusy ? t.signingIn : t.signIn}
+                  <Icon name="arrow" size={17} />
+                </button>
+                <div className="login-footnote">
+                  <Icon name="shield" size={15} />
+                  {t.scoped}
+                </div>
+              </div>
             </section>
           ) : !allowed ? (
-            <section className="empty">
-              <h1>Đang chờ cấp quyền</h1>
-              <p>
-                Tài khoản đã đăng nhập. Admin cần kích hoạt hồ sơ và cấp vai trò
-                ATS.
-              </p>
-              <button className="secondary" onClick={() => void refresh()}>
-                Kiểm tra lại quyền
+            <section className="waiting-card">
+              <span className="welcome-icon">
+                <Icon name="clock" size={28} />
+              </span>
+              <h1>{t.waiting}</h1>
+              <p>{t.waitingBody}</p>
+              <button className="primary" onClick={() => void refresh()}>
+                <Icon name="refresh" size={17} />
+                {t.checkAccess}
               </button>
             </section>
           ) : (
             <>
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow">ATS WORKSPACE</div>
-                  <h1>
-                    {tab === "jobs" ? "Vị trí tuyển dụng" : "Duyệt CV & JD"}
-                  </h1>
-                  <p>
-                    {tab === "jobs"
-                      ? "Theo dõi các vị trí trong phạm vi bạn được xem."
-                      : "Đối chiếu bản nháp với tệp gốc trước khi đưa vào ATS."}
-                  </p>
+                  <span className="eyebrow">{t.workspace}</span>
+                  <h1>{tab === "jobs" ? t.jobs : t.review}</h1>
+                  <p>{tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
                 </div>
-                <button className="secondary" onClick={() => void refresh()}>
-                  ↻ Tải lại quyền
-                </button>
+                <div className="heading-actions">
+                  {tab === "jobs" && !guideOpen && (
+                    <button
+                      className="secondary"
+                      onClick={() => setGuideOpen(true)}
+                    >
+                      <Icon name="help" size={17} />
+                      {t.help}
+                    </button>
+                  )}
+                  <button className="secondary" onClick={() => void refresh()}>
+                    <Icon name="refresh" size={17} />
+                    {t.refreshAccess}
+                  </button>
+                </div>
               </div>
               <div className="role-line">
                 {access.roles.map((role) => (
                   <span className="role" key={role}>
-                    {role}
+                    {roleLabel(role, t)}
                   </span>
                 ))}
               </div>
-              {tab === "review" && canReview(access.roles) ? (
+              {tab === "review" && reviewAllowed ? (
                 <ReviewQueue key={access.userId} onAccessLost={invalidate} />
               ) : (
                 <>
-                  <section
-                    className="metrics"
-                    aria-label="Tóm tắt danh sách đã tải"
-                  >
+                  {guideOpen && (
+                    <section className="guide" aria-label={t.help}>
+                      <div className="guide-heading">
+                        <div>
+                          <h2>{t.guideTitle}</h2>
+                          <p>{t.guideIntro}</p>
+                        </div>
+                        <button
+                          className="quiet"
+                          onClick={() => setGuideOpen(false)}
+                        >
+                          <Icon name="close" size={15} />
+                          {t.hideGuide}
+                        </button>
+                      </div>
+                      <div className="guide-grid">
+                        <article>
+                          <span className="step-number">01</span>
+                          <h3>{t.guideJobs}</h3>
+                          <p>{t.guideJobsBody}</p>
+                          <button
+                            className="text-link"
+                            onClick={() => {
+                              setSearch("");
+                              setStatus("OPEN");
+                              setGuideOpen(false);
+                            }}
+                          >
+                            {t.guideJobsAction}
+                            <Icon name="arrow" size={16} />
+                          </button>
+                        </article>
+                        {reviewAllowed && (
+                          <article>
+                            <span className="step-number">02</span>
+                            <h3>{t.guideReview}</h3>
+                            <p>{t.guideReviewBody}</p>
+                            <button
+                              className="text-link"
+                              onClick={() => setTab("review")}
+                            >
+                              {t.guideReviewAction}
+                              <Icon name="arrow" size={16} />
+                            </button>
+                          </article>
+                        )}
+                        <article>
+                          <span className="step-number">
+                            {reviewAllowed ? "03" : "02"}
+                          </span>
+                          <h3>{adminAllowed ? t.guideAdmin : t.guideAccess}</h3>
+                          <p>
+                            {adminAllowed
+                              ? t.guideAdminBody
+                              : t.guideAccessBody}
+                          </p>
+                          {adminAllowed && (
+                            <a
+                              className="text-link"
+                              href={adminUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {t.guideAdminAction}
+                              <Icon name="external" size={15} />
+                            </a>
+                          )}
+                        </article>
+                      </div>
+                    </section>
+                  )}
+                  <section className="metrics" aria-label={t.totalJobs}>
                     <div>
-                      <small>Vị trí đã tải</small>
+                      <div className="metric-top">
+                        <small>{t.totalJobs}</small>
+                        <span className="metric-icon purple">
+                          <Icon name="jobs" />
+                        </span>
+                      </div>
                       <strong>{access.jobs.length}</strong>
-                      <span>Tối đa 100 vị trí được phép xem</span>
+                      <span>{t.totalHint}</span>
                     </div>
                     <div>
-                      <small>Đang tuyển</small>
+                      <div className="metric-top">
+                        <small>{t.openJobs}</small>
+                        <span className="metric-icon mint">
+                          <Icon name="team" />
+                        </span>
+                      </div>
                       <strong>
                         {access.jobs.filter((j) => j.status === "OPEN").length}
                       </strong>
-                      <span>Trong danh sách đã tải</span>
+                      <span>{t.openHint}</span>
                     </div>
                     <div>
-                      <small>Bản nháp</small>
+                      <div className="metric-top">
+                        <small>{t.draftJobs}</small>
+                        <span className="metric-icon amber">
+                          <Icon name="review" />
+                        </span>
+                      </div>
                       <strong>
                         {access.jobs.filter((j) => j.status === "DRAFT").length}
                       </strong>
-                      <span>Chờ hoàn thiện thông tin</span>
+                      <span>{t.draftHint}</span>
                     </div>
                   </section>
+                  <p className="scope-note">
+                    <Icon name="shield" size={14} />
+                    {t.scopeHint}
+                  </p>
                   <section className="panel">
                     <div className="panel-heading">
                       <h2>
-                        Danh sách vị trí{" "}
+                        {t.jobList}
                         <span className="count">{jobs.length}</span>
                       </h2>
                     </div>
                     <div className="toolbar">
                       <label className="search">
-                        <span aria-hidden="true">⌕</span>
+                        <Icon name="search" size={18} />
                         <input
-                          aria-label="Tìm vị trí"
-                          placeholder="Tìm tên vị trí hoặc mã Job…"
+                          aria-label={t.searchJobs}
+                          placeholder={t.searchPlaceholder}
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                         />
                       </label>
                       <select
-                        aria-label="Trạng thái Job"
+                        aria-label={t.jobStatus}
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
                       >
-                        <option value="ALL">Tất cả trạng thái</option>
-                        {Array.from(new Set(access.jobs.map((j) => j.status)))
+                        <option value="ALL">{t.allStatuses}</option>
+                        {Array.from(
+                          new Set([
+                            "OPEN",
+                            "DRAFT",
+                            ...access.jobs.map((j) => j.status),
+                          ]),
+                        )
                           .sort()
                           .map((s) => (
-                            <option key={s}>{s}</option>
+                            <option key={s} value={s}>
+                              {jobStatusLabel(s, t)}
+                            </option>
                           ))}
                       </select>
                     </div>
@@ -376,9 +552,9 @@ export default function Workspace() {
                         <table>
                           <thead>
                             <tr>
-                              <th>VỊ TRÍ</th>
-                              <th>MÃ JOB</th>
-                              <th>TRẠNG THÁI</th>
+                              <th>{t.colJob}</th>
+                              <th>{t.colCode}</th>
+                              <th>{t.colStatus}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -386,23 +562,21 @@ export default function Workspace() {
                               <tr key={job.id}>
                                 <td>
                                   <div className="job-title">
-                                    <span
-                                      className="job-icon"
-                                      aria-hidden="true"
-                                    >
-                                      ▦
+                                    <span className="job-icon">
+                                      <Icon name="jobs" size={18} />
                                     </span>
                                     <strong>{job.title}</strong>
                                   </div>
                                 </td>
                                 <td className="muted">
-                                  {job.job_code || "Chưa cấp mã"}
+                                  {job.job_code || t.noCode}
                                 </td>
                                 <td>
                                   <span
-                                    className={`badge ${job.status === "OPEN" ? "green" : ""}`}
+                                    className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
                                   >
-                                    {job.status}
+                                    <span className="status-dot" />
+                                    {jobStatusLabel(job.status, t)}
                                   </span>
                                 </td>
                               </tr>
@@ -412,13 +586,27 @@ export default function Workspace() {
                       </div>
                     ) : (
                       <div className="empty">
-                        <h3>Chưa có vị trí phù hợp</h3>
-                        <p>Thử đổi bộ lọc hoặc kiểm tra phạm vi được giao.</p>
+                        <span className="empty-icon">
+                          <Icon name="search" size={25} />
+                        </span>
+                        <h3>{t.noJobs}</h3>
+                        <p>{t.noJobsBody}</p>
+                        <button
+                          className="secondary"
+                          onClick={() => {
+                            setSearch("");
+                            setStatus("ALL");
+                          }}
+                        >
+                          {t.clearFilters}
+                        </button>
                       </div>
                     )}
                     <div className="panel-footer">
-                      Hiển thị {jobs.length} / {access.jobs.length} vị trí đã
-                      tải · Thông tin được lọc theo quyền ATS
+                      {format(t.jobsShown, {
+                        shown: jobs.length,
+                        total: access.jobs.length,
+                      })}
                     </div>
                   </section>
                 </>
@@ -427,7 +615,8 @@ export default function Workspace() {
           )}
         </main>
         <footer>
-          ATS V2 <span>Không gian tuyển dụng của bạn</span>
+          <strong>ATS Workspace</strong>
+          <span>{t.footer}</span>
         </footer>
       </div>
     </div>

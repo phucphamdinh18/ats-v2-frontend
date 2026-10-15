@@ -5,39 +5,45 @@ import {
   driveLink,
   RequestGate,
   reviewPermissions,
-  titleOf,
   type Detail,
   type Draft,
   type Kind,
   type ReviewState,
 } from "@/lib/policy";
-const labels: Record<ReviewState, string> = {
-  pending_review: "Chờ duyệt",
-  approved: "Đã duyệt",
-  rejected: "Đã từ chối",
-};
-const fieldLabels: Record<string, string> = {
-  full_name: "Họ và tên",
-  email: "Email",
-  phone: "Điện thoại",
-  current_title: "Vị trí hiện tại",
-  primary_role: "Vai trò",
-  total_experience_years: "Kinh nghiệm (năm)",
-  seniority: "Cấp độ",
-  skills: "Kỹ năng",
-  domains: "Lĩnh vực",
-  location: "Địa điểm",
-  current_company: "Công ty hiện tại",
-  position: "Vị trí",
-  business_unit: "Bộ phận",
-  proposed_job_id: "Mã Job đề xuất",
-  summary: "Tóm tắt",
+import { useLanguage } from "./language";
+import Icon from "./icon";
+import LoadingState from "./loading-state";
+import { format, friendlyError, type Copy } from "@/lib/i18n";
+const fieldLabels: Record<string, keyof Copy> = {
+  full_name: "fieldName",
+  email: "fieldEmail",
+  phone: "fieldPhone",
+  current_title: "fieldTitle",
+  primary_role: "fieldRole",
+  total_experience_years: "fieldExperience",
+  seniority: "fieldSeniority",
+  skills: "fieldSkills",
+  domains: "fieldDomains",
+  location: "fieldLocation",
+  current_company: "fieldCompany",
+  position: "fieldPosition",
+  business_unit: "fieldUnit",
+  proposed_job_id: "fieldProposed",
+  summary: "fieldSummary",
 };
 export default function ReviewQueue({
   onAccessLost,
 }: {
   onAccessLost: () => void;
 }) {
+  const { t } = useLanguage();
+  const labels: Record<ReviewState, string> = {
+    pending_review: t.pending,
+    approved: t.approved,
+    rejected: t.rejected,
+  };
+  const documentTitle = (draft: Draft) =>
+    draft.full_name || draft.position || t.untitled;
   const [kind, setKind] = useState<Kind>("cv");
   const [state, setState] = useState<ReviewState>("pending_review");
   const [page, setPage] = useState(0);
@@ -66,7 +72,7 @@ export default function ReviewQueue({
         onAccessLost();
         return;
       }
-      setError(err instanceof Error ? err.message : "Không tải được dữ liệu.");
+      setError(err instanceof Error ? err.message : "requestFailed");
     },
     [onAccessLost],
   );
@@ -118,7 +124,7 @@ export default function ReviewQueue({
         result.intake.kind !== kind ||
         result.draft.id !== id
       )
-        throw new Error("Dữ liệu bản nháp không khớp. Hãy tải lại.");
+        throw new Error("mismatched");
       setDetail(result);
     } catch (err) {
       if (details.current.current(ticket)) fail(err);
@@ -136,7 +142,7 @@ export default function ReviewQueue({
       action === "correct_title" &&
       (!permission.correct || !value.trim().startsWith("[TEST ONLY]"))
     ) {
-      setError("Chỉ sửa bản nháp giả cho phép, với nhãn [TEST ONLY].");
+      setError("correctionRestricted");
       return;
     }
     if (
@@ -147,15 +153,17 @@ export default function ReviewQueue({
     )
       return;
     if (decision === "rejected" && !reason.trim()) {
-      setError("Vui lòng nhập lý do từ chối.");
+      setError("reasonRequired");
       return;
     }
     const prompt =
       action === "correct_title"
-        ? "Lưu tên mới cho bản nháp TEST ONLY?"
+        ? t.confirmCorrection
         : decision === "approved"
-          ? `Duyệt bản nháp và tạo ${kind === "cv" ? "Candidate" : "Job nháp"}?`
-          : "Từ chối bản nháp này?";
+          ? kind === "cv"
+            ? t.confirmApproveCV
+            : t.confirmApproveJD
+          : t.confirmReject;
     if (!window.confirm(prompt)) return;
     submitting.current = true;
     setBusy(true);
@@ -185,9 +193,9 @@ export default function ReviewQueue({
         setMessage(
           action === "correct_title"
             ? result.correction?.changed
-              ? "Đã lưu tên mới và nhật ký chỉnh sửa."
-              : "Giá trị không đổi; không ghi thêm nhật ký."
-            : "Đã lưu quyết định.",
+              ? "savedCorrection"
+              : "noChange"
+            : "savedDecision",
         );
     } catch (err) {
       if (!alive.current) return;
@@ -195,10 +203,7 @@ export default function ReviewQueue({
         details.current.invalidate();
         setDetail(null);
         await loadList();
-        if (alive.current)
-          setError(
-            "Bản nháp đã thay đổi. Mở lại bản nháp để kiểm tra dữ liệu mới trước khi tiếp tục.",
-          );
+        if (alive.current) setError("stale");
       } else fail(err);
     } finally {
       submitting.current = false;
@@ -232,10 +237,32 @@ export default function ReviewQueue({
           "domains",
           "summary",
         ];
+  const intakeLabel = (value: string) =>
+    ({
+      ready_for_review: t.ready,
+      possible_duplicate: t.duplicate,
+      processing: t.processing,
+      received: t.received,
+      failed: t.failed,
+    })[value] || t.failed;
   return (
-    <section className="panel review-panel" aria-label="Hàng chờ CV và JD">
+    <section className="panel review-panel" aria-label={t.reviewRegion}>
+      <ol className="review-steps" aria-label={t.help}>
+        <li>
+          <span>1</span>
+          {t.stepChoose}
+        </li>
+        <li>
+          <span>2</span>
+          {t.stepCheck}
+        </li>
+        <li>
+          <span>3</span>
+          {t.stepDecide}
+        </li>
+      </ol>
       <div className="toolbar">
-        <div className="segmented" aria-label="Loại bản nháp">
+        <div className="segmented" aria-label={t.draftKind}>
           <button
             disabled={busy}
             aria-pressed={kind === "cv"}
@@ -244,7 +271,8 @@ export default function ReviewQueue({
               setPage(0);
             }}
           >
-            CV ứng viên
+            <Icon name="team" size={16} />
+            {t.cv}
           </button>
           <button
             disabled={busy}
@@ -254,11 +282,12 @@ export default function ReviewQueue({
               setPage(0);
             }}
           >
-            JD tuyển dụng
+            <Icon name="review" size={16} />
+            {t.jd}
           </button>
         </div>
         <select
-          aria-label="Trạng thái bản nháp"
+          aria-label={t.reviewState}
           value={state}
           disabled={busy}
           onChange={(e) => {
@@ -277,58 +306,64 @@ export default function ReviewQueue({
           disabled={busy || loading}
           onClick={() => void loadList()}
         >
-          ↻ Tải lại
+          <Icon name="refresh" size={16} />
+          {t.refresh}
         </button>
       </div>
       {error && (
         <div className="notice error" role="alert">
-          {error}
+          <Icon name="help" size={18} />
+          {friendlyError(error, t)}
         </div>
       )}
       {message && (
         <div className="notice success" role="status">
-          {message}
+          <Icon name="check" size={18} />
+          {t[message as keyof Copy] || t.savedDecision}
         </div>
       )}
       <div className="review-grid">
         <div className="draft-list" aria-busy={loading}>
           {loading ? (
-            <div className="empty" role="status">
-              Đang tải bản nháp…
-            </div>
+            <LoadingState label={t.loadingDrafts} />
           ) : drafts.length ? (
             drafts.map((draft) => (
               <button
                 className={`draft-item ${detail?.draft.id === draft.id ? "selected" : ""}`}
                 key={draft.id}
-                aria-label={`${kind.toUpperCase()} ${titleOf(draft)}`}
+                aria-label={`${kind.toUpperCase()} ${documentTitle(draft)}`}
+                aria-pressed={detail?.draft.id === draft.id}
                 disabled={busy}
                 onClick={() => void loadDetail(draft.id)}
               >
                 <span className="draft-kind">{kind.toUpperCase()}</span>
                 <span>
-                  <strong>{titleOf(draft)}</strong>
+                  <strong>{documentTitle(draft)}</strong>
                   <small>
-                    {draft.email ||
-                      draft.business_unit ||
-                      "Chưa có thông tin bổ sung"}
+                    {draft.email || draft.business_unit || t.noExtra}
                   </small>
                 </span>
-                <span className="chevron" aria-hidden="true">
-                  ›
-                </span>
+                <Icon name="arrow" size={16} className="chevron" />
               </button>
             ))
           ) : (
             <div className="empty">
-              <div className="empty-icon" aria-hidden="true">
-                ✓
-              </div>
-              <h3>Không có bản nháp</h3>
+              <span className="empty-icon mint">
+                <Icon name="check" size={27} />
+              </span>
+              <h3>
+                {page
+                  ? t.noDrafts
+                  : state === "pending_review"
+                    ? format(t.emptyPending, { kind: kind.toUpperCase() })
+                    : t.noDrafts}
+              </h3>
               <p>
                 {page
-                  ? "Không có dữ liệu ở trang này."
-                  : `Danh sách ${labels[state].toLowerCase()} đang trống.`}
+                  ? t.emptyPage
+                  : state === "pending_review"
+                    ? t.emptyPendingBody
+                    : t.emptyOther}
               </p>
             </div>
           )}
@@ -338,62 +373,60 @@ export default function ReviewQueue({
               disabled={busy || loading || page === 0}
               onClick={() => setPage((p) => p - 1)}
             >
-              ← Trước
+              {t.previous}
             </button>
-            <span>Trang {page + 1}</span>
+            <span>{format(t.page, { page: page + 1 })}</span>
             <button
               className="quiet"
               disabled={busy || loading || drafts.length < 50 || page >= 1000}
               onClick={() => setPage((p) => p + 1)}
             >
-              Sau →
+              {t.next}
             </button>
           </div>
         </div>
         <div className="detail" aria-busy={detailLoading}>
           {detailLoading ? (
-            <div className="empty" role="status">
-              Đang tải chi tiết…
-            </div>
+            <LoadingState label={t.loadingDetail} rows={4} />
           ) : !detail ? (
             <div className="empty">
-              <div className="empty-icon" aria-hidden="true">
-                ▤
-              </div>
-              <h3>Chọn bản nháp để xem</h3>
-              <p>
-                Thông tin trích xuất và tệp gốc
-                <br />
-                sẽ hiển thị tại đây.
-              </p>
+              <span className="empty-icon purple">
+                <Icon name="review" size={28} />
+              </span>
+              <h3>{t.selectDraft}</h3>
+              <p>{t.selectDraftBody}</p>
             </div>
           ) : (
             <>
               <div className="detail-heading">
-                <span className="badge">
+                <span
+                  className={`badge ${detail.draft.review_state === "approved" ? "green" : ""}`}
+                >
                   {labels[detail.draft.review_state]}
                 </span>
-                <h2>{titleOf(detail.draft)}</h2>
+                <h2>{documentTitle(detail.draft)}</h2>
                 <p>{detail.intake.original_name}</p>
                 {source ? (
                   <a
-                    className="text-link"
+                    className="source-link"
                     href={source}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Mở tệp gốc trên Drive ↗
+                    <Icon name="external" size={17} />
+                    {t.openSource}
                   </a>
                 ) : (
-                  <p className="muted">Không có liên kết Drive hợp lệ.</p>
+                  <p className="muted">{t.noSource}</p>
                 )}
               </div>
+              <div className="detail-section-title">{t.extracted}</div>
               <dl>
                 {keys.map((key) => {
                   const item = detail.draft[key];
                   return (
                     <div key={key}>
-                      <dt>{fieldLabels[key]}</dt>
+                      <dt>{t[fieldLabels[key]]}</dt>
                       <dd>
                         {Array.isArray(item)
                           ? item.join(", ") || "—"
@@ -405,17 +438,19 @@ export default function ReviewQueue({
                   );
                 })}
                 <div>
-                  <dt>Trạng thái intake</dt>
-                  <dd>{detail.intake.state}</dd>
+                  <dt>{t.intakeState}</dt>
+                  <dd>{intakeLabel(detail.intake.state)}</dd>
                 </div>
                 {detail.review && (
                   <>
                     <div>
-                      <dt>Quyết định</dt>
-                      <dd>{detail.review.decision}</dd>
+                      <dt>{t.decision}</dt>
+                      <dd>
+                        {labels[detail.review.decision as ReviewState] || "—"}
+                      </dd>
                     </div>
                     <div>
-                      <dt>Lý do</dt>
+                      <dt>{t.reason}</dt>
                       <dd>{detail.review.reason || "—"}</dd>
                     </div>
                   </>
@@ -423,8 +458,8 @@ export default function ReviewQueue({
               </dl>
               {permission?.fixture && (
                 <div className="notice">
-                  Bản nháp giả phục vụ kiểm thử sửa tên. Không tạo Candidate
-                  hoặc Job.
+                  <Icon name="help" size={18} />
+                  {t.testOnly}
                 </div>
               )}
               {permission?.correct && (
@@ -436,7 +471,7 @@ export default function ReviewQueue({
                   }}
                 >
                   <label htmlFor="correct-value">
-                    {kind === "cv" ? "Tên CV" : "Vị trí JD"} sau chỉnh sửa
+                    {kind === "cv" ? t.correctionLabelCV : t.correctionLabelJD}
                   </label>
                   <input
                     id="correct-value"
@@ -446,29 +481,26 @@ export default function ReviewQueue({
                     minLength={kind === "cv" ? 1 : 3}
                     maxLength={200}
                     disabled={busy}
-                    placeholder="[TEST ONLY] …"
+                    placeholder={t.correctionPlaceholder}
                   />
                   <button className="secondary" type="submit" disabled={busy}>
-                    Lưu chỉnh sửa TEST ONLY
+                    {t.saveCorrection}
                   </button>
                 </form>
               )}
               {permission?.reject && (
                 <div className="review-form">
                   {!permission.approve && (
-                    <div className="notice">
-                      Bản nháp chưa đủ điều kiện duyệt. Cần xử lý trạng thái
-                      intake trước khi tạo hồ sơ.
-                    </div>
+                    <div className="notice">{t.cannotApprove}</div>
                   )}
-                  <label htmlFor="reason">Ghi chú / lý do từ chối</label>
+                  <label htmlFor="reason">{t.rejectReason}</label>
                   <textarea
                     id="reason"
                     value={reason}
                     maxLength={1000}
                     disabled={busy}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="Bắt buộc khi từ chối"
+                    placeholder={t.rejectPlaceholder}
                   />
                   {permission.approve && (
                     <label className="checkbox">
@@ -478,7 +510,7 @@ export default function ReviewQueue({
                         disabled={busy}
                         onChange={(e) => setChecked(e.target.checked)}
                       />
-                      Tôi đã đối chiếu dữ liệu với tệp gốc.
+                      {t.verifiedSource}
                     </label>
                   )}
                   <div className="actions">
@@ -487,14 +519,18 @@ export default function ReviewQueue({
                       disabled={busy}
                       onClick={() => void mutate("decide", "rejected")}
                     >
-                      Từ chối
+                      {t.reject}
                     </button>
                     <button
                       className="primary"
                       disabled={busy || !permission.approve || !checked}
                       onClick={() => void mutate("decide", "approved")}
                     >
-                      {busy ? "Đang lưu…" : "Duyệt bản nháp"}
+                      {busy
+                        ? t.saving
+                        : kind === "cv"
+                          ? t.approveCV
+                          : t.approveJD}
                     </button>
                   </div>
                 </div>

@@ -88,3 +88,14 @@ Same-user SIGNED_IN/TOKEN_REFRESHED now rechecks profile/roles/Jobs while keepin
 The canonical root and `/qa.html` were verified in the browser after propagation. Pages initially served the preceding preview from cache even after deployment succeeded; acceptance used the actual HTML release marker and visible UI, not a green workflow alone. Rollback mode packaging is tested; an actual production rollback was not executed.
 
 This remains the first Next increment. HM/Interviewer live matrix, pending draft writes through Next, real CV/JD intake, later pipeline stages, Interview, Offer and Matching still require their own implementation/QA. The rollout performed read-only ATS data checks plus Auth session operations; it did not approve/reject drafts, grant roles or run AI/Drive processing.
+
+
+## Pending local UI increment Vietnamese and English
+
+Prepared a SaaS-style interface with indigo primary actions, mint/amber labelled statuses, consistent SVG icons, clearer typography, role-aware quick-start guidance, and friendly empty/error states. API payloads, authorization gates, correction allowlists and draft transaction logic remain unchanged. Job/status and role labels are localized; imported titles, names, notes and other source data retain their original text.
+
+A typed copy dictionary provides Vietnamese and English. The selector is available before and after sign-in, stores only `ats.locale`, updates the document language, and continues working when browser storage is unavailable. Switching languages preserves review selection, unsaved notes and source verification, without refetching the scope or changing API state codes. Raw backend error details are replaced with localized actionable messages.
+
+Local validation: 38 web tests and 11 legacy QA tests passed, as did the Next production build and strict TypeScript. New tests cover dictionary/placeholder parity, locale persistence and private-browser failures, actual review state preservation across languages, and unchanged decision payloads. A standalone HTML design preview uses clearly labelled sample data and simulated sign-in; it has no live Supabase connection.
+
+This increment has not been pushed, checked in GitHub CI, published or visually accepted. The attempted GitHub read was rejected. The cloud browser blocks file URLs, so it could not visually inspect the standalone preview. Restore GitHub authorization, reconcile against the latest main, create a PR, run CI, then use the existing manual Pages preview flow for actual desktop/mobile and bilingual QA before promotion. Current live release remains the one recorded above.

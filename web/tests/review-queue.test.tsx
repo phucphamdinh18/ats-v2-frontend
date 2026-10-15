@@ -8,6 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import ReviewQueue from "../components/review-queue";
+import { LanguageProvider, useLanguage } from "../components/language";
 import { ApiError } from "../lib/supabase";
 const { call } = vi.hoisted(() => ({ call: vi.fn() }));
 vi.mock("../lib/supabase", () => ({
@@ -55,7 +56,7 @@ describe("review request lifecycle", () => {
             })
           : Promise.resolve(detail("Second")),
     );
-    render(<ReviewQueue onAccessLost={vi.fn()} />);
+    render(<ReviewQueue onAccessLost={languageAccessLost} />);
     fireEvent.click(await screen.findByRole("button", { name: /CV First/ }));
     fireEvent.click(screen.getByRole("button", { name: /CV Second/ }));
     await screen.findByRole("heading", { name: "Second" });
@@ -76,10 +77,10 @@ describe("review request lifecycle", () => {
             resolveOld = resolve;
           }),
     );
-    render(<ReviewQueue onAccessLost={vi.fn()} />);
+    render(<ReviewQueue onAccessLost={languageAccessLost} />);
     fireEvent.click(await screen.findByRole("button", { name: /CV CV old/ }));
     fireEvent.click(screen.getByRole("button", { name: "JD tuyển dụng" }));
-    await screen.findByRole("heading", { name: "Không có bản nháp" });
+    await screen.findByRole("heading", { name: /Chưa có.*cần duyệt/ });
     await act(async () => {
       resolveOld(detail("CV old"));
     });
@@ -93,17 +94,21 @@ describe("review request lifecycle", () => {
           ? Promise.resolve(detail("Synthetic"))
           : Promise.reject(new ApiError("Stale", 409)),
     );
-    render(<ReviewQueue onAccessLost={vi.fn()} />);
+    render(<ReviewQueue onAccessLost={languageAccessLost} />);
     fireEvent.click(
       await screen.findByRole("button", { name: /CV Synthetic/ }),
     );
     fireEvent.click(await screen.findByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Duyệt bản nháp" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Duyệt & tạo ứng viên" }),
+    );
     await screen.findByRole("alert");
     expect(screen.getByRole("alert").textContent).toContain(
       "Bản nháp đã thay đổi",
     );
-    expect(screen.queryByRole("button", { name: "Duyệt bản nháp" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Duyệt & tạo ứng viên" }),
+    ).toBeNull();
     expect(
       call.mock.calls.filter(([input]) => input.action === "list"),
     ).toHaveLength(2);
@@ -122,12 +127,12 @@ describe("review request lifecycle", () => {
           : detail("Duplicate", "possible_duplicate"),
       ),
     );
-    render(<ReviewQueue onAccessLost={vi.fn()} />);
+    render(<ReviewQueue onAccessLost={languageAccessLost} />);
     fireEvent.click(
       await screen.findByRole("button", { name: /CV Duplicate/ }),
     );
     const approve = await screen.findByRole("button", {
-      name: "Duyệt bản nháp",
+      name: "Duyệt & tạo ứng viên",
     });
     expect((approve as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Từ chối" }));
@@ -156,4 +161,76 @@ describe("review request lifecycle", () => {
     });
     expect(onAccessLost).not.toHaveBeenCalled();
   });
+});
+
+const languageAccessLost = () => {};
+function ReviewWithLanguage() {
+  const { locale, setLocale } = useLanguage();
+  return (
+    <>
+      <select
+        aria-label="Ngôn ngữ / Language"
+        value={locale}
+        onChange={(e) => setLocale(e.target.value === "en" ? "en" : "vi")}
+      >
+        <option value="vi">Tiếng Việt</option>
+        <option value="en">English</option>
+      </select>
+      <ReviewQueue onAccessLost={languageAccessLost} />
+    </>
+  );
+}
+it("language switch preserves review notes and verification, with unchanged API decision codes", async () => {
+  localStorage.clear();
+  call.mockImplementation((input) =>
+    Promise.resolve(
+      input.action === "list"
+        ? { drafts: [draft("Language fixture")] }
+        : input.action === "detail"
+          ? detail("Language fixture")
+          : { review: { decision: "rejected" } },
+    ),
+  );
+  render(
+    <LanguageProvider>
+      <ReviewWithLanguage />
+    </LanguageProvider>,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /CV Language fixture/ }),
+  );
+  fireEvent.change(
+    await screen.findByRole("textbox", { name: "Ghi chú / lý do từ chối" }),
+    { target: { value: "Keep this note" } },
+  );
+  fireEvent.click(screen.getByRole("checkbox"));
+  const listCalls = call.mock.calls.filter(
+    ([input]) => input.action === "list",
+  ).length;
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Ngôn ngữ / Language" }),
+    { target: { value: "en" } },
+  );
+  expect(
+    (
+      screen.getByRole("textbox", {
+        name: "Note / reason for declining",
+      }) as HTMLTextAreaElement
+    ).value,
+  ).toBe("Keep this note");
+  expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
+  expect(
+    call.mock.calls.filter(([input]) => input.action === "list"),
+  ).toHaveLength(listCalls);
+  fireEvent.click(screen.getByRole("button", { name: "Decline" }));
+  await waitFor(() =>
+    expect(call).toHaveBeenCalledWith({
+      action: "decide",
+      kind: "cv",
+      id: "Language fixture",
+      decision: "rejected",
+      reason: "Keep this note",
+    }),
+  );
+  localStorage.clear();
 });
