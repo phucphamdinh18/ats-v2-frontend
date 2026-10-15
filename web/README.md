@@ -1,6 +1,6 @@
 # ATS V2 — Next.js frontend, increment 1
 
-Next.js App Router + strict TypeScript. The existing root `index.html` remains the deployed QA UI. The application is prepared for GitHub Pages at the existing ATS URL. Publishing is a separate manual workflow; merging does **not** deploy Next or replace the Pages entry point. See the rollout controls below.
+Next.js App Router + strict TypeScript. Next is deployed at https://phucphamdinh18.github.io/ats-v2-frontend/. The source root `index.html` preserves the legacy QA interface, published at `/qa.html`. Publishing is a separate manual workflow; merging does **not** deploy or replace the live Pages artifact. See the rollout evidence and controls below.
 
 ## Run
 
@@ -29,7 +29,7 @@ npm run typecheck
 - Jobs read through the signed-in Supabase client's existing RLS. Search title/code and filter by actual status. All three counts describe only the **up to 100 loaded jobs**, never tenant-wide totals. Jobs are read-only in this increment.
 - Admin/TA review queue through existing `ta-review`: CV/JD, pending/approved/rejected, 50-item pagination, details, Drive source, approve/reject, rejection reason and explicit source verification before approval.
 - Approval blocked for duplicate/unready intakes. Name correction stays restricted to the exact existing TEST ONLY IDs + source + label. No fixture can create a Candidate/Job; closed fixtures stay closed. No normal CV/JD field editing is introduced.
-- Request tickets discard stale responses on filter/selection changes and unmount. Logout/auth changes immediately clear loaded scope. Backend 401/403 clears access. A 409 clears detail and reloads the list; reopening is required. Submission locks prevent repeated writes while in flight. Backend remains authoritative for authorization, deduplication, audit and transactions.
+- Request tickets discard stale responses on filter/selection changes and unmount. Logout and identity changes immediately clear loaded scope; same-user auth refresh revalidates access while preserving the review selection. Backend 401/403 clears access. A 409 clears detail and reloads the list; reopening is required. Submission locks prevent repeated writes while in flight. Backend remains authoritative for authorization, deduplication, audit and transactions.
 
 ## API contract
 
@@ -48,9 +48,9 @@ Uses existing project `izchulqhmhqevfmuvqlx` and `supabase/functions/ta-review/i
 
 `npm test`: policy tests plus React DOM integration tests with a mocked backend. They cover authorization display gates, exact correction guards, closed/duplicate restrictions, safe source links, out-of-order details, CV→JD invalidation, 409 recovery, 403 access loss, unmount, job search, logout data clearing and duplicate OAuth initiation. Existing root QA tests remain unchanged. These are not live OAuth/RLS end-to-end results for this Next application.
 
-Local production build and TypeScript validation must pass before merging. Browser visual QA was attempted but the cloud browser could not reach the isolated local server (`ERR_CONNECTION_REFUSED`), so desktop/mobile screenshots and actual Google OAuth on this Next build remain outstanding. Do not treat CSS breakpoints or DOM tests as visual QA.
+Production build and strict TypeScript pass in CI. Desktop and a 375×812 same-origin iframe were inspected on live Pages. Google sign-in from the promoted Next root, sign-out data clearing and return to Admin/3 Jobs were verified. Job search/status filter, pending queues, a rejected synthetic JD's read-only details, cross-tab selection preservation and retained QA access were checked. No production records were created or changed by these checks. Mobile inspection used an iframe, not a physical device.
 
-Before first live rollout: choose hosting and its base path; build with `NEXT_PUBLIC_BASE_PATH` if needed; ensure exact origin/path callback is allowed in Supabase Auth, redirects return to that same path, and Edge CORS allows that origin. Then verify desktop/mobile rendering, Google sign-in/out, current Admin/TA/HM visibility and stale/revoked sessions against synthetic data. Avoid wildcard callback expansion. Keep the current QA entry available for comparison/rollback. Do not reopen closed fixtures.
+Before changing hosting/base path, verify the exact callback, Edge CORS origin and the resulting built asset paths again. No callback allowlist, CORS, Supabase schema, role or AI/Drive pilot change was needed for this rollout.
 
 Admin Job mutations/memberships and Applications remain available only in the existing QA UI. Candidate management, stages after SCREEN, Interview, Offer and Matching are not added here. Drive/AI pilot limits are unchanged; no real CV or JD was processed.
 
@@ -71,3 +71,20 @@ Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML met
 Packaging copies only the static export and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Sign in at the top-level root first; Google OAuth should not be used inside the iframe.
 
 Rollback: manually run `Publish ATS Pages` with `mode: qa` on main, or restore the prior Pages deployment. Publishing `next` again rebuilds the current main source; it is not an immutable old-release rollback. There is no automatic production deployment on merge/push.
+
+## Rollout evidence 15 October 2026
+
+| Change / release                 | Evidence                                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Manual publish setup             | PR #16, head `6173e5553cb70a5eb9a68a344bd8ee71bc8322b0`, Next CI `38744395978`, QA CI `38744396024`; merged `af306fc436975f188b86035fa37eb0b58b4890fc` |
+| Initial preview                  | Publish `38745055648` succeeded; existing QA root + Next `/next/`                                                                                      |
+| Refocus fix found during preview | PR #17, head `201bed4c0fa6100ec4e08031687f7b35e656f73a`, Next CI `38745850001`, QA CI `38745849728`; merged `5b53cb18145e2ec03fa815fb5825c1a2a1882bef` |
+| Fixed preview                    | Publish `38746535323` succeeded; actual rejected synthetic JD selection survived loading another ATS tab, with zero write forms                        |
+| Next at canonical root           | Publish `38746986182` succeeded in `next` mode; live HTML meta `5b53cb18145e2ec03fa815fb5825c1a2a1882bef:next`                                         |
+| Checks in final publish          | 29 web tests + 11 existing QA tests, production build, TypeScript and packaging passed                                                                 |
+
+Same-user SIGNED_IN/TOKEN_REFRESHED now rechecks profile/roles/Jobs while keeping the mounted review selection. Sign-out/identity changes still clear data immediately; revoked/inactive access or a failed scope read removes the view. Two new component tests cover preserved JD selection and silent revalidation after revocation. Revocation in this Next increment was tested with mocks; earlier QA-role revocation evidence belongs to the legacy UI and is not a new live Next revocation test.
+
+The canonical root and `/qa.html` were verified in the browser after propagation. Pages initially served the preceding preview from cache even after deployment succeeded; acceptance used the actual HTML release marker and visible UI, not a green workflow alone. Rollback mode packaging is tested; an actual production rollback was not executed.
+
+This remains the first Next increment. HM/Interviewer live matrix, pending draft writes through Next, real CV/JD intake, later pipeline stages, Interview, Offer and Matching still require their own implementation/QA. The rollout performed read-only ATS data checks plus Auth session operations; it did not approve/reject drafts, grant roles or run AI/Drive processing.
