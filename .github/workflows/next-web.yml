@@ -1,0 +1,39 @@
+name: Next web checks
+
+on:
+  pull_request:
+    paths: ['web/**', '.github/workflows/next-web.yml']
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/next-web.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  next-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://izchulqhmhqevfmuvqlx.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_3z9T_XwfGujrPObIj-8rbg_bjbpnXnt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-fund --no-audit
+      - run: npm test
+      - run: npm run build
+      - run: npm run typecheck
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ats-next-static-build
+          path: web/out
+          retention-days: 7
