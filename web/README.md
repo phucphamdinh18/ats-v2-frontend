@@ -1,6 +1,6 @@
 # ATS V2 — Next.js frontend, increment 1
 
-Next.js App Router + strict TypeScript. The existing root `index.html` remains the deployed QA UI. This application is source-ready; merging does **not** deploy it or replace the Pages entry point. Hosting is still undecided.
+Next.js App Router + strict TypeScript. The existing root `index.html` remains the deployed QA UI. The application is prepared for GitHub Pages at the existing ATS URL. Publishing is a separate manual workflow; merging does **not** deploy Next or replace the Pages entry point. See the rollout controls below.
 
 ## Run
 
@@ -55,3 +55,19 @@ Before first live rollout: choose hosting and its base path; build with `NEXT_PU
 Admin Job mutations/memberships and Applications remain available only in the existing QA UI. Candidate management, stages after SCREEN, Interview, Offer and Matching are not added here. Drive/AI pilot limits are unchanged; no real CV or JD was processed.
 
 Official framework reference: https://nextjs.org/docs/app/guides/static-exports
+
+## Manual Pages publishing
+
+`Publish ATS Pages` is a separate **workflow_dispatch-only** workflow on main. It runs the existing QA checks, all web tests, the production build and TypeScript before producing an artifact. Only the deploy job receives `pages:write` and the temporary OIDC token; the repository token has no content-write permission. Switch the existing Pages publishing source to **GitHub Actions** before the first run. No custom domain, new hosting account, OAuth callback allowlist, CORS origin or backend permission changes are required.
+
+| Mode      | Root URL         | Other pages                        | Purpose                                                        |
+| --------- | ---------------- | ---------------------------------- | -------------------------------------------------------------- |
+| `preview` | Existing QA      | Next at `/next/`, QA at `/qa.html` | Verify Next with the existing browser session before promotion |
+| `next`    | Next application | QA at `/qa.html`                   | Promote the verified build                                     |
+| `qa`      | Existing QA      | QA at `/qa.html`                   | Restore the current QA interface                               |
+
+Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` always points to the already-allowed root callback. Preview/QA sign-in returns to the root; reopen the preview or QA link after sign-in. Normal Next at root returns to itself.
+
+Packaging copies only the static export and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Sign in at the top-level root first; Google OAuth should not be used inside the iframe.
+
+Rollback: manually run `Publish ATS Pages` with `mode: qa` on main, or restore the prior Pages deployment. Publishing `next` again rebuilds the current main source; it is not an immutable old-release rollback. There is no automatic production deployment on merge/push.

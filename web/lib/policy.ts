@@ -99,3 +99,26 @@ export class RequestGate {
     ++this.revision;
   }
 }
+
+// A preview can return OAuth to the already-allowed root callback on the same origin.
+// Never widen Supabase's callback allowlist just to render a preview path.
+export function authRedirect(
+  origin: string,
+  basePath: string,
+  configured?: string,
+): string {
+  const target = configured || origin + basePath + "/";
+  const url = new URL(target);
+  if (
+    url.origin !== origin ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error(
+      "URL đăng nhập không khớp với địa chỉ ATS. Liên hệ quản trị viên.",
+    );
+  }
+  return url.href;
+}

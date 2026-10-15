@@ -1,0 +1,64 @@
+name: Publish ATS Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'preview: QA root + Next /next/; next: Next root; qa: restore QA only'
+        required: true
+        default: preview
+        type: choice
+        options: [preview, next, qa]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ats-pages-publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://izchulqhmhqevfmuvqlx.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_3z9T_XwfGujrPObIj-8rbg_bjbpnXnt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --prefix web --no-fund --no-audit
+      - run: node tests/inline-script-syntax.cjs && node --test tests/*.test.cjs
+      - run: npm --prefix web test
+      - run: npm --prefix web run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ inputs.mode == 'preview' && '/ats-v2-frontend/next' || '/ats-v2-frontend' }}
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
+      - run: npm --prefix web run typecheck
+      - run: node web/scripts/prepare-pages.mjs "$PAGES_MODE"
+        env:
+          PAGES_MODE: ${{ inputs.mode }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/.pages-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment

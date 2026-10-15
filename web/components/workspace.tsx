@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
-import { canReview, RequestGate, type Job } from "@/lib/policy";
+import { authRedirect, canReview, RequestGate, type Job } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 
 type Access = {
@@ -126,10 +126,11 @@ export default function Workspace() {
       );
     });
     try {
-      const redirectTo =
-        window.location.origin +
-        (process.env.NEXT_PUBLIC_BASE_PATH || "") +
-        "/";
+      const redirectTo = authRedirect(
+        window.location.origin,
+        process.env.NEXT_PUBLIC_BASE_PATH || "",
+        process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL,
+      );
       const { error } = await Promise.race([
         getClient().auth.signInWithOAuth({
           provider: "google",
