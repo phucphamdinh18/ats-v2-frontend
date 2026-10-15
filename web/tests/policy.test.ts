@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  authRedirect,
   canReview,
   driveLink,
   isCorrectionFixture,
@@ -143,4 +144,23 @@ test("logout or scope change invalidates all pending results", () => {
   const ticket = gate.next();
   gate.invalidate();
   assert.equal(gate.current(ticket), false);
+});
+
+test("preview OAuth returns only to a configured callback on the same origin", () => {
+  const origin = "https://phucphamdinh18.github.io";
+  assert.equal(
+    authRedirect(origin, "/ats-v2-frontend"),
+    origin + "/ats-v2-frontend/",
+  );
+  assert.equal(
+    authRedirect(origin, "/ats-v2-frontend/next", origin + "/ats-v2-frontend/"),
+    origin + "/ats-v2-frontend/",
+  );
+  for (const value of [
+    "https://evil.test/callback",
+    origin + "/?next=evil",
+    origin + "/#token",
+    "https://u:p@phucphamdinh18.github.io/",
+  ])
+    assert.throws(() => authRedirect(origin, "", value));
 });
