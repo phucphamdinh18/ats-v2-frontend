@@ -1,6 +1,9 @@
 name: Publish ATS Pages
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths: ['web/**', '.github/workflows/publish-pages.yml']
   workflow_dispatch:
     inputs:
       mode:
@@ -19,7 +22,9 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
+    # PR previews may only publish code from branches in this repository.
+    # Forks never receive Pages credentials.
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -38,12 +43,12 @@ jobs:
       - run: npm --prefix web test
       - run: npm --prefix web run build
         env:
-          NEXT_PUBLIC_BASE_PATH: ${{ inputs.mode == 'preview' && '/ats-v2-frontend/next' || '/ats-v2-frontend' }}
+          NEXT_PUBLIC_BASE_PATH: ${{ (github.event_name == 'pull_request' || inputs.mode == 'preview') && '/ats-v2-frontend/next' || '/ats-v2-frontend' }}
           NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
       - run: npm --prefix web run typecheck
       - run: node web/scripts/prepare-pages.mjs "$PAGES_MODE"
         env:
-          PAGES_MODE: ${{ inputs.mode }}
+          PAGES_MODE: ${{ github.event_name == 'pull_request' && 'preview' || inputs.mode }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/.pages-site

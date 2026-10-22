@@ -1,4 +1,4 @@
-# ATS V2 — Next.js frontend, increment 1
+# ATS V2 — Next.js frontend, increment 2 (Application pipeline draft)
 
 Next.js App Router + strict TypeScript. Next is deployed at https://phucphamdinh18.github.io/ats-v2-frontend/. The source root `index.html` preserves the legacy QA interface, published at `/qa.html`. Publishing is a separate manual workflow; merging does **not** deploy or replace the live Pages artifact. See the rollout evidence and controls below.
 
@@ -43,6 +43,27 @@ Uses existing project `izchulqhmhqevfmuvqlx` and `supabase/functions/ta-review/i
 | Detail              | `{action:'detail',kind,id}` → `{draft,intake,review}`                                  |
 | Correct pilot title | `{action:'correct_title',kind,id,expected_value,value}` → `{correction:{changed,...}}` |
 | Decide              | `{action:'decide',kind,id,decision,reason}` → `{review}`                               |
+
+### Application pipeline draft (TEST ONLY)
+
+This draft adds a read-only Job → Application pipeline, candidate-name search and Application detail surface. Jobs still use the authenticated browser client's RLS query; Applications call only the existing `applications` Edge Function with the session JWT automatically attached by Supabase. The browser sends no `actor_id` and contains only the publishable key.
+
+| Action | Exact request | Exact response used by UI |
+| --- | --- | --- |
+| List | `{action:'list',job_id,limit,offset}` | `{applications,limit,offset}` |
+| Search | `{action:'search',job_id,query,limit,offset}` | `{applications,limit,offset}` |
+| Detail | `{action:'detail',job_id,application_id}` | `{application,events,event_count,limit,offset}` |
+| Screen | `{action:'screen',application_id,request_id}` | `{application}` |
+
+Stages are grouped from returned records; no client-side stage list is declared. `SCREEN` is only offered for returned `stage === 'NEW'` and `status === 'ACTIVE'`. A confirmation creates one UUID; a network retry retains that exact `request_id`, so the backend idempotency rule remains effective. The UI is not authorization: 401 clears the session-scoped UI, while 403 explicitly says **“Không có quyền”** and clears the Application view rather than rendering an empty list. Request tickets prevent old list/detail responses replacing newer selections.
+
+The current deployed backend migration returns `actor_id`, not `actor_display_name`, and does not return `matching_context`. The detail view therefore states that the actor display name is unavailable; it will display `actor_display_name` and `matching_context` only if/when the backend adds them. No Candidate Profile/PII, Interview, Offer, Dashboard, Matching, AI, migration or Edge Function was changed.
+
+### Draft validation boundary — 22 October 2026
+
+**Tried locally:** strict TypeScript, 21 Node checks, 20 React tests (including Application loading/empty/403/error/retry-with-same-request-id/detail-race cases), and Next production build. All used TEST ONLY mocked Application fixtures; no CV/JD or live Application record was used.
+
+**Not tried:** GitHub CI for the draft commit, E2E with an actual Admin JWT, E2E with a TA-only Job membership JWT, real Edge Function/network/CORS, production deployment, or a production write. Do not treat a green local suite as authorization proof; deploy a preview only after CI and test with separate Admin and TA accounts.
 
 ## Validation and rollout boundary
 

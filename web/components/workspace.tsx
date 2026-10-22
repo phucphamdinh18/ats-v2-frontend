@@ -6,6 +6,7 @@ import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
+import ApplicationPipeline from "./application-pipeline";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
 type Access = {
@@ -25,12 +26,14 @@ export default function Workspace() {
   const [tab, setTab] = useState<"jobs" | "review">("jobs");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const authUser = useRef<string | null>(null);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
+    setSelectedJob(null);
     setTab("jobs");
     setError("scopeChanged");
   }, []);
@@ -555,6 +558,7 @@ export default function Workspace() {
                               <th>{t.colJob}</th>
                               <th>{t.colCode}</th>
                               <th>{t.colStatus}</th>
+                              <th>Pipeline</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -567,6 +571,15 @@ export default function Workspace() {
                                     </span>
                                     <strong>{job.title}</strong>
                                   </div>
+                                </td>
+                                <td>
+                                  <button
+                                    className="secondary"
+                                    aria-label={`Mở pipeline ${job.title}`}
+                                    onClick={() => setSelectedJob(job)}
+                                  >
+                                    Mở pipeline
+                                  </button>
                                 </td>
                                 <td className="muted">
                                   {job.job_code || t.noCode}
@@ -609,6 +622,13 @@ export default function Workspace() {
                       })}
                     </div>
                   </section>
+                  {selectedJob && (
+                    <ApplicationPipeline
+                      key={selectedJob.id}
+                      job={selectedJob}
+                      onSessionLost={invalidate}
+                    />
+                  )}
                 </>
               )}
             </>
