@@ -34,6 +34,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const [screenBusy, setScreenBusy] = useState(false);
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
+  const selectedId = useRef<string | null>(null);
 
   const load = useCallback(async (nextOffset = offset, nextQuery = query) => {
     const ticket = ++listTicket.current;
@@ -58,7 +59,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   }, [job.id, offset, query, onSessionLost]);
 
   useEffect(() => {
-    void load(0, "");
+    // The search effect below performs the first load too, avoiding two initial requests.
     return () => { listTicket.current += 1; detailTicket.current += 1; };
     // A job switch must immediately discard the prior scope, before a new request resolves.
   }, [job.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -79,6 +80,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const openDetail = useCallback(async (application: Application) => {
     const ticket = ++detailTicket.current;
     setSelected(application);
+    selectedId.current = application.application_id;
     setDetail(null);
     setDetailError("");
     setScreenRequestId(null);
@@ -92,7 +94,13 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       if (ticket !== detailTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
       if (apiError?.status === 401) onSessionLost();
-      if (apiError?.status === 403) setState("forbidden");
+      if (apiError?.status === 403) {
+        setItems([]);
+        setDetail(null);
+        setSelected(null);
+        selectedId.current = null;
+        setState("forbidden");
+      }
       setDetailError(message(cause));
     } finally {
       if (ticket === detailTicket.current) setDetailLoading(false);
@@ -101,20 +109,31 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
 
   async function screen() {
     if (!selected) return;
+    const application = selected;
     const requestId = screenRequestId ?? crypto.randomUUID();
     if (!screenRequestId && !window.confirm("Chuyển Application này sang SCREEN?")) return;
     setScreenRequestId(requestId);
     setScreenBusy(true);
     setScreenError("");
     try {
-      await screenApplication(selected.application_id, requestId);
+      const result = await screenApplication(application.application_id, requestId);
       setScreenRequestId(null);
-      await openDetail(selected);
+      // Update immediately so a completed transition cannot be clicked a second time.
+      if (selectedId.current === application.application_id) {
+        setSelected(result.application);
+        await openDetail(result.application);
+      }
       await load(offset, query);
     } catch (cause) {
       const apiError = cause instanceof ApiError ? cause : undefined;
       if (apiError?.status === 401) onSessionLost();
-      if (apiError?.status === 403) setState("forbidden");
+      if (apiError?.status === 403) {
+        setItems([]);
+        setDetail(null);
+        setSelected(null);
+        selectedId.current = null;
+        setState("forbidden");
+      }
       // Keep requestId: clicking retry repeats the exact idempotent request.
       setScreenError(message(cause));
     } finally {
@@ -142,7 +161,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     </div>}
     {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     {selected && <aside className="application-detail" aria-label="Chi tiết Application">
-      <div className="panel-heading"><h2>Chi tiết Application</h2><button className="quiet" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; setSelected(null); }}>Đóng</button></div>
+      <div className="panel-heading"><h2>Chi tiết Application</h2><button className="quiet" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>Đóng</button></div>
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <><dl className="application-fields"><dt>Ứng viên</dt><dd>{detail.application.candidate_name}</dd><dt>Giai đoạn</dt><dd>{detail.application.stage}</dd><dt>Trạng thái</dt><dd>{detail.application.status}</dd><dt>Nguồn</dt><dd>{detail.application.source || "Không có"}</dd></dl>
