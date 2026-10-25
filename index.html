@@ -83,7 +83,7 @@
       </form>
       <div class="subsection">
         <h3>Thử mở Job và tạo Application</h3>
-        <p class="muted small">Chỉ dùng Job TEST ONLY trong đợt kiểm thử. Admin kiểm tra tiêu đề và mã trước khi xác nhận; backend ghi audit. Hai Job DRAFT cũ không tự được chọn.</p>
+        <p class="muted small">Chỉ dùng Job TEST ONLY trong đợt kiểm thử. Admin kiểm tra tiêu đề và mã trước khi xác nhận; backend ghi audit. Ngoài Job TEST ONLY được gắn cố định cho intake pilot, các Job DRAFT khác không tự được chọn.</p>
         <form id="open-job-form">
           <label for="open-job">Job nháp</label>
           <select id="open-job" required></select>
@@ -194,6 +194,10 @@
     const applicationJob = document.getElementById("application-job");
     const applicationMessage = document.getElementById("application-message");
     const screenForm = document.getElementById("screen-form");
+    // The legacy Drive pilot created this one synthetic Job before the UI
+    // convention required a [TEST ONLY] title. Keep its exception explicit;
+    // never make every historical DRAFT job eligible for opening here.
+    const legacyPilotDraftJobIds = new Set(["361f8194-6f41-4143-b9ad-286bcdd7b56a"]);
     const screenMessage = document.getElementById("screen-message");
     const screenFixtureId = "7a703410-2bec-42e1-b153-e5a3f1a22de2";
     let client;
@@ -433,7 +437,8 @@
         option.value = job.id;
         option.textContent = [job.job_code || "Nháp", job.title].join(" · ");
         adminJob.append(option);
-        if (job.status === "DRAFT" && job.title.startsWith("[TEST ONLY]")) {
+        if (job.status === "DRAFT" &&
+            (job.title.startsWith("[TEST ONLY]") || legacyPilotDraftJobIds.has(job.id))) {
           const draftOption = document.createElement("option");
           draftOption.value = job.id;
           draftOption.textContent = job.title;
