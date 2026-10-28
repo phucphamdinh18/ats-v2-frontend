@@ -32,6 +32,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const [screenRequestId, setScreenRequestId] = useState<string | null>(null);
   const [screenError, setScreenError] = useState("");
   const [screenBusy, setScreenBusy] = useState(false);
+  const [dragging, setDragging] = useState<Application | null>(null);
+  const screenRequestIds = useRef(new Map<string, string>());
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
@@ -72,10 +74,15 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     return () => window.clearTimeout(timer);
   }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const stages = useMemo(() => Object.entries(items.reduce<Record<string, Application[]>>((all, application) => {
-    (all[application.stage] ??= []).push(application);
-    return all;
-  }, {})), [items]);
+  const stages = useMemo(() => {
+    const grouped = items.reduce<Record<string, Application[]>>((all, application) => {
+      (all[application.stage] ??= []).push(application);
+      return all;
+    }, {});
+    // SCREEN is the only additional target the current API exposes. Other stages remain API-driven.
+    grouped.SCREEN ??= [];
+    return Object.entries(grouped);
+  }, [items]);
 
   const openDetail = useCallback(async (application: Application) => {
     const ticket = ++detailTicket.current;
@@ -107,19 +114,21 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     }
   }, [job.id, onSessionLost]);
 
-  async function screen() {
-    if (!selected) return;
-    const application = selected;
-    const requestId = screenRequestId ?? crypto.randomUUID();
-    if (!screenRequestId && !window.confirm("Chuyển Application này sang SCREEN?")) return;
-    setScreenRequestId(requestId);
+  async function screen(application = selected) {
+    if (!application || screenBusy) return;
+    const existingRequestId = screenRequestIds.current.get(application.application_id);
+    const requestId = existingRequestId ?? crypto.randomUUID();
+    if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} sang SCREEN?`)) return;
+    screenRequestIds.current.set(application.application_id, requestId);
+    if (selectedId.current === application.application_id) setScreenRequestId(requestId);
     setScreenBusy(true);
     setScreenError("");
     try {
       const result = await screenApplication(application.application_id, requestId);
-      setScreenRequestId(null);
-      // Update immediately so a completed transition cannot be clicked a second time.
+      screenRequestIds.current.delete(application.application_id);
+      // Update immediately so a completed transition cannot be repeated.
       if (selectedId.current === application.application_id) {
+        setScreenRequestId(null);
         setSelected(result.application);
         await openDetail(result.application);
       }
@@ -134,8 +143,11 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         selectedId.current = null;
         setState("forbidden");
       }
-      // Keep requestId: clicking retry repeats the exact idempotent request.
-      setScreenError(message(cause));
+      // Keep the request id per Application: a retry repeats the exact idempotent request.
+      if (selectedId.current === application.application_id) {
+        setScreenRequestId(requestId);
+        setScreenError(message(cause));
+      }
     } finally {
       setScreenBusy(false);
     }
@@ -153,11 +165,28 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && <div className="empty"><h3>Chưa có Application</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
     {state === "ready" && <div className="pipeline-grid">
-      {stages.map(([stage, applications]) => <section className="stage" key={stage} aria-label={`Giai đoạn ${stage}`}><h3>{stage} <span className="count">{applications.length}</span></h3>
-        {applications.map((application) => <button className="application-card" key={application.application_id} onClick={() => void openDetail(application)} aria-label={`Mở Application của ${application.candidate_name}`}>
-          <strong>{application.candidate_name}</strong><span>{application.status}</span><small>{application.source || "Không có nguồn"}</small>
-        </button>)}
-      </section>)}
+      {stages.map(([stage, applications]) => {
+        const acceptsDrop = stage === "SCREEN" && dragging?.stage === "NEW" && dragging.status === "ACTIVE";
+        return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
+          onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
+          onDrop={(event) => { event.preventDefault(); const candidate = dragging; setDragging(null); if (acceptsDrop && candidate) void screen(candidate); }}>
+          <h3>{stage} <span className="count">{applications.length}</span></h3>
+          {stage === "SCREEN" && <p className="drop-hint">Kéo Application NEW đang ACTIVE vào đây để chuyển sang SCREEN.</p>}
+          {applications.map((application) => {
+            const canDrag = application.stage === "NEW" && application.status === "ACTIVE";
+            const dragReason = canDrag ? "Kéo sang SCREEN" : "Chỉ Application NEW đang ACTIVE mới có thể kéo sang SCREEN.";
+            return <button className="application-card" key={application.application_id}
+              draggable={canDrag}
+              onDragStart={(event) => { if (!canDrag) { event.preventDefault(); return; } setDragging(application); }}
+              onDragEnd={() => setDragging(null)}
+              onClick={() => void openDetail(application)}
+              title={dragReason}
+              aria-label={`Mở Application của ${application.candidate_name}. ${dragReason}`}>
+              <strong>{application.candidate_name}</strong><span>{application.status}</span><small>{application.source || "Không có nguồn"}</small>
+            </button>;
+          })}
+        </section>;
+      })}
     </div>}
     {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     {selected && <aside className="application-detail" aria-label="Chi tiết Application">
