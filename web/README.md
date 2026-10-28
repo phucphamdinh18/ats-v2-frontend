@@ -83,11 +83,11 @@ Official framework reference: https://nextjs.org/docs/app/guides/static-exports
 
 | Mode      | Root URL         | Other pages                        | Purpose                                                        |
 | --------- | ---------------- | ---------------------------------- | -------------------------------------------------------------- |
-| `preview` | Existing QA      | Next at `/next/`, QA at `/qa.html` | Verify Next with the existing browser session before promotion |
+| `preview` | Redirect to Next | Next at `/next/`, QA at `/qa.html` | Verify Next without sending OAuth users into legacy QA |
 | `next`    | Next application | QA at `/qa.html`                   | Promote the verified build                                     |
 | `qa`      | Existing QA      | QA at `/qa.html`                   | Restore the current QA interface                               |
 
-Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` always points to the already-allowed root callback. Preview/QA sign-in returns to the root; reopen the preview or QA link after sign-in. Normal Next at root returns to itself.
+Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` remains the already-allowed root callback. In preview, the root landing page forwards the OAuth hash and query string to `/next/`, so users return to the Next workspace while no Supabase callback allowlist change is needed. Normal Next at root returns to itself.
 
 Packaging copies only the static export and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Sign in at the top-level root first; Google OAuth should not be used inside the iframe.
 

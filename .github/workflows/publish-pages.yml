@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'preview: QA root + Next /next/; next: Next root; qa: restore QA only'
+        description: 'preview: root redirects to Next /next/; next: Next root; qa: restore QA only'
         required: true
         default: preview
         type: choice
