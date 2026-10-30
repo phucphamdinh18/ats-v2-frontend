@@ -11,6 +11,7 @@ import {
   type ApplicationDetail,
 } from "@/lib/applications";
 import { ApiError } from "@/lib/supabase";
+import ManualCandidateForm from "./manual-candidate-form";
 
 const PAGE_SIZE = 25;
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
@@ -157,8 +158,15 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const disabledReason = !selected ? "Chọn một Application để thao tác." : !eligible
     ? "Chỉ Application NEW đang ACTIVE mới có thể chuyển sang SCREEN." : "";
 
+  const refreshAfterCandidateCreated = useCallback(async () => {
+    setQuery("");
+    setOffset(0);
+    await load(0, "");
+  }, [load]);
+
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
     <div className="panel-heading"><div><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Không có mã Job"} · Dữ liệu theo quyền Job từ backend.</p></div></div>
+    {(state === "ready" || state === "empty" || state === "error") && <ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} />}
     <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên ứng viên" /></label>
     {state === "loading" && <p role="status" aria-live="polite">Đang tải Application…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
