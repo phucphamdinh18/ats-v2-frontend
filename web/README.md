@@ -1,4 +1,4 @@
-# ATS V2 — Next.js frontend, increment 1
+# ATS V2 — Next.js frontend, increment 2 (Application pipeline draft)
 
 Next.js App Router + strict TypeScript. Next is deployed at https://phucphamdinh18.github.io/ats-v2-frontend/. The source root `index.html` preserves the legacy QA interface, published at `/qa.html`. Publishing is a separate manual workflow; merging does **not** deploy or replace the live Pages artifact. See the rollout evidence and controls below.
 
@@ -44,6 +44,27 @@ Uses existing project `izchulqhmhqevfmuvqlx` and `supabase/functions/ta-review/i
 | Correct pilot title | `{action:'correct_title',kind,id,expected_value,value}` → `{correction:{changed,...}}` |
 | Decide              | `{action:'decide',kind,id,decision,reason}` → `{review}`                               |
 
+### Application pipeline draft (TEST ONLY)
+
+This draft adds a read-only Job → Application pipeline, candidate-name search and Application detail surface. Jobs still use the authenticated browser client's RLS query; Applications call only the existing `applications` Edge Function with the session JWT automatically attached by Supabase. The browser sends no `actor_id` and contains only the publishable key.
+
+| Action | Exact request | Exact response used by UI |
+| --- | --- | --- |
+| List | `{action:'list',job_id,limit,offset}` | `{applications,limit,offset}` |
+| Search | `{action:'search',job_id,query,limit,offset}` | `{applications,limit,offset}` |
+| Detail | `{action:'detail',job_id,application_id}` | `{application,events,event_count,limit,offset}` |
+| Screen | `{action:'screen',application_id,request_id}` | `{application}` |
+
+Stages are grouped from returned records; no client-side stage list is declared. `SCREEN` is only offered for returned `stage === 'NEW'` and `status === 'ACTIVE'`. A confirmation creates one UUID; a network retry retains that exact `request_id`, so the backend idempotency rule remains effective. The UI is not authorization: 401 clears the session-scoped UI, while 403 explicitly says **“Không có quyền”** and clears the Application view rather than rendering an empty list. Request tickets prevent old list/detail responses replacing newer selections.
+
+The current deployed backend migration returns `actor_id`, not `actor_display_name`, and does not return `matching_context`. The detail view therefore states that the actor display name is unavailable; it will display `actor_display_name` and `matching_context` only if/when the backend adds them. No Candidate Profile/PII, Interview, Offer, Dashboard, Matching, AI, migration or Edge Function was changed.
+
+### Draft validation boundary — 22 October 2026
+
+**Tried locally:** strict TypeScript, 21 Node checks, 20 React tests (including Application loading/empty/403/error/retry-with-same-request-id/detail-race cases), and Next production build. All used TEST ONLY mocked Application fixtures; no CV/JD or live Application record was used.
+
+**Not tried:** GitHub CI for the draft commit, E2E with an actual Admin JWT, E2E with a TA-only Job membership JWT, real Edge Function/network/CORS, production deployment, or a production write. Do not treat a green local suite as authorization proof; deploy a preview only after CI and test with separate Admin and TA accounts.
+
 ## Validation and rollout boundary
 
 `npm test`: policy tests plus React DOM integration tests with a mocked backend. They cover authorization display gates, exact correction guards, closed/duplicate restrictions, safe source links, out-of-order details, CV→JD invalidation, 409 recovery, 403 access loss, unmount, job search, logout data clearing and duplicate OAuth initiation. Existing root QA tests remain unchanged. These are not live OAuth/RLS end-to-end results for this Next application.
@@ -62,11 +83,11 @@ Official framework reference: https://nextjs.org/docs/app/guides/static-exports
 
 | Mode      | Root URL         | Other pages                        | Purpose                                                        |
 | --------- | ---------------- | ---------------------------------- | -------------------------------------------------------------- |
-| `preview` | Existing QA      | Next at `/next/`, QA at `/qa.html` | Verify Next with the existing browser session before promotion |
+| `preview` | Redirect to Next | Next at `/next/`, QA at `/qa.html` | Verify Next without sending OAuth users into legacy QA |
 | `next`    | Next application | QA at `/qa.html`                   | Promote the verified build                                     |
 | `qa`      | Existing QA      | QA at `/qa.html`                   | Restore the current QA interface                               |
 
-Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` always points to the already-allowed root callback. Preview/QA sign-in returns to the root; reopen the preview or QA link after sign-in. Normal Next at root returns to itself.
+Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` remains the already-allowed root callback. In preview, the root landing page forwards the OAuth hash and query string to `/next/`, so users return to the Next workspace while no Supabase callback allowlist change is needed. Normal Next at root returns to itself.
 
 Packaging copies only the static export and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Sign in at the top-level root first; Google OAuth should not be used inside the iframe.
 

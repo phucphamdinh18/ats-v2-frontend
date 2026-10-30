@@ -48,6 +48,12 @@ for (const mode of ["preview", "next"])
       );
       assert.ok(html.includes(`${prefix}/_next/app.js`));
       assert.ok(html.includes(`${revision}:${mode}`));
+      if (mode === "preview") {
+        const landing = await readFile(path.join(destination, "index.html"), "utf8");
+        assert.ok(landing.includes("./next/"));
+        assert.ok(landing.includes("target.hash=window.location.hash"));
+        assert.ok(!landing.includes("Legacy QA"));
+      }
       const qa = await readFile(path.join(destination, "qa.html"), "utf8");
       assert.ok(
         qa.includes('redirectTo: window.location.origin + "/ats-v2-frontend/"'),

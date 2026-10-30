@@ -28,6 +28,7 @@ export async function preparePages({ mode, root, revision, destination }) {
     if (!html.includes("</head>")) throw new Error("Missing HTML head");
     return html.replace("</head>", marker + "</head>");
   };
+  const previewLanding = `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ATS · Tuyển dụng</title>${marker}</head><body><p>Đang mở ATS… <a id="ats-next-link" href="./next/">Mở ATS</a></p><script>const target=new URL('./next/',window.location.href);target.search=window.location.search;target.hash=window.location.hash;document.getElementById('ats-next-link').href=target.href;window.location.replace(target.href);</script></body></html>`;
   let next;
   const out = path.join(root, "web", "out");
   if (mode !== "qa") {
@@ -44,7 +45,10 @@ export async function preparePages({ mode, root, revision, destination }) {
     await cp(out, destination, { recursive: true });
     await writeFile(path.join(destination, "index.html"), mark(next));
   } else {
-    await writeFile(path.join(destination, "index.html"), mark(qa));
+    await writeFile(
+      path.join(destination, "index.html"),
+      mode === "preview" ? previewLanding : mark(qa),
+    );
     if (mode === "preview") {
       await cp(out, path.join(destination, "next"), { recursive: true });
       await writeFile(path.join(destination, "next", "index.html"), mark(next));
