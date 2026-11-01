@@ -35,6 +35,18 @@ describe("application pipeline", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Không có quyền");
     expect(screen.queryByText("Chưa có Application")).toBeNull();
   });
+  it("renders only stages returned by the API", async () => {
+    api.list.mockResolvedValue({
+      applications: [application("Ada")],
+      limit: 25,
+      offset: 0,
+    });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    await screen.findByRole("region", { name: "Giai đoạn NEW" });
+    expect(
+      screen.queryByRole("region", { name: "Giai đoạn SCREEN" }),
+    ).toBeNull();
+  });
   it("does not let an old detail response replace the latest selection", async () => {
     let resolveOld!: (value: ReturnType<typeof detail>) => void;
     api.list.mockResolvedValue({ applications: [application("Old"), application("New")], limit: 25, offset: 0 });
