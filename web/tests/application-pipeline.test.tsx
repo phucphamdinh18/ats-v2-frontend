@@ -4,6 +4,8 @@ import ApplicationPipeline from "../components/application-pipeline";
 import { ApiError } from "../lib/supabase";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn() }));
+const confirmMock = vi.hoisted(() => vi.fn());
+const randomUuidMock = vi.hoisted(() => vi.fn());
 vi.mock("../lib/applications", () => ({
   listApplications: api.list, searchApplications: api.search, applicationDetail: api.detail, screenApplication: api.screen,
 }));
@@ -15,7 +17,15 @@ const job = { id: "job-1", job_code: "TEST-1", title: "Test only job", status: "
 const application = (id: string) => ({ application_id: id, candidate_id: `candidate-${id}`, candidate_name: id, stage: "NEW", status: "ACTIVE", source: "TEST ONLY", created_at: "2026-01-01T00:00:00Z" });
 const detail = (id: string) => ({ application: application(id), events: [], event_count: 0, limit: 50, offset: 0 });
 
-beforeEach(() => { Object.values(api).forEach((fn) => fn.mockReset()); vi.stubGlobal("confirm", vi.fn(() => true)); vi.stubGlobal("crypto", { randomUUID: vi.fn(() => "11111111-1111-4111-8111-111111111111") }); });
+beforeEach(() => {
+  Object.values(api).forEach((fn) => fn.mockReset());
+  confirmMock.mockReset();
+  confirmMock.mockReturnValue(true);
+  randomUuidMock.mockReset();
+  randomUuidMock.mockReturnValue("11111111-1111-4111-8111-111111111111");
+  vi.stubGlobal("confirm", confirmMock);
+  vi.stubGlobal("crypto", { randomUUID: randomUuidMock });
+});
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("application pipeline", () => {
@@ -61,5 +71,7 @@ describe("application pipeline", () => {
     fireEvent.click(screen.getByRole("button", { name: "Thử lại với cùng request_id" }));
     await waitFor(() => expect(api.screen).toHaveBeenCalledTimes(2));
     expect(api.screen.mock.calls[0][1]).toBe(api.screen.mock.calls[1][1]);
+    expect(randomUuidMock).toHaveBeenCalledTimes(1);
+    expect(confirmMock).toHaveBeenCalledTimes(1);
   });
 });
