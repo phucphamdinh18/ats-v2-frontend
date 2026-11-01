@@ -38,6 +38,18 @@ describe("application pipeline", () => {
     expect(screen.getByLabelText("Chi tiết Application").textContent).toContain("New");
     expect(screen.getByLabelText("Chi tiết Application").textContent).not.toContain("Old");
   });
+  it("renders actor display name and hides null matching context", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
+    api.detail.mockResolvedValue({
+      ...detail("Ada"),
+      events: [{ event_id: "event-1", actor_id: "actor-1", actor_display_name: "TEST ONLY Recruiter", event_type: "MOVED", from_stage: "NEW", to_stage: "SCREEN", created_at: "2026-01-01T00:00:00Z" }],
+      matching_context: null,
+    });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
+    expect((await screen.findByLabelText("Chi tiết Application")).textContent).toContain("TEST ONLY Recruiter");
+    expect(screen.queryByText("Matching context")).toBeNull();
+  });
   it("retries screen with the same generated request id", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
     api.detail.mockResolvedValue(detail("Ada"));
