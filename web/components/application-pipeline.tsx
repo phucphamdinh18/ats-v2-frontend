@@ -202,8 +202,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <><dl className="application-fields"><dt>Ứng viên</dt><dd>{detail.application.candidate_name}</dd><dt>Giai đoạn</dt><dd>{detail.application.stage}</dd><dt>Trạng thái</dt><dd>{detail.application.status}</dd><dt>Nguồn</dt><dd>{detail.application.source || "Không có"}</dd></dl>
-        <h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Tên người thao tác chưa được backend trả về"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol>
-        {detail.matching_context !== undefined && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
+        <h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol>
+        {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
       <button className="primary" aria-label="Chuyển sang SCREEN" disabled={!eligible || screenBusy} title={disabledReason || "Chuyển sang SCREEN"} onClick={() => void screen()}>{screenBusy ? "Đang xử lý…" : screenRequestId ? "Thử lại chuyển SCREEN" : "Chuyển sang SCREEN"}</button>
       {disabledReason && <p className="disabled-explanation">{disabledReason}</p>}
