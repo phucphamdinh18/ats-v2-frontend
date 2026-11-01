@@ -80,8 +80,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       (all[application.stage] ??= []).push(application);
       return all;
     }, {});
-    // SCREEN is the only additional target the current API exposes. Other stages remain API-driven.
-    grouped.SCREEN ??= [];
+    // Stages are derived solely from API data. The formal stage catalog is not fixed in the frontend.
     return Object.entries(grouped);
   }, [items]);
 
