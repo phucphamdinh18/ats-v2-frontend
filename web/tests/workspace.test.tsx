@@ -112,6 +112,23 @@ it("logout removes already displayed private data immediately", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Đăng xuất" }));
   expect(screen.queryByText("Synthetic Job")).toBeNull();
 });
+it("Supabase SIGNED_OUT event clears displayed scoped data immediately", async () => {
+  scope(
+    true,
+    ["TA_RECRUITER"],
+    [{ id: "job1", title: "Scoped Job", status: "OPEN", job_code: "TEST-2" }],
+  );
+  render(<Workspace />);
+  await screen.findByText("Scoped Job");
+  await act(async () => {
+    mocks.authCallback?.("SIGNED_OUT", null);
+  });
+  await waitFor(() => expect(screen.queryByText("Scoped Job")).toBeNull());
+  expect(
+    screen.getByRole("button", { name: "Đăng nhập bằng Google" }),
+  ).toBeTruthy();
+});
+
 it("signed-out login starts only one OAuth request on repeated clicks", async () => {
   mocks.session.mockResolvedValue({ data: { session: null }, error: null });
   mocks.oauth.mockResolvedValue({ error: null });
