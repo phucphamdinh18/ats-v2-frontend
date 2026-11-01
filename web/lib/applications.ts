@@ -17,8 +17,8 @@ export type ApplicationEvent = {
   from_stage: string | null;
   to_stage: string | null;
   created_at: string;
-  // Kept optional: the current backend does not yet return this field.
-  actor_display_name?: string | null;
+  actor_display_name: string;
+
 };
 
 export type ApplicationDetail = {
@@ -27,8 +27,8 @@ export type ApplicationDetail = {
   event_count: number;
   limit: number;
   offset: number;
-  // Kept optional for forward compatibility; the current contract omits it.
-  matching_context?: unknown;
+  // Applications not created through Matching return null.
+  matching_context?: unknown | null;
 };
 
 type ListResponse = { applications: Application[]; limit: number; offset: number };
