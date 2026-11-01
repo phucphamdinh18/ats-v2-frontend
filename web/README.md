@@ -57,7 +57,7 @@ This draft adds a read-only Job → Application pipeline, candidate-name search 
 
 Stages are grouped from returned records; no client-side stage list is declared. `SCREEN` is only offered for returned `stage === 'NEW'` and `status === 'ACTIVE'`. A confirmation creates one UUID; a network retry retains that exact `request_id`, so the backend idempotency rule remains effective. The UI is not authorization: 401 clears the session-scoped UI, while 403 explicitly says **“Không có quyền”** and clears the Application view rather than rendering an empty list. Request tickets prevent old list/detail responses replacing newer selections.
 
-The current deployed backend migration returns `actor_id`, not `actor_display_name`, and does not return `matching_context`. The detail view therefore states that the actor display name is unavailable; it will display `actor_display_name` and `matching_context` only if/when the backend adds them. No Candidate Profile/PII, Interview, Offer, Dashboard, Matching, AI, migration or Edge Function was changed.
+The deployed backend returns `actor_display_name` for timeline events and a nullable `matching_context`. The detail view renders the actor display name, hides Matching context for ordinary Applications where it is `null`, and renders it only when a future Matching-created Application provides a value. No Candidate Profile/PII, Interview, Offer, Dashboard, Matching, AI, migration or Edge Function is changed by this frontend increment.
 
 ### Draft validation boundary — 22 October 2026
 
