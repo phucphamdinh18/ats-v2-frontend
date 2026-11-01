@@ -54,6 +54,9 @@ jobs:
           path: web/.pages-site
 
   deploy:
+    # A PR may validate a preview artifact, but may never alter GitHub Pages.
+    # Production deployment is an explicit manual dispatch from main only.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
