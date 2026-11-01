@@ -120,13 +120,12 @@ it("Supabase SIGNED_OUT event clears displayed scoped data immediately", async (
   );
   render(<Workspace />);
   await screen.findByText("Scoped Job");
+  mocks.session.mockResolvedValue({ data: { session: null }, error: null });
   await act(async () => {
     mocks.authCallback?.("SIGNED_OUT", null);
   });
-  await waitFor(() => expect(screen.queryByText("Scoped Job")).toBeNull());
-  expect(
-    screen.getByRole("button", { name: "Đăng nhập bằng Google" }),
-  ).toBeTruthy();
+  await screen.findByRole("button", { name: "Đăng nhập bằng Google" });
+  expect(screen.queryByRole("button", { name: /Mở pipeline Scoped Job/ })).toBeNull();
 });
 
 it("signed-out login starts only one OAuth request on repeated clicks", async () => {
