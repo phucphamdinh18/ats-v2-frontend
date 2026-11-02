@@ -68,6 +68,16 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   }, [job.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    // Changing the search scope invalidates the selected record and any in-flight detail read.
+    // This prevents a previous Application from looking like a match for the new query.
+    detailTicket.current += 1;
+    selectedId.current = null;
+    setSelected(null);
+    setDetail(null);
+    setDetailError("");
+    setDetailLoading(false);
+    setScreenRequestId(null);
+    setScreenError("");
     const timer = window.setTimeout(() => {
       setOffset(0);
       void load(0, query);

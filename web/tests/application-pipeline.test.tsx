@@ -60,6 +60,22 @@ describe("application pipeline", () => {
     expect(screen.getByLabelText("Chi tiết Application").textContent).toContain("New");
     expect(screen.getByLabelText("Chi tiết Application").textContent).not.toContain("Old");
   });
+  it("closes the previous detail when a new search has no results", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
+    api.detail.mockResolvedValue(detail("Ada"));
+    api.search.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
+    await screen.findByText("Lịch sử");
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Tìm ứng viên trong Job" }), {
+      target: { value: "No matching candidate" },
+    });
+
+    expect(screen.queryByLabelText("Chi tiết Application")).toBeNull();
+    expect(await screen.findByText("Chưa có Application")).toBeTruthy();
+    expect(screen.queryByLabelText("Chi tiết Application")).toBeNull();
+  });
   it("renders actor display name and hides null matching context", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
     api.detail.mockResolvedValue({
