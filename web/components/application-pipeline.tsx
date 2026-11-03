@@ -107,6 +107,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       const result = await applicationDetail(job.id, application.application_id);
       if (ticket !== detailTicket.current) return;
       setDetail(result);
+      // Detail is the authoritative post-action state; the screen RPC returns only ID + changed.
+      setSelected(result.application);
     } catch (cause) {
       if (ticket !== detailTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
@@ -139,8 +141,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       // Update immediately so a completed transition cannot be repeated.
       if (selectedId.current === application.application_id) {
         setScreenRequestId(null);
-        setSelected(result.application);
-        await openDetail(result.application);
+        // Re-read detail so stage/status and the action button reflect the server result.
+        await openDetail(application);
       }
       await load(offset, query);
     } catch (cause) {
