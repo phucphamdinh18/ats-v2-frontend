@@ -61,8 +61,12 @@ export function applicationDetail(jobId: string, applicationId: string) {
   return call<ApplicationDetail>({ action: "detail", job_id: jobId, application_id: applicationId });
 }
 
+export type ScreenApplicationResult = {
+  application: { application_id: string; changed: boolean };
+};
+
 export function screenApplication(applicationId: string, requestId: string) {
-  return call<{ application: Application }>({
+  return call<ScreenApplicationResult>({
     action: "screen",
     application_id: applicationId,
     request_id: requestId,
