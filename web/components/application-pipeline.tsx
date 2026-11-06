@@ -141,7 +141,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     const requestKey = `${application.application_id}:${targetStage}`;
     const existingRequestId = transitionRequestIds.current.get(requestKey);
     const requestId = existingRequestId ?? crypto.randomUUID();
-    if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} sang ${targetStage}?`)) return;
+    if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} ${isBackward ? "về" : "sang"} ${targetStage}?`)) return;
     transitionRequestIds.current.set(requestKey, requestId);
     if (selectedId.current === application.application_id) {
       setTransitionRequestId(requestId);
