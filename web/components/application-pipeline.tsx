@@ -37,6 +37,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
   const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
+  const [transitionRequestTarget, setTransitionRequestTarget] = useState<TransitionStage | null>(null);
   const [failedTransition, setFailedTransition] = useState<{ application: Application; targetStage: TransitionStage; message: string } | null>(null);
   const [transitionBusy, setTransitionBusy] = useState(false);
   const [dragging, setDragging] = useState<Application | null>(null);
@@ -83,6 +84,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     setDetailError("");
     setDetailLoading(false);
     setTransitionRequestId(null);
+    setTransitionRequestTarget(null);
     const timer = window.setTimeout(() => {
       setOffset(0);
       void load(0, query);
@@ -107,6 +109,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     setDetail(null);
     setDetailError("");
     setTransitionRequestId(null);
+    setTransitionRequestTarget(null);
     setDetailLoading(true);
     try {
       const result = await applicationDetail(job.id, application.application_id);
@@ -140,7 +143,10 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     const requestId = existingRequestId ?? crypto.randomUUID();
     if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} sang ${targetStage}?`)) return;
     transitionRequestIds.current.set(requestKey, requestId);
-    if (selectedId.current === application.application_id) setTransitionRequestId(requestId);
+    if (selectedId.current === application.application_id) {
+      setTransitionRequestId(requestId);
+      setTransitionRequestTarget(targetStage);
+    }
     setTransitionBusy(true);
     setFailedTransition(null);
     try {
@@ -150,6 +156,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       transitionRequestIds.current.delete(requestKey);
       if (selectedId.current === application.application_id) {
         setTransitionRequestId(null);
+        setTransitionRequestTarget(null);
         await openDetail(application);
       }
       await load(offset, query);
@@ -158,6 +165,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       if (apiError?.status === 401 || apiError?.status === 403) {
         transitionRequestIds.current.clear();
         setTransitionRequestId(null);
+        setTransitionRequestTarget(null);
         setFailedTransition(null);
         setItems([]);
         setDetail(null);
@@ -175,7 +183,10 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         return;
       }
       setFailedTransition({ application, targetStage, message: message(cause) });
-      if (selectedId.current === application.application_id) setTransitionRequestId(requestId);
+      if (selectedId.current === application.application_id) {
+        setTransitionRequestId(requestId);
+        setTransitionRequestTarget(targetStage);
+      }
     } finally {
       setTransitionBusy(false);
     }
@@ -240,8 +251,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         <h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol>
         {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
-      {previousStage && <button className="secondary" aria-label={transitionRequestId ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestId ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
-      {nextStage && <button className="primary" aria-label={transitionRequestId ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestId ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
+      {previousStage && <button className="secondary" aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
+      {nextStage && <button className="primary" aria-label={transitionRequestTarget === nextStage ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === nextStage ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
       {disabledReason && <p className="disabled-explanation">{disabledReason}</p>}
     </aside>}
   </section>;
