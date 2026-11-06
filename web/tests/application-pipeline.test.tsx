@@ -3,11 +3,11 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import ApplicationPipeline from "../components/application-pipeline";
 import { ApiError } from "../lib/supabase";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn(), back: vi.fn() }));
 const confirmMock = vi.hoisted(() => vi.fn());
 const randomUuidMock = vi.hoisted(() => vi.fn());
 vi.mock("../lib/applications", () => ({
-  listApplications: api.list, searchApplications: api.search, applicationDetail: api.detail, screenApplication: api.screen, interviewApplication: api.interview,
+  listApplications: api.list, searchApplications: api.search, applicationDetail: api.detail, screenApplication: api.screen, interviewApplication: api.interview, moveApplicationBack: api.back,
 }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
@@ -66,6 +66,32 @@ describe("application pipeline", () => {
     fireEvent.drop(target);
     await waitFor(() => expect(api.screen).toHaveBeenCalledWith("Ada", "11111111-1111-4111-8111-111111111111"));
     expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
+  });
+
+  it("moves INTERVIEW back to SCREEN when dropped on the previous column", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada", "INTERVIEW")], limit: 25, offset: 0 });
+    api.back.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    const card = await screen.findByRole("button", { name: /Ada/ });
+    const target = screen.getByRole("region", { name: "Giai đoạn SCREEN" });
+    fireEvent.dragStart(card);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "SCREEN", "11111111-1111-4111-8111-111111111111"));
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
+  });
+
+  it("moves SCREEN back to NEW when dropped on the first column", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada", "SCREEN")], limit: 25, offset: 0 });
+    api.back.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    const card = await screen.findByRole("button", { name: /Ada/ });
+    const target = screen.getByRole("region", { name: "Giai đoạn NEW" });
+    fireEvent.dragStart(card);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "NEW", "11111111-1111-4111-8111-111111111111"));
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang NEW?");
   });
 
   it("clears Application data and retry state when transition access is revoked", async () => {
