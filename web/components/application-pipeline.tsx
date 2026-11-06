@@ -150,13 +150,24 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       await load(offset, query);
     } catch (cause) {
       const apiError = cause instanceof ApiError ? cause : undefined;
-      if (apiError?.status === 401) onSessionLost();
-      if (apiError?.status === 403) {
+      if (apiError?.status === 401 || apiError?.status === 403) {
+        transitionRequestIds.current.clear();
+        setTransitionRequestId(null);
+        setFailedTransition(null);
         setItems([]);
         setDetail(null);
+        setDetailError("");
         setSelected(null);
         selectedId.current = null;
-        setState("forbidden");
+        setDragging(null);
+        if (apiError.status === 401) {
+          setState("error");
+          setError(message(cause));
+          onSessionLost();
+        } else {
+          setState("forbidden");
+        }
+        return;
       }
       setFailedTransition({ application, targetStage, message: message(cause) });
       if (selectedId.current === application.application_id) setTransitionRequestId(requestId);

@@ -68,6 +68,22 @@ describe("application pipeline", () => {
     expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
   });
 
+  it("clears Application data and retry state when transition access is revoked", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
+    api.detail.mockResolvedValue(detail("Ada"));
+    api.screen.mockRejectedValue(new ApiError("Không có quyền", 403));
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
+    await screen.findByText("Lịch sử");
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang SCREEN" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Không có quyền");
+    expect(screen.queryByLabelText("Chi tiết Application")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Ada/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Thử lại chuyển SCREEN" })).toBeNull();
+  });
+
   it("moves SCREEN to INTERVIEW through the guarded backend action", async () => {
     api.list
       .mockResolvedValueOnce({ applications: [application("Ada", "SCREEN")], limit: 25, offset: 0 })
