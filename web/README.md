@@ -121,3 +121,8 @@ A typed copy dictionary provides Vietnamese and English. The selector is availab
 Local validation: 38 web tests and 11 legacy QA tests passed, as did the Next production build and strict TypeScript. New tests cover dictionary/placeholder parity, locale persistence and private-browser failures, actual review state preservation across languages, and unchanged decision payloads. A standalone HTML design preview uses clearly labelled sample data and simulated sign-in; it has no live Supabase connection.
 
 This increment has not been pushed, checked in GitHub CI, published or visually accepted. The attempted GitHub read was rejected. The cloud browser blocks file URLs, so it could not visually inspect the standalone preview. Restore GitHub authorization, reconcile against the latest main, create a PR, run CI, then use the existing manual Pages preview flow for actual desktop/mobile and bilingual QA before promotion. Current live release remains the one recorded above.
+
+
+### Backward Application movement (PR Draft)
+
+The Kanban now supports moving an `ACTIVE` Application one adjacent stage backward: `INTERVIEW → SCREEN` and `SCREEN → NEW`, alongside the existing forward moves. Cards can be dragged to the adjacent previous or next column, and the detail panel offers the same explicit actions. Each action asks for confirmation, uses an idempotency request ID, and refreshes the authoritative detail/list after success. The backend blocks moves across scheduled Interviews or open Offers and keeps `HIRED`/`REJECTED` read-only. Offer remains a separate workflow rather than an Application stage. This frontend PR depends on the backend migration and Edge Function change in the matching backend PR; neither is merged or deployed.
