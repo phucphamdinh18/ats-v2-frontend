@@ -1667,6 +1667,7 @@ footer span {
   line-height: 1.45;
   margin: 0 0 10px;
 }
+.empty-stage { color: var(--muted); font-size: 12px; padding: 8px 2px; }
 .application-card[draggable="true"] {
   cursor: grab;
 }

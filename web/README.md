@@ -46,7 +46,7 @@ Uses existing project `izchulqhmhqevfmuvqlx` and `supabase/functions/ta-review/i
 
 ### Application pipeline draft (TEST ONLY)
 
-This draft adds a read-only Job → Application pipeline, candidate-name search and Application detail surface. Jobs still use the authenticated browser client's RLS query; Applications call only the existing `applications` Edge Function with the session JWT automatically attached by Supabase. The browser sends no `actor_id` and contains only the publishable key.
+This draft adds an interactive Job → Application Kanban pipeline, candidate-name search and Application detail surface. Jobs still use the authenticated browser client's RLS query; Applications call only the existing `applications` Edge Function with the session JWT automatically attached by Supabase. The browser sends no `actor_id` and contains only the publishable key.
 
 | Action | Exact request | Exact response used by UI |
 | --- | --- | --- |
@@ -54,8 +54,9 @@ This draft adds a read-only Job → Application pipeline, candidate-name search 
 | Search | `{action:'search',job_id,query,limit,offset}` | `{applications,limit,offset}` |
 | Detail | `{action:'detail',job_id,application_id}` | `{application,events,event_count,limit,offset}` |
 | Screen | `{action:'screen',application_id,request_id}` | `{application}` |
+| Interview | `{action:'interview',application_id,request_id}` | `{application}` |
 
-Stages are grouped from returned records; no client-side stage list is declared. `SCREEN` is only offered for returned `stage === 'NEW'` and `status === 'ACTIVE'`. A confirmation creates one UUID; a network retry retains that exact `request_id`, so the backend idempotency rule remains effective. The UI is not authorization: 401 clears the session-scoped UI, while 403 explicitly says **“Không có quyền”** and clears the Application view rather than rendering an empty list. Request tickets prevent old list/detail responses replacing newer selections.
+The Kanban renders the backend's persisted stages (`NEW`, `SCREEN`, `INTERVIEW`, `HIRED`, `REJECTED`) even when a stage has no Applications; unknown server stages also remain visible. Dragging an active Application supports only the guarded transitions `NEW → SCREEN` and `SCREEN → INTERVIEW`. `HIRED` and `REJECTED` are terminal/read-only columns here; their outcomes remain controlled by offer/rejection workflows. A confirmation creates one UUID per Application/transition; a network retry retains that exact `request_id`, so backend idempotency remains effective. The `INTERVIEW` UI action depends on backend PR #78 being merged and deployed first. The UI is not authorization: 401 clears the session-scoped UI, while 403 explicitly says **“Không có quyền”** and clears the Application view rather than rendering an empty list. Request tickets prevent old list/detail responses replacing newer selections.
 
 The deployed backend returns `actor_display_name` for timeline events and a nullable `matching_context`. The detail view renders the actor display name, hides Matching context for ordinary Applications where it is `null`, and renders it only when a future Matching-created Application provides a value. No Candidate Profile/PII, Interview, Offer, Dashboard, Matching, AI, migration or Edge Function is changed by this frontend increment.
 
