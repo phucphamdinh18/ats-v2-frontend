@@ -80,3 +80,12 @@ export function interviewApplication(applicationId: string, requestId: string) {
     request_id: requestId,
   });
 }
+
+export function moveApplicationBack(applicationId: string, targetStage: "NEW" | "SCREEN", requestId: string) {
+  return call<ScreenApplicationResult>({
+    action: "move_back",
+    application_id: applicationId,
+    target_stage: targetStage,
+    request_id: requestId,
+  });
+}
