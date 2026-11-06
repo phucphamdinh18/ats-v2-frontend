@@ -78,7 +78,7 @@ describe("application pipeline", () => {
     fireEvent.dragOver(target);
     fireEvent.drop(target);
     await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "SCREEN", "11111111-1111-4111-8111-111111111111"));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về SCREEN?");
   });
 
   it("moves SCREEN back to NEW when dropped on the first column", async () => {
@@ -91,7 +91,7 @@ describe("application pipeline", () => {
     fireEvent.dragOver(target);
     fireEvent.drop(target);
     await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "NEW", "11111111-1111-4111-8111-111111111111"));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang NEW?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về NEW?");
   });
 
   it("clears Application data and retry state when transition access is revoked", async () => {
