@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import {
   applicationDetail,
+  interviewApplication,
   listApplications,
   screenApplication,
   searchApplications,
@@ -14,6 +15,9 @@ import { ApiError } from "@/lib/supabase";
 import ManualCandidateForm from "./manual-candidate-form";
 
 const PAGE_SIZE = 25;
+const PIPELINE_STAGES = ["NEW", "SCREEN", "INTERVIEW", "HIRED", "REJECTED"] as const;
+const NEXT_STAGE: Record<string, "SCREEN" | "INTERVIEW" | undefined> = { NEW: "SCREEN", SCREEN: "INTERVIEW" };
+type TransitionStage = "SCREEN" | "INTERVIEW";
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
 
 function message(error: unknown) {
@@ -30,11 +34,11 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
-  const [screenRequestId, setScreenRequestId] = useState<string | null>(null);
-  const [screenError, setScreenError] = useState("");
-  const [screenBusy, setScreenBusy] = useState(false);
+  const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
+  const [failedTransition, setFailedTransition] = useState<{ application: Application; targetStage: TransitionStage; message: string } | null>(null);
+  const [transitionBusy, setTransitionBusy] = useState(false);
   const [dragging, setDragging] = useState<Application | null>(null);
-  const screenRequestIds = useRef(new Map<string, string>());
+  const transitionRequestIds = useRef(new Map<string, string>());
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
@@ -76,8 +80,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     setDetail(null);
     setDetailError("");
     setDetailLoading(false);
-    setScreenRequestId(null);
-    setScreenError("");
+    setTransitionRequestId(null);
     const timer = window.setTimeout(() => {
       setOffset(0);
       void load(0, query);
@@ -90,8 +93,9 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       (all[application.stage] ??= []).push(application);
       return all;
     }, {});
-    // Stages are derived solely from API data. The formal stage catalog is not fixed in the frontend.
-    return Object.entries(grouped);
+    // These are the persisted Application stages in the backend; unknown future stages remain visible.
+    const stages = [...PIPELINE_STAGES, ...Object.keys(grouped).filter((stage) => !PIPELINE_STAGES.includes(stage as typeof PIPELINE_STAGES[number]))];
+    return stages.map((stage) => [stage, grouped[stage] ?? []] as [string, Application[]]);
   }, [items]);
 
   const openDetail = useCallback(async (application: Application) => {
@@ -100,8 +104,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     selectedId.current = application.application_id;
     setDetail(null);
     setDetailError("");
-    setScreenRequestId(null);
-    setScreenError("");
+    setTransitionRequestId(null);
     setDetailLoading(true);
     try {
       const result = await applicationDetail(job.id, application.application_id);
@@ -126,22 +129,22 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     }
   }, [job.id, onSessionLost]);
 
-  async function screen(application = selected) {
-    if (!application || screenBusy) return;
-    const existingRequestId = screenRequestIds.current.get(application.application_id);
+  async function moveApplication(application: Application, targetStage: TransitionStage) {
+    if (transitionBusy || NEXT_STAGE[application.stage] !== targetStage || application.status !== "ACTIVE") return;
+    const requestKey = `${application.application_id}:${targetStage}`;
+    const existingRequestId = transitionRequestIds.current.get(requestKey);
     const requestId = existingRequestId ?? crypto.randomUUID();
-    if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} sang SCREEN?`)) return;
-    screenRequestIds.current.set(application.application_id, requestId);
-    if (selectedId.current === application.application_id) setScreenRequestId(requestId);
-    setScreenBusy(true);
-    setScreenError("");
+    if (!existingRequestId && !window.confirm(`Chuyển ${application.candidate_name} sang ${targetStage}?`)) return;
+    transitionRequestIds.current.set(requestKey, requestId);
+    if (selectedId.current === application.application_id) setTransitionRequestId(requestId);
+    setTransitionBusy(true);
+    setFailedTransition(null);
     try {
-      const result = await screenApplication(application.application_id, requestId);
-      screenRequestIds.current.delete(application.application_id);
-      // Update immediately so a completed transition cannot be repeated.
+      if (targetStage === "SCREEN") await screenApplication(application.application_id, requestId);
+      else await interviewApplication(application.application_id, requestId);
+      transitionRequestIds.current.delete(requestKey);
       if (selectedId.current === application.application_id) {
-        setScreenRequestId(null);
-        // Re-read detail so stage/status and the action button reflect the server result.
+        setTransitionRequestId(null);
         await openDetail(application);
       }
       await load(offset, query);
@@ -155,19 +158,17 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         selectedId.current = null;
         setState("forbidden");
       }
-      // Keep the request id per Application: a retry repeats the exact idempotent request.
-      if (selectedId.current === application.application_id) {
-        setScreenRequestId(requestId);
-        setScreenError(message(cause));
-      }
+      setFailedTransition({ application, targetStage, message: message(cause) });
+      if (selectedId.current === application.application_id) setTransitionRequestId(requestId);
     } finally {
-      setScreenBusy(false);
+      setTransitionBusy(false);
     }
   }
 
-  const eligible = selected?.stage === "NEW" && selected.status === "ACTIVE";
+  const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
+  const eligible = Boolean(nextStage && selected?.status === "ACTIVE");
   const disabledReason = !selected ? "Chọn một Application để thao tác." : !eligible
-    ? "Chỉ Application NEW đang ACTIVE mới có thể chuyển sang SCREEN." : "";
+    ? "Chỉ Application đang ACTIVE ở NEW hoặc SCREEN mới chuyển tiếp được." : "";
 
   const refreshAfterCandidateCreated = useCallback(async () => {
     setQuery("");
@@ -183,17 +184,21 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && <div className="empty"><h3>Chưa có Application</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
-    {state === "ready" && <div className="pipeline-grid">
+    {failedTransition && <div className="notice error" role="alert">{failedTransition.message}<button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
+    {(state === "ready" || state === "empty") && <div className="pipeline-grid">
       {stages.map(([stage, applications]) => {
-        const acceptsDrop = stage === "SCREEN" && dragging?.stage === "NEW" && dragging.status === "ACTIVE";
+        const targetStage = dragging ? NEXT_STAGE[dragging.stage] : undefined;
+        const acceptsDrop = stage === targetStage && Boolean(targetStage) && dragging?.status === "ACTIVE";
         return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
-          onDrop={(event) => { event.preventDefault(); const candidate = dragging; setDragging(null); if (acceptsDrop && candidate) void screen(candidate); }}>
+          onDrop={(event) => { event.preventDefault(); const candidate = dragging; setDragging(null); if (acceptsDrop && candidate && targetStage) void moveApplication(candidate, targetStage); }}>
           <h3>{stage} <span className="count">{applications.length}</span></h3>
           {stage === "SCREEN" && <p className="drop-hint">Kéo Application NEW đang ACTIVE vào đây để chuyển sang SCREEN.</p>}
+          {stage === "INTERVIEW" && <p className="drop-hint">Kéo Application SCREEN đang ACTIVE vào đây để chuyển sang INTERVIEW.</p>}
+          {applications.length === 0 && <p className="empty-stage">Chưa có ứng viên ở vòng này.</p>}
           {applications.map((application) => {
-            const canDrag = application.stage === "NEW" && application.status === "ACTIVE";
-            const dragReason = canDrag ? "Kéo sang SCREEN" : "Chỉ Application NEW đang ACTIVE mới có thể kéo sang SCREEN.";
+            const canDrag = Boolean(NEXT_STAGE[application.stage]) && application.status === "ACTIVE";
+            const dragReason = canDrag ? `Kéo sang ${NEXT_STAGE[application.stage]}` : "Chỉ Application ACTIVE ở NEW hoặc SCREEN mới có thể kéo sang vòng tiếp theo.";
             return <button className="application-card" key={application.application_id}
               draggable={canDrag}
               onDragStart={(event) => { if (!canDrag) { event.preventDefault(); return; } setDragging(application); }}
@@ -216,9 +221,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         <h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol>
         {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
-      <button className="primary" aria-label="Chuyển sang SCREEN" disabled={!eligible || screenBusy} title={disabledReason || "Chuyển sang SCREEN"} onClick={() => void screen()}>{screenBusy ? "Đang xử lý…" : screenRequestId ? "Thử lại chuyển SCREEN" : "Chuyển sang SCREEN"}</button>
+      {nextStage && <button className="primary" aria-label={transitionRequestId ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestId ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
       {disabledReason && <p className="disabled-explanation">{disabledReason}</p>}
-      {screenError && <div className="notice error" role="alert">{screenError}<button className="quiet" onClick={() => void screen()}>Thử lại với cùng request_id</button></div>}
     </aside>}
   </section>;
 }

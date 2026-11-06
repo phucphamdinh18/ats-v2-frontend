@@ -3,19 +3,19 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import ApplicationPipeline from "../components/application-pipeline";
 import { ApiError } from "../lib/supabase";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn() }));
 const confirmMock = vi.hoisted(() => vi.fn());
 const randomUuidMock = vi.hoisted(() => vi.fn());
 vi.mock("../lib/applications", () => ({
-  listApplications: api.list, searchApplications: api.search, applicationDetail: api.detail, screenApplication: api.screen,
+  listApplications: api.list, searchApplications: api.search, applicationDetail: api.detail, screenApplication: api.screen, interviewApplication: api.interview,
 }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
 }));
 
 const job = { id: "job-1", job_code: "TEST-1", title: "Test only job", status: "OPEN" };
-const application = (id: string) => ({ application_id: id, candidate_id: `candidate-${id}`, candidate_name: id, stage: "NEW", status: "ACTIVE", source: "TEST ONLY", created_at: "2026-01-01T00:00:00Z" });
-const detail = (id: string) => ({ application: application(id), events: [], event_count: 0, limit: 50, offset: 0 });
+const application = (id: string, stage = "NEW") => ({ application_id: id, candidate_id: `candidate-${id}`, candidate_name: id, stage, status: "ACTIVE", source: "TEST ONLY", created_at: "2026-01-01T00:00:00Z" });
+const detail = (id: string, stage = "NEW") => ({ application: application(id, stage), events: [], event_count: 0, limit: 50, offset: 0 });
 
 beforeEach(() => {
   Object.values(api).forEach((fn) => fn.mockReset());
@@ -35,17 +35,52 @@ describe("application pipeline", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Không có quyền");
     expect(screen.queryByText("Chưa có Application")).toBeNull();
   });
-  it("renders only stages returned by the API", async () => {
-    api.list.mockResolvedValue({
-      applications: [application("Ada")],
-      limit: 25,
-      offset: 0,
-    });
+  it("keeps the board visible when the Job has no Applications", async () => {
+    api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    await screen.findByText("Chưa có Application");
+    expect(screen.getByRole("region", { name: "Giai đoạn NEW" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Giai đoạn SCREEN" })).toBeTruthy();
+  });
+
+  it("shows empty pipeline columns even when the API returns only NEW", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
     render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
     await screen.findByRole("region", { name: "Giai đoạn NEW" });
-    expect(
-      screen.queryByRole("region", { name: "Giai đoạn SCREEN" }),
-    ).toBeNull();
+    expect(screen.getByRole("region", { name: "Giai đoạn SCREEN" }).textContent).toContain("Chưa có ứng viên");
+    expect(screen.getByRole("region", { name: "Giai đoạn INTERVIEW" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Giai đoạn HIRED" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Giai đoạn REJECTED" })).toBeTruthy();
+  });
+
+  it("moves NEW to SCREEN when dropped on the empty SCREEN column", async () => {
+    api.list
+      .mockResolvedValueOnce({ applications: [application("Ada")], limit: 25, offset: 0 })
+      .mockResolvedValueOnce({ applications: [application("Ada", "SCREEN")], limit: 25, offset: 0 });
+    api.screen.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    const card = await screen.findByRole("button", { name: /Ada/ });
+    const target = screen.getByRole("region", { name: "Giai đoạn SCREEN" });
+    fireEvent.dragStart(card);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    await waitFor(() => expect(api.screen).toHaveBeenCalledWith("Ada", "11111111-1111-4111-8111-111111111111"));
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
+  });
+
+  it("moves SCREEN to INTERVIEW through the guarded backend action", async () => {
+    api.list
+      .mockResolvedValueOnce({ applications: [application("Ada", "SCREEN")], limit: 25, offset: 0 })
+      .mockResolvedValueOnce({ applications: [application("Ada", "INTERVIEW")], limit: 25, offset: 0 });
+    api.interview.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
+    render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} />);
+    const card = await screen.findByRole("button", { name: /Ada/ });
+    const target = screen.getByRole("region", { name: "Giai đoạn INTERVIEW" });
+    fireEvent.dragStart(card);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    await waitFor(() => expect(api.interview).toHaveBeenCalledWith("Ada", "11111111-1111-4111-8111-111111111111"));
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang INTERVIEW?");
   });
   it("does not let an old detail response replace the latest selection", async () => {
     let resolveOld!: (value: ReturnType<typeof detail>) => void;
@@ -96,7 +131,7 @@ describe("application pipeline", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Chuyển sang SCREEN" }));
     await screen.findByText("Mạng lỗi");
-    fireEvent.click(screen.getByRole("button", { name: "Thử lại với cùng request_id" }));
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại chuyển SCREEN" }));
     await waitFor(() => expect(api.screen).toHaveBeenCalledTimes(2));
     expect(api.screen.mock.calls[0][1]).toBe(api.screen.mock.calls[1][1]);
     expect(randomUuidMock).toHaveBeenCalledTimes(1);

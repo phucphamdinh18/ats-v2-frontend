@@ -72,3 +72,11 @@ export function screenApplication(applicationId: string, requestId: string) {
     request_id: requestId,
   });
 }
+
+export function interviewApplication(applicationId: string, requestId: string) {
+  return call<ScreenApplicationResult>({
+    action: "interview",
+    application_id: applicationId,
+    request_id: requestId,
+  });
+}
