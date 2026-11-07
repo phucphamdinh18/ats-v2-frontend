@@ -122,6 +122,11 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       const apiError = cause instanceof ApiError ? cause : undefined;
       if (apiError?.status === 401) onSessionLost();
       if (apiError?.status === 403) {
+        transitionRequestIds.current.clear();
+        setTransitionRequestId(null);
+        setTransitionRequestTarget(null);
+        setFailedTransition(null);
+        setDragging(null);
         setItems([]);
         setDetail(null);
         setSelected(null);
@@ -206,13 +211,13 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
 
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
     <div className="panel-heading"><div><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Không có mã Job"} · Dữ liệu theo quyền Job từ backend.</p></div></div>
-    {(state === "ready" || state === "empty" || state === "error") && <ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} />}
+    {(state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary>Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
     <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên ứng viên" /></label>
-    {state === "loading" && <p role="status" aria-live="polite">Đang tải Application…</p>}
+    {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
-    {state === "empty" && <div className="empty"><h3>Chưa có Application</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
-    {failedTransition && <div className="notice error" role="alert">{failedTransition.message}<button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
+    {state === "empty" && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
+    {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
     {(state === "ready" || state === "empty") && <div className="pipeline-grid">
       {stages.map(([stage, applications]) => {
         const allowedTargets = dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
@@ -235,7 +240,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
               onDragEnd={() => setDragging(null)}
               onClick={() => void openDetail(application)}
               title={dragReason}
-              aria-label={`Mở Application của ${application.candidate_name}. ${dragReason}`}>
+              aria-label={`Mở hồ sơ của ${application.candidate_name}. ${dragReason}`}>
               <strong>{application.candidate_name}</strong><span>{application.status}</span><small>{application.source || "Không có nguồn"}</small>
             </button>;
           })}
@@ -243,8 +248,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       })}
     </div>}
     {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
-    {selected && <aside className="application-detail" aria-label="Chi tiết Application">
-      <div className="panel-heading"><h2>Chi tiết Application</h2><button className="quiet" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>Đóng</button></div>
+    {selected && <aside className="application-detail" aria-label="Chi tiết ứng viên">
+      <div className="panel-heading"><h2>Chi tiết ứng viên</h2><button className="quiet" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>Đóng</button></div>
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <><dl className="application-fields"><dt>Ứng viên</dt><dd>{detail.application.candidate_name}</dd><dt>Giai đoạn</dt><dd>{detail.application.stage}</dd><dt>Trạng thái</dt><dd>{detail.application.status}</dd><dt>Nguồn</dt><dd>{detail.application.source || "Không có"}</dd></dl>
