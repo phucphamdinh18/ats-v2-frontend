@@ -272,7 +272,7 @@ export default function Workspace() {
               onClick={() => setTab("admin")}
             >
               <Icon name="shield" />
-              Quản trị & quyền
+              {locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}
             </button>
           )}
           {reviewAllowed && (
@@ -282,7 +282,7 @@ export default function Workspace() {
               onClick={() => setTab("jd")}
             >
               <Icon name="review" />
-              JD
+              {locale === "en" ? "Job descriptions" : "JD"}
             </button>
           )}
         </nav>
