@@ -218,7 +218,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
 
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
     <div className="pipeline-heading">
-      <div><span className="eyebrow">Hiring pipeline</span><h2>{job.title}</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> Hồ sơ chỉ hiển thị theo quyền Job của bạn.</p></div>
+      <div><span className="eyebrow">Hiring pipeline</span><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> Hồ sơ chỉ hiển thị theo quyền Job của bạn.</p></div>
       <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
     </div>
     <div className="pipeline-toolbar">
