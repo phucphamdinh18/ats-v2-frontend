@@ -68,6 +68,7 @@ export const vi = {
   colCode: "Mã vị trí",
   colStatus: "Trạng thái",
   noCode: "Chưa có mã",
+  jobCodeNeeded: "Cấp mã vị trí trước khi gửi duyệt.",
   noJobs: "Chưa tìm thấy vị trí phù hợp",
   noJobsBody:
     "Thử tên khác hoặc đổi bộ lọc. Nếu vẫn chưa thấy, nhờ quản trị viên kiểm tra phân công.",
@@ -252,6 +253,7 @@ export const en: Record<keyof Copy, string> = {
   colCode: "Reference",
   colStatus: "Status",
   noCode: "Not assigned yet",
+  jobCodeNeeded: "Assign a job reference before submitting for approval.",
   noJobs: "No matching roles yet",
   noJobsBody:
     "Try another search or change the filter. If you still can’t find a role, ask your admin to check your assignments.",
