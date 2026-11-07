@@ -7,6 +7,14 @@ export type Job = {
   status: string;
   business_unit?: string | null;
   location?: string | null;
+  level?: number | null;
+  function_group?: "Tech/Product" | "Non-Tech/Non-Product" | null;
+  hiring_season?: "High Time" | "Normal Time" | null;
+  req_date?: string | null;
+  request_type?: "NEW" | "REPLACEMENT" | null;
+  priority?: "CRITICAL" | "HIGH" | "NORMAL" | "LOW" | null;
+  replacement_for?: string | null;
+  sla_target_workdays?: number | null;
 };
 export type Draft = {
   id: string;
