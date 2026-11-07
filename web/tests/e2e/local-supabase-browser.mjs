@@ -55,6 +55,7 @@ try {
   console.error("E2E visible page text:\n" + visibleText.slice(0, 12000));
   console.error("E2E uncaught browser errors:\n" + pageErrors.join("\n"));
   console.error("E2E failed requests:\n" + failedRequests.join("\n"));
+  console.error("E2E failed Supabase responses:\\n" + failedResponses.join("\\n"));
   await page.screenshot({ path: path.join(artifactDir, "failure.png"), fullPage: true }).catch(() => {});
   throw error;
 } finally {
