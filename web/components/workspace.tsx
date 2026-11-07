@@ -7,6 +7,7 @@ import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
+import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import AdminConsole from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
@@ -93,6 +94,8 @@ export default function Workspace() {
         const rules = await client.from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
+        const overview = await jobOverview();
+        const metricsByJob = new Map(overview.jobs.map((row) => [row.job_id, row]));
         const byKey = new Map((rules.data || []).map((rule) =>
           [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
         ));
@@ -101,6 +104,7 @@ export default function Workspace() {
           sla_target_workdays: job.level != null && job.function_group && job.hiring_season
             ? byKey.get(`${job.level}:${job.function_group}:${job.hiring_season}`) ?? null
             : null,
+          metrics: metricsByJob.get(job.id),
         }));
       }
       if (gate.current.current(ticket)) {
@@ -687,7 +691,7 @@ export default function Workspace() {
                               <th>4. Level & ưu tiên</th>
                               <th>5. Trạng thái</th>
                               <th>6. SLA tổng</th>
-                              <th>Pipeline</th>
+                              <th>7. Funnel & nguồn</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -722,14 +726,9 @@ export default function Workspace() {
                                 </td>
                                 <td>{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></td>
                                 <td>
-                                  <button
-                                    className={selectedJob?.id === job.id ? "primary" : "secondary"}
-                                    aria-pressed={selectedJob?.id === job.id}
-                                    aria-label={`Mở pipeline ${job.title}`}
-                                    onClick={() => setSelectedJob(job)}
-                                  >
-                                    {selectedJob?.id === job.id ? "Đang xem" : "Mở pipeline"}
-                                  </button>
+                                  <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
+                                  {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
+                                  {job.metrics?.source_summary?.length ? <details className="job-source-summary"><summary>Nguồn ({job.metrics.source_summary.length})</summary><ul>{job.metrics.source_summary.map((source) => <li key={`${source.source}:${source.sub_source}:${source.source_ownership}`}>{source.sub_source ? `${source.sub_source} · ` : ""}{source.source}: {source.count}</li>)}</ul></details> : <small className="job-code-subtitle">Nguồn: chưa có dữ liệu</small>}
                                 </td>
                               </tr>
                             ))}
