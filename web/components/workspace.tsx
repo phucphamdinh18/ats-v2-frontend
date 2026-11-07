@@ -18,7 +18,7 @@ type Access = {
 };
 export default function Workspace() {
   const { t, locale, setLocale } = useLanguage();
-  const [guideOpen, setGuideOpen] = useState(true);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [access, setAccess] = useState<Access | null>(null);
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
@@ -81,7 +81,10 @@ export default function Workspace() {
         if (result.error) throw result.error;
         jobs = result.data || [];
       }
-      if (gate.current.current(ticket))
+      if (gate.current.current(ticket)) {
+        setSelectedJob((current) =>
+          jobs.find((job) => job.id === current?.id) || jobs[0] || null,
+        );
         setAccess({
           userId: session.user.id,
           email: session.user.email || "",
@@ -89,6 +92,7 @@ export default function Workspace() {
           roles: roleNames,
           jobs,
         });
+      }
     } catch (err) {
       if (gate.current.current(ticket)) {
         setAccess(null);
@@ -183,6 +187,11 @@ export default function Workspace() {
         .toLocaleLowerCase(locale)
         .includes(search.toLocaleLowerCase(locale)),
   );
+  useEffect(() => {
+    setSelectedJob((current) =>
+      jobs.find((job) => job.id === current?.id) || jobs[0] || null,
+    );
+  }, [jobs]);
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -371,24 +380,25 @@ export default function Workspace() {
               <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
-                  <h1>{selectedJob && tab === "jobs" ? selectedJob.title : tab === "jobs" ? t.jobs : t.review}</h1>
-                  <p>{selectedJob && tab === "jobs" ? `${selectedJob.job_code || t.noCode} · ${jobStatusLabel(selectedJob.status, t)}${!selectedJob.job_code && selectedJob.status === "DRAFT" ? ` · ${t.jobCodeNeeded}` : ""}` : tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
+                  <h1>{tab === "jobs" ? t.jobs : t.review}</h1>
+                  <p>{tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
                 </div>
                 <div className="heading-actions">
-                  {selectedJob && tab === "jobs" && (
-                    <button className="secondary" onClick={() => setSelectedJob(null)}>
-                      <Icon name="arrow" size={17} />
-                      {t.jobList}
-                    </button>
-                  )}
-                  {tab === "jobs" && !selectedJob && !guideOpen && (
+                  {tab === "jobs" && (
                     <button
                       className="secondary"
-                      onClick={() => setGuideOpen(true)}
+                      aria-label={guideOpen ? "Ẩn hướng dẫn" : "Hiện hướng dẫn"}
+                      onClick={() => setGuideOpen((open) => !open)}
                     >
-                      <Icon name="help" size={17} />
-                      {t.help}
+                      <Icon name={guideOpen ? "close" : "help"} size={17} />
+                      {guideOpen ? t.hideGuide : t.help}
                     </button>
+                  )}
+                  {tab === "jobs" && adminAllowed && (
+                    <a className="primary admin-link" href={adminUrl} target="_blank" rel="noopener noreferrer">
+                      Quản trị Job
+                      <Icon name="external" size={15} />
+                    </a>
                   )}
                   <button className="secondary" onClick={() => void refresh()}>
                     <Icon name="refresh" size={17} />
@@ -407,10 +417,6 @@ export default function Workspace() {
                 <ReviewQueue key={access.userId} onAccessLost={invalidate} />
               ) : (
                 <>
-                  {selectedJob ? (
-                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} />
-                  ) : (
-                    <>
                   {guideOpen && (
                     <section className="guide" aria-label={t.help}>
                       <div className="guide-heading">
@@ -573,7 +579,7 @@ export default function Workspace() {
                           </thead>
                           <tbody>
                             {jobs.map((job) => (
-                              <tr key={job.id}>
+                              <tr key={job.id} className={selectedJob?.id === job.id ? "selected-job-row" : undefined}>
                                 <td>
                                   <div className="job-title">
                                     <span className="job-icon">
@@ -581,7 +587,8 @@ export default function Workspace() {
                                     </span>
                                     <button
                                       className="job-title-link"
-                                      aria-label={`Mở pipeline ${job.title}`}
+                                      aria-pressed={selectedJob?.id === job.id}
+                                      aria-label={`Chọn Job ${job.title}`}
                                       onClick={() => setSelectedJob(job)}
                                     >
                                       {job.title}
@@ -599,11 +606,12 @@ export default function Workspace() {
                                 </td>
                                 <td>
                                   <button
-                                    className="secondary"
+                                    className={selectedJob?.id === job.id ? "primary" : "secondary"}
+                                    aria-pressed={selectedJob?.id === job.id}
                                     aria-label={`Mở pipeline ${job.title}`}
                                     onClick={() => setSelectedJob(job)}
                                   >
-                                    Mở pipeline
+                                    {selectedJob?.id === job.id ? "Đang xem" : "Mở pipeline"}
                                   </button>
                                 </td>
                               </tr>
@@ -636,7 +644,8 @@ export default function Workspace() {
                       })}
                     </div>
                   </section>
-                </>
+                  {selectedJob && tab === "jobs" && (
+                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} />
                   )}
                 </>
               )}
