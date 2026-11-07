@@ -79,12 +79,13 @@ export type ScreenApplicationResult = {
   application: { application_id: string; changed: boolean };
 };
 
-export function createApplication(candidateId: string, jobId: string, requestId: string) {
+export function createApplication(candidateId: string, jobId: string, requestId: string, source: string, subSource: string) {
   return call<{ application: { application_id: string; changed?: boolean } }>({
     action: "create",
     candidate_id: candidateId,
     job_id: jobId,
-    source: "Talent Pool",
+    source,
+    sub_source: subSource,
     request_id: requestId,
   });
 }
