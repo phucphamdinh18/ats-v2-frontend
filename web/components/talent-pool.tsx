@@ -88,7 +88,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
     if (!profile || !selectedId || !jobId || busy) return;
     const job = openJobs.find((item) => item.id === jobId);
     if (!job || profile.applications.some((application) => application.job_id === job.id)) return;
-    if (!window.confirm(`Thêm ${profile.candidate.full_name} vào ${job.title}? ATS sẽ tạo Application mới ở vòng Mới ứng tuyển.`)) return;
+    if (!window.confirm(`Thêm ${profile.candidate.full_name} vào ${job.title}? ứng viên sẽ được đưa vào vòng Mới ứng tuyển.`)) return;
     const key = `${selectedId}:${jobId}`;
     const request = requestId.current?.key === key ? requestId.current.id : crypto.randomUUID();
     requestId.current = { key, id: request };
@@ -98,7 +98,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
     try {
       await createApplication(selectedId, jobId, request);
       requestId.current = null;
-      setMessage(`Đã thêm vào Job “${job.title}”. Application xuất hiện ở vòng Mới ứng tuyển.`);
+      setMessage(`Đã thêm vào Job “${job.title}”. Ứng viên xuất hiện ở vòng Mới ứng tuyển.`);
       await load(offset, query);
       const nextProfile = await candidateProfile(selectedId);
       setProfile(nextProfile);
@@ -146,8 +146,8 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
           </dl>
           <h3 className="talent-subheading">CV / tài liệu</h3>
           {profile.documents.length ? <ul className="talent-documents">{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">Mở CV ↗</a> : <small>Link không hợp lệ</small>}</li>)}</ul> : <p className="muted">Chưa có CV được lưu trong hồ sơ.</p>}
-          <h3 className="talent-subheading">Job đã ứng tuyển</h3>
-          {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className="talent-applications">{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => <li key={application.id}><strong>{jobs.find((job) => job.id === application.job_id)?.title}</strong><span>{application.stage} · {application.status}</span></li>)}</ul> : <p className="muted">Chưa có Application trong phạm vi Job bạn được xem.</p>}
+          <h3 className="talent-subheading">Đang tham gia Job</h3>
+          {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className="talent-applications">{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => <li key={application.id}><strong>{jobs.find((job) => job.id === application.job_id)?.title}</strong><span>{application.stage} · {application.status}</span></li>)}</ul> : <p className="muted">Chưa được thêm vào Job nào trong phạm vi bạn được xem.</p>}
           <div className="add-to-job"><h3>Thêm vào Job</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className="add-to-job-control"><select aria-label="Chọn Job để thêm ứng viên" value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">Chọn Job đang mở</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><button className="primary" disabled={!jobId || busy} onClick={() => void addToJob()}>{busy ? "Đang thêm…" : requestId.current ? "Thử lại" : "Thêm vào Job"}</button></div> : <p className="muted">Không có Job đang mở mà bạn có quyền thêm hồ sơ này.</p>}</div>
         </> : profileError ? <div className="notice error" role="alert">{profileError}</div> : <div className="talent-empty"><h3>Chọn một hồ sơ</h3><p>Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.</p></div>}
       </div>
