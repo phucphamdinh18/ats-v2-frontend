@@ -11,7 +11,13 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const pageErrors = [];
 const failedRequests = [];
+const failedResponses = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
+page.on("response", async (response) => {
+  if (response.status() >= 400 && response.url().includes("127.0.0.1:54321")) {
+    failedResponses.push(`${response.status()} ${response.url()} ${((await response.text().catch(() => "")) || "").slice(0, 2000)}`);
+  }
+});
 page.on("requestfailed", (request) => failedRequests.push(`${request.method()} ${request.url()} — ${request.failure()?.errorText || "request failed"}`));
 
 try {
