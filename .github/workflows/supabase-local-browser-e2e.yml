@@ -2,6 +2,7 @@ name: Supabase local browser E2E
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "web/**"
       - ".github/workflows/supabase-local-browser-e2e.yml"
