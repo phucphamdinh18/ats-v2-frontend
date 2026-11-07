@@ -245,11 +245,6 @@ it("quick start opens actual open-job filtering, without creating any records", 
   );
   expect(screen.getByRole("button", { name: "Chọn Job Open role" })).toBeTruthy();
   expect(screen.queryByText("Draft role")).toBeNull();
-  expect(
-    (
-      screen.getByRole("combobox", {
-        name: "Trạng thái vị trí",
-      }) as HTMLSelectElement
-    ).value,
-  ).toBe("OPEN");
+  const openFilter = screen.getByRole("button", { name: "Đang tuyển (1)" });
+  expect(openFilter.getAttribute("aria-pressed")).toBe("true");
 });
