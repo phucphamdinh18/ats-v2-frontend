@@ -15,6 +15,11 @@ export type Job = {
   priority?: "CRITICAL" | "HIGH" | "NORMAL" | "LOW" | null;
   replacement_for?: string | null;
   sla_target_workdays?: number | null;
+  metrics?: {
+    total_candidates: number; new_count: number; screening_count: number;
+    interview_count: number; hired_count: number; rejected_count: number;
+    source_summary: { source: string; sub_source: string; source_ownership: string; count: number }[];
+  };
 };
 export type Draft = {
   id: string;
