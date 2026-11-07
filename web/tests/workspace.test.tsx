@@ -15,12 +15,14 @@ const mocks = vi.hoisted(() => ({
   oauth: vi.fn(),
   signOut: vi.fn(),
   review: vi.fn(),
+  functionInvoke: vi.fn(),
   authCallback: null as
     null | ((event: string, session: { user: { id: string } } | null) => void),
 }));
 vi.mock("../lib/supabase", () => ({
   getClient: () => ({
     from: mocks.from,
+    functions: { invoke: mocks.functionInvoke },
     auth: {
       getSession: mocks.session,
       signInWithOAuth: mocks.oauth,
@@ -39,6 +41,10 @@ vi.mock("../lib/supabase", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.review.mockResolvedValue({ drafts: [] });
+  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: options.body?.action === "overview"
+      ? { jobs: [] }
+      : { applications: [], limit: 25, offset: 0 }, error: null }));
   mocks.session.mockResolvedValue({
     data: {
       session: { user: { id: "synthetic", email: "qa@example.invalid" } },
@@ -54,7 +60,13 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = []) {
         ? { data: { id: "synthetic", is_active: active }, error: null }
         : table === "user_roles"
           ? { data: roles.map((role) => ({ role })), error: null }
-          : { data: jobs, error: null };
+          : table === "jobs"
+            ? { data: jobs, error: null }
+            : table === "job_sla_rules"
+              ? { data: [], error: null }
+              : table === "hiring_source_catalog"
+                ? { data: [{ sub_source: "TEST ONLY", source: "TEST ONLY", source_ownership: "TEST ONLY" }], error: null }
+                : { data: [], error: null };
     const query = {
       select: () => query,
       eq: () => query,
