@@ -34,7 +34,7 @@ export type ApplicationDetail = {
 type ListResponse = { applications: Application[]; limit: number; offset: number };
 
 function humanize(message: string): string {
-  return message.replace(/Applications?/g, "hồ sơ trong Job");
+  return message.replace(/Applications?/gi, "hồ sơ trong Job");
 }
 
 async function call<T>(body: Record<string, unknown>): Promise<T> {
