@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
-import { assignJobMember, createJobDraft, listJobMembers, openJob, removeJobMember, type JobMember } from "@/lib/admin-jobs";
+import { assignJobMember, createJobDraft, listJobMembers, openJob, removeJobMember, updateJobMetadata, type JobMember } from "@/lib/admin-jobs";
 
 const roleNames: Record<string, string> = {
   TA_RECRUITER: "TA / Recruiter",
@@ -24,6 +24,7 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("TA_RECRUITER");
+  const [metadata, setMetadata] = useState({ level: "3", functionGroup: "Tech/Product", season: "Normal Time", reqDate: "", requestType: "NEW", priority: "NORMAL", replacementFor: "" });
   const [members, setMembers] = useState<JobMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,19 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
   useEffect(() => {
     if (!assignableJobs.some((job) => job.id === jobId)) setJobId(assignableJobs[0]?.id || "");
   }, [jobs, jobId]);
+
+  useEffect(() => {
+    if (!selectedJob) return;
+    setMetadata({
+      level: selectedJob.level == null ? "3" : String(selectedJob.level),
+      functionGroup: selectedJob.function_group || "Tech/Product",
+      season: selectedJob.hiring_season || "Normal Time",
+      reqDate: selectedJob.req_date || "",
+      requestType: selectedJob.request_type || "NEW",
+      priority: selectedJob.priority || "NORMAL",
+      replacementFor: selectedJob.replacement_for || "",
+    });
+  }, [selectedJob?.id]); // initialize on Job changes
 
   const loadMembers = useCallback(async () => {
     if (!jobId) { setMembers([]); return; }
@@ -92,6 +106,23 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
     } finally { setBusy(false); }
   }
 
+  async function saveMetadata(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedJob || busy || !metadata.level) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await updateJobMetadata({ jobId: selectedJob.id, level: Number(metadata.level),
+        functionGroup: metadata.functionGroup, hiringSeason: metadata.season,
+        reqDate: metadata.reqDate || null, requestType: metadata.requestType,
+        priority: metadata.priority, replacementFor: metadata.replacementFor });
+      setMessage(`Đã lưu SLA Master và thông tin vị trí cho “${selectedJob.title}”.`);
+      await onRefresh();
+    } catch (cause) {
+      if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
+      setError(cause instanceof Error ? cause.message : "Không lưu được thông tin SLA của Job.");
+    } finally { setBusy(false); }
+  }
+
   async function assign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!jobId || !email.trim() || busy) return;
@@ -143,8 +174,25 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
           <button className="primary" type="submit" disabled={busy || !draftJobs.length}>{busy ? "Đang xử lý…" : "Xác nhận mở tuyển"}</button>
         </form>
       </section>
+      <section className="admin-task">
+        <span className="admin-step">03</span><h3>Thông tin SLA và yêu cầu</h3><p>Chọn Level, nhóm chức năng và mùa tuyển dụng để tra mục tiêu SLA tổng trong TA-SLA Master.</p>
+        <form onSubmit={(event) => void saveMetadata(event)}>
+          <label>Job<select value={jobId} onChange={(event) => setJobId(event.target.value)} required><option value="">Chọn Job</option>{assignableJobs.map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select></label>
+          <div className="job-meta-fields">
+            <label>Level<select value={metadata.level} onChange={(event) => setMetadata({ ...metadata, level: event.target.value })}>{Array.from({ length: 16 }, (_, i) => 15 - i).map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+            <label>Nhóm chức năng<select value={metadata.functionGroup} onChange={(event) => setMetadata({ ...metadata, functionGroup: event.target.value })}><option value="Tech/Product">Tech/Product</option><option value="Non-Tech/Non-Product">Non-Tech/Non-Product</option></select></label>
+            <label>Mùa tuyển dụng<select value={metadata.season} onChange={(event) => setMetadata({ ...metadata, season: event.target.value })}><option value="Normal Time">Normal Time</option><option value="High Time">High Time</option></select></label>
+            <label>Ngày yêu cầu<input type="date" value={metadata.reqDate} onChange={(event) => setMetadata({ ...metadata, reqDate: event.target.value })} /></label>
+            <label>Loại yêu cầu<select value={metadata.requestType} onChange={(event) => setMetadata({ ...metadata, requestType: event.target.value })}><option value="NEW">Tuyển mới</option><option value="REPLACEMENT">Thay thế</option></select></label>
+            <label>Ưu tiên<select value={metadata.priority} onChange={(event) => setMetadata({ ...metadata, priority: event.target.value })}><option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="NORMAL">Normal</option><option value="LOW">Low</option></select></label>
+            {metadata.requestType === "REPLACEMENT" && <label>Thay thế vị trí<input value={metadata.replacementFor} onChange={(event) => setMetadata({ ...metadata, replacementFor: event.target.value })} maxLength={180} required /></label>}
+          </div>
+          {selectedJob?.sla_target_workdays != null && <div className="selected-job-preview"><strong>SLA tổng: {selectedJob.sla_target_workdays} ngày làm việc</strong><small>Tra theo Level × nhóm chức năng × mùa tuyển dụng.</small></div>}
+          <button className="primary" type="submit" disabled={busy || !selectedJob}>{busy ? "Đang lưu…" : "Lưu thông tin Job"}</button>
+        </form>
+      </section>
       <section className="admin-task admin-access-task">
-        <span className="admin-step">03</span><h3>Gán quyền theo Job</h3><p>TA chỉ thấy hồ sơ thuộc Job được giao; Hiring Manager và Interviewer giữ giới hạn theo quyền hiện có.</p>
+        <span className="admin-step">04</span><h3>Gán quyền theo Job</h3><p>TA chỉ thấy hồ sơ thuộc Job được giao; Hiring Manager và Interviewer giữ giới hạn theo quyền hiện có.</p>
         <form onSubmit={(event) => void assign(event)}>
           <label>Job<select value={jobId} onChange={(event) => setJobId(event.target.value)} required><option value="">Chọn Job</option>{assignableJobs.map((job) => <option key={job.id} value={job.id}>{job.title} · {job.status}</option>)}</select></label>
           <label>Email người dùng<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={254} autoComplete="off" placeholder="name@company.com" /></label>

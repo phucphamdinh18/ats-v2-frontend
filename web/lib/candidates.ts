@@ -9,6 +9,7 @@ export type ManualCandidateInput = {
   currentTitle: string;
   driveUrl: string;
   documentName: string;
+  subSource: string;
 };
 
 export type ManualCandidateResult = {
@@ -85,5 +86,6 @@ export async function createManualCandidateApplication(input: ManualCandidateInp
     current_title: input.currentTitle || null,
     drive_url: input.driveUrl,
     document_name: input.documentName,
+    sub_source: input.subSource,
   }).then(({ result }) => result);
 }

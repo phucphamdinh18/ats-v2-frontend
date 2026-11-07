@@ -1,6 +1,10 @@
 import { ApiError, getClient } from "./supabase";
 
 export type JobMember = { user_id: string; email: string; role: string; assigned_at: string };
+export type JobMetadataInput = {
+  jobId: string; level: number; functionGroup: string; hiringSeason: string;
+  reqDate: string | null; requestType: string; priority: string; replacementFor: string;
+};
 
 async function adminCall<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await getClient().functions.invoke("admin-jobs", { body });
@@ -20,6 +24,15 @@ export function createJobDraft(input: { requestId: string; title: string; busine
   return adminCall<{ job: { job_id: string; job_title: string; job_status: string; created: boolean } }>({
     action: "create_job_draft", request_id: input.requestId, title: input.title,
     business_unit: input.businessUnit, location: input.location,
+  });
+}
+
+export function updateJobMetadata(input: JobMetadataInput) {
+  return adminCall<{ job: Record<string, unknown> }>({
+    action: "update_job_metadata", job_id: input.jobId, level: input.level,
+    function_group: input.functionGroup, hiring_season: input.hiringSeason,
+    req_date: input.reqDate, request_type: input.requestType, priority: input.priority,
+    replacement_for: input.replacementFor,
   });
 }
 

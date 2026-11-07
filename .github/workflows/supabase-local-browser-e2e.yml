@@ -1,0 +1,137 @@
+name: Supabase local browser E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "web/**"
+      - ".github/workflows/supabase-local-browser-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-e2e') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout frontend PR
+        uses: actions/checkout@v4
+      - name: Check private backend read credential
+        env:
+          CROSS_REPO_TOKEN: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
+        run: |
+          if [[ -z "$CROSS_REPO_TOKEN" ]]; then
+            echo "::error::Add ATS_CROSS_REPO_READ_TOKEN in frontend repository Actions secrets. It needs Contents: Read access to both ATS repositories."
+            exit 1
+          fi
+      - name: Validate backend PAT without logging it
+        env:
+          CROSS_REPO_TOKEN: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
+        run: |
+          set +x
+          user_status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer $CROSS_REPO_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/user)
+          if [[ "$user_status" != "200" ]]; then
+            echo "::error::GitHub rejected ATS_CROSS_REPO_READ_TOKEN (HTTP $user_status). Replace it with the full active token."
+            exit 1
+          fi
+          repo_status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer $CROSS_REPO_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/phucphamdinh18/ats-v2-independent)
+          if [[ "$repo_status" != "200" ]]; then
+            echo "::error::Token is valid, but GitHub denies access to ats-v2-independent (HTTP $repo_status). Check token repository selection and Contents: Read permission."
+            exit 1
+          fi
+      - name: Checkout backend Draft PR
+        uses: actions/checkout@v4
+        with:
+          repository: phucphamdinh18/ats-v2-independent
+          ref: feat/job-sla-source-model
+          path: backend
+          token: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.79.0
+      - name: Start disposable Supabase local
+        working-directory: backend
+        run: |
+          python3 tests/prepare-local-supabase-migrations.py
+          supabase start -x studio,mailpit
+      - name: Apply backend E2E checks and seed synthetic Admin and TA users
+        working-directory: backend
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: bash tests/run-supabase-local-e2e.sh
+      - name: Install frontend and pinned browser runner
+        working-directory: web
+        run: |
+          npm ci --no-fund --no-audit
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start Edge Functions and frontend against local Supabase
+        working-directory: backend
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          eval "$(supabase status -o env)"
+          umask 077
+          cat > "$RUNNER_TEMP/supabase-local.env" <<EOF
+          SUPABASE_URL=$API_URL
+          SUPABASE_ANON_KEY=$ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          ATS_ALLOWED_ORIGINS=http://127.0.0.1:3000,http://localhost:3000
+          EOF
+          supabase functions serve --env-file "$RUNNER_TEMP/supabase-local.env" > "$RUNNER_TEMP/edge-functions.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/edge-functions.pid"
+          cd "$GITHUB_WORKSPACE/web"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY" npm run dev -- --hostname 127.0.0.1 > "$RUNNER_TEMP/next-dev.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/next-dev.pid"
+          mkdir -p "$RUNNER_TEMP/ats-browser-e2e"
+          ready=0
+          for _ in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then ready=1; break; fi
+            sleep 2
+          done
+          if [[ "$ready" != 1 ]]; then
+            cat "$RUNNER_TEMP/next-dev.log"
+            exit 1
+          fi
+      - name: Run TA browser workflow against local data
+        working-directory: web
+        env:
+          ATS_BASE_URL: http://127.0.0.1:3000
+          ATS_E2E_ARTIFACT_DIR: ${{ runner.temp }}/ats-browser-e2e
+        run: node tests/e2e/local-supabase-browser.mjs
+      - name: Upload browser evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ats-local-browser-e2e-failure
+          path: ${{ runner.temp }}/ats-browser-e2e
+          retention-days: 7
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/next-dev.log" 2>/dev/null || true
+          cat "$RUNNER_TEMP/edge-functions.log" 2>/dev/null || true
+      - name: Stop local services
+        if: always()
+        working-directory: backend
+        run: |
+          if [[ -f "$RUNNER_TEMP/next-dev.pid" ]]; then kill "$(cat "$RUNNER_TEMP/next-dev.pid")" 2>/dev/null || true; fi
+          if [[ -f "$RUNNER_TEMP/edge-functions.pid" ]]; then kill "$(cat "$RUNNER_TEMP/edge-functions.pid")" 2>/dev/null || true; fi
+          supabase stop --no-backup
