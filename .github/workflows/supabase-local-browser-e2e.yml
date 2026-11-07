@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   browser-e2e:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.ATS_CROSS_REPO_E2E_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
