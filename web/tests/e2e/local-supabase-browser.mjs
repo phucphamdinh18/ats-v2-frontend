@@ -10,7 +10,9 @@ await fs.mkdir(artifactDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const pageErrors = [];
+const failedRequests = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
+page.on("requestfailed", (request) => failedRequests.push(`${request.method()} ${request.url()} — ${request.failure()?.errorText || "request failed"}`));
 
 try {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
@@ -43,6 +45,10 @@ try {
   await page.screenshot({ path: path.join(artifactDir, "ta-job-pipeline.png"), fullPage: true });
   console.log("Browser E2E passed: TA login, Job scope, pipeline, round SLA, source-backed candidate detail.");
 } catch (error) {
+  const visibleText = await page.locator("body").innerText().catch(() => "(không đọc được nội dung trang)");
+  console.error("E2E visible page text:\n" + visibleText.slice(0, 12000));
+  console.error("E2E uncaught browser errors:\n" + pageErrors.join("\n"));
+  console.error("E2E failed requests:\n" + failedRequests.join("\n"));
   await page.screenshot({ path: path.join(artifactDir, "failure.png"), fullPage: true }).catch(() => {});
   throw error;
 } finally {
