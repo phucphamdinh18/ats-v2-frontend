@@ -207,8 +207,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
   const previousStage = selected ? PREVIOUS_STAGE[selected.stage] : undefined;
   const eligible = Boolean((nextStage || previousStage) && selected?.status === "ACTIVE");
-  const disabledReason = !selected ? "Chọn một Application để thao tác." : !eligible
-    ? "Chỉ Application đang ACTIVE ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng." : "";
+  const disabledReason = !selected ? "Chọn một ứng viên để thao tác." : !eligible
+    ? "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng." : "";
 
   const refreshAfterCandidateCreated = useCallback(async () => {
     setQuery("");
@@ -226,7 +226,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
       <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
       {state === "ready" && <span className="muted">{items.length} hồ sơ đang hiển thị</span>}
     </div>
-    {state === "loading" && <p role="status" aria-live="polite">Đang tải Application…</p>}
+    {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
@@ -239,14 +239,14 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
           <h3><span className="stage-title"><i aria-hidden="true" />{STAGE_LABEL[stage] || stage}</span><span className="count">{applications.length}</span></h3>
-          {stage === "NEW" && <p className="drop-hint">Kéo Application SCREEN đang ACTIVE vào đây để đưa về NEW.</p>}
-          {stage === "SCREEN" && <p className="drop-hint">Kéo Application NEW hoặc INTERVIEW đang ACTIVE vào đây.</p>}
-          {stage === "INTERVIEW" && <p className="drop-hint">Kéo Application SCREEN đang ACTIVE vào đây để chuyển sang INTERVIEW.</p>}
+          {stage === "NEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để đưa về NEW.</p>}
+          {stage === "SCREEN" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng NEW hoặc INTERVIEW đang xử lý vào đây.</p>}
+          {stage === "INTERVIEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để chuyển sang INTERVIEW.</p>}
           {applications.length === 0 && <p className="empty-stage">Chưa có ứng viên ở vòng này.</p>}
           {applications.map((application) => {
             const canDrag = Boolean(NEXT_STAGE[application.stage] || PREVIOUS_STAGE[application.stage]) && application.status === "ACTIVE";
             const dragTargets = [NEXT_STAGE[application.stage], PREVIOUS_STAGE[application.stage]].filter(Boolean);
-            const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ Application ACTIVE ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
+            const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
             return <button className="application-card" key={application.application_id}
               draggable={canDrag}
               onDragStart={(event) => { if (!canDrag) { event.preventDefault(); return; } setDragging(application); }}
