@@ -33,19 +33,23 @@ export type ApplicationDetail = {
 
 type ListResponse = { applications: Application[]; limit: number; offset: number };
 
+function humanize(message: string): string {
+  return message.replace(/Applications?/g, "hồ sơ trong Job");
+}
+
 async function call<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await getClient().functions.invoke("applications", { body });
   if (error) {
-    let message = "Không tải được dữ liệu Application. Vui lòng thử lại.";
+    let message = "Không tải được hồ sơ trong Job. Vui lòng thử lại.";
     try {
       const payload = await error.context?.json();
-      if (typeof payload?.error === "string") message = payload.error;
+      if (typeof payload?.error === "string") message = humanize(payload.error);
     } catch {
       // A network failure does not necessarily have a JSON response body.
     }
     throw new ApiError(message, error.context?.status);
   }
-  if (data?.error) throw new ApiError(data.error, data.status);
+  if (data?.error) throw new ApiError(humanize(data.error), data.status);
   return data as T;
 }
 
