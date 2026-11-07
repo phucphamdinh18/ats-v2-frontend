@@ -26,6 +26,15 @@ const STAGE_LABEL: Record<string, string> = {
   HIRED: "Đã tuyển",
   REJECTED: "Từ chối",
 };
+// Interim round limits from the supplied UI reference. These are presentation
+// targets; the TA-SLA Master file defines requisition-level targets separately.
+const ROUND_SLA_DAYS: Record<string, number> = {
+  NEW: 2,
+  SCREEN: 3,
+  INTERVIEW: 4,
+  HIRED: 0,
+  REJECTED: 0,
+};
 type TransitionStage = "NEW" | "SCREEN" | "INTERVIEW";
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
 
@@ -218,13 +227,13 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
 
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
     <div className="pipeline-heading">
-      <div><span className="eyebrow">Hiring pipeline</span><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> Hồ sơ chỉ hiển thị theo quyền Job của bạn.</p></div>
+      <div><span className="eyebrow">HIRING PIPELINE</span><h2>Pipeline tuyển dụng</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> {job.title}</p></div>
       <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
     </div>
     <div className="pipeline-toolbar">
       {(state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
       <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
-      {state === "ready" && <span className="muted">{items.length} hồ sơ đang hiển thị</span>}
+      {state === "ready" && <span className="muted">{items.length} ứng viên đang hiển thị</span>}
     </div>
     {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
@@ -239,6 +248,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
           <h3><span className="stage-title"><i aria-hidden="true" />{STAGE_LABEL[stage] || stage}</span><span className="count">{applications.length}</span></h3>
+          {ROUND_SLA_DAYS[stage] > 0 && <p className="stage-sla">SLA vòng: ≤ {ROUND_SLA_DAYS[stage]} ngày</p>}
           {stage === "NEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để đưa về NEW.</p>}
           {stage === "SCREEN" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng NEW hoặc INTERVIEW đang xử lý vào đây.</p>}
           {stage === "INTERVIEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để chuyển sang INTERVIEW.</p>}
