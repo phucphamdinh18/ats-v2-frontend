@@ -100,7 +100,7 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
     ],
   );
   render(<Workspace />);
-  await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
+  await screen.findByRole("button", { name: "Chọn Job Synthetic Engineer" });
   expect(screen.queryByRole("button", { name: /Duyệt CV/ })).toBeNull();
   expect(
     screen.getByText(
@@ -118,10 +118,10 @@ it("keeps the Job list visible while switching the selected Job pipeline", async
     { id: "job2", title: "Second Job", status: "DRAFT", job_code: "JOB-2" },
   ]);
   render(<Workspace />);
-  await screen.findByRole("heading", { name: "Pipeline: First Job" });
+  await screen.findByRole("region", { name: "Pipeline First Job" });
   expect(screen.getByRole("button", { name: "Chọn Job First Job" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Chọn Job Second Job" }));
-  await screen.findByRole("heading", { name: "Pipeline: Second Job" });
+  await screen.findByRole("region", { name: "Pipeline Second Job" });
   expect(screen.getByRole("button", { name: "Chọn Job First Job" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Chọn Job Second Job" })).toBeTruthy();
 });
@@ -133,7 +133,7 @@ it("logout removes already displayed private data immediately", async () => {
   );
   mocks.signOut.mockImplementation(() => new Promise(() => {}));
   render(<Workspace />);
-  await screen.findByRole("button", { name: "Mở pipeline Synthetic Job" });
+  await screen.findByRole("button", { name: "Chọn Job Synthetic Job" });
   fireEvent.click(screen.getByRole("button", { name: "Đăng xuất" }));
   expect(screen.queryByText("Synthetic Job")).toBeNull();
 });
@@ -144,7 +144,7 @@ it("Supabase SIGNED_OUT event clears displayed scoped data immediately", async (
     [{ id: "job1", title: "Scoped Job", status: "OPEN", job_code: "TEST-2" }],
   );
   render(<Workspace />);
-  await screen.findByRole("button", { name: "Mở pipeline Scoped Job" });
+  await screen.findByRole("button", { name: "Chọn Job Scoped Job" });
   mocks.session.mockResolvedValue({ data: { session: null }, error: null });
   await act(async () => {
     mocks.authCallback?.("SIGNED_OUT", null);
