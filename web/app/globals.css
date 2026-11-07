@@ -2001,3 +2001,55 @@ th { padding: 11px 18px; }
   .admin-access-task form .primary { justify-self: start; }
 
 }
+
+
+/* Job status filters follow the reference palette while retaining existing status values. */
+.job-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.job-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.job-filter-chip > span {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 7%);
+  padding: 0 5px;
+  font-size: 10px;
+}
+.job-filter-chip:hover { border-color: #a5b4fc; }
+.job-filter-chip:focus-visible { outline: 3px solid #4f46e533; outline-offset: 2px; }
+.job-filter-chip.filter-all.selected { border-color: #111827; background: #111827; color: #fff; }
+.job-filter-chip.status-open { border-color: #bbf7d0; background: #f0fdf4; color: #15803d; }
+.job-filter-chip.status-open.selected { border-color: #16a34a; background: #dcfce7; color: #166534; }
+.job-filter-chip.status-draft { border-color: #fde68a; background: #fffbeb; color: #b45309; }
+.job-filter-chip.status-draft.selected { border-color: #f59e0b; background: #fef3c7; color: #92400e; }
+.job-filter-chip.status-paused,
+.job-filter-chip.status-on-hold { border-color: #fed7aa; background: #fff7ed; color: #c2410c; }
+.job-filter-chip.status-paused.selected,
+.job-filter-chip.status-on-hold.selected { border-color: #f97316; background: #ffedd5; color: #9a3412; }
+.job-filter-chip.status-closed { border-color: #cbd5e1; background: #f8fafc; color: #475569; }
+.job-filter-chip.status-closed.selected { border-color: #64748b; background: #e2e8f0; color: #334155; }
+.job-filter-chip.status-filled { border-color: #c7d2fe; background: #eef2ff; color: #4338ca; }
+.job-filter-chip.status-filled.selected { border-color: #6366f1; background: #e0e7ff; color: #3730a3; }
+.job-filter-chip.status-cancelled { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+.job-filter-chip.status-cancelled.selected { border-color: #ef4444; background: #fee2e2; color: #991b1b; }
