@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
-import { ApiError } from "@/lib/supabase";
+import { ApiError, getClient } from "@/lib/supabase";
 import { candidateProfile, listCandidates, type Candidate, type CandidateProfile } from "@/lib/candidates";
 import { createApplication } from "@/lib/applications";
 import { driveLink } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 
 const PAGE_SIZE = 25;
+type SourceOption = { sub_source: string; source: string; source_ownership: string };
 
 export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAccessLost: () => void }) {
   const [view, setView] = useState<"pool" | "cv-review">("pool");
@@ -24,11 +25,25 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
   const [jobId, setJobId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [sourceOptions, setSourceOptions] = useState<SourceOption[]>([]);
+  const [subSource, setSubSource] = useState("");
+  const [sourceLoadError, setSourceLoadError] = useState("");
   const requestId = useRef<{ key: string; id: string } | null>(null);
   const listRevision = useRef(0);
   const profileRevision = useRef(0);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openJobs = jobs.filter((job) => job.status === "OPEN");
+
+  useEffect(() => {
+    let current = true;
+    void getClient().from("hiring_source_catalog").select("sub_source,source,source_ownership").order("source").order("sub_source")
+      .then(({ data, error: catalogError }) => {
+        if (!current) return;
+        if (catalogError) setSourceLoadError("Không tải được danh mục nguồn tuyển dụng.");
+        else setSourceOptions((data || []) as SourceOption[]);
+      });
+    return () => { current = false; };
+  }, []);
 
   const load = useCallback(async (nextOffset = offset, nextQuery = query) => {
     const revision = ++listRevision.current;
@@ -85,18 +100,20 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
   }, [profile, jobId, jobs]);
 
   async function addToJob() {
-    if (!profile || !selectedId || !jobId || busy) return;
+    if (!profile || !selectedId || !jobId || !subSource || busy) return;
+    const sourceOption = sourceOptions.find((item) => item.sub_source === subSource);
+    if (!sourceOption) return;
     const job = openJobs.find((item) => item.id === jobId);
     if (!job || profile.applications.some((application) => application.job_id === job.id)) return;
     if (!window.confirm(`Thêm ${profile.candidate.full_name} vào ${job.title}? Ứng viên sẽ được đưa vào vòng Mới ứng tuyển.`)) return;
-    const key = `${selectedId}:${jobId}`;
+    const key = `${selectedId}:${jobId}:${subSource}`;
     const request = requestId.current?.key === key ? requestId.current.id : crypto.randomUUID();
     requestId.current = { key, id: request };
     setBusy(true);
     setMessage("");
     setProfileError("");
     try {
-      await createApplication(selectedId, jobId, request);
+      await createApplication(selectedId, jobId, request, sourceOption.source, sourceOption.sub_source);
       requestId.current = null;
       setMessage(`Đã thêm vào Job “${job.title}”. Ứng viên xuất hiện ở vòng Mới ứng tuyển.`);
       await load(offset, query);
@@ -148,7 +165,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
           {profile.documents.length ? <ul className="talent-documents">{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">Mở CV ↗</a> : <small>Link không hợp lệ</small>}</li>)}</ul> : <p className="muted">Chưa có CV được lưu trong hồ sơ.</p>}
           <h3 className="talent-subheading">Đang tham gia Job</h3>
           {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className="talent-applications">{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => <li key={application.id}><strong>{jobs.find((job) => job.id === application.job_id)?.title}</strong><span>{application.stage} · {application.status}</span></li>)}</ul> : <p className="muted">Chưa được thêm vào Job nào trong phạm vi bạn được xem.</p>}
-          <div className="add-to-job"><h3>Thêm vào Job</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className="add-to-job-control"><select aria-label="Chọn Job để thêm ứng viên" value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">Chọn Job đang mở</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><button className="primary" disabled={!jobId || busy} onClick={() => void addToJob()}>{busy ? "Đang thêm…" : requestId.current ? "Thử lại" : "Thêm vào Job"}</button></div> : <p className="muted">Không có Job đang mở mà bạn có quyền thêm hồ sơ này.</p>}</div>
+          <div className="add-to-job"><h3>Thêm vào Job</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className="add-to-job-control"><select aria-label="Chọn Job để thêm ứng viên" value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">Chọn Job đang mở</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><select aria-label="Chọn nguồn ứng viên" value={subSource} onChange={(event) => { setSubSource(event.target.value); requestId.current = null; }} disabled={!!sourceLoadError}><option value="">Chọn nguồn ứng viên</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select><button className="primary" disabled={!jobId || !subSource || busy || !sourceOptions.length} onClick={() => void addToJob()}>{busy ? "Đang thêm…" : requestId.current ? "Thử lại" : "Thêm vào Job"}</button></div> : <p className="muted">Không có Job đang mở mà bạn có quyền thêm hồ sơ này.</p>}{sourceLoadError && <p className="notice error" role="alert">{sourceLoadError}</p>}</div>
         </> : profileError ? <div className="notice error" role="alert">{profileError}</div> : <div className="talent-empty"><h3>Chọn một hồ sơ</h3><p>Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.</p></div>}
       </div>
     </div>
