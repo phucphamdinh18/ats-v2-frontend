@@ -634,6 +634,7 @@ export default function Workspace() {
                         <button
                           type="button"
                           className={`job-filter-chip filter-all ${status === "ALL" ? "selected" : ""}`}
+                          aria-label={`${t.allStatuses} (${access.jobs.length})`}
                           aria-pressed={status === "ALL"}
                           onClick={() => setStatus("ALL")}
                         >
@@ -654,6 +655,7 @@ export default function Workspace() {
                                 key={s}
                                 type="button"
                                 className={`job-filter-chip status-${s.toLowerCase().replace(/_/g, "-")} ${status === s ? "selected" : ""}`}
+                                aria-label={`${jobStatusLabel(s, t)} (${count})`}
                                 aria-pressed={status === s}
                                 onClick={() => setStatus(s)}
                               >
