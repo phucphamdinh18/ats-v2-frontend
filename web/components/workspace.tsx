@@ -7,6 +7,8 @@ import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
+import TalentPool from "./talent-pool";
+import AdminConsole from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
 type Access = {
@@ -22,14 +24,23 @@ export default function Workspace() {
   const [access, setAccess] = useState<Access | null>(null);
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
+  const [localLoginVisible, setLocalLoginVisible] = useState(false);
+  const [localEmail, setLocalEmail] = useState("");
+  const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"jobs" | "review">("jobs");
+  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin">("jobs");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const authUser = useRef<string | null>(null);
+  useEffect(() => {
+    const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
+      window.location.hostname,
+    );
+    setLocalLoginVisible(process.env.NODE_ENV === "development" && isLoopback);
+  }, []);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
@@ -75,7 +86,7 @@ export default function Workspace() {
       if (active && roleNames.length) {
         const result = await client
           .from("jobs")
-          .select("id,job_code,title,status")
+          .select("id,job_code,title,status,business_unit,location")
           .order("job_code")
           .limit(100);
         if (result.error) throw result.error;
@@ -179,6 +190,25 @@ export default function Workspace() {
       setAuthBusy(false);
     }
   }
+  async function localLogin() {
+    const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
+      window.location.hostname,
+    );
+    if (process.env.NODE_ENV !== "development" || !isLoopback) return;
+    setAuthBusy(true);
+    setError("");
+    try {
+      const { error } = await getClient().auth.signInWithPassword({
+        email: localEmail.trim(),
+        password: localPassword,
+      });
+      if (error) throw error;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "requestFailed");
+    } finally {
+      setAuthBusy(false);
+    }
+  }
   const allowed = access?.active && access.roles.length > 0;
   const jobs = (access?.jobs || []).filter(
     (job) =>
@@ -194,10 +224,13 @@ export default function Workspace() {
   }, [jobs]);
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
+  useEffect(() => {
+    if (!selectedJob && access?.jobs.length) setSelectedJob(access.jobs[0]);
+  }, [access?.jobs, selectedJob]);
+  useEffect(() => {
+    if (tab === "admin" && !adminAllowed) setTab("jobs");
+  }, [tab, adminAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-  const adminUrl = process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL
-    ? new URL("qa.html", process.env.NEXT_PUBLIC_AUTH_REDIRECT_URL).href
-    : basePath + "/qa.html";
   return (
     <div className="shell">
       <a className="skip-link" href="#main-content">
@@ -224,12 +257,32 @@ export default function Workspace() {
           </button>
           {reviewAllowed && (
             <button
-              className={tab === "review" ? "nav active" : "nav"}
-              aria-current={tab === "review" ? "page" : undefined}
-              onClick={() => setTab("review")}
+              className={tab === "talent" ? "nav active" : "nav"}
+              aria-current={tab === "talent" ? "page" : undefined}
+              onClick={() => setTab("talent")}
+            >
+              <Icon name="team" />
+              Talent Pool
+            </button>
+          )}
+          {adminAllowed && (
+            <button
+              className={tab === "admin" ? "nav active" : "nav"}
+              aria-current={tab === "admin" ? "page" : undefined}
+              onClick={() => setTab("admin")}
+            >
+              <Icon name="shield" />
+              Quản trị & quyền
+            </button>
+          )}
+          {reviewAllowed && (
+            <button
+              className={tab === "jd" ? "nav active" : "nav"}
+              aria-current={tab === "jd" ? "page" : undefined}
+              onClick={() => setTab("jd")}
             >
               <Icon name="review" />
-              {t.review}
+              JD
             </button>
           )}
         </nav>
@@ -262,7 +315,7 @@ export default function Workspace() {
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
-            <strong>{selectedJob && tab === "jobs" ? selectedJob.title : tab === "jobs" ? t.jobs : t.review}</strong>
+            <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
           </div>
           <div className="header-actions">
             <label className="language-picker">
@@ -346,17 +399,53 @@ export default function Workspace() {
                 <div className="eyebrow">{t.loginEyebrow}</div>
                 <h2>{t.signIn}</h2>
                 <p>{t.loginNote}</p>
-                <button
-                  className="primary google-button"
-                  disabled={authBusy || !!error}
-                  onClick={login}
-                >
-                  <span className="google-mark" aria-hidden="true">
-                    G
-                  </span>
-                  {authBusy ? t.signingIn : t.signIn}
-                  <Icon name="arrow" size={17} />
-                </button>
+                {localLoginVisible ? (
+                  <div className="local-login">
+                    <label>
+                      Email thử nghiệm
+                      <input
+                        type="email"
+                        autoComplete="username"
+                        value={localEmail}
+                        onChange={(event) => setLocalEmail(event.target.value)}
+                        placeholder="admin.test@example.invalid"
+                      />
+                    </label>
+                    <label>
+                      Mật khẩu thử nghiệm
+                      <input
+                        type="password"
+                        autoComplete="current-password"
+                        value={localPassword}
+                        onChange={(event) => setLocalPassword(event.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="primary google-button"
+                      disabled={authBusy || !localEmail || !localPassword}
+                      onClick={() => void localLogin()}
+                    >
+                      {authBusy ? "Đang đăng nhập…" : "Đăng nhập thử"}
+                      <Icon name="arrow" size={17} />
+                    </button>
+                    <div className="local-login-note">
+                      Chế độ thử trên máy này. Quyền Admin/TA vẫn được
+                      kiểm tra bằng dữ liệu thử.
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="primary google-button"
+                    disabled={authBusy || !!error}
+                    onClick={login}
+                  >
+                    <span className="google-mark" aria-hidden="true">
+                      G
+                    </span>
+                    {authBusy ? t.signingIn : t.signIn}
+                    <Icon name="arrow" size={17} />
+                  </button>
+                )}
                 <div className="login-footnote">
                   <Icon name="shield" size={15} />
                   {t.scoped}
@@ -380,8 +469,8 @@ export default function Workspace() {
               <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jobs" ? t.jobs : t.review}</h1>
-                  <p>{tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
+                  <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
+                  <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp." : tab === "jd" ? "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp." : "Tạo Job và cấp quyền theo từng Job; backend kiểm tra lại trước khi lưu."}</p>
                 </div>
                 <div className="heading-actions">
                   {tab === "jobs" && (
@@ -395,10 +484,10 @@ export default function Workspace() {
                     </button>
                   )}
                   {tab === "jobs" && adminAllowed && (
-                    <a className="primary admin-link" href={adminUrl} target="_blank" rel="noopener noreferrer">
+                    <button className="primary" onClick={() => setTab("admin")}>
                       Quản trị Job
-                      <Icon name="external" size={15} />
-                    </a>
+                      <Icon name="shield" size={15} />
+                    </button>
                   )}
                   <button className="secondary" onClick={() => void refresh()}>
                     <Icon name="refresh" size={17} />
@@ -413,8 +502,12 @@ export default function Workspace() {
                   </span>
                 ))}
               </div>
-              {tab === "review" && reviewAllowed ? (
-                <ReviewQueue key={access.userId} onAccessLost={invalidate} />
+              {tab === "talent" && reviewAllowed ? (
+                <TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} />
+              ) : tab === "jd" && reviewAllowed ? (
+                <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
+              ) : tab === "admin" && adminAllowed ? (
+                <AdminConsole jobs={access.jobs} onRefresh={() => refresh(true)} onAccessLost={invalidate} />
               ) : (
                 <>
                   {guideOpen && (
@@ -456,7 +549,7 @@ export default function Workspace() {
                             <p>{t.guideReviewBody}</p>
                             <button
                               className="text-link"
-                              onClick={() => setTab("review")}
+                              onClick={() => setTab("talent")}
                             >
                               {t.guideReviewAction}
                               <Icon name="arrow" size={16} />
@@ -474,15 +567,10 @@ export default function Workspace() {
                               : t.guideAccessBody}
                           </p>
                           {adminAllowed && (
-                            <a
-                              className="text-link"
-                              href={adminUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
+                            <button className="text-link" onClick={() => setTab("admin")}>
                               {t.guideAdminAction}
                               <Icon name="external" size={15} />
-                            </a>
+                            </button>
                           )}
                         </article>
                       </div>
@@ -572,9 +660,9 @@ export default function Workspace() {
                           <thead>
                             <tr>
                               <th>{t.colJob}</th>
+                              <th>Pipeline</th>
                               <th>{t.colCode}</th>
                               <th>{t.colStatus}</th>
-                              <th>Pipeline</th>
                             </tr>
                           </thead>
                           <tbody>
