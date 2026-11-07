@@ -80,7 +80,7 @@ jobs:
         env:
           ATS_BASE_URL: http://127.0.0.1:3000
           ATS_E2E_ARTIFACT_DIR: ${{ runner.temp }}/ats-browser-e2e
-        run: npx playwright test --config=/dev/null --reporter=line tests/e2e/local-supabase-browser.mjs
+        run: node tests/e2e/local-supabase-browser.mjs
       - name: Upload browser evidence on failure
         if: failure()
         uses: actions/upload-artifact@v4
