@@ -18,12 +18,21 @@ jobs:
     steps:
       - name: Checkout frontend PR
         uses: actions/checkout@v4
+      - name: Check private backend read credential
+        env:
+          CROSS_REPO_TOKEN: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
+        run: |
+          if [[ -z "$CROSS_REPO_TOKEN" ]]; then
+            echo "::error::Add ATS_CROSS_REPO_READ_TOKEN in frontend repository Actions secrets. It needs Contents: Read access to both ATS repositories."
+            exit 1
+          fi
       - name: Checkout backend Draft PR
         uses: actions/checkout@v4
         with:
           repository: phucphamdinh18/ats-v2-independent
           ref: feat/job-sla-source-model
           path: backend
+          token: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
