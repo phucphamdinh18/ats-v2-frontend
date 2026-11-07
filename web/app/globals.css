@@ -1680,32 +1680,33 @@ footer span {
   cursor: grabbing;
 }
 
-/* ATS master-workspace direction: compact jobs table and an always-horizontal
-   per-job Kanban, so each stage stays visually in its own lane at every width. */
+/* ATS master workspace: light, job-first navigation with the selected pipeline below. */
 .sidebar {
-  background: #0b0f19;
-  border-right-color: #202938;
-  color: #cbd5e1;
+  background: #fff;
+  border-right-color: #e1e7f2;
+  color: var(--ink);
 }
-.brand { color: #f8fafc; }
-.brand-caption { color: #94a3b8; }
-.brand-mark { background: linear-gradient(135deg, #6366f1, #7c3aed); }
-.workspace-label { color: #94a3b8; padding-top: 34px; }
-.nav { color: #cbd5e1; }
-.nav:hover { color: #fff; background: #171e2c; }
-.nav.active { color: #fff; background: #27244f; border-color: #39356b; }
-.sidebar-help { background: linear-gradient(145deg, #121827, #151b2d); border-color: #273148; color: #f8fafc; }
-.sidebar-help p { color: #aab6c8; }
-.sidebar-help .quiet { color: #a5b4fc; }
-.sidebar-note { color: #94a3b8; }
+.brand { color: var(--ink); }
+.brand-caption { color: var(--muted); }
+.brand-mark { background: var(--primary); }
+.workspace-label { color: #64748b; padding-top: 34px; }
+.nav { color: #526078; }
+.nav:hover { color: var(--primary); background: #f7f6ff; }
+.nav.active { color: var(--primary); background: #f0efff; border-color: transparent; }
+.sidebar-help { background: linear-gradient(145deg, #f4f2ff, #f1f8ff); border-color: #e3e5ff; color: var(--ink); }
+.sidebar-help p { color: var(--muted); }
+.sidebar-help .quiet { color: var(--primary); }
+.sidebar-note { color: var(--muted); }
 .topbar { min-height: 62px; padding-block: 10px; }
 .panel { box-shadow: 0 4px 18px #0f172a08; }
 .panel-heading { padding-bottom: 14px; }
 .toolbar { padding-bottom: 16px; }
-th { background: #111827; color: #f8fafc; border-color: #273244; padding-block: 11px; }
+th { background: #f8faff; color: #64748b; border-color: var(--line); padding-block: 11px; }
 td { padding-block: 15px; }
 tbody tr { transition: background-color .15s ease; }
-tbody tr:hover { background: #f7f8ff; }
+tbody tr:hover { background: #fafaff; }
+.selected-job-row { background: #f7f6ff; }
+.selected-job-row td:first-child { box-shadow: inset 3px 0 var(--primary); }
 .job-icon { width: 32px; height: 32px; }
 .job-title-link { border: 0; background: transparent; color: var(--ink); padding: 0; text-align: left; font-size: 14px; line-height: 1.4; font-weight: 650; }
 .job-title-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
@@ -1719,6 +1720,7 @@ tbody tr:hover { background: #f7f8ff; }
 .drop-hint { font-size: 11px; line-height: 1.5; }
 .application-card { min-height: 74px; }
 .application-card:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+.admin-link { text-decoration: none; }
 @media (max-width: 900px) {
   .topbar { min-height: 58px; }
 }
