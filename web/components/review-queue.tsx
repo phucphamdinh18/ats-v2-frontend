@@ -33,8 +33,10 @@ const fieldLabels: Record<string, keyof Copy> = {
 };
 export default function ReviewQueue({
   onAccessLost,
+  fixedKind,
 }: {
   onAccessLost: () => void;
+  fixedKind?: Kind;
 }) {
   const { t } = useLanguage();
   const labels: Record<ReviewState, string> = {
@@ -44,7 +46,7 @@ export default function ReviewQueue({
   };
   const documentTitle = (draft: Draft) =>
     draft.full_name || draft.position || t.untitled;
-  const [kind, setKind] = useState<Kind>("cv");
+  const [kind, setKind] = useState<Kind>(fixedKind ?? "cv");
   const [state, setState] = useState<ReviewState>("pending_review");
   const [page, setPage] = useState(0);
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -262,7 +264,7 @@ export default function ReviewQueue({
         </li>
       </ol>
       <div className="toolbar">
-        <div className="segmented" aria-label={t.draftKind}>
+        {!fixedKind && <div className="segmented" aria-label={t.draftKind}>
           <button
             disabled={busy}
             aria-pressed={kind === "cv"}
@@ -285,7 +287,7 @@ export default function ReviewQueue({
             <Icon name="review" size={16} />
             {t.jd}
           </button>
-        </div>
+        </div>}
         <select
           aria-label={t.reviewState}
           value={state}

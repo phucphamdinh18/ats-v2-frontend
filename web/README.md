@@ -1,5 +1,15 @@
 # ATS V2 — Next.js frontend, increment 2 (Application pipeline draft)
 
+## Current local UI and permissions work — 7 November 2026
+
+This section describes the current frontend change proposed for Pages preview. It supersedes older statements below that said Candidate management and Admin Job/membership actions were QA-only. It has not been published.
+
+- The workspace has separate Job/Pipeline, Talent Pool, JD and Admin sections. Approved CV Candidates are listed through the existing JWT-protected `candidates` Edge Function. The current UI filters Candidate Applications to Jobs loaded for the signed-in user; the backend must also enforce this boundary in its response before TA Talent Pool detail can be safely published.
+- Admin can create a Job draft, open a draft with an explicit code, assign TA/Recruiter, Hiring Manager or Interviewer to a Job, list members and revoke a Job membership. All writes use existing `admin-jobs` API actions; the database checks the actor and records administrative actions. The browser never receives the service key.
+- From Talent Pool, Admin/TA can create an Application for an open Job using the existing `applications` API. The database enforces access, open Job status, duplicate prevention and the initial `NEW` stage. CV approval and JD review remain in the existing review workflow.
+- The intended permission boundaries remain: Admin can read the Candidate directory; TA can read Candidates associated with a Job assigned to that TA. Hiring Managers and Interviewers do not receive Candidate directory access. The Admin UI does not allow a user to grant global `ADMIN` to another user. Backend PR #79 is still Draft and documents a cross-Job Application response issue in TA Candidate profiles; do not deploy or test Talent Pool with a TA until that fix is reviewed, merged and deployed.
+- No migration, RLS policy, Edge Function or production data was changed. Local validation passes: 49 React tests, 21 web Node tests, 12 legacy QA tests, Next production build and strict TypeScript. GitHub Actions must also pass before this branch is considered ready. No live Admin/TA authorization flow or GitHub Pages deployment was run for this UI change.
+
 Next.js App Router + strict TypeScript. Next is deployed at https://phucphamdinh18.github.io/ats-v2-frontend/. The source root `index.html` preserves the legacy QA interface, published at `/qa.html`. Publishing is a separate manual workflow; merging does **not** deploy or replace the live Pages artifact. See the rollout evidence and controls below.
 
 ## Run
@@ -74,7 +84,7 @@ Production build and strict TypeScript pass in CI. Desktop and a 375×812 same-o
 
 Before changing hosting/base path, verify the exact callback, Edge CORS origin and the resulting built asset paths again. No callback allowlist, CORS, Supabase schema, role or AI/Drive pilot change was needed for this rollout.
 
-Admin Job mutations/memberships and Applications remain available only in the existing QA UI. Candidate management, stages after SCREEN, Interview, Offer and Matching are not added here. Drive/AI pilot limits are unchanged; no real CV or JD was processed.
+At the time of this earlier rollout, Admin Job mutations/memberships and Applications were available only in the QA UI. The current local UI work described above moves Job creation/opening, Job membership management and Candidate directory actions into the Next workspace. Later pipeline stages, Interview, Offer and Matching still require their own implementation/QA. Drive/AI pilot limits are unchanged; no real CV or JD was processed.
 
 Official framework reference: https://nextjs.org/docs/app/guides/static-exports
 
@@ -112,17 +122,16 @@ The canonical root and `/qa.html` were verified in the browser after propagation
 This remains the first Next increment. HM/Interviewer live matrix, pending draft writes through Next, real CV/JD intake, later pipeline stages, Interview, Offer and Matching still require their own implementation/QA. The rollout performed read-only ATS data checks plus Auth session operations; it did not approve/reject drafts, grant roles or run AI/Drive processing.
 
 
-## Pending local UI increment Vietnamese and English
+## Vietnamese and English interface
 
-Prepared a SaaS-style interface with indigo primary actions, mint/amber labelled statuses, consistent SVG icons, clearer typography, role-aware quick-start guidance, and friendly empty/error states. API payloads, authorization gates, correction allowlists and draft transaction logic remain unchanged. Job/status and role labels are localized; imported titles, names, notes and other source data retain their original text.
-
-A typed copy dictionary provides Vietnamese and English. The selector is available before and after sign-in, stores only `ats.locale`, updates the document language, and continues working when browser storage is unavailable. Switching languages preserves review selection, unsaved notes and source verification, without refetching the scope or changing API state codes. Raw backend error details are replaced with localized actionable messages.
-
-Local validation: 38 web tests and 11 legacy QA tests passed, as did the Next production build and strict TypeScript. New tests cover dictionary/placeholder parity, locale persistence and private-browser failures, actual review state preservation across languages, and unchanged decision payloads. A standalone HTML design preview uses clearly labelled sample data and simulated sign-in; it has no live Supabase connection.
-
-This increment has not been pushed, checked in GitHub CI, published or visually accepted. The attempted GitHub read was rejected. The cloud browser blocks file URLs, so it could not visually inspect the standalone preview. Restore GitHub authorization, reconcile against the latest main, create a PR, run CI, then use the existing manual Pages preview flow for actual desktop/mobile and bilingual QA before promotion. Current live release remains the one recorded above.
-
+The workspace has a typed Vietnamese/English copy dictionary. The selector works before and after sign-in, stores only `ats.locale`, and does not change API state codes. This UI is part of the pending preview change above; it is not a separate release.
 
 ### Backward Application movement (PR Draft)
 
 The Kanban now supports moving an `ACTIVE` Application one adjacent stage backward: `INTERVIEW → SCREEN` and `SCREEN → NEW`, alongside the existing forward moves. Cards can be dragged to the adjacent previous or next column, and the detail panel offers the same explicit actions. Each action asks for confirmation, uses an idempotency request ID, and refreshes the authoritative detail/list after success. The backend blocks moves across scheduled Interviews or open Offers and keeps `HIRED`/`REJECTED` read-only. Offer remains a separate workflow rather than an Application stage. This frontend PR depends on the backend migration and Edge Function change in the matching backend PR; neither is merged or deployed.
+
+## Job-first Admin, Talent Pool and JD navigation (preview candidate)
+
+The workspace now puts Jobs first, shows the selected Job's hiring pipeline below the Job list, and provides separate Talent Pool, JD review and Admin screens. Admin actions use the existing `admin-jobs` Edge Function for draft creation, opening a Job with an explicit code, and per-Job member assignment/revocation; role enforcement remains in Supabase. Candidate browsing and adding a candidate to an open Job use the existing `candidates` and `applications` Edge Functions. This increment adds no database schema, RLS policy, Edge Function or secret.
+
+This is a frontend integration candidate. Verify the current backend supports each called action before using the buttons against a live project. The CI and Pages preview must pass before treating this UI as testable on the website. No production records or real CVs are part of this change.

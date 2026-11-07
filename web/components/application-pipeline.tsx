@@ -19,6 +19,13 @@ const PAGE_SIZE = 25;
 const PIPELINE_STAGES = ["NEW", "SCREEN", "INTERVIEW", "HIRED", "REJECTED"] as const;
 const NEXT_STAGE: Record<string, "SCREEN" | "INTERVIEW" | undefined> = { NEW: "SCREEN", SCREEN: "INTERVIEW" };
 const PREVIOUS_STAGE: Record<string, "NEW" | "SCREEN" | undefined> = { SCREEN: "NEW", INTERVIEW: "SCREEN" };
+const STAGE_LABEL: Record<string, string> = {
+  NEW: "Mới ứng tuyển",
+  SCREEN: "Sơ loại",
+  INTERVIEW: "Phỏng vấn",
+  HIRED: "Đã tuyển",
+  REJECTED: "Từ chối",
+};
 type TransitionStage = "NEW" | "SCREEN" | "INTERVIEW";
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
 
@@ -200,8 +207,8 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
   const previousStage = selected ? PREVIOUS_STAGE[selected.stage] : undefined;
   const eligible = Boolean((nextStage || previousStage) && selected?.status === "ACTIVE");
-  const disabledReason = !selected ? "Chọn một Application để thao tác." : !eligible
-    ? "Chỉ Application đang ACTIVE ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng." : "";
+  const disabledReason = !selected ? "Chọn một ứng viên để thao tác." : !eligible
+    ? "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng." : "";
 
   const refreshAfterCandidateCreated = useCallback(async () => {
     setQuery("");
@@ -210,9 +217,15 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
   }, [load]);
 
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
-    <div className="panel-heading"><div><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Không có mã Job"} · Dữ liệu theo quyền Job từ backend.</p></div></div>
-    {(state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary>Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
-    <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên ứng viên" /></label>
+    <div className="pipeline-heading">
+      <div><span className="eyebrow">Hiring pipeline</span><h2>Pipeline: {job.title}</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> Hồ sơ chỉ hiển thị theo quyền Job của bạn.</p></div>
+      <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
+    </div>
+    <div className="pipeline-toolbar">
+      {(state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
+      <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
+      {state === "ready" && <span className="muted">{items.length} hồ sơ đang hiển thị</span>}
+    </div>
     {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
@@ -225,15 +238,15 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
         return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
-          <h3>{stage} <span className="count">{applications.length}</span></h3>
-          {stage === "NEW" && <p className="drop-hint">Kéo Application SCREEN đang ACTIVE vào đây để đưa về NEW.</p>}
-          {stage === "SCREEN" && <p className="drop-hint">Kéo Application NEW hoặc INTERVIEW đang ACTIVE vào đây.</p>}
-          {stage === "INTERVIEW" && <p className="drop-hint">Kéo Application SCREEN đang ACTIVE vào đây để chuyển sang INTERVIEW.</p>}
+          <h3><span className="stage-title"><i aria-hidden="true" />{STAGE_LABEL[stage] || stage}</span><span className="count">{applications.length}</span></h3>
+          {stage === "NEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để đưa về NEW.</p>}
+          {stage === "SCREEN" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng NEW hoặc INTERVIEW đang xử lý vào đây.</p>}
+          {stage === "INTERVIEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để chuyển sang INTERVIEW.</p>}
           {applications.length === 0 && <p className="empty-stage">Chưa có ứng viên ở vòng này.</p>}
           {applications.map((application) => {
             const canDrag = Boolean(NEXT_STAGE[application.stage] || PREVIOUS_STAGE[application.stage]) && application.status === "ACTIVE";
             const dragTargets = [NEXT_STAGE[application.stage], PREVIOUS_STAGE[application.stage]].filter(Boolean);
-            const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ Application ACTIVE ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
+            const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
             return <button className="application-card" key={application.application_id}
               draggable={canDrag}
               onDragStart={(event) => { if (!canDrag) { event.preventDefault(); return; } setDragging(application); }}
@@ -241,7 +254,7 @@ export default function ApplicationPipeline({ job, onSessionLost }: { job: Job; 
               onClick={() => void openDetail(application)}
               title={dragReason}
               aria-label={`Mở hồ sơ của ${application.candidate_name}. ${dragReason}`}>
-              <strong>{application.candidate_name}</strong><span>{application.status}</span><small>{application.source || "Không có nguồn"}</small>
+              <span className="application-card-code">{job.job_code || "ỨNG VIÊN"}</span><strong>{application.candidate_name}</strong><span className="application-card-status">{application.status === "ACTIVE" ? "Đang xử lý" : application.status}</span><small>{application.source || "Chưa ghi nguồn"}</small>
             </button>;
           })}
         </section>;

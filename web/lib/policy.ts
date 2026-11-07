@@ -5,6 +5,8 @@ export type Job = {
   job_code: string | null;
   title: string;
   status: string;
+  business_unit?: string | null;
+  location?: string | null;
 };
 export type Draft = {
   id: string;

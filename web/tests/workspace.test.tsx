@@ -163,8 +163,7 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
 it("same-user auth refresh preserves the current review kind while rechecking roles", async () => {
   scope(true, ["ADMIN"]);
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "Duyệt CV & JD" }));
-  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  fireEvent.click(await screen.findByRole("button", { name: "JD" }));
   await screen.findByRole("heading", { name: /Chưa có.*cần duyệt/ });
   const callsBefore = mocks.session.mock.calls.length;
   await act(async () => {
@@ -175,29 +174,28 @@ it("same-user auth refresh preserves the current review kind while rechecking ro
   );
   expect(
     screen
-      .getByRole("button", { name: "JD tuyển dụng" })
-      .getAttribute("aria-pressed"),
-  ).toBe("true");
+      .getByRole("button", { name: "JD" })
+      .getAttribute("aria-current"),
+  ).toBe("page");
   await act(async () => {
     mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
   });
   expect(
     screen
-      .getByRole("button", { name: "JD tuyển dụng" })
-      .getAttribute("aria-pressed"),
-  ).toBe("true");
+      .getByRole("button", { name: "JD" })
+      .getAttribute("aria-current"),
+  ).toBe("page");
 });
 it("silent same-user auth refresh removes review when current roles are revoked", async () => {
   scope(true, ["ADMIN"]);
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "Duyệt CV & JD" }));
-  await screen.findByRole("button", { name: "JD tuyển dụng" });
+  fireEvent.click(await screen.findByRole("button", { name: "JD" }));
   scope(false, []);
   await act(async () => {
     mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
   });
   await screen.findByRole("heading", { name: "Tài khoản đang chờ kích hoạt" });
-  expect(screen.queryByRole("button", { name: "JD tuyển dụng" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "JD" })).toBeNull();
 });
 
 it("switching languages preserves the actual review kind and does not refetch scope", async () => {
@@ -208,8 +206,7 @@ it("switching languages preserves the actual review kind and does not refetch sc
       <Workspace />
     </LanguageProvider>,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Duyệt CV & JD" }));
-  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  fireEvent.click(await screen.findByRole("button", { name: "JD" }));
   await screen.findByRole("heading", { name: /Chưa có JD cần duyệt/ });
   const sessionCalls = mocks.session.mock.calls.length;
   fireEvent.change(
@@ -219,8 +216,8 @@ it("switching languages preserves the actual review kind and does not refetch sc
   expect(
     screen
       .getByRole("button", { name: "Job descriptions" })
-      .getAttribute("aria-pressed"),
-  ).toBe("true");
+      .getAttribute("aria-current"),
+  ).toBe("page");
   await screen.findByRole("heading", { name: "No JD waiting for review" });
   expect(mocks.session.mock.calls.length).toBe(sessionCalls);
   expect(
