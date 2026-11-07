@@ -253,7 +253,7 @@ export default function Workspace() {
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
-            <strong>{tab === "jobs" ? t.jobs : t.review}</strong>
+            <strong>{selectedJob && tab === "jobs" ? selectedJob.title : tab === "jobs" ? t.jobs : t.review}</strong>
           </div>
           <div className="header-actions">
             <label className="language-picker">
@@ -371,11 +371,17 @@ export default function Workspace() {
               <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jobs" ? t.jobs : t.review}</h1>
-                  <p>{tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
+                  <h1>{selectedJob && tab === "jobs" ? selectedJob.title : tab === "jobs" ? t.jobs : t.review}</h1>
+                  <p>{selectedJob && tab === "jobs" ? `${selectedJob.job_code || t.noCode} · ${jobStatusLabel(selectedJob.status, t)}${!selectedJob.job_code && selectedJob.status === "DRAFT" ? ` · ${t.jobCodeNeeded}` : ""}` : tab === "jobs" ? t.jobsIntro : t.reviewIntro}</p>
                 </div>
                 <div className="heading-actions">
-                  {tab === "jobs" && !guideOpen && (
+                  {selectedJob && tab === "jobs" && (
+                    <button className="secondary" onClick={() => setSelectedJob(null)}>
+                      <Icon name="arrow" size={17} />
+                      {t.jobList}
+                    </button>
+                  )}
+                  {tab === "jobs" && !selectedJob && !guideOpen && (
                     <button
                       className="secondary"
                       onClick={() => setGuideOpen(true)}
@@ -401,6 +407,10 @@ export default function Workspace() {
                 <ReviewQueue key={access.userId} onAccessLost={invalidate} />
               ) : (
                 <>
+                  {selectedJob ? (
+                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} />
+                  ) : (
+                    <>
                   {guideOpen && (
                     <section className="guide" aria-label={t.help}>
                       <div className="guide-heading">
@@ -569,8 +579,23 @@ export default function Workspace() {
                                     <span className="job-icon">
                                       <Icon name="jobs" size={18} />
                                     </span>
-                                    <strong>{job.title}</strong>
+                                    <button
+                                      className="job-title-link"
+                                      aria-label={`Mở pipeline ${job.title}`}
+                                      onClick={() => setSelectedJob(job)}
+                                    >
+                                      {job.title}
+                                    </button>
                                   </div>
+                                </td>
+                                <td className="muted">{job.job_code || t.noCode}</td>
+                                <td>
+                                  <span
+                                    className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
+                                  >
+                                    <span className="status-dot" />
+                                    {jobStatusLabel(job.status, t)}
+                                  </span>
                                 </td>
                                 <td>
                                   <button
@@ -580,17 +605,6 @@ export default function Workspace() {
                                   >
                                     Mở pipeline
                                   </button>
-                                </td>
-                                <td className="muted">
-                                  {job.job_code || t.noCode}
-                                </td>
-                                <td>
-                                  <span
-                                    className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
-                                  >
-                                    <span className="status-dot" />
-                                    {jobStatusLabel(job.status, t)}
-                                  </span>
                                 </td>
                               </tr>
                             ))}
@@ -622,12 +636,7 @@ export default function Workspace() {
                       })}
                     </div>
                   </section>
-                  {selectedJob && (
-                    <ApplicationPipeline
-                      key={selectedJob.id}
-                      job={selectedJob}
-                      onSessionLost={invalidate}
-                    />
+                </>
                   )}
                 </>
               )}

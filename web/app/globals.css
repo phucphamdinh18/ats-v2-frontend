@@ -63,7 +63,7 @@ button:disabled {
 .manual-candidate-action { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 3px; }
 .manual-candidate-action p { margin: 0; font-size: 12px; }
 .notice.success { color: #166534; background: #ecfdf3; border: 1px solid #bbf7d0; }
-.pipeline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 18px; overflow-x: auto; }
+.pipeline-grid { display: grid; grid-template-columns: repeat(5, minmax(240px, 1fr)); gap: 14px; margin-top: 18px; overflow-x: auto; overscroll-behavior-inline: contain; padding-bottom: 8px; }
 .stage { background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-height: 150px; }
 .stage h3 { display: flex; justify-content: space-between; align-items: center; }
 .application-card { display: grid; gap: 2px; width: 100%; text-align: left; border: 1px solid var(--line); border-radius: 10px; background: var(--white); padding: 11px; margin: 8px 0; color: var(--ink); }
@@ -76,7 +76,7 @@ button:disabled {
 .timeline { margin: 0; padding-left: 22px; }
 .timeline li { display: grid; margin: 8px 0; }
 .timeline span, .timeline small, .disabled-explanation { color: var(--muted); }
-@media (max-width: 720px) { .pipeline-grid { grid-template-columns: minmax(240px, 1fr); } .application-detail { min-width: 0; } .manual-candidate-form { grid-template-columns: 1fr; } .manual-candidate-action { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 720px) { .pipeline-grid { grid-template-columns: repeat(5, minmax(240px, 1fr)); } .application-detail { min-width: 0; } .manual-candidate-form { grid-template-columns: 1fr; } .manual-candidate-action { align-items: flex-start; flex-direction: column; } }
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -376,7 +376,7 @@ main {
   justify-content: center;
   gap: 8px;
   padding: 10px 15px;
-  border-radius: 9px;
+  border-radius: 10px;
   font-weight: 600;
   border: 1px solid #dce2ed;
   white-space: nowrap;
@@ -389,6 +389,7 @@ main {
 .secondary:hover:not(:disabled) {
   background: #f5f6ff;
   border-color: #c7c9ee;
+  box-shadow: 0 2px 8px #17233b0d;
 }
 .primary {
   background: var(--primary);
@@ -398,6 +399,8 @@ main {
 }
 .primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: 0 4px 10px #4f46e52b;
 }
 .danger {
   color: #b42318;
@@ -405,6 +408,8 @@ main {
 }
 .danger:hover:not(:disabled) {
   background: #fff2f0;
+  border-color: #e8a7a2;
+  box-shadow: 0 2px 8px #b4231812;
 }
 .quiet {
   display: inline-flex;
@@ -1673,4 +1678,82 @@ footer span {
 }
 .application-card[draggable="true"]:active {
   cursor: grabbing;
+}
+
+/* ATS master-workspace direction: compact jobs table and an always-horizontal
+   per-job Kanban, so each stage stays visually in its own lane at every width. */
+.sidebar {
+  background: #0b0f19;
+  border-right-color: #202938;
+  color: #cbd5e1;
+}
+.brand { color: #f8fafc; }
+.brand-caption { color: #94a3b8; }
+.brand-mark { background: linear-gradient(135deg, #6366f1, #7c3aed); }
+.workspace-label { color: #94a3b8; padding-top: 34px; }
+.nav { color: #cbd5e1; }
+.nav:hover { color: #fff; background: #171e2c; }
+.nav.active { color: #fff; background: #27244f; border-color: #39356b; }
+.sidebar-help { background: linear-gradient(145deg, #121827, #151b2d); border-color: #273148; color: #f8fafc; }
+.sidebar-help p { color: #aab6c8; }
+.sidebar-help .quiet { color: #a5b4fc; }
+.sidebar-note { color: #94a3b8; }
+.topbar { min-height: 62px; padding-block: 10px; }
+.panel { box-shadow: 0 4px 18px #0f172a08; }
+.panel-heading { padding-bottom: 14px; }
+.toolbar { padding-bottom: 16px; }
+th { background: #111827; color: #f8fafc; border-color: #273244; padding-block: 11px; }
+td { padding-block: 15px; }
+tbody tr { transition: background-color .15s ease; }
+tbody tr:hover { background: #f7f8ff; }
+.job-icon { width: 32px; height: 32px; }
+.job-title-link { border: 0; background: transparent; color: var(--ink); padding: 0; text-align: left; font-size: 14px; line-height: 1.4; font-weight: 650; }
+.job-title-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.job-title-link:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; border-radius: 3px; }
+.stage { min-width: 0; border-top: 3px solid #cbd5e1; }
+.stage:nth-child(2) { border-top-color: #38bdf8; }
+.stage:nth-child(3) { border-top-color: #818cf8; }
+.stage:nth-child(4) { border-top-color: #34d399; }
+.stage:nth-child(5) { border-top-color: #fb7185; }
+.stage h3 { font-size: 12px; letter-spacing: .04em; }
+.drop-hint { font-size: 11px; line-height: 1.5; }
+.application-card { min-height: 74px; }
+.application-card:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+@media (max-width: 900px) {
+  .topbar { min-height: 58px; }
+}
+
+
+/* Keep candidate intake out of the way until a recruiter chooses to add someone. */
+.add-candidate-disclosure {
+  margin: 16px 24px 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfcff;
+}
+.add-candidate-disclosure > summary {
+  padding: 13px 16px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+}
+.add-candidate-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.add-candidate-disclosure[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.add-candidate-disclosure .manual-candidate {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+@media (max-width: 640px) {
+  .add-candidate-disclosure {
+    margin-right: 14px;
+    margin-left: 14px;
+  }
 }
