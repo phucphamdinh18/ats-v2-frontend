@@ -630,12 +630,15 @@ export default function Workspace() {
                           onChange={(e) => setSearch(e.target.value)}
                         />
                       </label>
-                      <select
-                        aria-label={t.jobStatus}
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                      >
-                        <option value="ALL">{t.allStatuses}</option>
+                      <div className="job-status-filters" role="group" aria-label={t.jobStatus}>
+                        <button
+                          type="button"
+                          className={`job-filter-chip filter-all ${status === "ALL" ? "selected" : ""}`}
+                          aria-pressed={status === "ALL"}
+                          onClick={() => setStatus("ALL")}
+                        >
+                          {t.allStatuses}<span>{access.jobs.length}</span>
+                        </button>
                         {Array.from(
                           new Set([
                             "OPEN",
@@ -644,12 +647,21 @@ export default function Workspace() {
                           ]),
                         )
                           .sort()
-                          .map((s) => (
-                            <option key={s} value={s}>
-                              {jobStatusLabel(s, t)}
-                            </option>
-                          ))}
-                      </select>
+                          .map((s) => {
+                            const count = access.jobs.filter((job) => job.status === s).length;
+                            return (
+                              <button
+                                key={s}
+                                type="button"
+                                className={`job-filter-chip status-${s.toLowerCase().replace(/_/g, "-")} ${status === s ? "selected" : ""}`}
+                                aria-pressed={status === s}
+                                onClick={() => setStatus(s)}
+                              >
+                                {jobStatusLabel(s, t)}<span>{count}</span>
+                              </button>
+                            );
+                          })}
+                      </div>
                     </div>
                     {jobs.length ? (
                       <div className="table-scroll">
