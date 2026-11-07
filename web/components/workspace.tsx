@@ -225,9 +225,6 @@ export default function Workspace() {
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
   useEffect(() => {
-    if (!selectedJob && access?.jobs.length) setSelectedJob(access.jobs[0]);
-  }, [access?.jobs, selectedJob]);
-  useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
   }, [tab, adminAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";

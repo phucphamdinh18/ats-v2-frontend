@@ -176,7 +176,7 @@ it("same-user auth refresh preserves the current review kind while rechecking ro
     screen
       .getByRole("button", { name: "JD" })
       .getAttribute("aria-current"),
-  ).toBe("true");
+  ).toBe("page");
   await act(async () => {
     mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
   });
@@ -184,7 +184,7 @@ it("same-user auth refresh preserves the current review kind while rechecking ro
     screen
       .getByRole("button", { name: "JD" })
       .getAttribute("aria-current"),
-  ).toBe("true");
+  ).toBe("page");
 });
 it("silent same-user auth refresh removes review when current roles are revoked", async () => {
   scope(true, ["ADMIN"]);
@@ -217,7 +217,7 @@ it("switching languages preserves the actual review kind and does not refetch sc
     screen
       .getByRole("button", { name: "Job descriptions" })
       .getAttribute("aria-current"),
-  ).toBe("true");
+  ).toBe("page");
   await screen.findByRole("heading", { name: "No JD waiting for review" });
   expect(mocks.session.mock.calls.length).toBe(sessionCalls);
   expect(
