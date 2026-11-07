@@ -88,7 +88,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
     if (!profile || !selectedId || !jobId || busy) return;
     const job = openJobs.find((item) => item.id === jobId);
     if (!job || profile.applications.some((application) => application.job_id === job.id)) return;
-    if (!window.confirm(`Thêm ${profile.candidate.full_name} vào ${job.title}? ứng viên sẽ được đưa vào vòng Mới ứng tuyển.`)) return;
+    if (!window.confirm(`Thêm ${profile.candidate.full_name} vào ${job.title}? Ứng viên sẽ được đưa vào vòng Mới ứng tuyển.`)) return;
     const key = `${selectedId}:${jobId}`;
     const request = requestId.current?.key === key ? requestId.current.id : crypto.randomUUID();
     requestId.current = { key, id: request };
