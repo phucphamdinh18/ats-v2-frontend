@@ -10,6 +10,16 @@ export type Application = {
   created_at: string;
 };
 
+export type JobSourceMetric = { source: string; sub_source: string; source_ownership: string; count: number };
+export type JobOverview = {
+  job_id: string; total_candidates: number; new_count: number; screening_count: number;
+  interview_count: number; hired_count: number; rejected_count: number; source_summary: JobSourceMetric[];
+};
+
+export async function jobOverview() {
+  return call<{ jobs: JobOverview[] }>({ action: "overview" });
+}
+
 export type ApplicationEvent = {
   event_id: string;
   actor_id: string;
@@ -69,12 +79,13 @@ export type ScreenApplicationResult = {
   application: { application_id: string; changed: boolean };
 };
 
-export function createApplication(candidateId: string, jobId: string, requestId: string) {
+export function createApplication(candidateId: string, jobId: string, requestId: string, source: string, subSource: string) {
   return call<{ application: { application_id: string; changed?: boolean } }>({
     action: "create",
     candidate_id: candidateId,
     job_id: jobId,
-    source: "Talent Pool",
+    source,
+    sub_source: subSource,
     request_id: requestId,
   });
 }

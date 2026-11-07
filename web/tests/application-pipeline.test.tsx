@@ -11,6 +11,17 @@ vi.mock("../lib/applications", () => ({
 }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
+  getClient: () => ({
+    from: () => {
+      const result = { data: [{ sub_source: "TEST ONLY", source: "TEST ONLY", source_ownership: "TEST ONLY" }], error: null };
+      const query = {
+        select: () => query,
+        order: () => query,
+        then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve),
+      };
+      return query;
+    },
+  }),
 }));
 
 const job = { id: "job-1", job_code: "TEST-1", title: "Test only job", status: "OPEN" };

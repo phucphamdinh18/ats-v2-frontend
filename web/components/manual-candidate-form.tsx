@@ -4,21 +4,34 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
+import { getClient } from "@/lib/supabase";
 import { createManualCandidateApplication } from "@/lib/candidates";
 
 type Status = "idle" | "saving" | "success" | "error";
-type Form = { fullName: string; email: string; phone: string; currentTitle: string; driveUrl: string; documentName: string };
-const blank: Form = { fullName: "", email: "", phone: "", currentTitle: "", driveUrl: "", documentName: "" };
+type Form = { fullName: string; email: string; phone: string; currentTitle: string; driveUrl: string; documentName: string; subSource: string };
+type SourceOption = { sub_source: string; source: string; source_ownership: string };
+const blank: Form = { fullName: "", email: "", phone: "", currentTitle: "", driveUrl: "", documentName: "", subSource: "" };
 
 export default function ManualCandidateForm({ job, onCreated, onSessionLost }: { job: Job; onCreated: () => Promise<void>; onSessionLost: () => void }) {
   const [form, setForm] = useState<Form>(blank);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+  const [sourceOptions, setSourceOptions] = useState<SourceOption[]>([]);
+  const [sourceLoadError, setSourceLoadError] = useState("");
   const requestId = useRef<string | null>(null);
   const requestPayload = useRef<string | null>(null);
   const ticket = useRef(0);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => () => { ticket.current += 1; }, []);
+  useEffect(() => {
+    let current = true;
+    void getClient().from("hiring_source_catalog").select("sub_source,source,source_ownership").order("source").order("sub_source")
+      .then(({ data, error: catalogError }) => {
+        if (!current) return;
+        if (catalogError) setSourceLoadError("Không tải được danh mục nguồn. Hãy tải lại trang hoặc báo Admin.");
+        else setSourceOptions((data || []) as SourceOption[]);
+      });
+    return () => { current = false; ticket.current += 1; };
+  }, []);
   const open = job.status === "OPEN";
   const disabledReason = open ? "" : "Chỉ Job đang mở tuyển mới có thể nhận ứng viên.";
   const update = (field: keyof Form, value: string) => {
@@ -34,9 +47,9 @@ export default function ManualCandidateForm({ job, onCreated, onSessionLost }: {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!open || status === "saving") return;
-    if (!form.fullName.trim() || (!form.email.trim() && !form.phone.trim()) || !form.driveUrl.trim() || !form.documentName.trim()) {
+    if (!form.fullName.trim() || (!form.email.trim() && !form.phone.trim()) || !form.driveUrl.trim() || !form.documentName.trim() || !form.subSource) {
       setStatus("error");
-      setError("Nhập họ tên, ít nhất email hoặc số điện thoại, link CV Drive và tên tệp.");
+      setError("Nhập họ tên, email hoặc số điện thoại, link CV Drive, tên tệp và nguồn ứng viên.");
       return;
     }
     const payload = JSON.stringify({ jobId: job.id, ...form });
@@ -82,6 +95,8 @@ export default function ManualCandidateForm({ job, onCreated, onSessionLost }: {
       <label>Email<input aria-label="Email ứng viên" type="email" value={form.email} onChange={(event) => update("email", event.target.value)} maxLength={254} disabled={!open || status === "saving"} /></label>
       <label>Số điện thoại<input aria-label="Số điện thoại ứng viên" value={form.phone} onChange={(event) => update("phone", event.target.value)} maxLength={40} disabled={!open || status === "saving"} /></label>
       <label>Chức danh hiện tại<input aria-label="Chức danh hiện tại" value={form.currentTitle} onChange={(event) => update("currentTitle", event.target.value)} maxLength={160} disabled={!open || status === "saving"} /></label>
+      <label>Nguồn ứng viên *<select aria-label="Nguồn ứng viên" value={form.subSource} onChange={(event) => update("subSource", event.target.value)} required disabled={!open || status === "saving" || !!sourceLoadError}><option value="">Chọn nguồn</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select></label>
+      {sourceLoadError && <p className="notice error" role="alert">{sourceLoadError}</p>}
       <label>Link CV trên Drive *<input aria-label="Link CV Google Drive" type="url" value={form.driveUrl} onChange={(event) => update("driveUrl", event.target.value)} placeholder="https://drive.google.com/file/d/..." disabled={!open || status === "saving"} /></label>
       <label>Tên tệp CV *<input aria-label="Tên tệp CV" value={form.documentName} onChange={(event) => update("documentName", event.target.value)} maxLength={255} disabled={!open || status === "saving"} /></label>
       <div className="manual-candidate-action"><p>Email hoặc số điện thoại là bắt buộc để chống tạo trùng.</p><button className="primary" type="submit" disabled={!open || status === "saving"} title={disabledReason || "Thêm ứng viên vào pipeline"}>{status === "saving" ? "Đang tạo…" : requestId.current ? "Thử lại thêm ứng viên" : "Thêm vào pipeline"}</button></div>
