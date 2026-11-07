@@ -92,6 +92,7 @@ jobs:
           SUPABASE_URL=$API_URL
           SUPABASE_ANON_KEY=$ANON_KEY
           SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY
+          ATS_ALLOWED_ORIGINS=http://127.0.0.1:3000,http://localhost:3000
           EOF
           supabase functions serve --env-file "$RUNNER_TEMP/supabase-local.env" > "$RUNNER_TEMP/edge-functions.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/edge-functions.pid"
