@@ -7,11 +7,21 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'preview: root redirects to Next /next/; next: Next root; qa: restore QA only'
+        description: 'preview: root redirects to Next /next/; path-preview: add a separate /preview/ app and retain the deployed root; next: Next root; qa: restore QA only'
         required: true
         default: preview
         type: choice
-        options: [preview, next, qa]
+        options: [preview, next, qa, path-preview]
+      production_ref:
+        description: 'Commit currently deployed at the Pages root; used only by path-preview'
+        required: false
+        default: '5b53cb18145e2ec03fa815fb5825c1a2a1882bef'
+        type: string
+      preview_ref:
+        description: 'Branch or commit containing the UI to show under /preview/'
+        required: false
+        default: 'feat/ats-job-master-ui-magicpath'
+        type: string
 
 permissions:
   contents: read
@@ -26,7 +36,7 @@ jobs:
     # Forks never receive Pages credentials.
     if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       NEXT_PUBLIC_SUPABASE_URL: https://izchulqhmhqevfmuvqlx.supabase.co
@@ -41,14 +51,66 @@ jobs:
       - run: npm ci --prefix web --no-fund --no-audit
       - run: node tests/inline-script-syntax.cjs && node --test tests/*.test.cjs
       - run: npm --prefix web test
+      - run: npm --prefix web run typecheck
+      - run: |
+          if [ "$PAGES_MODE" = "path-preview" ]; then
+            test -n "$PRODUCTION_REF"
+            test -n "$PREVIEW_REF"
+            echo "Building deployed root from $PRODUCTION_REF"
+            echo "$PRODUCTION_REF" | grep -Eq '^[a-f0-9]{40}$'
+          fi
+        env:
+          PAGES_MODE: ${{ inputs.mode }}
+          PRODUCTION_REF: ${{ inputs.production_ref }}
+          PREVIEW_REF: ${{ inputs.preview_ref }}
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+        with:
+          ref: ${{ inputs.production_ref }}
+          path: production-source/repo
+      - run: npm ci --prefix production-source/repo/web --no-fund --no-audit
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+      - run: npm --prefix production-source/repo/web run build
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+        env:
+          NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+        id: checkout-preview
+        with:
+          ref: ${{ inputs.preview_ref }}
+          path: preview-source/repo
+      - id: preview-revision
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+        run: echo "sha=$(git -C preview-source/repo rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - run: npm ci --prefix preview-source/repo/web --no-fund --no-audit
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+      - run: npm --prefix preview-source/repo/web test && npm --prefix preview-source/repo/web run typecheck
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+      - run: npm --prefix preview-source/repo/web run build
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
+        env:
+          NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend/preview
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
+      - run: |
+          rm -rf web/.pages-preview-out web/out
+          cp -a preview-source/repo/web/out web/.pages-preview-out
+          cp -a production-source/repo/web/out web/out
+          mkdir -p web/.pages-legacy-root
+          cp -a production-source/repo/index.html web/.pages-legacy-root/index.html
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
       - run: npm --prefix web run build
+        if: github.event_name == 'workflow_dispatch' && inputs.mode != 'path-preview'
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ (github.event_name == 'pull_request' || inputs.mode == 'preview') && '/ats-v2-frontend/next' || '/ats-v2-frontend' }}
           NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
-      - run: npm --prefix web run typecheck
       - run: node web/scripts/prepare-pages.mjs "$PAGES_MODE"
         env:
           PAGES_MODE: ${{ github.event_name == 'pull_request' && 'preview' || inputs.mode }}
+          PAGES_PREVIEW_EXPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview' && 'web/.pages-preview-out' || '' }}
+          PAGES_PREVIEW_REVISION: ${{ steps.preview-revision.outputs.sha }}
+          PAGES_LEGACY_ROOT: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview' && 'web/.pages-legacy-root' || '' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/.pages-site

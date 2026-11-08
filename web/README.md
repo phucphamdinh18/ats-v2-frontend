@@ -92,15 +92,16 @@ Official framework reference: https://nextjs.org/docs/app/guides/static-exports
 
 `Publish ATS Pages` is a separate **workflow_dispatch-only** workflow on main. It runs the existing QA checks, all web tests, the production build and TypeScript before producing an artifact. Only the deploy job receives `pages:write` and the temporary OIDC token; the repository token has no content-write permission. Switch the existing Pages publishing source to **GitHub Actions** before the first run. No custom domain, new hosting account, OAuth callback allowlist, CORS origin or backend permission changes are required.
 
-| Mode      | Root URL         | Other pages                        | Purpose                                                        |
-| --------- | ---------------- | ---------------------------------- | -------------------------------------------------------------- |
-| `preview` | Redirect to Next | Next at `/next/`, QA at `/qa.html` | Verify Next without sending OAuth users into legacy QA |
-| `next`    | Next application | QA at `/qa.html`                   | Promote the verified build                                     |
-| `qa`      | Existing QA      | QA at `/qa.html`                   | Restore the current QA interface                               |
+| Mode            | Root URL                  | Other pages                         | Purpose                                                                  |
+| --------------- | ------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| `preview`       | Redirect to Next          | Next at `/next/`, QA at `/qa.html`  | Verify Next without sending OAuth users into legacy QA                   |
+| `path-preview`  | Existing deployed Next    | UI branch at `/preview/`, QA at `/qa.html` | Review a separate UI branch while keeping the deployed app at root |
+| `next`          | Next application          | QA at `/qa.html`                    | Promote the verified build                                              |
+| `qa`            | Existing QA               | QA at `/qa.html`                    | Restore the current QA interface                                        |
 
-Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The export uses `/ats-v2-frontend/next` for preview or `/ats-v2-frontend` for promotion. A same-origin `NEXT_PUBLIC_AUTH_REDIRECT_URL` remains the already-allowed root callback. In preview, the root landing page forwards the OAuth hash and query string to `/next/`, so users return to the Next workspace while no Supabase callback allowlist change is needed. Normal Next at root returns to itself.
+Every release includes `.nojekyll`, `release.json` and an `ats-release` HTML meta tag with the source commit/mode. The `path-preview` mode rebuilds the deployed root from `production_ref` (default: `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`) and places the selected `preview_ref` under `/preview/`. The root gets a small guarded OAuth return bridge: it only forwards to `/preview/` after a Google login was initiated there and a recent callback arrives. No Supabase callback allowlist change is needed. For the ordinary `preview` mode, the root landing page forwards the OAuth hash and query string to `/next/`.
 
-Packaging copies only the static export and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Sign in at the top-level root first; Google OAuth should not be used inside the iframe.
+Packaging copies only static exports and the reviewed legacy HTML; source, environment files and dependencies are excluded. It refuses an existing destination, an unexpected legacy callback, an invalid source revision or a mismatched Next basePath. `/responsive-check.html` embeds the actual app at 375×812 for mobile visual inspection when the cloud browser cannot resize its viewport. Do not sign in inside the iframe.
 
 Rollback: manually run `Publish ATS Pages` with `mode: qa` on main, or restore the prior Pages deployment. Publishing `next` again rebuilds the current main source; it is not an immutable old-release rollback. There is no automatic production deployment on merge/push.
 

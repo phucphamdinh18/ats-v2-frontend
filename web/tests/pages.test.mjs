@@ -75,6 +75,41 @@ test("QA rollback publishes original QA at root without requiring Next export", 
     );
     assert.ok(!(await readdir(destination)).includes("next"));
   }));
+test("path preview adds a separate /preview app while retaining the deployed root export", () =>
+  project(async (root, destination) => {
+    const previewExport = path.join(root, "preview-out");
+    const productionRoot = path.join(root, "production");
+    await mkdir(previewExport);
+    await mkdir(productionRoot);
+    await writeFile(
+      path.join(root, "web/out/index.html"),
+      '<head></head><script src="/ats-v2-frontend/_next/live.js"></script><p>Production app</p>',
+    );
+    await writeFile(
+      path.join(productionRoot, "index.html"),
+      '<head></head><p>Production QA</p><script>const options = {redirectTo: window.location.origin + window.location.pathname};</script>',
+    );
+    await writeFile(
+      path.join(previewExport, "index.html"),
+      '<head></head><script src="/ats-v2-frontend/preview/_next/demo.js"></script><p>Preview app</p>',
+    );
+    const previewRevision = "2".repeat(40);
+    await preparePages({ mode: "path-preview", root, revision, destination, previewExport, previewRevision, legacyRoot: productionRoot });
+    const liveRoot = await readFile(path.join(destination, "index.html"), "utf8");
+    const preview = await readFile(path.join(destination, "preview/index.html"), "utf8");
+    const qa = await readFile(path.join(destination, "qa.html"), "utf8");
+    assert.ok(liveRoot.includes("Production app"));
+    assert.ok(liveRoot.includes("/ats-v2-frontend/_next/live.js"));
+    assert.ok(liveRoot.includes(`${revision}:path-preview`));
+    assert.ok(liveRoot.includes("ats.preview.oauth.return"));
+    assert.ok(!liveRoot.includes("Preview app"));
+    assert.ok(preview.includes("Preview app"));
+    assert.ok(preview.includes(`${previewRevision}:path-preview`));
+    assert.ok(preview.includes("auth-google-button"));
+    assert.ok(qa.includes("Production QA"));
+    const release = JSON.parse(await readFile(path.join(destination, "release.json"), "utf8"));
+    assert.deepEqual(release.preview, { path: "preview/", revision: previewRevision });
+  }));
 test("fails on a mismatched Next basePath before creating output", () =>
   project(async (root, destination) => {
     await writeFile(

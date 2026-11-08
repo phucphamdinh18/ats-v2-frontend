@@ -22,7 +22,7 @@ describe("manual candidate form", () => {
   it("keeps the same request id when the network retry is requested", async () => {
     api.create.mockRejectedValueOnce(new Error("Mạng lỗi")).mockResolvedValueOnce({ created: true });
     render(<ManualCandidateForm job={openJob} onCreated={vi.fn(async () => {})} onSessionLost={vi.fn()} />);
-    await await complete(); fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
+    await complete(); fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
     await screen.findByText("Mạng lỗi"); fireEvent.click(screen.getByRole("button", { name: "Thử lại với cùng request_id" }));
     await waitFor(() => expect(api.create).toHaveBeenCalledTimes(2));
     expect(api.create.mock.calls[0][0].requestId).toBe(api.create.mock.calls[1][0].requestId);

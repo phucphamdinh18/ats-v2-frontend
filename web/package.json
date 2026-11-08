@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts tests/pages.test.mjs && vitest run"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",
+    "lucide-react": "^0.468.0",
     "next": "16.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
