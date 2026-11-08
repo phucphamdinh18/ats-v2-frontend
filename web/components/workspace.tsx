@@ -19,6 +19,60 @@ type Access = {
   active: boolean;
   jobs: Job[];
 };
+
+function DemoWorkspace({ onExit }: { onExit: () => void }) {
+  const stages = [
+    { label: "Mới", count: 18, color: "new", names: ["Linh N.", "Minh T."] },
+    { label: "Sơ loại", count: 12, color: "screen", names: ["An P.", "Vy H."] },
+    { label: "Phỏng vấn", count: 7, color: "interview", names: ["Huy Q.", "Trang L."] },
+    { label: "Offer", count: 3, color: "offer", names: ["Mai T."] },
+    { label: "Đã tuyển", count: 2, color: "hired", names: ["Nam V."] },
+  ];
+  const demoJobs = [
+    { title: "Senior Embedded Software Engineer", code: "EPC-4-2026", team: "Embedded · HCMC", status: "Đang tuyển", count: 8, sla: "Còn 6 ngày" },
+    { title: "Senior AI Engineer", code: "EAF-12-2026", team: "AI Engineering · HCMC", status: "Đang tuyển", count: 6, sla: "Còn 3 ngày" },
+    { title: "Technical Operations Coordinator", code: "OPS-03-2026", team: "Operations · Remote", status: "Bản nháp", count: 0, sla: "Chưa bắt đầu" },
+  ];
+  return (
+    <div className="demo-shell">
+      <aside className="demo-sidebar">
+        <div className="demo-brand"><span className="demo-brand-mark"><Icon name="jobs" size={20} /></span><span>ATS<small>HIRING WORKSPACE</small></span></div>
+        <span className="demo-nav-caption">KHÔNG GIAN LÀM VIỆC</span>
+        <nav aria-label="Điều hướng bản demo">
+          <span className="demo-nav-item active"><Icon name="jobs" size={18} />Vị trí tuyển dụng</span>
+          <span className="demo-nav-item"><Icon name="review" size={18} />Hiring Pipeline</span>
+          <span className="demo-nav-item"><Icon name="team" size={18} />Talent Pool</span>
+          <span className="demo-nav-item"><Icon name="review" size={18} />JD tuyển dụng</span>
+          <span className="demo-nav-item"><Icon name="shield" size={18} />Quản trị & quyền</span>
+        </nav>
+        <div className="demo-sidebar-bottom"><span className="demo-avatar">P</span><span>Recruiter demo<small>Chỉ xem · dữ liệu minh họa</small></span></div>
+      </aside>
+      <main className="demo-main">
+        <header className="demo-topbar"><span>Tuyển dụng <b>/</b> Vị trí tuyển dụng</span><button type="button" onClick={onExit}>Thoát bản demo</button></header>
+        <div className="demo-content">
+          <div className="demo-notice"><Icon name="help" size={17} /><span><strong>BẢN DEMO ·</strong> Dữ liệu minh họa, chỉ xem. Không kết nối Supabase và không lưu thay đổi.</span></div>
+          <div className="demo-heading"><div><span className="demo-eyebrow">TỔNG QUAN TUYỂN DỤNG</span><h1>Vị trí tuyển dụng</h1><p>Theo dõi nhu cầu tuyển dụng và tiến độ của từng Job tại một nơi.</p></div><button type="button" disabled><Icon name="jobs" size={16} />Tạo Job</button></div>
+          <section className="demo-metrics" aria-label="Chỉ số tuyển dụng minh họa">
+            <article><span className="demo-metric-icon violet"><Icon name="jobs" size={19} /></span><small>Tổng Job</small><strong>18</strong><em>Trong danh sách được giao</em></article>
+            <article><span className="demo-metric-icon green"><Icon name="team" size={19} /></span><small>Đang tuyển</small><strong>12</strong><em>Đang nhận ứng viên</em></article>
+            <article><span className="demo-metric-icon amber"><Icon name="review" size={19} /></span><small>Cần xử lý</small><strong>5</strong><em>2 Job nháp · 3 lịch phỏng vấn</em></article>
+          </section>
+          <section className="demo-panel demo-pipeline">
+            <div className="demo-panel-heading"><div><h2>Hiring Pipeline</h2><p>Tổng quan ứng viên qua các vòng tuyển dụng</p></div><span>Tháng này <Icon name="arrow" size={14} /></span></div>
+            <div className="demo-stage-grid">{stages.map((stage) => <article className={`demo-stage ${stage.color}`} key={stage.label}><div><span>{stage.label}</span><strong>{stage.count}</strong></div><div className="demo-stage-track"><span style={{ width: `${Math.min(stage.count * 5, 100)}%` }} /></div><small>ứng viên</small>{stage.names.map((name) => <span className="demo-candidate" key={name}>{name}<span>•••</span></span>)}</article>)}</div>
+          </section>
+          <section className="demo-panel demo-job-panel">
+            <div className="demo-panel-heading"><div><h2>Danh sách Job</h2><p>Thông tin chính, SLA và ứng viên theo từng vị trí</p></div><span className="demo-count">18 vị trí</span></div>
+            <div className="demo-job-filters"><span className="demo-search"><Icon name="search" size={17} />Tìm theo tên Job hoặc mã</span><span className="demo-filter active">Tất cả <b>18</b></span><span className="demo-filter">Đang tuyển <b>12</b></span><span className="demo-filter">Bản nháp <b>6</b></span></div>
+            <div className="demo-table-wrap"><table className="demo-table"><thead><tr><th>VỊ TRÍ & MÃ JOB</th><th>ĐƠN VỊ</th><th>TRẠNG THÁI</th><th>SLA</th><th>ỨNG VIÊN</th><th></th></tr></thead><tbody>{demoJobs.map((job) => <tr key={job.code}><td><strong>{job.title}</strong><small>{job.code}</small></td><td>{job.team}</td><td><span className={`demo-status ${job.status === "Đang tuyển" ? "open" : "draft"}`}><i />{job.status}</span></td><td>{job.sla}</td><td><strong>{job.count}</strong><small>ứng viên</small></td><td><span className="demo-open-pipeline">Mở Pipeline <Icon name="arrow" size={14} /></span></td></tr>)}</tbody></table></div>
+          </section>
+          <p className="demo-footnote"><Icon name="shield" size={14} />Các con số và tên trong màn hình này chỉ phục vụ xem thử.</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 export default function Workspace() {
   const { t, locale, setLocale } = useLanguage();
   const [guideOpen, setGuideOpen] = useState(false);
@@ -30,6 +84,7 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
+  const [showDemo, setShowDemo] = useState(false);
   const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -280,6 +335,7 @@ export default function Workspace() {
   const globalJobMatches = (access?.jobs || []).filter((job) =>
     normalizedGlobalQuery && `${job.title} ${job.job_code || ""}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery),
   ).slice(0, 5);
+  if (!access && showDemo) return <DemoWorkspace onExit={() => setShowDemo(false)} />;
   if (loading && !access) {
     return (
       <div className="auth-loading">
@@ -364,6 +420,10 @@ export default function Workspace() {
               <span className="auth-scope-icon"><Icon name="jobs" size={20} /></span>
               <span>{t.scoped}</span>
             </div>
+            <button className="auth-demo-button" type="button" onClick={() => setShowDemo(true)}>
+              Xem thử giao diện ATS <Icon name="arrow" size={15} />
+            </button>
+            <span className="auth-demo-caption">Bản xem trước chỉ dùng dữ liệu minh họa</span>
           </div>
           <div className="auth-main-footer">ATS · {t.footer}</div>
         </section>
@@ -841,13 +901,11 @@ export default function Workspace() {
                         <table>
                           <thead>
                             <tr>
-                              <th>1. Định danh & vị trí</th>
-                              <th>2. Đơn vị & chức năng</th>
-                              <th>3. Loại yêu cầu & ngày Req</th>
-                              <th>4. Level & ưu tiên</th>
-                              <th>5. Trạng thái</th>
-                              <th>6. SLA tổng</th>
-                              <th>7. Funnel & nguồn</th>
+                              <th>Vị trí tuyển dụng</th>
+                              <th>Đơn vị</th>
+                              <th>Trạng thái & yêu cầu</th>
+                              <th>SLA & ưu tiên</th>
+                              <th>Ứng viên & tiến độ</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -869,9 +927,7 @@ export default function Workspace() {
                                   </div>
                                   <small className="job-code-subtitle">{job.job_code || t.noCode}</small>
                                 </td>
-                                <td><strong>{job.business_unit || "Chưa có BU"}</strong><small className="job-code-subtitle">{job.function_group || "Chưa phân nhóm"}{job.location ? ` · ${job.location}` : ""}</small></td>
-                                <td><strong>{job.request_type === "REPLACEMENT" ? "Thay thế" : job.request_type === "NEW" ? "Tuyển mới" : "Chưa xác định"}</strong><small className="job-code-subtitle">Req: {job.req_date || "—"}</small></td>
-                                <td><strong>{job.level == null ? "Level —" : `Level ${job.level}`}</strong><small className="job-code-subtitle">{job.priority || "Chưa có ưu tiên"}</small></td>
+                                <td><strong>{job.business_unit || "Chưa có đơn vị"}</strong><small className="job-row-meta">{job.function_group || "Chưa phân nhóm"}{job.location ? ` · ${job.location}` : ""}</small></td>
                                 <td>
                                   <span
                                     className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
@@ -879,11 +935,12 @@ export default function Workspace() {
                                     <span className="status-dot" />
                                     {jobStatusLabel(job.status, t)}
                                   </span>
+                                  <small className="job-row-meta">{job.request_type === "REPLACEMENT" ? "Thay thế" : job.request_type === "NEW" ? "Tuyển mới" : "Chưa xác định"}{job.req_date ? ` · Req ${job.req_date}` : ""}</small>
                                 </td>
-                                <td>{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></td>
+                                <td>{job.sla_target_workdays == null ? <span className="muted">Chưa thiết lập</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-row-meta">{job.level == null ? "Chưa có Level" : `Level ${job.level}`}{job.priority ? ` · ${job.priority}` : ""}{job.hiring_season ? ` · ${job.hiring_season}` : ""}</small></td>
                                 <td>
-                                  <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
-                                  {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
+                                  <strong>{job.metrics?.total_candidates ?? 0} ứng viên</strong>
+                                  {job.metrics && <small className="job-row-meta">Mới {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
                                   {job.metrics?.source_summary?.length ? <details className="job-source-summary"><summary>Nguồn ({job.metrics.source_summary.length})</summary><ul>{job.metrics.source_summary.map((source) => <li key={`${source.source}:${source.sub_source}:${source.source_ownership}`}>{source.sub_source ? `${source.sub_source} · ` : ""}{source.source}: {source.count}</li>)}</ul></details> : <small className="job-code-subtitle">Nguồn: chưa có dữ liệu</small>}
                                   <button className="job-pipeline-action" aria-label={`Mở pipeline ${job.title}`} onClick={() => { setSelectedJob(job); setJobView("pipeline"); }}>Pipeline <Icon name="arrow" size={14} /></button>
                                 </td>
