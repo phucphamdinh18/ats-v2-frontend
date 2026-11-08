@@ -33,6 +33,7 @@ export default function Workspace() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobView, setJobView] = useState<"master" | "pipeline">("master");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const authUser = useRef<string | null>(null);
@@ -588,6 +589,15 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
+                  <div className="job-view-tabs" role="tablist" aria-label="Chế độ xem Job">
+                    <button type="button" role="tab" aria-selected={jobView === "master"} className={jobView === "master" ? "active" : ""} onClick={() => setJobView("master")}>
+                      <Icon name="jobs" size={16} /> 1.1 Bảng Master <span>{access.jobs.length} Job</span>
+                    </button>
+                    <button type="button" role="tab" aria-selected={jobView === "pipeline"} className={jobView === "pipeline" ? "active" : ""} onClick={() => setJobView("pipeline")}>
+                      <Icon name="review" size={16} /> 1.2 Hiring Pipeline <span>{selectedJob?.job_code || "Chọn Job"}</span>
+                    </button>
+                  </div>
+                  {jobView === "master" ? <>
                   <section className="metrics" aria-label={t.totalJobs}>
                     <div>
                       <div className="metric-top">
@@ -631,7 +641,7 @@ export default function Workspace() {
                   <section className="panel">
                     <div className="panel-heading">
                       <h2>
-                        {t.jobList}
+                        {t.jobList} · Master
                         <span className="count">{jobs.length}</span>
                       </h2>
                     </div>
@@ -729,6 +739,7 @@ export default function Workspace() {
                                   <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
                                   {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
                                   {job.metrics?.source_summary?.length ? <details className="job-source-summary"><summary>Nguồn ({job.metrics.source_summary.length})</summary><ul>{job.metrics.source_summary.map((source) => <li key={`${source.source}:${source.sub_source}:${source.source_ownership}`}>{source.sub_source ? `${source.sub_source} · ` : ""}{source.source}: {source.count}</li>)}</ul></details> : <small className="job-code-subtitle">Nguồn: chưa có dữ liệu</small>}
+                                  <button className="job-pipeline-action" aria-label={`Mở pipeline ${job.title}`} onClick={() => { setSelectedJob(job); setJobView("pipeline"); }}>Pipeline <Icon name="arrow" size={14} /></button>
                                 </td>
                               </tr>
                             ))}
@@ -760,9 +771,17 @@ export default function Workspace() {
                       })}
                     </div>
                   </section>
-                  {selectedJob && tab === "jobs" && (
-                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} />
-                  )}
+                  </> : selectedJob ? <section className="job-pipeline-view">
+                    <div className="job-pipeline-toolbar">
+                      <button className="secondary" onClick={() => setJobView("master")}><Icon name="arrow" size={15} /> Quay lại Bảng Master</button>
+                      <label>Requisition
+                        <select aria-label="Chọn Job cho Hiring Pipeline" value={selectedJob.id} onChange={(event) => setSelectedJob(access.jobs.find((job) => job.id === event.target.value) || null)}>
+                          {access.jobs.map((job) => <option key={job.id} value={job.id}>[{job.job_code || "Chưa có mã"}] {job.title}</option>)}
+                        </select>
+                      </label>
+                    </div>
+                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} />
+                  </section> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
                 </>
               )}
             </>

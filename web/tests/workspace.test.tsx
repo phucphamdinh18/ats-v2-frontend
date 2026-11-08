@@ -112,18 +112,20 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   });
   expect(screen.queryByText("Synthetic Engineer")).toBeNull();
 });
-it("keeps the Job list visible while switching the selected Job pipeline", async () => {
+it("opens Pipeline from Job Master and switches requisitions", async () => {
   scope(true, ["HIRING_MANAGER"], [
     { id: "job1", title: "First Job", status: "OPEN", job_code: "JOB-1" },
     { id: "job2", title: "Second Job", status: "DRAFT", job_code: "JOB-2" },
   ]);
   render(<Workspace />);
+  fireEvent.click(await screen.findByRole("button", { name: "Mở pipeline First Job" }));
   await screen.findByRole("region", { name: "Pipeline First Job" });
-  expect(screen.getByRole("button", { name: "Chọn Job First Job" })).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Chọn Job Second Job" }));
+  const requisition = screen.getByRole("combobox", { name: "Chọn Job cho Hiring Pipeline" });
+  fireEvent.change(requisition, { target: { value: "job2" } });
   await screen.findByRole("region", { name: "Pipeline Second Job" });
-  expect(screen.getByRole("button", { name: "Chọn Job First Job" })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Chọn Job Second Job" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Quay lại Bảng Master" }));
+  await screen.findByRole("button", { name: "Mở pipeline First Job" });
+  expect(screen.getByRole("button", { name: "Mở pipeline Second Job" })).toBeTruthy();
 });
 it("logout removes already displayed private data immediately", async () => {
   scope(
