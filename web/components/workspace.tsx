@@ -26,16 +26,21 @@ export default function Workspace() {
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
   const [localLoginVisible, setLocalLoginVisible] = useState(false);
+  const [localLoginOpen, setLocalLoginOpen] = useState(false);
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin">("jobs");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [jobView, setJobView] = useState<"master" | "pipeline">("master");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
+  const globalSearchRef = useRef<HTMLInputElement>(null);
   const authUser = useRef<string | null>(null);
   useEffect(() => {
     const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
@@ -241,11 +246,132 @@ export default function Workspace() {
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
   useEffect(() => {
+    if (!globalSearchOpen) return;
+    const frame = window.requestAnimationFrame(() => globalSearchRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [globalSearchOpen]);
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
+        event.preventDefault();
+        setGlobalSearchOpen(true);
+      }
+      if (event.key === "Escape") {
+        setGlobalSearchOpen(false);
+        setGlobalSearchQuery("");
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
+  useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
   }, [tab, adminAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
+  const globalNavMatches = [
+    { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
+    ...(reviewAllowed ? [
+      { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
+      { label: locale === "en" ? "Job descriptions" : "JD tuyển dụng", description: "Hàng chờ duyệt mô tả công việc", destination: "jd" as const },
+    ] : []),
+    ...(adminAllowed ? [{ label: locale === "en" ? "Admin & permissions" : "Quản trị & quyền", description: "Quản lý Job và phân quyền", destination: "admin" as const }] : []),
+  ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
+  const globalJobMatches = (access?.jobs || []).filter((job) =>
+    normalizedGlobalQuery && `${job.title} ${job.job_code || ""}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery),
+  ).slice(0, 5);
+  if (loading && !access) {
+    return (
+      <div className="auth-loading">
+        <LoadingState label={t.loading} />
+      </div>
+    );
+  }
+  if (!access) {
+    return (
+      <main className="auth-screen">
+        <section className="auth-brand-panel" aria-label={t.workspace} style={{ backgroundImage: `linear-gradient(135deg, rgb(19 24 68 / 84%), rgb(57 39 143 / 82%)), url("${basePath}/login-brand-background.webp")` }}>
+          <div className="auth-brand-content">
+            <a className="auth-brand" href={`${basePath}/`} aria-label="ATS">
+              <span className="auth-brand-mark"><Icon name="jobs" size={22} /></span>
+              <span>ATS<small>Applicant Tracking System</small></span>
+            </a>
+            <div className="auth-brand-copy">
+              <span className="auth-kicker">{t.workspace}</span>
+              <h1>{t.loginTitle}</h1>
+              <p>{t.loginIntro}</p>
+            </div>
+            <div className="auth-brand-footer">
+              <Icon name="shield" size={17} />
+              <span>{t.securityNote}</span>
+            </div>
+          </div>
+        </section>
+        <section className="auth-main-panel">
+          <div className="auth-language">
+            <Icon name="globe" size={17} />
+            <select
+              aria-label={t.language}
+              value={locale}
+              onChange={(event) => setLocale(event.target.value === "en" ? "en" : "vi")}
+            >
+              <option value="vi">Tiếng Việt</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div className="auth-login-content">
+            <span className="auth-welcome-icon"><Icon name="team" size={25} /></span>
+            <span className="auth-kicker">{t.loginEyebrow}</span>
+            <h2>{locale === "vi" ? "Đăng nhập vào ATS" : "Sign in to ATS"}</h2>
+            {error && (
+              <div className="notice error auth-error" role="alert">
+                <Icon name="help" />
+                <span>{friendlyError(error, t)}</span>
+                <button className="quiet" onClick={() => loginStarted.current ? window.location.reload() : void refresh()}>
+                  {loginStarted.current ? t.reload : t.refreshAccess}
+                </button>
+              </div>
+            )}
+            <p className="auth-login-note">
+              <Icon name="help" size={18} />
+              <span>{t.loginNote}</span>
+            </p>
+            {localLoginVisible && localLoginOpen ? (
+              <div className="local-login auth-local-login">
+                <label>
+                  Email thử nghiệm
+                  <input type="email" autoComplete="username" value={localEmail} onChange={(event) => setLocalEmail(event.target.value)} placeholder="admin.test@example.invalid" />
+                </label>
+                <label>
+                  Mật khẩu thử nghiệm
+                  <input type="password" autoComplete="current-password" value={localPassword} onChange={(event) => setLocalPassword(event.target.value)} />
+                </label>
+                <button className="primary google-button" disabled={authBusy || !localEmail || !localPassword} onClick={() => void localLogin()}>
+                  {authBusy ? "Đang đăng nhập…" : "Đăng nhập thử"}<Icon name="arrow" size={17} />
+                </button>
+                <button className="quiet auth-local-toggle" onClick={() => setLocalLoginOpen(false)}>Ẩn đăng nhập thử nghiệm</button>
+              </div>
+            ) : (
+              <>
+                <button className="primary auth-google-button" disabled={authBusy || !!error} onClick={login}>
+                  <span className="google-mark" aria-hidden="true">G</span>
+                  {authBusy ? t.signingIn : t.signIn}
+                </button>
+                {localLoginVisible && <button className="quiet auth-local-toggle" onClick={() => setLocalLoginOpen(true)}>Mở đăng nhập thử nghiệm cục bộ</button>}
+              </>
+            )}
+            <div className="auth-scope-note">
+              <span className="auth-scope-icon"><Icon name="jobs" size={20} /></span>
+              <span>{t.scoped}</span>
+            </div>
+          </div>
+          <div className="auth-main-footer">ATS · {t.footer}</div>
+        </section>
+      </main>
+    );
+  }
   return (
-    <div className="shell">
+    <div className={`shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <a className="skip-link" href="#main-content">
         {t.navigation}
       </a>
@@ -266,7 +392,7 @@ export default function Workspace() {
             onClick={() => setTab("jobs")}
           >
             <Icon name="jobs" />
-            {t.jobs}
+            <span className="nav-label">{t.jobs}</span>
           </button>
           {reviewAllowed && (
             <button
@@ -275,7 +401,7 @@ export default function Workspace() {
               onClick={() => setTab("talent")}
             >
               <Icon name="team" />
-              Talent Pool
+              <span className="nav-label">Talent Pool</span>
             </button>
           )}
           {adminAllowed && (
@@ -285,7 +411,7 @@ export default function Workspace() {
               onClick={() => setTab("admin")}
             >
               <Icon name="shield" />
-              {locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}
+              <span className="nav-label">{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span>
             </button>
           )}
           {reviewAllowed && (
@@ -295,7 +421,7 @@ export default function Workspace() {
               onClick={() => setTab("jd")}
             >
               <Icon name="review" />
-              {locale === "en" ? "Job descriptions" : "JD"}
+              <span className="nav-label">{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span>
             </button>
           )}
         </nav>
@@ -320,8 +446,12 @@ export default function Workspace() {
         </div>
         <div className="sidebar-note">
           <Icon name="shield" size={16} />
-          <span>{t.scoped}</span>
+          <span className="sidebar-note-copy">{t.scoped}</span>
         </div>
+        <button className="sidebar-collapse" type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed((value) => !value)}>
+          <Icon name={sidebarCollapsed ? "expand" : "collapse"} size={17} />
+          <span className="nav-label">{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span>
+        </button>
       </aside>
       <div className="main">
         <header className="topbar">
@@ -331,6 +461,22 @@ export default function Workspace() {
             <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
           </div>
           <div className="header-actions">
+            <div className={`global-search ${globalSearchOpen ? "is-open" : ""}`}>
+              {globalSearchOpen ? (
+                <>
+                  <label className="global-search-input">
+                    <Icon name="search" size={17} />
+                    <input ref={globalSearchRef} value={globalSearchQuery} onChange={(event) => setGlobalSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setGlobalSearchOpen(false); setGlobalSearchQuery(""); } }} placeholder={locale === "en" ? "Search jobs and pages…" : "Tìm Job hoặc màn hình…"} aria-label={locale === "en" ? "Search ATS" : "Tìm trong ATS"} />
+                    <kbd>ESC</kbd>
+                  </label>
+                  <div className="global-search-results" role="listbox" aria-label={locale === "en" ? "Search results" : "Kết quả tìm kiếm"}>
+                    {globalJobMatches.map((job) => <button key={job.id} type="button" role="option" aria-selected="false" onClick={() => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name="jobs" size={16} /></span><span><strong>{job.title}</strong><small>{job.job_code || t.noCode} · {jobStatusLabel(job.status, t)}</small></span><Icon name="arrow" size={15} /></button>)}
+                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : item.destination === "jd" ? "review" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
+                    {!globalJobMatches.length && !globalNavMatches.length && <p className="global-search-empty">{locale === "en" ? "No matching Jobs or pages." : "Không tìm thấy Job hoặc màn hình phù hợp."}</p>}
+                  </div>
+                </>
+              ) : <button className="global-search-trigger" type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
+            </div>
             <label className="language-picker">
               <Icon name="globe" size={17} />
               <select
