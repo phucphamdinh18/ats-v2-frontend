@@ -101,7 +101,7 @@ jobs:
           cp -a production-source/repo/index.html web/.pages-legacy-root/index.html
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview'
       - run: npm --prefix web run build
-        if: github.event_name == 'workflow_dispatch' && inputs.mode != 'path-preview'
+        if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'path-preview')
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ (github.event_name == 'pull_request' || inputs.mode == 'preview') && '/ats-v2-frontend/next' || '/ats-v2-frontend' }}
           NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
