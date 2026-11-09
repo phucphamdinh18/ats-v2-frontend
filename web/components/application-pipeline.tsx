@@ -256,7 +256,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
     </div>
     <div className="pipeline-toolbar">
-      {(state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
+      {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
       <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
       {state === "ready" && <span className="muted">{items.length} ứng viên đang hiển thị</span>}
     </div>
