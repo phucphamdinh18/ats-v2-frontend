@@ -13,6 +13,7 @@
   box-sizing: border-box;
 }
 html {
+  color-scheme: only light;
   scroll-behavior: smooth;
 }
 body {
@@ -2384,3 +2385,6 @@ th { padding: 11px 18px; }
   .auth-main-panel { min-height: 500px; padding: 68px 24px 60px; }
   .auth-language { top: 18px; right: 18px; }
 }
+
+/* Keep the Job Master column labels in normal flow inside the horizontal scroller. */
+.table-scroll th { position: static; top: auto; }
