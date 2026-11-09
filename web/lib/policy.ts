@@ -84,6 +84,17 @@ export function reviewPermissions(kind: Kind, detail: Detail) {
 export function canReview(roles: string[]) {
   return roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER");
 }
+export type JobMembership = { job_id: string; role: string };
+export function canManageApplicationStages(
+  roles: string[],
+  memberships: JobMembership[],
+  jobId: string,
+) {
+  if (roles.includes("ADMIN")) return true;
+  return roles.includes("TA_RECRUITER") && memberships.some(
+    (membership) => membership.job_id === jobId && membership.role === "TA_RECRUITER",
+  );
+}
 export function driveLink(value: string | null): string | null {
   if (!value) return null;
   try {

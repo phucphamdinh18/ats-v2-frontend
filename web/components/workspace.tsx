@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
-import { authRedirect, canReview, RequestGate, type Job } from "@/lib/policy";
+import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
 import Icon from "./icon";
@@ -18,6 +18,7 @@ type Access = {
   roles: string[];
   active: boolean;
   jobs: Job[];
+  memberships: JobMembership[];
 };
 export default function Workspace() {
   const { t, locale, setLocale } = useLanguage();
@@ -90,7 +91,15 @@ export default function Workspace() {
         ? (roles.data || []).map((item) => item.role)
         : [];
       let jobs: Job[] = [];
+      let memberships: JobMembership[] = [];
       if (active && roleNames.length) {
+        if (roleNames.includes("TA_RECRUITER") && !roleNames.includes("ADMIN")) {
+          const membershipResult = await client.from("job_memberships")
+            .select("job_id,role")
+            .eq("user_id", session.user.id);
+          if (membershipResult.error) throw membershipResult.error;
+          memberships = (membershipResult.data || []) as JobMembership[];
+        }
         const result = await client
           .from("jobs")
           .select("id,job_code,title,status,business_unit,location,level,function_group,hiring_season,req_date,request_type,priority,replacement_for")
@@ -123,6 +132,7 @@ export default function Workspace() {
           active,
           roles: roleNames,
           jobs,
+          memberships,
         });
       }
     } catch (err) {
@@ -926,7 +936,7 @@ export default function Workspace() {
                         </select>
                       </label>
                     </div>
-                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} />
+                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
                   </section> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
                 </>
               )}

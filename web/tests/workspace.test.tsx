@@ -53,7 +53,7 @@ beforeEach(() => {
   });
 });
 afterEach(cleanup);
-function scope(active: boolean, roles: string[], jobs: unknown[] = []) {
+function scope(active: boolean, roles: string[], jobs: unknown[] = [], memberships: unknown[] = []) {
   mocks.from.mockImplementation((table: string) => {
     const result =
       table === "app_users"
@@ -62,6 +62,8 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = []) {
           ? { data: roles.map((role) => ({ role })), error: null }
           : table === "jobs"
             ? { data: jobs, error: null }
+            : table === "job_memberships"
+              ? { data: memberships, error: null }
             : table === "job_sla_rules"
               ? { data: [], error: null }
               : table === "hiring_source_catalog"
@@ -79,6 +81,14 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = []) {
     return query;
   });
 }
+it("passes stage permission only when the TA membership matches the selected Job", async () => {
+  scope(true, ["TA_RECRUITER"], [{ id: "job1", title: "Synthetic Engineer", status: "OPEN", job_code: "TEST-1" }], []);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
+  fireEvent.click(screen.getByRole("button", { name: "Mở pipeline Synthetic Engineer" }));
+  expect(await screen.findByRole("status")).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
+});
 it("inactive profile cannot show role-restricted data even with a retained TA role", async () => {
   scope(false, ["TA_RECRUITER"]);
   render(<Workspace />);
