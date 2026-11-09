@@ -12,6 +12,7 @@ const pageErrors = [];
 const failedRequests = [];
 const failedResponses = [];
 const contexts = [];
+let activePage;
 function observePage(page) {
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("response", async (response) => {
@@ -25,12 +26,14 @@ async function loginAs(email) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   contexts.push(context);
   const page = await context.newPage();
+  activePage = page;
   observePage(page);
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Mở đăng nhập thử nghiệm cục bộ" }).click();
   await page.getByLabel("Email thử nghiệm").fill(email);
   await page.getByLabel("Mật khẩu thử nghiệm").fill("LocalTestOnly-2026-ATS!");
   await page.getByRole("button", { name: "Đăng nhập thử", exact: true }).click();
+  await page.locator(".account-email").getByText(email, { exact: true }).waitFor({ state: "visible", timeout: 20000 });
   return page;
 }
 async function acceptConfirmation(page) {
@@ -108,12 +111,12 @@ try {
   assert.deepEqual(pageErrors, [], "The browser UI should not throw uncaught runtime errors");
   console.log("Browser E2E passed: assigned TA and Admin can move NEW ↔ SCREEN; Hiring Manager and Interviewer are read-only; unassigned TA cannot see the Job.");
 } catch (error) {
-  const visibleText = await page?.locator("body").innerText().catch(() => "(không đọc được nội dung trang)") || "(trang chưa khởi chạy)";
+  const visibleText = await activePage?.locator("body").innerText().catch(() => "(không đọc được nội dung trang)") || "(trang chưa khởi chạy)";
   console.error("E2E visible page text:\n" + visibleText.slice(0, 12000));
   console.error("E2E uncaught browser errors:\n" + pageErrors.join("\n"));
   console.error("E2E failed requests:\n" + failedRequests.join("\n"));
   console.error("E2E failed Supabase responses:\n" + failedResponses.join("\n"));
-  await page?.screenshot({ path: path.join(artifactDir, "failure.png"), fullPage: true }).catch(() => {});
+  await activePage?.screenshot({ path: path.join(artifactDir, "failure.png"), fullPage: true }).catch(() => {});
   throw error;
 } finally {
   await Promise.all(contexts.map((context) => context.close()));
