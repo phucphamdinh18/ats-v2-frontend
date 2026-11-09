@@ -25,7 +25,7 @@ try {
   await page.getByRole("button", { name: "Mở đăng nhập thử nghiệm cục bộ" }).click();
   await page.getByLabel("Email thử nghiệm").fill("ta-e2e@example.invalid");
   await page.getByLabel("Mật khẩu thử nghiệm").fill("LocalTestOnly-2026-ATS!");
-  await page.getByRole("button", { name: "Đăng nhập thử" }).click();
+  await page.getByRole("button", { name: "Đăng nhập thử", exact: true }).click();
 
   const jobButton = page.getByRole("button", { name: "Chọn Job TEST ONLY Application E2E" });
   await jobButton.waitFor({ state: "visible", timeout: 20000 });
