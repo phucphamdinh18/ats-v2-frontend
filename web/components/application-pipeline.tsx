@@ -45,7 +45,7 @@ function message(error: unknown) {
   return error instanceof Error ? error.message : "Không tải được dữ liệu. Vui lòng thử lại.";
 }
 
-export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean }) {
+export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
   const [items, setItems] = useState<Application[]>([]);
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
@@ -180,6 +180,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   }, [job.id, onSessionLost]);
 
   async function moveApplication(application: Application, targetStage: TransitionStage) {
+    if (!canManageApplications) return;
     const isForward = NEXT_STAGE[application.stage] === targetStage;
     const isBackward = PREVIOUS_STAGE[application.stage] === targetStage;
     if (transitionBusy || (!isForward && !isBackward) || application.status !== "ACTIVE") return;
@@ -240,7 +241,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
   const previousStage = selected ? PREVIOUS_STAGE[selected.stage] : undefined;
   const eligible = Boolean((nextStage || previousStage) && selected?.status === "ACTIVE");
-  const disabledReason = !selected ? "Chọn một ứng viên để thao tác." : !eligible
+  const disabledReason = !canManageApplications ? "Bạn chỉ có quyền xem Pipeline của Job này." : !selected ? "Chọn một ứng viên để thao tác." : !eligible
     ? "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng." : "";
 
   const refreshAfterCandidateCreated = useCallback(async () => {
@@ -259,6 +260,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
       {state === "ready" && <span className="muted">{items.length} ứng viên đang hiển thị</span>}
     </div>
+    {!canManageApplications && <div className="notice" role="status">Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.</div>}
     {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
     {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
     {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
@@ -267,7 +269,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
     {(state === "ready" || state === "empty") && <div className="pipeline-grid">
       {stages.map(([stage, applications]) => {
-        const allowedTargets = dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
+        const allowedTargets = canManageApplications && dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
         const acceptsDrop = allowedTargets.includes(stage as "NEW" | "SCREEN" | "INTERVIEW") && dragging?.status === "ACTIVE";
         return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
@@ -281,7 +283,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
           {applications.length === 0 && <p className="empty-stage">Chưa có ứng viên ở vòng này.</p>}
           {applications.map((application) => {
             const offer = stage === "OFFER" ? offerItems.find((item) => item.application_id === application.application_id) : undefined;
-            const canDrag = stage !== "OFFER" && Boolean(NEXT_STAGE[application.stage] || PREVIOUS_STAGE[application.stage]) && application.status === "ACTIVE";
+            const canDrag = canManageApplications && stage !== "OFFER" && Boolean(NEXT_STAGE[application.stage] || PREVIOUS_STAGE[application.stage]) && application.status === "ACTIVE";
             const dragTargets = [NEXT_STAGE[application.stage], PREVIOUS_STAGE[application.stage]].filter(Boolean);
             const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
             return <button className="application-card" key={application.application_id}
@@ -306,8 +308,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         <h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol>
         {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
-      {previousStage && <button className="secondary" aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
-      {nextStage && <button className="primary" aria-label={transitionRequestTarget === nextStage ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === nextStage ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
+      {canManageApplications && previousStage && <button className="secondary" aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
+      {canManageApplications && nextStage && <button className="primary" aria-label={transitionRequestTarget === nextStage ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === nextStage ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
       {disabledReason && <p className="disabled-explanation">{disabledReason}</p>}
     </aside>}
   </section>;

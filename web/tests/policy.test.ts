@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   authRedirect,
   canReview,
+  canManageApplicationStages,
   driveLink,
   isCorrectionFixture,
   RequestGate,
@@ -46,6 +47,14 @@ test("active roles permit review only for Admin and TA", () => {
   assert.equal(canReview(["TA_RECRUITER"]), true);
   assert.equal(canReview(["HIRING_MANAGER", "INTERVIEWER"]), false);
   assert.equal(canReview([]), false);
+});
+test("only Admin globally or a TA assigned to this exact Job can move stages", () => {
+  const memberships = [{ job_id: "job-1", role: "TA_RECRUITER" }];
+  assert.equal(canManageApplicationStages(["ADMIN"], [], "job-2"), true);
+  assert.equal(canManageApplicationStages(["TA_RECRUITER"], memberships, "job-1"), true);
+  assert.equal(canManageApplicationStages(["TA_RECRUITER"], memberships, "job-2"), false);
+  assert.equal(canManageApplicationStages(["HIRING_MANAGER"], memberships, "job-1"), false);
+  assert.equal(canManageApplicationStages(["INTERVIEWER"], memberships, "job-1"), false);
 });
 test("normal pending draft permits decision but cannot use correction pilot", () => {
   assert.deepEqual(reviewPermissions("cv", draft()), {
