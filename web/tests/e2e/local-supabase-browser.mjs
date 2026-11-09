@@ -27,15 +27,15 @@ try {
   await page.getByLabel("Mật khẩu thử nghiệm").fill("LocalTestOnly-2026-ATS!");
   await page.getByRole("button", { name: "Đăng nhập thử", exact: true }).click();
 
-  const jobButton = page.getByRole("button", { name: "Chọn Job TEST ONLY Application E2E" });
-  await jobButton.waitFor({ state: "visible", timeout: 20000 });
+  const openPipelineButton = page.getByRole("button", { name: "Mở pipeline TEST ONLY Application E2E" });
+  await openPipelineButton.waitFor({ state: "visible", timeout: 20000 });
   assert.equal(
     await page.getByText("TEST ONLY Admin Metadata Job", { exact: false }).count(),
     0,
     "TA should not see the Admin-only metadata Job",
   );
 
-  await jobButton.click();
+  await openPipelineButton.click();
   const pipeline = page.getByRole("region", { name: "Pipeline TEST ONLY Application E2E" });
   await pipeline.waitFor({ state: "visible", timeout: 15000 });
   await pipeline.getByText("SLA vòng: ≤ 2 ngày").waitFor({ state: "visible" });
