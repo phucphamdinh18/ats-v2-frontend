@@ -89,18 +89,24 @@ try {
   await moveStage(adminPage, adminView.details, "backward");
   await adminPage.screenshot({ path: path.join(artifactDir, "admin-job-pipeline.png"), fullPage: true });
 
-  for (const [role, email] of [
-    ["Hiring Manager", "hm-e2e@example.invalid"],
-    ["Interviewer", "interviewer-e2e@example.invalid"],
-  ]) {
-    const rolePage = await loginAs(email);
-    const view = await openRolePipeline(rolePage);
-    assert.equal(await view.card.getAttribute("draggable"), "false", `${role} must not drag Applications`);
-    await rolePage.getByText("Chế độ chỉ xem.", { exact: false }).waitFor({ state: "visible" });
-    assert.equal(await view.details.getByRole("button", { name: /Chuyển (sang|về) (NEW|SCREEN|INTERVIEW)/ }).count(), 0, `${role} must not see stage controls`);
-    assert.equal(await rolePage.getByText("Thêm ứng viên vào Job", { exact: true }).count(), 0, `${role} must not see the add-candidate control`);
-    await rolePage.screenshot({ path: path.join(artifactDir, `${role.toLowerCase().replaceAll(" ", "-")}-readonly.png`), fullPage: true });
-  }
+  const hmPage = await loginAs("hm-e2e@example.invalid");
+  const hmView = await openRolePipeline(hmPage);
+  assert.equal(await hmView.card.getAttribute("draggable"), "false", "Hiring Manager must not drag Applications");
+  await hmPage.getByText("Chế độ chỉ xem.", { exact: false }).waitFor({ state: "visible" });
+  assert.equal(await hmView.details.getByRole("button", { name: /Chuyển (sang|về) (NEW|SCREEN|INTERVIEW)/ }).count(), 0, "Hiring Manager must not see stage controls");
+  assert.equal(await hmPage.getByText("Thêm ứng viên vào Job", { exact: true }).count(), 0, "Hiring Manager must not see the add-candidate control");
+  await hmPage.screenshot({ path: path.join(artifactDir, "hiring-manager-readonly.png"), fullPage: true });
+
+  // Interviewers receive a per-interview context through the interviews function;
+  // they are intentionally not granted read access to the whole Job or Pipeline.
+  const interviewerPage = await loginAs("interviewer-e2e@example.invalid");
+  assert.equal(
+    await interviewerPage.getByRole("button", { name: "Mở pipeline TEST ONLY Application E2E" }).count(),
+    0,
+    "Interviewer must not see the Job-wide Pipeline",
+  );
+  assert.equal(await interviewerPage.getByText("TEST ONLY Application E2E", { exact: true }).count(), 0);
+  await interviewerPage.screenshot({ path: path.join(artifactDir, "interviewer-job-scope.png"), fullPage: true });
 
   const unassignedPage = await loginAs("unassigned-ta-e2e@example.invalid");
   assert.equal(
@@ -109,7 +115,7 @@ try {
     "An unassigned TA must not see the Job",
   );
   assert.deepEqual(pageErrors, [], "The browser UI should not throw uncaught runtime errors");
-  console.log("Browser E2E passed: assigned TA and Admin can move NEW ↔ SCREEN; Hiring Manager and Interviewer are read-only; unassigned TA cannot see the Job.");
+  console.log("Browser E2E passed: assigned TA and Admin can move NEW ↔ SCREEN; assigned Hiring Manager has read-only pipeline access; Interviewer has no Job-wide access; unassigned TA cannot see the Job.");
 } catch (error) {
   const visibleText = await activePage?.locator("body").innerText().catch(() => "(không đọc được nội dung trang)") || "(trang chưa khởi chạy)";
   console.error("E2E visible page text:\n" + visibleText.slice(0, 12000));
