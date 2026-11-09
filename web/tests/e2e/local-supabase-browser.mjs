@@ -22,19 +22,20 @@ page.on("requestfailed", (request) => failedRequests.push(`${request.method()} $
 
 try {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Mở đăng nhập thử nghiệm cục bộ" }).click();
   await page.getByLabel("Email thử nghiệm").fill("ta-e2e@example.invalid");
   await page.getByLabel("Mật khẩu thử nghiệm").fill("LocalTestOnly-2026-ATS!");
-  await page.getByRole("button", { name: "Đăng nhập thử" }).click();
+  await page.getByRole("button", { name: "Đăng nhập thử", exact: true }).click();
 
-  const jobButton = page.getByRole("button", { name: "Chọn Job TEST ONLY Application E2E" });
-  await jobButton.waitFor({ state: "visible", timeout: 20000 });
+  const openPipelineButton = page.getByRole("button", { name: "Mở pipeline TEST ONLY Application E2E" });
+  await openPipelineButton.waitFor({ state: "visible", timeout: 20000 });
   assert.equal(
     await page.getByText("TEST ONLY Admin Metadata Job", { exact: false }).count(),
     0,
     "TA should not see the Admin-only metadata Job",
   );
 
-  await jobButton.click();
+  await openPipelineButton.click();
   const pipeline = page.getByRole("region", { name: "Pipeline TEST ONLY Application E2E" });
   await pipeline.waitFor({ state: "visible", timeout: 15000 });
   await pipeline.getByText("SLA vòng: ≤ 2 ngày").waitFor({ state: "visible" });
@@ -55,7 +56,7 @@ try {
   console.error("E2E visible page text:\n" + visibleText.slice(0, 12000));
   console.error("E2E uncaught browser errors:\n" + pageErrors.join("\n"));
   console.error("E2E failed requests:\n" + failedRequests.join("\n"));
-  console.error("E2E failed Supabase responses:\\n" + failedResponses.join("\\n"));
+  console.error("E2E failed Supabase responses:\n" + failedResponses.join("\n"));
   await page.screenshot({ path: path.join(artifactDir, "failure.png"), fullPage: true }).catch(() => {});
   throw error;
 } finally {
