@@ -74,7 +74,7 @@
 .am-filters button.active span { color: #292f42; background: #fff; }
 .am-table-wrap { width: 100%; overflow: auto; }
 .am-table { width: 100%; min-width: 1120px; border-collapse: separate; border-spacing: 0; text-align: left; }
-.am-table thead th { height: 47px; padding: 0 13px; color: #73809a; background: #f7f8fc; border-bottom: 1px solid #e3e7ef; font-size: 9px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; }
+.am-table thead th { position: static; top: auto; height: 47px; padding: 0 13px; color: #73809a; background: #f7f8fc; border-bottom: 1px solid #e3e7ef; font-size: 9px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; }
 .am-table thead th:first-child,.am-table tbody td:first-child { padding-left: 19px; }
 .am-table tbody tr { cursor: pointer; transition: background .15s ease; }
 .am-table tbody tr:hover { background: #fafaff; }
