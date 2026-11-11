@@ -292,15 +292,15 @@ export default function Workspace() {
   ).slice(0, 5);
   if (loading && !access) {
     return (
-      <div className="auth-loading">
+      <div className="auth-loading astryx-auth">
         <LoadingState label={t.loading} />
       </div>
     );
   }
   if (!access) {
     return (
-      <main className="auth-screen">
-        <section className="auth-brand-panel" aria-label={t.workspace} style={{ backgroundImage: `linear-gradient(135deg, rgb(19 24 68 / 84%), rgb(57 39 143 / 82%)), url("${basePath}/login-brand-background.webp")` }}>
+      <main className="auth-screen astryx-auth">
+        <section className="auth-brand-panel" aria-label={t.workspace}>
           <div className="auth-brand-content">
             <a className="auth-brand" href={`${basePath}/`} aria-label="ATS">
               <span className="auth-brand-mark"><Icon name="jobs" size={22} /></span>
@@ -381,7 +381,7 @@ export default function Workspace() {
     );
   }
   return (
-    <div className={`shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+    <div className={`shell astryx-workspace ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <a className="skip-link" href="#main-content">
         {t.navigation}
       </a>
@@ -468,7 +468,7 @@ export default function Workspace() {
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
-            <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
+            <strong>{tab === "jobs" ? (jobView === "pipeline" ? "Hiring Pipeline" : "Bảng Master") : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
           </div>
           <div className="header-actions">
             <div className={`global-search ${globalSearchOpen ? "is-open" : ""}`}>
@@ -637,8 +637,8 @@ export default function Workspace() {
             <>
               <div className="page-heading">
                 <div>
-                  <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
+                  <span className="eyebrow">{t.workspace}<span className="workspace-preview-label">Preview</span></span>
+                  <h1>{tab === "jobs" ? (jobView === "pipeline" ? "Hiring Pipeline" : t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
                   <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp." : tab === "jd" ? "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp." : "Tạo Job và cấp quyền theo từng Job; backend kiểm tra lại trước khi lưu."}</p>
                 </div>
                 <div className="heading-actions">
@@ -754,41 +754,22 @@ export default function Workspace() {
                     </button>
                   </div>
                   {jobView === "master" ? <>
-                  <section className="metrics" aria-label={t.totalJobs}>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.totalJobs}</small>
-                        <span className="metric-icon purple">
-                          <Icon name="jobs" />
-                        </span>
-                      </div>
-                      <strong>{access.jobs.length}</strong>
-                      <span>{t.totalHint}</span>
+                  <section className="metrics workspace-bento" aria-label={t.totalJobs}>
+                    <div className="bento-total">
+                      <div className="metric-top"><small>{t.totalJobs}</small><span className="metric-icon purple"><Icon name="jobs" /></span></div>
+                      <strong>{access.jobs.length}</strong><span>{t.totalHint}</span>
+                      <div className="bento-foot"><span><i className="bento-dot green" />{access.jobs.filter(j => j.status === "OPEN").length} {t.openJobs}</span><span><i className="bento-dot amber" />{access.jobs.filter(j => j.status === "DRAFT").length} {t.draftJobs}</span></div>
                     </div>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.openJobs}</small>
-                        <span className="metric-icon mint">
-                          <Icon name="team" />
-                        </span>
-                      </div>
-                      <strong>
-                        {access.jobs.filter((j) => j.status === "OPEN").length}
-                      </strong>
-                      <span>{t.openHint}</span>
+                    <div className="bento-health">
+                      <div className="bento-health-copy"><div className="metric-top"><small>{locale === "en" ? "Candidate overview" : "Tình hình tuyển dụng"}</small><span className="metric-icon mint"><Icon name="team" /></span></div><strong>{access.jobs.some(j => j.metrics) ? access.jobs.reduce((n,j) => n + (j.metrics?.total_candidates ?? 0),0) : "—"}</strong><span>{locale === "en" ? "Applications across loaded Jobs" : "Hồ sơ trong các Job đã tải"}</span></div>
+                      <div className="bento-stages">{([
+                        [locale === "en" ? "New" : "Mới", "new_count"],
+                        [locale === "en" ? "Screening" : "Sơ loại", "screening_count"],
+                        [locale === "en" ? "Interview" : "Phỏng vấn", "interview_count"],
+                        [locale === "en" ? "Hired" : "Đã tuyển", "hired_count"],
+                      ] as const).map(([label,key]) => {const count = access.jobs.reduce((n,j) => n + (j.metrics?.[key] ?? 0),0);const total = access.jobs.reduce((n,j) => n + (j.metrics?.total_candidates ?? 0),0);return <div key={key}><span>{label}</span><b>{access.jobs.some(j => j.metrics) ? count : "—"}</b><i><em style={{width:`${total ? count / total * 100 : 0}%`}} /></i></div>;})}</div>
                     </div>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.draftJobs}</small>
-                        <span className="metric-icon amber">
-                          <Icon name="review" />
-                        </span>
-                      </div>
-                      <strong>
-                        {access.jobs.filter((j) => j.status === "DRAFT").length}
-                      </strong>
-                      <span>{t.draftHint}</span>
-                    </div>
+                    <div className="bento-attention"><div className="metric-top"><small>{locale === "en" ? "SLA setup needed" : "Cần hoàn thiện SLA"}</small><span className="metric-icon amber"><Icon name="clock" /></span></div><strong>{access.jobs.filter(j => j.sla_target_workdays == null).length}</strong><span>{locale === "en" ? "Jobs without an SLA target" : "Job chưa xác định được SLA tổng"}</span><p>{locale === "en" ? "Check Level, Function and Season." : "Kiểm tra Level, nhóm chức năng và mùa tuyển dụng."}</p></div>
                   </section>
                   <p className="scope-note">
                     <Icon name="shield" size={14} />
@@ -848,16 +829,14 @@ export default function Workspace() {
                     </div>
                     {jobs.length ? (
                       <div className="table-scroll">
-                        <table>
+                        <table className="workspace-master-table">
                           <thead>
                             <tr>
                               <th>1. Định danh & vị trí</th>
                               <th>2. Đơn vị & chức năng</th>
                               <th>3. Loại yêu cầu & ngày Req</th>
-                              <th>4. Level & ưu tiên</th>
-                              <th>5. Trạng thái</th>
-                              <th>6. SLA tổng</th>
-                              <th>7. Funnel & nguồn</th>
+                              <th>4. Trạng thái & SLA</th>
+                              <th>5. Ứng viên & nguồn</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -877,11 +856,10 @@ export default function Workspace() {
                                       {job.title}
                                     </button>
                                   </div>
-                                  <small className="job-code-subtitle">{job.job_code || t.noCode}</small>
+                                  <small className="job-code-subtitle">{job.job_code || t.noCode}</small><small className="job-code-subtitle">{job.level == null ? "Level —" : `Level ${job.level}`} · {job.priority || "Chưa có ưu tiên"}</small>
                                 </td>
                                 <td><strong>{job.business_unit || "Chưa có BU"}</strong><small className="job-code-subtitle">{job.function_group || "Chưa phân nhóm"}{job.location ? ` · ${job.location}` : ""}</small></td>
                                 <td><strong>{job.request_type === "REPLACEMENT" ? "Thay thế" : job.request_type === "NEW" ? "Tuyển mới" : "Chưa xác định"}</strong><small className="job-code-subtitle">Req: {job.req_date || "—"}</small></td>
-                                <td><strong>{job.level == null ? "Level —" : `Level ${job.level}`}</strong><small className="job-code-subtitle">{job.priority || "Chưa có ưu tiên"}</small></td>
                                 <td>
                                   <span
                                     className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
@@ -889,8 +867,7 @@ export default function Workspace() {
                                     <span className="status-dot" />
                                     {jobStatusLabel(job.status, t)}
                                   </span>
-                                </td>
-                                <td>{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></td>
+                                  <div className="master-sla">{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></div></td>
                                 <td>
                                   <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
                                   {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
@@ -930,7 +907,7 @@ export default function Workspace() {
                   </> : selectedJob ? <section className="job-pipeline-view">
                     <div className="job-pipeline-toolbar">
                       <button className="secondary" onClick={() => setJobView("master")}><Icon name="arrow" size={15} /> Quay lại Bảng Master</button>
-                      <label>Requisition
+                      <label>{locale === "en" ? "Pipeline for Job" : "Đang xem pipeline của Job"}
                         <select aria-label="Chọn Job cho Hiring Pipeline" value={selectedJob.id} onChange={(event) => setSelectedJob(access.jobs.find((job) => job.id === event.target.value) || null)}>
                           {access.jobs.map((job) => <option key={job.id} value={job.id}>[{job.job_code || "Chưa có mã"}] {job.title}</option>)}
                         </select>

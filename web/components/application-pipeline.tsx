@@ -238,6 +238,15 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     }
   }
 
+  useEffect(() => {
+    if (!selected) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { detailTicket.current += 1; selectedId.current = null; setSelected(null); }
+    };
+    window.addEventListener("keydown", dismiss);
+    return () => window.removeEventListener("keydown", dismiss);
+  }, [selected]);
+
   const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
   const previousStage = selected ? PREVIOUS_STAGE[selected.stage] : undefined;
   const eligible = Boolean((nextStage || previousStage) && selected?.status === "ACTIVE");
@@ -271,7 +280,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       {stages.map(([stage, applications]) => {
         const allowedTargets = canManageApplications && dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
         const acceptsDrop = allowedTargets.includes(stage as "NEW" | "SCREEN" | "INTERVIEW") && dragging?.status === "ACTIVE";
-        return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
+        return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} data-stage={stage} aria-label={`Giai đoạn ${stage}`}
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
           <h3><span className="stage-title"><i aria-hidden="true" />{STAGE_LABEL[stage] || stage}</span><span className="count">{applications.length}</span></h3>
@@ -293,7 +302,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
               onClick={() => void openDetail(application)}
               title={dragReason}
               aria-label={`Mở hồ sơ của ${application.candidate_name}. ${dragReason}`}>
-              <span className="application-card-code">{job.job_code || "ỨNG VIÊN"}</span><strong>{application.candidate_name}</strong><span className="application-card-status">{offer ? offer.offer_status === "APPROVED" ? "Offer đã duyệt" : "Offer chờ duyệt" : application.status === "ACTIVE" ? "Đang xử lý" : application.status}</span><small>{application.source || "Chưa ghi nguồn"}</small>
+              <span className="application-person"><span className="application-avatar" aria-hidden="true">{application.candidate_name.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase() || "UV"}</span><span><strong>{application.candidate_name}</strong><span className="application-card-code">{job.job_code || "ỨNG VIÊN"}</span></span></span><span className="application-card-status">{offer ? offer.offer_status === "APPROVED" ? "Offer đã duyệt" : "Offer chờ duyệt" : application.status === "ACTIVE" ? "Đang xử lý" : application.status}</span><span className="application-card-footer"><small>{application.source || "Chưa ghi nguồn"}</small><span aria-hidden="true">Xem hồ sơ →</span></span>
             </button>;
           })}
         </section>;
