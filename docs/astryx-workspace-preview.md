@@ -37,3 +37,13 @@ Validation: 25 Node tests, 54 component tests, 12 root QA checks, inline syntax,
 Publish with the existing `path-preview` workflow from main, keeping root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Keep PR #43 draft and unmerged. Roll back this revision by publishing prior preview source `2323094a9524c2323fd283227036bcaad0be6243` with the same root source.
 
 Unknown backend errors now use the existing localized friendly-error fallback. Known application event codes are translated; unknown event codes display a neutral profile-update label. No raw backend error/code is required for the recruiter to interpret.
+
+### Signed-in browser follow-up
+
+The existing Admin session subsequently restored without a new sign-in or an account selection. Read-only browser checks confirmed the live four-card Pipeline summary and compact lanes, candidate drawer, VI/EN switching while the drawer stays open, and all four Admin sections (including readable input borders and translated metadata/role options). Laptop layout was visually inspected. No stage changes, Job creates/opens, assignments or permission removals were submitted in this browser check.
+
+Talent Pool returned a candidate-list load error in this existing TEST environment. This UI revision localizes the error fallback; it does not repair the underlying candidate API. Full backend role E2E remains opt-in and was skipped by CI. This is distinct from the signed-in Admin UI checks.
+
+The final deployed frontend source is `87bb0607611c7f405492429f51d2d909d7d107c5`; Pages run #121 (`43071356438`) succeeded and the live `ats-release` meta tag matches that source with `path-preview`. The main-site root source remains `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. A subsequent documentation-only commit records this verification without changing deployed frontend files.
+
+Final-source browser checks also confirmed Manual Drive reduces the board to two cards while the full-Job total stays six; resetting the filter restores six cards. The candidate history displays “Đã chuyển vòng” on the final revision. The preview was left open in Vietnamese with no data or access mutations.
