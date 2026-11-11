@@ -54,14 +54,12 @@ export default function AstryxMasterPreview() {
        <div className="am-filters" role="group" aria-label="Lọc trạng thái">{(["All","Hiring","Draft"] as const).map(item=><button key={item} className={status===item?"active":""} aria-pressed={status===item} onClick={()=>setStatus(item)}>{item==="All"?"Tất cả":item==="Hiring"?"Đang tuyển":"Bản nháp"}<span>{item==="All"?demoJobs.length:demoJobs.filter(j=>j.status===item).length}</span></button>)}</div>
        <button className="am-filter-more">Bộ lọc <span>＋</span></button>
       </div>
-      <div className="am-table-wrap"><table className="am-table"><thead><tr><th>VỊ TRÍ & MÃ JOB</th><th>ĐƠN VỊ</th><th>YÊU CẦU</th><th>LEVEL</th><th>TRẠNG THÁI</th><th>SLA</th><th>ỨNG VIÊN & TIẾN ĐỘ</th></tr></thead>
+      <div className="am-table-wrap"><table className="am-table"><thead><tr><th>JOB & ĐỊNH DANH</th><th>ĐƠN VỊ & CHỨC NĂNG</th><th>YÊU CẦU</th><th>TRẠNG THÁI & SLA</th><th>ỨNG VIÊN & FUNNEL</th></tr></thead>
        <tbody>{filtered.map(job=><tr key={job.id} className={selected===job.id?"selected":""} onClick={()=>setSelected(job.id)}>
-        <td><div className="am-job-title"><span className="am-job-icon"><BriefcaseBusiness size={16}/></span><div><strong>{job.title}</strong><small>{job.code}</small></div></div></td>
+        <td><div className="am-job-title"><span className="am-job-icon"><BriefcaseBusiness size={16}/></span><div><strong>{job.title}</strong><small>{job.code}</small><small>Level {job.level} · {job.priority}</small></div></div></td>
         <td><strong>{job.unit}</strong><small>{job.functionGroup}</small></td>
         <td><strong>{job.request}</strong><small>Req date · {job.reqDate}</small></td>
-        <td><strong>Level {job.level}</strong><small>{job.priority}</small></td>
-        <td><StatusBadge status={job.status}/></td>
-        <td><span className="am-muted">{job.sla}</span></td>
+        <td><StatusBadge status={job.status}/><span className="am-muted">{job.sla}</span></td>
         <td><div className="am-candidates"><strong>{job.candidates}</strong><span>ứng viên</span></div><small>{job.stages}</small><button className="am-source">{job.source}</button><Button label="Pipeline" variant="secondary" size="sm" endContent={<ArrowRight size={14}/>} className="am-pipeline"/></td>
        </tr>)}</tbody></table>{filtered.length===0&&<div className="am-empty">Không tìm thấy Job phù hợp. Thử đổi từ khóa hoặc trạng thái.</div>}</div>
       <footer className="am-table-footer"><span>Dữ liệu mẫu · Không ghi vào ATS</span><span>{filtered.length} / {demoJobs.length} Job</span></footer>
