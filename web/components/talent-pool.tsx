@@ -1,5 +1,5 @@
 "use client";
-import { useUiText, useUiNotice } from "./ui-text";
+import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import { ApiError, getClient } from "@/lib/supabase";
@@ -27,6 +27,7 @@ export default function TalentPool({
 }) {
   const tr = useUiText();
   const notice = useUiNotice();
+  const errorText = useUiError();
   const [view, setView] = useState<"pool" | "cv-review">("pool");
   const [query, setQuery] = useState("");
   const [offset, setOffset] = useState(0);
@@ -264,7 +265,7 @@ export default function TalentPool({
       </div>
       {error && (
         <div className="notice error" role="alert">
-          {notice(error)}
+          {errorText(error)}
           <button className="quiet" onClick={() => void load()}>
             {tr("Thử lại")}
           </button>
@@ -360,7 +361,7 @@ export default function TalentPool({
               </div>
               {profileError && (
                 <div className="notice error" role="alert">
-                  {notice(profileError)}
+                  {errorText(profileError)}
                 </div>
               )}
               {message && (
@@ -514,14 +515,14 @@ export default function TalentPool({
                 )}
                 {sourceLoadError && (
                   <p className="notice error" role="alert">
-                    {notice(sourceLoadError)}
+                    {errorText(sourceLoadError)}
                   </p>
                 )}
               </div>
             </>
           ) : profileError ? (
             <div className="notice error" role="alert">
-              {notice(profileError)}
+              {errorText(profileError)}
             </div>
           ) : (
             <div className="talent-empty">

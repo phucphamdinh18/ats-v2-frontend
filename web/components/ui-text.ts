@@ -1,6 +1,6 @@
 "use client";
 import { useCallback } from "react";
-import { uiText, uiNotice } from "@/lib/ui-copy";
+import { uiText, uiNotice, uiError } from "@/lib/ui-copy";
 import { useLanguage } from "./language";
 export function useUiText() {
   const { locale } = useLanguage();
@@ -14,4 +14,9 @@ export function useUiText() {
 export function useUiNotice() {
   const { locale } = useLanguage();
   return useCallback((text: string) => uiNotice(locale, text), [locale]);
+}
+
+export function useUiError() {
+  const { locale } = useLanguage();
+  return useCallback((text: string) => uiError(locale, text), [locale]);
 }

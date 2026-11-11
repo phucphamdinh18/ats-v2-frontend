@@ -1,5 +1,5 @@
 "use client";
-import { useUiText, useUiNotice } from "./ui-text";
+import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
@@ -29,6 +29,7 @@ export default function AdminConsole({
 }) {
   const tr = useUiText();
   const notice = useUiNotice();
+  const errorText = useUiError();
   const [section, setSection] = useState("create");
   const [title, setTitle] = useState("");
   const [unit, setUnit] = useState("");
@@ -346,7 +347,7 @@ export default function AdminConsole({
       </div>
       {error && (
         <div className="notice error" role="alert">
-          {notice(error)}
+          {errorText(error)}
         </div>
       )}
       {message && (

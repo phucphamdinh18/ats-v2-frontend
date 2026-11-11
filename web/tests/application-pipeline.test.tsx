@@ -397,7 +397,7 @@ describe("application pipeline", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Chuyển sang Sơ loại" }),
     );
-    await screen.findByText("Mạng lỗi");
+    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
     fireEvent.click(
       screen.getAllByRole("button", {
         name: /Thử lại chuyển (sang )?Sơ loại/,
@@ -510,7 +510,7 @@ describe("Kanban failure feedback", () => {
       fireEvent.drop(screen.getByRole("region", { name: "Giai đoạn Sơ loại" }));
       const alert = await screen.findByRole("alert");
       expect(alert.textContent).toContain("Ada");
-      expect(alert.textContent).toContain(failure.message);
+      expect(alert.textContent).toContain("Chưa thực hiện được thao tác này");
       expect(screen.queryByLabelText("Chi tiết ứng viên")).toBeNull();
       fireEvent.click(
         screen.getAllByRole("button", {
@@ -544,11 +544,11 @@ describe("Kanban failure feedback", () => {
       screen.getByRole("button", { name: /Mở hồ sơ của Ada/ }),
     );
     fireEvent.drop(screen.getByRole("region", { name: "Giai đoạn Sơ loại" }));
-    await screen.findByText("Network failed");
+    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
     // Changing detail selection must not discard the board's failed operation.
     fireEvent.click(screen.getByRole("button", { name: /Mở hồ sơ của Other/ }));
     await screen.findByText("Lịch sử");
-    expect(screen.getByRole("alert").textContent).toContain("Network failed");
+    expect(screen.getByRole("alert").textContent).toContain("Chưa thực hiện được thao tác này");
     fireEvent.click(
       screen.getAllByRole("button", {
         name: /Thử lại chuyển (sang )?Sơ loại/,
@@ -595,12 +595,12 @@ it("hides a prior board error when detail access is revoked", async () => {
     await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
   );
   fireEvent.drop(screen.getByRole("region", { name: "Giai đoạn Sơ loại" }));
-  await screen.findByText("Network failed");
+  await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
   fireEvent.click(screen.getByRole("button", { name: /Mở hồ sơ của Other/ }));
   await waitFor(() =>
     expect(screen.getByRole("alert").textContent).toContain("Không có quyền"),
   );
-  expect(screen.queryByText("Network failed")).toBeNull();
+  expect(screen.queryByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.")).toBeNull();
   expect(
     screen.queryByRole("button", { name: /Thử lại chuyển (sang )?Sơ loại/ }),
   ).toBeNull();

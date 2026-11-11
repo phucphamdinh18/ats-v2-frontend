@@ -1,6 +1,6 @@
 "use client";
 import { useLanguage } from "./language";
-import { useUiText, useUiNotice } from "./ui-text";
+import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import {
@@ -16,6 +16,7 @@ import {
 import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import Icon from "./icon";
+import { eventLabel } from "@/lib/ui-copy";
 import ManualCandidateForm from "./manual-candidate-form";
 const PAGE_SIZE = 25;
 const PIPELINE_STAGES = [
@@ -71,6 +72,7 @@ export default function ApplicationPipeline({
 }) {
   const tr = useUiText();
   const notice = useUiNotice();
+  const errorText = useUiError();
   const { locale } = useLanguage();
   const [items, setItems] = useState<Application[]>([]);
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
@@ -520,7 +522,7 @@ export default function ApplicationPipeline({
       )}
       {state === "error" && (
         <div className="notice error" role="alert">
-          {notice(error)}
+          {errorText(error)}
           <button className="quiet" onClick={() => void load()}>
             {tr("Thử lại")}
           </button>
@@ -528,7 +530,7 @@ export default function ApplicationPipeline({
       )}
       {offerError && canViewOffers && (
         <div className="notice error" role="alert">
-          {tr("Không tải được dữ liệu Offer:")} {notice(offerError)}
+          {tr("Không tải được dữ liệu Offer:")} {errorText(offerError)}
           <button className="quiet" onClick={() => void load()}>
             {tr("Thử lại")}
           </button>
@@ -543,7 +545,7 @@ export default function ApplicationPipeline({
       {failedTransition && (
         <div className="notice error" role="alert">
           <strong>{failedTransition.application.candidate_name}</strong>:{" "}
-          <span>{notice(failedTransition.message)}</span>
+          <span>{errorText(failedTransition.message)}</span>
           <button
             className="quiet"
             onClick={() =>
@@ -786,7 +788,7 @@ export default function ApplicationPipeline({
           {detailLoading && <p role="status">{tr("Đang tải chi tiết…")}</p>}
           {detailError && (
             <div className="notice error" role="alert">
-              {notice(detailError)}
+              {errorText(detailError)}
               <button
                 className="quiet"
                 onClick={() => void openDetail(selected)}
@@ -811,7 +813,7 @@ export default function ApplicationPipeline({
               <ol className="timeline">
                 {detail.events.map((event) => (
                   <li key={event.event_id}>
-                    <strong>{tr(event.event_type)}</strong>
+                    <strong>{eventLabel(locale, event.event_type)}</strong>
                     <span>
                       {tr(event.from_stage || "—")} →{" "}
                       {tr(event.to_stage || "—")}

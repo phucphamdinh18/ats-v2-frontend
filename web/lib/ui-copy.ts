@@ -1,8 +1,13 @@
-import type { Locale } from "./i18n";
+import { friendlyError, getCopy, type Locale } from "./i18n";
 
 // Explicit interface copy only. Candidate names, CVs, job titles and API payloads
 // are never translated. Placeholders keep data separate from interface wording.
 export const uiCopy: Record<string, readonly [string, string]> = {
+  MOVED: ["Đã chuyển vòng", "Stage changed"],
+  APPLICATION_CREATED: ["Đã thêm hồ sơ", "Application added"],
+  APPLICATION_STAGE_CHANGED: ["Đã chuyển vòng", "Stage changed"],
+  "Cập nhật hồ sơ": ["Cập nhật hồ sơ", "Application updated"],
+
   sang: ["sang", "to"],
   "Hiring Pipeline": ["Tiến độ tuyển dụng", "Hiring Pipeline"],
   "Job overview and hiring progress": [
@@ -667,4 +672,17 @@ export function uiNotice(locale: Locale, text: string): string {
     );
   }
   return text;
+}
+
+export function uiError(locale: Locale, text: string): string {
+  const localized = uiNotice(locale, text);
+  if (
+    localized !== text ||
+    Object.values(uiCopy).some((pair) => pair.includes(text))
+  )
+    return localized;
+  return friendlyError(text, getCopy(locale));
+}
+export function eventLabel(locale: Locale, code: string): string {
+  return uiText(locale, Object.hasOwn(uiCopy, code) ? code : "Cập nhật hồ sơ");
 }

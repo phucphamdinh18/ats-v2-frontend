@@ -51,7 +51,7 @@ test("counts, page numbers and unknown errors use the selected language", () => 
   );
 });
 
-import { uiCopy, uiText, uiNotice } from "../lib/ui-copy";
+import { uiCopy, uiText, uiNotice, uiError, eventLabel } from "../lib/ui-copy";
 test("workspace interface translations preserve interpolation and document data", () => {
   for (const [key, [vietnamese, english]] of Object.entries(uiCopy)) {
     assert.ok(vietnamese.trim(), key);
@@ -70,4 +70,14 @@ test("workspace interface translations preserve interpolation and document data"
   const notice = uiText("en", "Đã tạo Job nháp “{0}”.", ["Kỹ sư QA"]);
   assert.equal(uiNotice("vi", notice), "Đã tạo Job nháp “Kỹ sư QA”.");
   assert.equal(uiNotice("vi", "Stage conflict"), "Stage conflict");
+});
+
+test("unknown backend errors and event codes use friendly localized copy", () => {
+  assert.equal(
+    uiError("en", "Không tải được hồ sơ trong Job. Vui lòng thử lại."),
+    en.requestFailed,
+  );
+  assert.equal(uiError("vi", "Internal error 500"), vi.requestFailed);
+  assert.equal(eventLabel("vi", "MOVED"), "Đã chuyển vòng");
+  assert.equal(eventLabel("en", "FUTURE_EVENT_CODE"), "Application updated");
 });

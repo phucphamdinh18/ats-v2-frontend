@@ -1,5 +1,5 @@
 "use client";
-import { useUiText, useUiNotice } from "./ui-text";
+import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
@@ -41,6 +41,7 @@ export default function ManualCandidateForm({
 }) {
   const tr = useUiText();
   const notice = useUiNotice();
+  const errorText = useUiError();
   const [form, setForm] = useState<Form>(blank);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
@@ -182,7 +183,7 @@ export default function ManualCandidateForm({
       )}
       {status === "error" && (
         <div className="notice error" role="alert">
-          {notice(error)}
+          {errorText(error)}
           {requestId.current && (
             <button
               className="quiet"
@@ -256,7 +257,7 @@ export default function ManualCandidateForm({
         </label>
         {sourceLoadError && (
           <p className="notice error" role="alert">
-            {notice(sourceLoadError)}
+            {errorText(sourceLoadError)}
           </p>
         )}
         <label>
