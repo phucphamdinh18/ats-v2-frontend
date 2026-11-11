@@ -38,7 +38,7 @@ try {
   await openPipelineButton.click();
   const pipeline = page.getByRole("region", { name: "Pipeline TEST ONLY Application E2E" });
   await pipeline.waitFor({ state: "visible", timeout: 15000 });
-  await pipeline.getByText("SLA vòng: ≤ 2 ngày").waitFor({ state: "visible" });
+  await pipeline.getByText("Mục tiêu: ≤ 2 ngày").waitFor({ state: "visible" });
   const candidateCard = pipeline.getByRole("button", {
     name: /Mở hồ sơ của TEST ONLY Manual E2E Candidate/,
   });

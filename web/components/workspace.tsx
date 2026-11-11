@@ -1,7 +1,15 @@
 "use client";
+import { useUiText } from "./ui-text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
-import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
+import {
+  authRedirect,
+  canManageApplicationStages,
+  canReview,
+  RequestGate,
+  type Job,
+  type JobMembership,
+} from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
 import Icon from "./icon";
@@ -11,7 +19,6 @@ import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import AdminConsole from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
-
 type Access = {
   userId: string;
   email: string;
@@ -21,6 +28,7 @@ type Access = {
   memberships: JobMembership[];
 };
 export default function Workspace() {
+  const tr = useUiText();
   const { t, locale, setLocale } = useLanguage();
   const [guideOpen, setGuideOpen] = useState(false);
   const [access, setAccess] = useState<Access | null>(null);
@@ -93,8 +101,12 @@ export default function Workspace() {
       let jobs: Job[] = [];
       let memberships: JobMembership[] = [];
       if (active && roleNames.length) {
-        if (roleNames.includes("TA_RECRUITER") && !roleNames.includes("ADMIN")) {
-          const membershipResult = await client.from("job_memberships")
+        if (
+          roleNames.includes("TA_RECRUITER") &&
+          !roleNames.includes("ADMIN")
+        ) {
+          const membershipResult = await client
+            .from("job_memberships")
             .select("job_id,role")
             .eq("user_id", session.user.id);
           if (membershipResult.error) throw membershipResult.error;
@@ -102,29 +114,41 @@ export default function Workspace() {
         }
         const result = await client
           .from("jobs")
-          .select("id,job_code,title,status,business_unit,location,level,function_group,hiring_season,req_date,request_type,priority,replacement_for")
+          .select(
+            "id,job_code,title,status,business_unit,location,level,function_group,hiring_season,req_date,request_type,priority,replacement_for",
+          )
           .order("job_code")
           .limit(100);
         if (result.error) throw result.error;
-        const rules = await client.from("job_sla_rules")
+        const rules = await client
+          .from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
         const overview = await jobOverview();
-        const metricsByJob = new Map(overview.jobs.map((row) => [row.job_id, row]));
-        const byKey = new Map((rules.data || []).map((rule) =>
-          [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
-        ));
+        const metricsByJob = new Map(
+          overview.jobs.map((row) => [row.job_id, row]),
+        );
+        const byKey = new Map(
+          (rules.data || []).map((rule) => [
+            `${rule.level}:${rule.function_group}:${rule.hiring_season}`,
+            rule.target_workdays,
+          ]),
+        );
         jobs = (result.data || []).map((job) => ({
           ...job,
-          sla_target_workdays: job.level != null && job.function_group && job.hiring_season
-            ? byKey.get(`${job.level}:${job.function_group}:${job.hiring_season}`) ?? null
-            : null,
+          sla_target_workdays:
+            job.level != null && job.function_group && job.hiring_season
+              ? (byKey.get(
+                  `${job.level}:${job.function_group}:${job.hiring_season}`,
+                ) ?? null)
+              : null,
           metrics: metricsByJob.get(job.id),
         }));
       }
       if (gate.current.current(ticket)) {
-        setSelectedJob((current) =>
-          jobs.find((job) => job.id === current?.id) || jobs[0] || null,
+        setSelectedJob(
+          (current) =>
+            jobs.find((job) => job.id === current?.id) || jobs[0] || null,
         );
         setAccess({
           userId: session.user.id,
@@ -249,20 +273,26 @@ export default function Workspace() {
         .includes(search.toLocaleLowerCase(locale)),
   );
   useEffect(() => {
-    setSelectedJob((current) =>
-      jobs.find((job) => job.id === current?.id) || jobs[0] || null,
+    setSelectedJob(
+      (current) =>
+        jobs.find((job) => job.id === current?.id) || jobs[0] || null,
     );
   }, [jobs]);
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
   useEffect(() => {
     if (!globalSearchOpen) return;
-    const frame = window.requestAnimationFrame(() => globalSearchRef.current?.focus());
+    const frame = window.requestAnimationFrame(() =>
+      globalSearchRef.current?.focus(),
+    );
     return () => window.cancelAnimationFrame(frame);
   }, [globalSearchOpen]);
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLocaleLowerCase() === "k"
+      ) {
         event.preventDefault();
         setGlobalSearchOpen(true);
       }
@@ -278,18 +308,55 @@ export default function Workspace() {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
   }, [tab, adminAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-  const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
+  const normalizedGlobalQuery = globalSearchQuery
+    .trim()
+    .toLocaleLowerCase(locale);
   const globalNavMatches = [
-    { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
-    ...(reviewAllowed ? [
-      { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
-      { label: locale === "en" ? "Job descriptions" : "JD tuyển dụng", description: "Hàng chờ duyệt mô tả công việc", destination: "jd" as const },
-    ] : []),
-    ...(adminAllowed ? [{ label: locale === "en" ? "Admin & permissions" : "Quản trị & quyền", description: "Quản lý Job và phân quyền", destination: "admin" as const }] : []),
-  ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
-  const globalJobMatches = (access?.jobs || []).filter((job) =>
-    normalizedGlobalQuery && `${job.title} ${job.job_code || ""}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery),
-  ).slice(0, 5);
+    {
+      label: t.jobs,
+      description: tr("Job overview and hiring progress"),
+      destination: "jobs" as const,
+    },
+    ...(reviewAllowed
+      ? [
+          {
+            label: tr("Talent Pool"),
+            description: tr("Kho ứng viên đã duyệt"),
+            destination: "talent" as const,
+          },
+          {
+            label: locale === "en" ? "Job descriptions" : tr("JD tuyển dụng"),
+            description: tr("Hàng chờ duyệt mô tả công việc"),
+            destination: "jd" as const,
+          },
+        ]
+      : []),
+    ...(adminAllowed
+      ? [
+          {
+            label:
+              locale === "en" ? "Admin & permissions" : tr("Quản trị & quyền"),
+            description: tr("Quản lý Job và phân quyền"),
+            destination: "admin" as const,
+          },
+        ]
+      : []),
+  ].filter(
+    (item) =>
+      !normalizedGlobalQuery ||
+      `${item.label} ${item.description}`
+        .toLocaleLowerCase(locale)
+        .includes(normalizedGlobalQuery),
+  );
+  const globalJobMatches = (access?.jobs || [])
+    .filter(
+      (job) =>
+        normalizedGlobalQuery &&
+        `${job.title} ${job.job_code || ""}`
+          .toLocaleLowerCase(locale)
+          .includes(normalizedGlobalQuery),
+    )
+    .slice(0, 5);
   if (loading && !access) {
     return (
       <div className="auth-loading astryx-auth">
@@ -303,8 +370,13 @@ export default function Workspace() {
         <section className="auth-brand-panel" aria-label={t.workspace}>
           <div className="auth-brand-content">
             <a className="auth-brand" href={`${basePath}/`} aria-label="ATS">
-              <span className="auth-brand-mark"><Icon name="jobs" size={22} /></span>
-              <span>ATS<small>Applicant Tracking System</small></span>
+              <span className="auth-brand-mark">
+                <Icon name="jobs" size={22} />
+              </span>
+              <span>
+                {tr("ATS")}
+                <small>{tr("Applicant Tracking System")}</small>
+              </span>
             </a>
             <div className="auth-brand-copy">
               <span className="auth-kicker">{t.workspace}</span>
@@ -323,21 +395,34 @@ export default function Workspace() {
             <select
               aria-label={t.language}
               value={locale}
-              onChange={(event) => setLocale(event.target.value === "en" ? "en" : "vi")}
+              onChange={(event) =>
+                setLocale(event.target.value === "en" ? "en" : "vi")
+              }
             >
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
+              <option value="vi">{tr("Tiếng Việt")}</option>
+              <option value="en">{tr("English")}</option>
             </select>
           </div>
           <div className="auth-login-content">
-            <span className="auth-welcome-icon"><Icon name="team" size={25} /></span>
+            <span className="auth-welcome-icon">
+              <Icon name="team" size={25} />
+            </span>
             <span className="auth-kicker">{t.loginEyebrow}</span>
-            <h2>{locale === "vi" ? "Đăng nhập vào ATS" : "Sign in to ATS"}</h2>
+            <h2>
+              {locale === "vi" ? tr("Đăng nhập vào ATS") : "Sign in to ATS"}
+            </h2>
             {error && (
               <div className="notice error auth-error" role="alert">
                 <Icon name="help" />
                 <span>{friendlyError(error, t)}</span>
-                <button className="quiet" onClick={() => loginStarted.current ? window.location.reload() : void refresh()}>
+                <button
+                  className="quiet"
+                  onClick={() =>
+                    loginStarted.current
+                      ? window.location.reload()
+                      : void refresh()
+                  }
+                >
                   {loginStarted.current ? t.reload : t.refreshAccess}
                 </button>
               </div>
@@ -349,39 +434,79 @@ export default function Workspace() {
             {localLoginVisible && localLoginOpen ? (
               <div className="local-login auth-local-login">
                 <label>
-                  Email thử nghiệm
-                  <input type="email" autoComplete="username" value={localEmail} onChange={(event) => setLocalEmail(event.target.value)} placeholder="admin.test@example.invalid" />
+                  {tr("Email thử nghiệm")}
+                  <input
+                    type="email"
+                    autoComplete="username"
+                    value={localEmail}
+                    onChange={(event) => setLocalEmail(event.target.value)}
+                    placeholder="admin.test@example.invalid"
+                  />
                 </label>
                 <label>
-                  Mật khẩu thử nghiệm
-                  <input type="password" autoComplete="current-password" value={localPassword} onChange={(event) => setLocalPassword(event.target.value)} />
+                  {tr("Mật khẩu thử nghiệm")}
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={localPassword}
+                    onChange={(event) => setLocalPassword(event.target.value)}
+                  />
                 </label>
-                <button className="primary google-button" disabled={authBusy || !localEmail || !localPassword} onClick={() => void localLogin()}>
-                  {authBusy ? "Đang đăng nhập…" : "Đăng nhập thử"}<Icon name="arrow" size={17} />
+                <button
+                  className="primary google-button"
+                  disabled={authBusy || !localEmail || !localPassword}
+                  onClick={() => void localLogin()}
+                >
+                  {authBusy ? tr("Đang đăng nhập…") : tr("Đăng nhập thử")}
+                  <Icon name="arrow" size={17} />
                 </button>
-                <button className="quiet auth-local-toggle" onClick={() => setLocalLoginOpen(false)}>Ẩn đăng nhập thử nghiệm</button>
+                <button
+                  className="quiet auth-local-toggle"
+                  onClick={() => setLocalLoginOpen(false)}
+                >
+                  {tr("Ẩn đăng nhập thử nghiệm")}
+                </button>
               </div>
             ) : (
               <>
-                <button className="primary auth-google-button" disabled={authBusy || !!error} onClick={login}>
-                  <span className="google-mark" aria-hidden="true">G</span>
+                <button
+                  className="primary auth-google-button"
+                  disabled={authBusy || !!error}
+                  onClick={login}
+                >
+                  <span className="google-mark" aria-hidden="true">
+                    {tr("G")}
+                  </span>
                   {authBusy ? t.signingIn : t.signIn}
                 </button>
-                {localLoginVisible && <button className="quiet auth-local-toggle" onClick={() => setLocalLoginOpen(true)}>Mở đăng nhập thử nghiệm cục bộ</button>}
+                {localLoginVisible && (
+                  <button
+                    className="quiet auth-local-toggle"
+                    onClick={() => setLocalLoginOpen(true)}
+                  >
+                    {tr("Mở đăng nhập thử nghiệm cục bộ")}
+                  </button>
+                )}
               </>
             )}
             <div className="auth-scope-note">
-              <span className="auth-scope-icon"><Icon name="jobs" size={20} /></span>
+              <span className="auth-scope-icon">
+                <Icon name="jobs" size={20} />
+              </span>
               <span>{t.scoped}</span>
             </div>
           </div>
-          <div className="auth-main-footer">ATS · {t.footer}</div>
+          <div className="auth-main-footer">
+            {tr("ATS ·")} {t.footer}
+          </div>
         </section>
       </main>
     );
   }
   return (
-    <div className={`shell astryx-workspace ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+    <div
+      className={`shell astryx-workspace ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}
+    >
       <a className="skip-link" href="#main-content">
         {t.navigation}
       </a>
@@ -391,7 +516,8 @@ export default function Workspace() {
             <Icon name="jobs" size={23} />
           </span>
           <span>
-            ATS<span className="brand-caption">{t.workspace}</span>
+            {tr("ATS")}
+            <span className="brand-caption">{t.workspace}</span>
           </span>
         </a>
         <div className="workspace-label">{t.workspace}</div>
@@ -411,7 +537,7 @@ export default function Workspace() {
               onClick={() => setTab("talent")}
             >
               <Icon name="team" />
-              <span className="nav-label">Talent Pool</span>
+              <span className="nav-label">{tr("Talent Pool")}</span>
             </button>
           )}
           {adminAllowed && (
@@ -421,7 +547,11 @@ export default function Workspace() {
               onClick={() => setTab("admin")}
             >
               <Icon name="shield" />
-              <span className="nav-label">{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span>
+              <span className="nav-label">
+                {locale === "en"
+                  ? "Admin & permissions"
+                  : tr("Quản trị & quyền")}
+              </span>
             </button>
           )}
           {reviewAllowed && (
@@ -431,7 +561,9 @@ export default function Workspace() {
               onClick={() => setTab("jd")}
             >
               <Icon name="review" />
-              <span className="nav-label">{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span>
+              <span className="nav-label">
+                {locale === "en" ? "Job descriptions" : tr("JD tuyển dụng")}
+              </span>
             </button>
           )}
         </nav>
@@ -458,9 +590,21 @@ export default function Workspace() {
           <Icon name="shield" size={16} />
           <span className="sidebar-note-copy">{t.scoped}</span>
         </div>
-        <button className="sidebar-collapse" type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed((value) => !value)}>
+        <button
+          className="sidebar-collapse"
+          type="button"
+          aria-label={
+            sidebarCollapsed
+              ? tr("Mở rộng thanh điều hướng")
+              : tr("Thu gọn thanh điều hướng")
+          }
+          aria-expanded={!sidebarCollapsed}
+          onClick={() => setSidebarCollapsed((value) => !value)}
+        >
           <Icon name={sidebarCollapsed ? "expand" : "collapse"} size={17} />
-          <span className="nav-label">{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span>
+          <span className="nav-label">
+            {sidebarCollapsed ? tr("Mở rộng") : tr("Thu gọn menu")}
+          </span>
         </button>
       </aside>
       <div className="main">
@@ -468,24 +612,138 @@ export default function Workspace() {
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
-            <strong>{tab === "jobs" ? (jobView === "pipeline" ? "Hiring Pipeline" : "Bảng Master") : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
+            <strong>
+              {tab === "jobs"
+                ? jobView === "pipeline"
+                  ? tr("Hiring Pipeline")
+                  : tr("Bảng Master")
+                : tab === "talent"
+                  ? tr("Talent Pool")
+                  : tab === "jd"
+                    ? "JD"
+                    : tr("Quản trị & quyền")}
+            </strong>
           </div>
           <div className="header-actions">
-            <div className={`global-search ${globalSearchOpen ? "is-open" : ""}`}>
+            <div
+              className={`global-search ${globalSearchOpen ? "is-open" : ""}`}
+            >
               {globalSearchOpen ? (
                 <>
                   <label className="global-search-input">
                     <Icon name="search" size={17} />
-                    <input ref={globalSearchRef} value={globalSearchQuery} onChange={(event) => setGlobalSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setGlobalSearchOpen(false); setGlobalSearchQuery(""); } }} placeholder={locale === "en" ? "Search jobs and pages…" : "Tìm Job hoặc màn hình…"} aria-label={locale === "en" ? "Search ATS" : "Tìm trong ATS"} />
-                    <kbd>ESC</kbd>
+                    <input
+                      ref={globalSearchRef}
+                      value={globalSearchQuery}
+                      onChange={(event) =>
+                        setGlobalSearchQuery(event.target.value)
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                          setGlobalSearchOpen(false);
+                          setGlobalSearchQuery("");
+                        }
+                      }}
+                      placeholder={
+                        locale === "en"
+                          ? "Search jobs and pages…"
+                          : tr("Tìm Job hoặc màn hình…")
+                      }
+                      aria-label={
+                        locale === "en" ? "Search ATS" : tr("Tìm trong ATS")
+                      }
+                    />
+                    <kbd>{tr("ESC")}</kbd>
                   </label>
-                  <div className="global-search-results" role="listbox" aria-label={locale === "en" ? "Search results" : "Kết quả tìm kiếm"}>
-                    {globalJobMatches.map((job) => <button key={job.id} type="button" role="option" aria-selected="false" onClick={() => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name="jobs" size={16} /></span><span><strong>{job.title}</strong><small>{job.job_code || t.noCode} · {jobStatusLabel(job.status, t)}</small></span><Icon name="arrow" size={15} /></button>)}
-                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : item.destination === "jd" ? "review" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
-                    {!globalJobMatches.length && !globalNavMatches.length && <p className="global-search-empty">{locale === "en" ? "No matching Jobs or pages." : "Không tìm thấy Job hoặc màn hình phù hợp."}</p>}
+                  <div
+                    className="global-search-results"
+                    role="listbox"
+                    aria-label={
+                      locale === "en"
+                        ? "Search results"
+                        : tr("Kết quả tìm kiếm")
+                    }
+                  >
+                    {globalJobMatches.map((job) => (
+                      <button
+                        key={job.id}
+                        type="button"
+                        role="option"
+                        aria-selected="false"
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setTab("jobs");
+                          setJobView("pipeline");
+                          setGlobalSearchOpen(false);
+                          setGlobalSearchQuery("");
+                        }}
+                      >
+                        <span className="search-result-icon">
+                          <Icon name="jobs" size={16} />
+                        </span>
+                        <span>
+                          <strong>{job.title}</strong>
+                          <small>
+                            {job.job_code || t.noCode} ·{" "}
+                            {jobStatusLabel(job.status, t)}
+                          </small>
+                        </span>
+                        <Icon name="arrow" size={15} />
+                      </button>
+                    ))}
+                    {globalNavMatches.map((item) => (
+                      <button
+                        key={item.destination}
+                        type="button"
+                        role="option"
+                        aria-selected="false"
+                        onClick={() => {
+                          setTab(item.destination);
+                          setGlobalSearchOpen(false);
+                          setGlobalSearchQuery("");
+                        }}
+                      >
+                        <span className="search-result-icon">
+                          <Icon
+                            name={
+                              item.destination === "jobs"
+                                ? "jobs"
+                                : item.destination === "talent"
+                                  ? "team"
+                                  : item.destination === "jd"
+                                    ? "review"
+                                    : "shield"
+                            }
+                            size={16}
+                          />
+                        </span>
+                        <span>
+                          <strong>{item.label}</strong>
+                          <small>{item.description}</small>
+                        </span>
+                        <Icon name="arrow" size={15} />
+                      </button>
+                    ))}
+                    {!globalJobMatches.length && !globalNavMatches.length && (
+                      <p className="global-search-empty">
+                        {locale === "en"
+                          ? "No matching Jobs or pages."
+                          : tr("Không tìm thấy Job hoặc màn hình phù hợp.")}
+                      </p>
+                    )}
                   </div>
                 </>
-              ) : <button className="global-search-trigger" type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
+              ) : (
+                <button
+                  className="global-search-trigger"
+                  type="button"
+                  onClick={() => setGlobalSearchOpen(true)}
+                >
+                  <Icon name="search" size={17} />
+                  <span>{locale === "en" ? "Search" : tr("Tìm nhanh")}</span>
+                  <kbd>{tr("⌘ K")}</kbd>
+                </button>
+              )}
             </div>
             <label className="language-picker">
               <Icon name="globe" size={17} />
@@ -496,8 +754,8 @@ export default function Workspace() {
                   setLocale(e.target.value === "en" ? "en" : "vi")
                 }
               >
-                <option value="vi">Tiếng Việt</option>
-                <option value="en">English</option>
+                <option value="vi">{tr("Tiếng Việt")}</option>
+                <option value="en">{tr("English")}</option>
               </select>
             </label>
             {access && (
@@ -571,7 +829,7 @@ export default function Workspace() {
                 {localLoginVisible ? (
                   <div className="local-login">
                     <label>
-                      Email thử nghiệm
+                      {tr("Email thử nghiệm")}
                       <input
                         type="email"
                         autoComplete="username"
@@ -581,12 +839,14 @@ export default function Workspace() {
                       />
                     </label>
                     <label>
-                      Mật khẩu thử nghiệm
+                      {tr("Mật khẩu thử nghiệm")}
                       <input
                         type="password"
                         autoComplete="current-password"
                         value={localPassword}
-                        onChange={(event) => setLocalPassword(event.target.value)}
+                        onChange={(event) =>
+                          setLocalPassword(event.target.value)
+                        }
                       />
                     </label>
                     <button
@@ -594,12 +854,13 @@ export default function Workspace() {
                       disabled={authBusy || !localEmail || !localPassword}
                       onClick={() => void localLogin()}
                     >
-                      {authBusy ? "Đang đăng nhập…" : "Đăng nhập thử"}
+                      {authBusy ? tr("Đang đăng nhập…") : tr("Đăng nhập thử")}
                       <Icon name="arrow" size={17} />
                     </button>
                     <div className="local-login-note">
-                      Chế độ thử trên máy này. Quyền Admin/TA vẫn được
-                      kiểm tra bằng dữ liệu thử.
+                      {tr(
+                        "Chế độ thử trên máy này. Quyền Admin/TA vẫn được kiểm tra bằng dữ liệu thử.",
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -609,7 +870,7 @@ export default function Workspace() {
                     onClick={login}
                   >
                     <span className="google-mark" aria-hidden="true">
-                      G
+                      {tr("G")}
                     </span>
                     {authBusy ? t.signingIn : t.signIn}
                     <Icon name="arrow" size={17} />
@@ -637,15 +898,46 @@ export default function Workspace() {
             <>
               <div className="page-heading">
                 <div>
-                  <span className="eyebrow">{t.workspace}<span className="workspace-preview-label">Preview</span></span>
-                  <h1>{tab === "jobs" ? (jobView === "pipeline" ? "Hiring Pipeline" : t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
-                  <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp." : tab === "jd" ? "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp." : "Tạo Job và cấp quyền theo từng Job; backend kiểm tra lại trước khi lưu."}</p>
+                  <span className="eyebrow">
+                    {t.workspace}
+                    <span className="workspace-preview-label">
+                      {tr("Preview")}
+                    </span>
+                  </span>
+                  <h1>
+                    {tab === "jobs"
+                      ? jobView === "pipeline"
+                        ? tr("Hiring Pipeline")
+                        : t.jobs
+                      : tab === "talent"
+                        ? tr("Talent Pool")
+                        : tab === "jd"
+                          ? tr("JD tuyển dụng")
+                          : tr("Quản trị ATS")}
+                  </h1>
+                  <p>
+                    {tab === "jobs"
+                      ? t.jobsIntro
+                      : tab === "talent"
+                        ? tr(
+                            "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp.",
+                          )
+                        : tab === "jd"
+                          ? tr(
+                              "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp.",
+                            )
+                          : tr(
+                              "Quản lý vị trí tuyển dụng và phân công đội ngũ của bạn.",
+                            )}
+                  </p>
                 </div>
                 <div className="heading-actions">
                   {tab === "jobs" && (
                     <button
                       className="secondary"
-                      aria-label={guideOpen ? "Ẩn hướng dẫn" : "Hiện hướng dẫn"}
+                      aria-label={
+                        guideOpen ? tr("Ẩn hướng dẫn") : tr("Hiện hướng dẫn")
+                      }
                       onClick={() => setGuideOpen((open) => !open)}
                     >
                       <Icon name={guideOpen ? "close" : "help"} size={17} />
@@ -654,7 +946,7 @@ export default function Workspace() {
                   )}
                   {tab === "jobs" && adminAllowed && (
                     <button className="primary" onClick={() => setTab("admin")}>
-                      Quản trị Job
+                      {tr("Quản trị Job")}
                       <Icon name="shield" size={15} />
                     </button>
                   )}
@@ -672,11 +964,23 @@ export default function Workspace() {
                 ))}
               </div>
               {tab === "talent" && reviewAllowed ? (
-                <TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} />
+                <TalentPool
+                  key={access.userId}
+                  jobs={access.jobs}
+                  onAccessLost={invalidate}
+                />
               ) : tab === "jd" && reviewAllowed ? (
-                <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
+                <ReviewQueue
+                  key={`${access.userId}-jd`}
+                  fixedKind="jd"
+                  onAccessLost={invalidate}
+                />
               ) : tab === "admin" && adminAllowed ? (
-                <AdminConsole jobs={access.jobs} onRefresh={() => refresh(true)} onAccessLost={invalidate} />
+                <AdminConsole
+                  jobs={access.jobs}
+                  onRefresh={() => refresh(true)}
+                  onAccessLost={invalidate}
+                />
               ) : (
                 <>
                   {guideOpen && (
@@ -736,7 +1040,10 @@ export default function Workspace() {
                               : t.guideAccessBody}
                           </p>
                           {adminAllowed && (
-                            <button className="text-link" onClick={() => setTab("admin")}>
+                            <button
+                              className="text-link"
+                              onClick={() => setTab("admin")}
+                            >
                               {t.guideAdminAction}
                               <Icon name="external" size={15} />
                             </button>
@@ -745,183 +1052,512 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  <div className="job-view-tabs" role="tablist" aria-label="Chế độ xem Job">
-                    <button type="button" role="tab" aria-selected={jobView === "master"} className={jobView === "master" ? "active" : ""} onClick={() => setJobView("master")}>
-                      <Icon name="jobs" size={16} /> 1.1 Bảng Master <span>{access.jobs.length} Job</span>
+                  <div
+                    className="job-view-tabs"
+                    role="tablist"
+                    aria-label={tr("Chế độ xem Job")}
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={jobView === "master"}
+                      className={jobView === "master" ? "active" : ""}
+                      onClick={() => setJobView("master")}
+                    >
+                      <Icon name="jobs" size={16} />
+                      {tr("1.1 Bảng Master")}
+                      <span>
+                        {access.jobs.length} {tr("Job")}
+                      </span>
                     </button>
-                    <button type="button" role="tab" aria-selected={jobView === "pipeline"} className={jobView === "pipeline" ? "active" : ""} onClick={() => setJobView("pipeline")}>
-                      <Icon name="review" size={16} /> 1.2 Hiring Pipeline <span>{selectedJob?.job_code || "Chọn Job"}</span>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={jobView === "pipeline"}
+                      className={jobView === "pipeline" ? "active" : ""}
+                      onClick={() => setJobView("pipeline")}
+                    >
+                      <Icon name="review" size={16} />
+                      {tr("1.2 Hiring Pipeline")}
+                      <span>{selectedJob?.job_code || tr("Chọn Job")}</span>
                     </button>
                   </div>
-                  {jobView === "master" ? <>
-                  <section className="metrics workspace-bento" aria-label={t.totalJobs}>
-                    <div className="bento-total">
-                      <div className="metric-top"><small>{t.totalJobs}</small><span className="metric-icon purple"><Icon name="jobs" /></span></div>
-                      <strong>{access.jobs.length}</strong><span>{t.totalHint}</span>
-                      <div className="bento-foot"><span><i className="bento-dot green" />{access.jobs.filter(j => j.status === "OPEN").length} {t.openJobs}</span><span><i className="bento-dot amber" />{access.jobs.filter(j => j.status === "DRAFT").length} {t.draftJobs}</span></div>
-                    </div>
-                    <div className="bento-health">
-                      <div className="bento-health-copy"><div className="metric-top"><small>{locale === "en" ? "Candidate overview" : "Tình hình tuyển dụng"}</small><span className="metric-icon mint"><Icon name="team" /></span></div><strong>{access.jobs.some(j => j.metrics) ? access.jobs.reduce((n,j) => n + (j.metrics?.total_candidates ?? 0),0) : "—"}</strong><span>{locale === "en" ? "Applications across loaded Jobs" : "Hồ sơ trong các Job đã tải"}</span></div>
-                      <div className="bento-stages">{([
-                        [locale === "en" ? "New" : "Mới", "new_count"],
-                        [locale === "en" ? "Screening" : "Sơ loại", "screening_count"],
-                        [locale === "en" ? "Interview" : "Phỏng vấn", "interview_count"],
-                        [locale === "en" ? "Hired" : "Đã tuyển", "hired_count"],
-                      ] as const).map(([label,key]) => {const count = access.jobs.reduce((n,j) => n + (j.metrics?.[key] ?? 0),0);const total = access.jobs.reduce((n,j) => n + (j.metrics?.total_candidates ?? 0),0);return <div key={key}><span>{label}</span><b>{access.jobs.some(j => j.metrics) ? count : "—"}</b><i><em style={{width:`${total ? count / total * 100 : 0}%`}} /></i></div>;})}</div>
-                    </div>
-                    <div className="bento-attention"><div className="metric-top"><small>{locale === "en" ? "SLA setup needed" : "Cần hoàn thiện SLA"}</small><span className="metric-icon amber"><Icon name="clock" /></span></div><strong>{access.jobs.filter(j => j.sla_target_workdays == null).length}</strong><span>{locale === "en" ? "Jobs without an SLA target" : "Job chưa xác định được SLA tổng"}</span><p>{locale === "en" ? "Check Level, Function and Season." : "Kiểm tra Level, nhóm chức năng và mùa tuyển dụng."}</p></div>
-                  </section>
-                  <p className="scope-note">
-                    <Icon name="shield" size={14} />
-                    {t.scopeHint}
-                  </p>
-                  <section className="panel">
-                    <div className="panel-heading">
-                      <h2>
-                        {t.jobList} · Master
-                        <span className="count">{jobs.length}</span>
-                      </h2>
-                    </div>
-                    <div className="toolbar">
-                      <label className="search">
-                        <Icon name="search" size={18} />
-                        <input
-                          aria-label={t.searchJobs}
-                          placeholder={t.searchPlaceholder}
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                        />
-                      </label>
-                      <div className="job-status-filters" role="group" aria-label={t.jobStatus}>
-                        <button
-                          type="button"
-                          className={`job-filter-chip filter-all ${status === "ALL" ? "selected" : ""}`}
-                          aria-label={`${t.allStatuses} (${access.jobs.length})`}
-                          aria-pressed={status === "ALL"}
-                          onClick={() => setStatus("ALL")}
-                        >
-                          {t.allStatuses}<span>{access.jobs.length}</span>
-                        </button>
-                        {Array.from(
-                          new Set([
-                            "OPEN",
-                            "DRAFT",
-                            ...access.jobs.map((j) => j.status),
-                          ]),
-                        )
-                          .sort()
-                          .map((s) => {
-                            const count = access.jobs.filter((job) => job.status === s).length;
-                            return (
-                              <button
-                                key={s}
-                                type="button"
-                                className={`job-filter-chip status-${s.toLowerCase().replace(/_/g, "-")} ${status === s ? "selected" : ""}`}
-                                aria-label={`${jobStatusLabel(s, t)} (${count})`}
-                                aria-pressed={status === s}
-                                onClick={() => setStatus(s)}
-                              >
-                                {jobStatusLabel(s, t)}<span>{count}</span>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    </div>
-                    {jobs.length ? (
-                      <div className="table-scroll">
-                        <table className="workspace-master-table">
-                          <thead>
-                            <tr>
-                              <th>1. Định danh & vị trí</th>
-                              <th>2. Đơn vị & chức năng</th>
-                              <th>3. Loại yêu cầu & ngày Req</th>
-                              <th>4. Trạng thái & SLA</th>
-                              <th>5. Ứng viên & nguồn</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {jobs.map((job) => (
-                              <tr key={job.id} className={selectedJob?.id === job.id ? "selected-job-row" : undefined}>
-                                <td>
-                                  <div className="job-title">
-                                    <span className="job-icon">
-                                      <Icon name="jobs" size={18} />
-                                    </span>
-                                    <button
-                                      className="job-title-link"
-                                      aria-pressed={selectedJob?.id === job.id}
-                                      aria-label={`Chọn Job ${job.title}`}
-                                      onClick={() => setSelectedJob(job)}
-                                    >
-                                      {job.title}
-                                    </button>
-                                  </div>
-                                  <small className="job-code-subtitle">{job.job_code || t.noCode}</small><small className="job-code-subtitle">{job.level == null ? "Level —" : `Level ${job.level}`} · {job.priority || "Chưa có ưu tiên"}</small>
-                                </td>
-                                <td><strong>{job.business_unit || "Chưa có BU"}</strong><small className="job-code-subtitle">{job.function_group || "Chưa phân nhóm"}{job.location ? ` · ${job.location}` : ""}</small></td>
-                                <td><strong>{job.request_type === "REPLACEMENT" ? "Thay thế" : job.request_type === "NEW" ? "Tuyển mới" : "Chưa xác định"}</strong><small className="job-code-subtitle">Req: {job.req_date || "—"}</small></td>
-                                <td>
-                                  <span
-                                    className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
+                  {jobView === "master" ? (
+                    <>
+                      <section
+                        className="metrics workspace-bento"
+                        aria-label={t.totalJobs}
+                      >
+                        <div className="bento-total">
+                          <div className="metric-top">
+                            <small>{t.totalJobs}</small>
+                            <span className="metric-icon purple">
+                              <Icon name="jobs" />
+                            </span>
+                          </div>
+                          <strong>{access.jobs.length}</strong>
+                          <span>{t.totalHint}</span>
+                          <div className="bento-foot">
+                            <span>
+                              <i className="bento-dot green" />
+                              {
+                                access.jobs.filter((j) => j.status === "OPEN")
+                                  .length
+                              }{" "}
+                              {t.openJobs}
+                            </span>
+                            <span>
+                              <i className="bento-dot amber" />
+                              {
+                                access.jobs.filter((j) => j.status === "DRAFT")
+                                  .length
+                              }{" "}
+                              {t.draftJobs}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bento-health">
+                          <div className="bento-health-copy">
+                            <div className="metric-top">
+                              <small>
+                                {locale === "en"
+                                  ? "Candidate overview"
+                                  : tr("Tình hình tuyển dụng")}
+                              </small>
+                              <span className="metric-icon mint">
+                                <Icon name="team" />
+                              </span>
+                            </div>
+                            <strong>
+                              {access.jobs.some((j) => j.metrics)
+                                ? access.jobs.reduce(
+                                    (n, j) =>
+                                      n + (j.metrics?.total_candidates ?? 0),
+                                    0,
+                                  )
+                                : "—"}
+                            </strong>
+                            <span>
+                              {locale === "en"
+                                ? "Applications across loaded Jobs"
+                                : tr("Hồ sơ trong các Job đã tải")}
+                            </span>
+                          </div>
+                          <div className="bento-stages">
+                            {(
+                              [
+                                [
+                                  locale === "en" ? "New" : tr("Mới"),
+                                  "new_count",
+                                ],
+                                [
+                                  locale === "en" ? "Screening" : tr("Sơ loại"),
+                                  "screening_count",
+                                ],
+                                [
+                                  locale === "en"
+                                    ? "Interview"
+                                    : tr("Phỏng vấn"),
+                                  "interview_count",
+                                ],
+                                [
+                                  locale === "en" ? "Hired" : tr("Đã tuyển"),
+                                  "hired_count",
+                                ],
+                              ] as const
+                            ).map(([label, key]) => {
+                              const count = access.jobs.reduce(
+                                (n, j) => n + (j.metrics?.[key] ?? 0),
+                                0,
+                              );
+                              const total = access.jobs.reduce(
+                                (n, j) =>
+                                  n + (j.metrics?.total_candidates ?? 0),
+                                0,
+                              );
+                              return (
+                                <div key={key}>
+                                  <span>{label}</span>
+                                  <b>
+                                    {access.jobs.some((j) => j.metrics)
+                                      ? count
+                                      : "—"}
+                                  </b>
+                                  <i>
+                                    <em
+                                      style={{
+                                        width: `${total ? (count / total) * 100 : 0}%`,
+                                      }}
+                                    />
+                                  </i>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="bento-attention">
+                          <div className="metric-top">
+                            <small>
+                              {locale === "en"
+                                ? "SLA setup needed"
+                                : tr("Cần hoàn thiện SLA")}
+                            </small>
+                            <span className="metric-icon amber">
+                              <Icon name="clock" />
+                            </span>
+                          </div>
+                          <strong>
+                            {
+                              access.jobs.filter(
+                                (j) => j.sla_target_workdays == null,
+                              ).length
+                            }
+                          </strong>
+                          <span>
+                            {locale === "en"
+                              ? "Jobs without an SLA target"
+                              : tr("Job chưa xác định được SLA tổng")}
+                          </span>
+                          <p>
+                            {locale === "en"
+                              ? "Check Level, Function and Season."
+                              : tr(
+                                  "Kiểm tra Level, nhóm chức năng và mùa tuyển dụng.",
+                                )}
+                          </p>
+                        </div>
+                      </section>
+                      <p className="scope-note">
+                        <Icon name="shield" size={14} />
+                        {t.scopeHint}
+                      </p>
+                      <section className="panel">
+                        <div className="panel-heading">
+                          <h2>
+                            {t.jobList} {tr("· Master")}
+                            <span className="count">{jobs.length}</span>
+                          </h2>
+                        </div>
+                        <div className="toolbar">
+                          <label className="search">
+                            <Icon name="search" size={18} />
+                            <input
+                              aria-label={t.searchJobs}
+                              placeholder={t.searchPlaceholder}
+                              value={search}
+                              onChange={(e) => setSearch(e.target.value)}
+                            />
+                          </label>
+                          <div
+                            className="job-status-filters"
+                            role="group"
+                            aria-label={t.jobStatus}
+                          >
+                            <button
+                              type="button"
+                              className={`job-filter-chip filter-all ${status === "ALL" ? "selected" : ""}`}
+                              aria-label={`${t.allStatuses} (${access.jobs.length})`}
+                              aria-pressed={status === "ALL"}
+                              onClick={() => setStatus("ALL")}
+                            >
+                              {t.allStatuses}
+                              <span>{access.jobs.length}</span>
+                            </button>
+                            {Array.from(
+                              new Set([
+                                "OPEN",
+                                "DRAFT",
+                                ...access.jobs.map((j) => j.status),
+                              ]),
+                            )
+                              .sort()
+                              .map((s) => {
+                                const count = access.jobs.filter(
+                                  (job) => job.status === s,
+                                ).length;
+                                return (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    className={`job-filter-chip status-${s.toLowerCase().replace(/_/g, "-")} ${status === s ? "selected" : ""}`}
+                                    aria-label={`${jobStatusLabel(s, t)} (${count})`}
+                                    aria-pressed={status === s}
+                                    onClick={() => setStatus(s)}
                                   >
-                                    <span className="status-dot" />
-                                    {jobStatusLabel(job.status, t)}
-                                  </span>
-                                  <div className="master-sla">{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></div></td>
-                                <td>
-                                  <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
-                                  {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
-                                  {job.metrics?.source_summary?.length ? <details className="job-source-summary"><summary>Nguồn ({job.metrics.source_summary.length})</summary><ul>{job.metrics.source_summary.map((source) => <li key={`${source.source}:${source.sub_source}:${source.source_ownership}`}>{source.sub_source ? `${source.sub_source} · ` : ""}{source.source}: {source.count}</li>)}</ul></details> : <small className="job-code-subtitle">Nguồn: chưa có dữ liệu</small>}
-                                  <button className="job-pipeline-action" aria-label={`Mở pipeline ${job.title}`} onClick={() => { setSelectedJob(job); setJobView("pipeline"); }}>Pipeline <Icon name="arrow" size={14} /></button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="empty">
-                        <span className="empty-icon">
-                          <Icon name="search" size={25} />
-                        </span>
-                        <h3>{t.noJobs}</h3>
-                        <p>{t.noJobsBody}</p>
+                                    {jobStatusLabel(s, t)}
+                                    <span>{count}</span>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        </div>
+                        {jobs.length ? (
+                          <div className="table-scroll">
+                            <table className="workspace-master-table">
+                              <thead>
+                                <tr>
+                                  <th>{tr("1. Định danh & vị trí")}</th>
+                                  <th>{tr("2. Đơn vị & chức năng")}</th>
+                                  <th>{tr("3. Loại yêu cầu & ngày Req")}</th>
+                                  <th>{tr("4. Trạng thái & SLA")}</th>
+                                  <th>{tr("5. Ứng viên & nguồn")}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {jobs.map((job) => (
+                                  <tr
+                                    key={job.id}
+                                    className={
+                                      selectedJob?.id === job.id
+                                        ? "selected-job-row"
+                                        : undefined
+                                    }
+                                  >
+                                    <td>
+                                      <div className="job-title">
+                                        <span className="job-icon">
+                                          <Icon name="jobs" size={18} />
+                                        </span>
+                                        <button
+                                          className="job-title-link"
+                                          aria-pressed={
+                                            selectedJob?.id === job.id
+                                          }
+                                          aria-label={tr("Chọn Job {0}", [
+                                            job.title,
+                                          ])}
+                                          onClick={() => setSelectedJob(job)}
+                                        >
+                                          {job.title}
+                                        </button>
+                                      </div>
+                                      <small className="job-code-subtitle">
+                                        {job.job_code || t.noCode}
+                                      </small>
+                                      <small className="job-code-subtitle">
+                                        {job.level == null
+                                          ? `${tr("Level")} —`
+                                          : `${tr("Level")} ${job.level}`}{" "}
+                                        ·{" "}
+                                        {job.priority
+                                          ? tr(job.priority)
+                                          : tr("Chưa có ưu tiên")}
+                                      </small>
+                                    </td>
+                                    <td>
+                                      <strong>
+                                        {job.business_unit || tr("Chưa có BU")}
+                                      </strong>
+                                      <small className="job-code-subtitle">
+                                        {job.function_group
+                                          ? tr(job.function_group)
+                                          : tr("Chưa phân nhóm")}
+                                        {job.location
+                                          ? ` · ${job.location}`
+                                          : ""}
+                                      </small>
+                                    </td>
+                                    <td>
+                                      <strong>
+                                        {job.request_type === "REPLACEMENT"
+                                          ? tr("Thay thế")
+                                          : job.request_type === "NEW"
+                                            ? tr("Tuyển mới")
+                                            : tr("Chưa xác định")}
+                                      </strong>
+                                      <small className="job-code-subtitle">
+                                        {tr("Req:")} {job.req_date || "—"}
+                                      </small>
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
+                                      >
+                                        <span className="status-dot" />
+                                        {jobStatusLabel(job.status, t)}
+                                      </span>
+                                      <div className="master-sla">
+                                        {job.sla_target_workdays == null ? (
+                                          <span className="muted">
+                                            {tr(
+                                              "Thiếu Level / Function / Season",
+                                            )}
+                                          </span>
+                                        ) : (
+                                          <span className="badge blue">
+                                            ≤ {job.sla_target_workdays}{" "}
+                                            {tr("ngày làm việc")}
+                                          </span>
+                                        )}
+                                        <small className="job-code-subtitle">
+                                          {job.hiring_season
+                                            ? tr(job.hiring_season)
+                                            : tr("Chưa chọn mùa tuyển dụng")}
+                                        </small>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <strong>
+                                        {job.metrics?.total_candidates ?? "—"}{" "}
+                                        {tr("ứng viên")}
+                                      </strong>
+                                      {job.metrics && (
+                                        <small className="job-code-subtitle">
+                                          {tr("NEW")} {job.metrics.new_count}{" "}
+                                          {tr("· Sơ loại")}{" "}
+                                          {job.metrics.screening_count}{" "}
+                                          {tr("· Phỏng vấn")}{" "}
+                                          {job.metrics.interview_count}{" "}
+                                          {tr("· Đã tuyển")}{" "}
+                                          {job.metrics.hired_count}
+                                        </small>
+                                      )}
+                                      {job.metrics?.source_summary?.length ? (
+                                        <details className="job-source-summary">
+                                          <summary>
+                                            {tr("Nguồn (")}{" "}
+                                            {job.metrics.source_summary.length})
+                                          </summary>
+                                          <ul>
+                                            {job.metrics.source_summary.map(
+                                              (source) => (
+                                                <li
+                                                  key={`${source.source}:${source.sub_source}:${source.source_ownership}`}
+                                                >
+                                                  {source.sub_source
+                                                    ? `${source.sub_source} · `
+                                                    : ""}
+                                                  {source.source}:{" "}
+                                                  {source.count}
+                                                </li>
+                                              ),
+                                            )}
+                                          </ul>
+                                        </details>
+                                      ) : (
+                                        <small className="job-code-subtitle">
+                                          {tr("Nguồn: chưa có dữ liệu")}
+                                        </small>
+                                      )}
+                                      <button
+                                        className="job-pipeline-action"
+                                        aria-label={tr("Mở pipeline {0}", [
+                                          job.title,
+                                        ])}
+                                        onClick={() => {
+                                          setSelectedJob(job);
+                                          setJobView("pipeline");
+                                        }}
+                                      >
+                                        {tr("Pipeline")}
+                                        <Icon name="arrow" size={14} />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="empty">
+                            <span className="empty-icon">
+                              <Icon name="search" size={25} />
+                            </span>
+                            <h3>{t.noJobs}</h3>
+                            <p>{t.noJobsBody}</p>
+                            <button
+                              className="secondary"
+                              onClick={() => {
+                                setSearch("");
+                                setStatus("ALL");
+                              }}
+                            >
+                              {t.clearFilters}
+                            </button>
+                          </div>
+                        )}
+                        <div className="panel-footer">
+                          {format(t.jobsShown, {
+                            shown: jobs.length,
+                            total: access.jobs.length,
+                          })}
+                        </div>
+                      </section>
+                    </>
+                  ) : selectedJob ? (
+                    <section className="job-pipeline-view">
+                      <div className="job-pipeline-toolbar">
                         <button
                           className="secondary"
-                          onClick={() => {
-                            setSearch("");
-                            setStatus("ALL");
-                          }}
+                          onClick={() => setJobView("master")}
                         >
-                          {t.clearFilters}
+                          <Icon name="arrow" size={15} />
+                          {tr("Quay lại Bảng Master")}
                         </button>
+                        <span className="pipeline-job-icon">
+                          <Icon name="jobs" size={23} />
+                        </span>
+                        <label>
+                          {locale === "en"
+                            ? "Pipeline for Job"
+                            : tr("Đang xem pipeline của Job")}
+                          <select
+                            aria-label={tr("Chọn Job cho Hiring Pipeline")}
+                            value={selectedJob.id}
+                            onChange={(event) =>
+                              setSelectedJob(
+                                access.jobs.find(
+                                  (job) => job.id === event.target.value,
+                                ) || null,
+                              )
+                            }
+                          >
+                            {access.jobs.map((job) => (
+                              <option key={job.id} value={job.id}>
+                                [{job.job_code || tr("Chưa có mã")}] {job.title}
+                              </option>
+                            ))}
+                          </select>
+                          <small>
+                            {selectedJob.job_code || t.noCode} ·{" "}
+                            {selectedJob.business_unit || tr("Chưa có bộ phận")}
+                          </small>
+                        </label>
+                        <span className="badge green">
+                          {jobStatusLabel(selectedJob.status, t)}
+                        </span>
                       </div>
-                    )}
-                    <div className="panel-footer">
-                      {format(t.jobsShown, {
-                        shown: jobs.length,
-                        total: access.jobs.length,
-                      })}
+                      <ApplicationPipeline
+                        key={selectedJob.id}
+                        job={selectedJob}
+                        onSessionLost={invalidate}
+                        canViewOffers={access.roles.some(
+                          (role) => role === "ADMIN" || role === "TA_RECRUITER",
+                        )}
+                        canManageApplications={canManageApplicationStages(
+                          access.roles,
+                          access.memberships,
+                          selectedJob.id,
+                        )}
+                      />
+                    </section>
+                  ) : (
+                    <div className="empty">
+                      <h3>{tr("Chưa có Job được cấp quyền")}</h3>
+                      <p>
+                        {tr(
+                          "Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.",
+                        )}
+                      </p>
                     </div>
-                  </section>
-                  </> : selectedJob ? <section className="job-pipeline-view">
-                    <div className="job-pipeline-toolbar">
-                      <button className="secondary" onClick={() => setJobView("master")}><Icon name="arrow" size={15} /> Quay lại Bảng Master</button>
-                      <label>{locale === "en" ? "Pipeline for Job" : "Đang xem pipeline của Job"}
-                        <select aria-label="Chọn Job cho Hiring Pipeline" value={selectedJob.id} onChange={(event) => setSelectedJob(access.jobs.find((job) => job.id === event.target.value) || null)}>
-                          {access.jobs.map((job) => <option key={job.id} value={job.id}>[{job.job_code || "Chưa có mã"}] {job.title}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
-                  </section> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
+                  )}
                 </>
               )}
             </>
           )}
         </main>
         <footer>
-          <strong>ATS Workspace</strong>
+          <strong>{tr("ATS Workspace")}</strong>
           <span>{t.footer}</span>
         </footer>
       </div>
