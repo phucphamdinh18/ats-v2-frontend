@@ -116,11 +116,11 @@ jobs:
           ATS_BASE_URL: http://127.0.0.1:3000
           ATS_E2E_ARTIFACT_DIR: ${{ runner.temp }}/ats-browser-e2e
         run: node tests/e2e/local-supabase-browser.mjs
-      - name: Upload browser evidence on failure
-        if: failure()
+      - name: Upload synthetic browser evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ats-local-browser-e2e-failure
+          name: ats-local-browser-e2e-evidence
           path: ${{ runner.temp }}/ats-browser-e2e
           retention-days: 7
       - name: Show service logs on failure
