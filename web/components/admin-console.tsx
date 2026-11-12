@@ -51,6 +51,7 @@ function RequirementsFields({
       <label>
         {tr("Level")}
         <select
+          aria-label={tr("Level")}
           required
           value={value.level}
           onChange={(event) =>
@@ -68,6 +69,7 @@ function RequirementsFields({
       <label>
         {tr("Nhóm chức năng")}
         <select
+          aria-label={tr("Nhóm chức năng")}
           required
           value={value.functionGroup}
           onChange={(event) =>
@@ -87,6 +89,7 @@ function RequirementsFields({
       <label>
         {tr("Mùa tuyển dụng")}
         <select
+          aria-label={tr("Mùa tuyển dụng")}
           required
           value={value.season}
           onChange={(event) =>
