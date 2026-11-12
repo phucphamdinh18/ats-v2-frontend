@@ -191,7 +191,11 @@ function ScheduleForm({ applicationId, onSaved, onAccessLost }: Props) {
       <fieldset disabled={busy || retry || loading}>
         <label>
           {say("Vòng phỏng vấn", "Interview round")}
-          <select value={type} onChange={(e) => setType(e.target.value)}>
+          <select
+            aria-label={say("Vòng phỏng vấn", "Interview round")}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
             <option value="PHONE_SCREEN">
               {say("Trao đổi ban đầu", "Phone screen")}
             </option>

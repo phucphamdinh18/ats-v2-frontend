@@ -102,6 +102,9 @@ it("an interviewer can submit feedback but cannot coordinate or decide", async (
   );
   await screen.findByRole("article", { name: "Chi tiết phỏng vấn" });
   expect(screen.getByRole("button", { name: "Gửi feedback" })).toBeTruthy();
+  expect(
+    screen.getByLabelText("Trạng thái lịch").getAttribute("aria-label"),
+  ).toBe("Trạng thái lịch");
   expect(screen.queryByRole("button", { name: "Lưu quyết định" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Hủy lịch" })).toBeNull();
   expect(api.call.mock.calls.some(([b]) => b.action === "decision_list")).toBe(

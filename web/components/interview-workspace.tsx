@@ -227,6 +227,7 @@ export default function InterviewWorkspace({
       <label>
         {say("Trạng thái lịch", "Interview status")}
         <select
+          aria-label={say("Trạng thái lịch", "Interview status")}
           disabled={busy || pending}
           value={status}
           onChange={(e) => {
@@ -411,6 +412,7 @@ export default function InterviewWorkspace({
                       <label>
                         {say("Điểm đánh giá", "Score")}
                         <select
+                          aria-label={say("Điểm đánh giá", "Score")}
                           value={score}
                           onChange={(e) => setScore(e.target.value)}
                         >
@@ -422,6 +424,7 @@ export default function InterviewWorkspace({
                       <label>
                         {say("Đề xuất", "Recommendation")}
                         <select
+                          aria-label={say("Đề xuất", "Recommendation")}
                           value={recommendation}
                           onChange={(e) => setRecommendation(e.target.value)}
                         >
@@ -532,6 +535,7 @@ export default function InterviewWorkspace({
                         <label>
                           {say("Kết quả", "Decision")}
                           <select
+                            aria-label={say("Kết quả", "Decision")}
                             value={decision}
                             onChange={(e) => setDecision(e.target.value)}
                           >
