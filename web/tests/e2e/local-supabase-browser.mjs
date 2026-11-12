@@ -227,7 +227,7 @@ async function checkLaptopReflow(page) {
 
 async function createJobAndAssign(page) {
   const title = `TEST ONLY Browser Job ${Date.now()}`;
-  await page.getByRole("tab", { name: /1.3/ }).click();
+  await page.getByRole("tab", { name: /^1\.3\s/ }).click();
   const admin = page.getByRole("region", { name: "Quản lý Job", exact: true });
   await admin.getByRole("button", { name: "Tạo Job", exact: true }).click();
   const form = admin.getByRole("region", { name: "Tạo Job", exact: true });
@@ -265,7 +265,7 @@ async function createJobAndAssign(page) {
     .click();
   await admin.getByText(/Đã mở tuyển Job/).waitFor({ timeout: 15000 });
   await row.getByText("Đang nhận ứng viên", { exact: true }).waitFor();
-  await page.getByRole("tab", { name: /1.1/ }).click();
+  await page.getByRole("tab", { name: /^1\.1\s/ }).click();
   return title;
 }
 
@@ -428,7 +428,7 @@ try {
   );
   // Complete interview workflow on synthetic data only. Simulate a lost response
   // after the schedule was committed, then verify a retry reuses the exact body.
-  await page.getByRole("tab", {name:/1.1/}).click();
+  await page.getByRole("tab", {name:/^1\.1\s/}).click();
   const interviewView = await openRolePipeline(page);
   await moveStage(page, interviewView.details, "forward");
   await interviewView.details.getByRole("button", {name:"Đặt lịch phỏng vấn",exact:true}).click();
