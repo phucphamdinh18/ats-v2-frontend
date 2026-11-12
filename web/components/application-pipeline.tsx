@@ -64,11 +64,13 @@ export default function ApplicationPipeline({
   onSessionLost,
   canViewOffers = false,
   canManageApplications = false,
+  onDataChanged,
 }: {
   job: Job;
   onSessionLost: () => void;
   canViewOffers?: boolean;
   canManageApplications?: boolean;
+  onDataChanged?: () => Promise<void>;
 }) {
   const tr = useUiText();
   const notice = useUiNotice();
@@ -98,6 +100,25 @@ export default function ApplicationPipeline({
     message: string;
   } | null>(null);
   const [transitionBusy, setTransitionBusy] = useState(false);
+  const [metricsStatus, setMetricsStatus] = useState<
+    "idle" | "loading" | "error"
+  >("idle");
+  const metricsTicket = useRef(0);
+  const refreshMetrics = useCallback(async () => {
+    if (!onDataChanged) return;
+    const ticket = ++metricsTicket.current;
+    setMetricsStatus("loading");
+    try {
+      await onDataChanged();
+      if (ticket !== metricsTicket.current) return;
+      setMetricsStatus("idle");
+    } catch (cause) {
+      if (ticket !== metricsTicket.current) return;
+      setMetricsStatus("error");
+      if (cause instanceof ApiError && [401, 403].includes(cause.status || 0))
+        onSessionLost();
+    }
+  }, [onDataChanged, onSessionLost]);
   const [dragging, setDragging] = useState<Application | null>(null);
   const transitionRequestIds = useRef(new Map<string, string>());
   const listTicket = useRef(0);
@@ -159,6 +180,7 @@ export default function ApplicationPipeline({
     return () => {
       listTicket.current += 1;
       detailTicket.current += 1;
+      metricsTicket.current += 1;
     };
     // A job switch must immediately discard the prior scope, before a new request resolves.
   }, [job.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -316,7 +338,7 @@ export default function ApplicationPipeline({
         setTransitionRequestTarget(null);
         await openDetail(application);
       }
-      await load(offset, query);
+      await Promise.all([load(offset, query), refreshMetrics()]);
     } catch (cause) {
       const apiError = cause instanceof ApiError ? cause : undefined;
       if (apiError?.status === 401 || apiError?.status === 403) {
@@ -381,8 +403,8 @@ export default function ApplicationPipeline({
   const refreshAfterCandidateCreated = useCallback(async () => {
     setQuery("");
     setOffset(0);
-    await load(0, "");
-  }, [load]);
+    await Promise.all([load(0, ""), refreshMetrics()]);
+  }, [load, refreshMetrics]);
   return (
     <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
       <h2 className="pipeline-accessible-heading">
@@ -432,11 +454,24 @@ export default function ApplicationPipeline({
             </span>
             <span>
               <small>{tr(metric.label)}</small>
-              <strong>{metric.value ?? "—"}</strong>
+              <strong>
+                {metricsStatus === "idle" ? (metric.value ?? "—") : "—"}
+              </strong>
             </span>
           </div>
         ))}
       </div>
+      {metricsStatus === "loading" && (
+        <p role="status">{tr("Đang cập nhật số liệu…")}</p>
+      )}
+      {metricsStatus === "error" && (
+        <div className="notice error" role="alert">
+          {tr("Đã lưu thay đổi nhưng chưa tải lại được số liệu tổng quan.")}
+          <button className="quiet" onClick={() => void refreshMetrics()}>
+            {tr("Tải lại số liệu")}
+          </button>
+        </div>
+      )}
       {canManageApplications && (
         <CandidateEntryDialog
           key={job.id}

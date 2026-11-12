@@ -65,6 +65,7 @@ export default function Workspace() {
     "master",
   );
   const gate = useRef(new RequestGate());
+  const metricsGate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
   const authUser = useRef<string | null>(null);
@@ -75,6 +76,7 @@ export default function Workspace() {
     setLocalLoginVisible(process.env.NODE_ENV === "development" && isLoopback);
   }, []);
   const invalidate = useCallback(() => {
+    metricsGate.current.invalidate();
     gate.current.invalidate();
     setAccess(null);
     setSelectedJob(null);
@@ -82,6 +84,7 @@ export default function Workspace() {
     setError("scopeChanged");
   }, []);
   const refresh = useCallback(async (quiet = false) => {
+    metricsGate.current.invalidate();
     const ticket = gate.current.next();
     if (!quiet) {
       setLoading(true);
@@ -185,6 +188,29 @@ export default function Workspace() {
       if (gate.current.current(ticket)) setLoading(false);
     }
   }, []);
+  const refreshJobMetrics = useCallback(async () => {
+    const userId = authUser.current;
+    if (!userId) return;
+    const ticket = metricsGate.current.next();
+    const result = await jobOverview();
+    if (!metricsGate.current.current(ticket) || authUser.current !== userId)
+      return;
+    const byJob = new Map(result.jobs.map((row) => [row.job_id, row]));
+    setAccess((current) =>
+      current?.userId === userId
+        ? {
+            ...current,
+            jobs: current.jobs.map((job) => ({
+              ...job,
+              metrics: byJob.get(job.id),
+            })),
+          }
+        : current,
+    );
+    setSelectedJob((current) =>
+      current ? { ...current, metrics: byJob.get(current.id) } : null,
+    );
+  }, []);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cleanup = () => {};
@@ -198,6 +224,7 @@ export default function Workspace() {
           nextUser === authUser.current &&
           event !== "SIGNED_OUT";
         authUser.current = nextUser;
+        metricsGate.current.invalidate();
         gate.current.invalidate();
         if (!quiet) {
           setAccess(null);
@@ -215,6 +242,7 @@ export default function Workspace() {
     }
     return () => {
       gate.current.invalidate();
+      metricsGate.current.invalidate();
       clearTimeout(timer);
       cleanup();
     };
@@ -251,6 +279,7 @@ export default function Workspace() {
   }
   async function logout() {
     setAuthBusy(true);
+    metricsGate.current.invalidate();
     gate.current.invalidate();
     setAccess(null);
     try {
@@ -1542,6 +1571,7 @@ export default function Workspace() {
                         key={selectedJob.id}
                         job={selectedJob}
                         onSessionLost={invalidate}
+                        onDataChanged={refreshJobMetrics}
                         canViewOffers={access.roles.some(
                           (role) => role === "ADMIN" || role === "TA_RECRUITER",
                         )}

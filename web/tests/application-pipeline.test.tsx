@@ -770,3 +770,41 @@ it("keeps compact cards free of duplicate source and current-stage labels", asyn
     "Long candidate name for compact card",
   );
 });
+
+it("refreshes totals after a successful move and retries only the read when totals fail", async () => {
+  api.list.mockResolvedValue({
+    applications: [application("Ada")],
+    limit: 25,
+    offset: 0,
+  });
+  api.detail.mockResolvedValue(detail("Ada"));
+  api.screen.mockResolvedValue({
+    application: { application_id: "Ada", changed: true },
+  });
+  const refresh = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("network failed"))
+    .mockResolvedValue(undefined);
+  render(
+    <ApplicationPipeline
+      job={job}
+      onSessionLost={vi.fn()}
+      canManageApplications
+      onDataChanged={refresh}
+    />,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Chuyển sang Sơ loại" }),
+  );
+  expect((await screen.findByRole("alert")).textContent).toContain(
+    "Đã lưu thay đổi nhưng chưa tải lại được số liệu tổng quan.",
+  );
+  expect(api.screen).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole("button", { name: "Tải lại số liệu" }));
+  await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+  expect(api.screen).toHaveBeenCalledTimes(1);
+});

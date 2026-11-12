@@ -3,6 +3,12 @@ import { friendlyError, getCopy, type Locale } from "./i18n";
 // Explicit interface copy only. Candidate names, CVs, job titles and API payloads
 // are never translated. Placeholders keep data separate from interface wording.
 export const uiCopy: Record<string, readonly [string, string]> = {
+  "Đang cập nhật số liệu…": ["Đang cập nhật số liệu…", "Updating totals…"],
+  "Đã lưu thay đổi nhưng chưa tải lại được số liệu tổng quan.": [
+    "Đã lưu thay đổi nhưng chưa tải lại được số liệu tổng quan.",
+    "Your changes were saved, but the overview totals could not be refreshed.",
+  ],
+  "Tải lại số liệu": ["Tải lại số liệu", "Refresh totals"],
   "Link CV Google Drive": ["Link CV Google Drive", "Google Drive CV link"],
   "Thêm ứng viên": ["Thêm ứng viên", "Add candidate"],
   "Theo dõi đề nghị": ["Theo dõi đề nghị", "Track offers"],
