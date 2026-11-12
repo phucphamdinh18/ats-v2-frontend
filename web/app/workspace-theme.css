@@ -554,6 +554,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
+  white-space: normal;
 }
 .astryx-workspace thead,
 .astryx-workspace th {
@@ -576,6 +577,27 @@
   font-size: 12px;
   vertical-align: middle;
   border-color: #edf0f5;
+}
+.astryx-workspace .workspace-master-table :is(th, td) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.astryx-workspace .workspace-master-table td :is(strong, small, .muted, .master-sla, .job-source-summary, .job-source-summary summary, .job-source-summary li, .badge) {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.astryx-workspace .workspace-master-table .job-title {
+  min-width: 0;
+  max-width: 100%;
+}
+.astryx-workspace .workspace-master-table .job-title-link {
+  min-width: 0;
+  flex: 1;
+}
+.astryx-workspace .workspace-master-table .job-source-summary ul {
+  padding-left: 16px;
 }
 .astryx-workspace .workspace-master-table :is(th, td):first-child {
   width: 28%;

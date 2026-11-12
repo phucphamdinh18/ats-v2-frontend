@@ -47,3 +47,10 @@ Talent Pool returned a candidate-list load error in this existing TEST environme
 The final deployed frontend source is `87bb0607611c7f405492429f51d2d909d7d107c5`; Pages run #121 (`43071356438`) succeeded and the live `ats-release` meta tag matches that source with `path-preview`. The main-site root source remains `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. A subsequent documentation-only commit records this verification without changing deployed frontend files.
 
 Final-source browser checks also confirmed Manual Drive reduces the board to two cards while the full-Job total stays six; resetting the filter restores six cards. The candidate history displays “Đã chuyển vòng” on the final revision. The preview was left open in Vietnamese with no data or access mutations.
+
+
+## 2026-11-12 — Laptop Master table text overflow
+
+The fixed-width Master table inherited `white-space: nowrap` from the base table rule. Long department/location, SLA explanations and candidate-stage summaries could therefore paint into adjacent cells. Scoped Master rules now restore normal wrapping, allow long unbroken references/source strings to wrap, constrain nested content to its cell, and allow the title flex item to shrink. No ellipsis or data removal is introduced. The existing 940px table minimum and table-only horizontal scrolling remain for narrow viewports. Other tables, workflow, API and access rules are unchanged.
+
+Validation: typecheck and static build; browser checks are recorded after deployment. Rollback by publishing frontend source `87bb0607611c7f405492429f51d2d909d7d107c5` with the unchanged root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`.
