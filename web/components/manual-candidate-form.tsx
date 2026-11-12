@@ -1,4 +1,5 @@
 "use client";
+import Icon from "./icon";
 import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
@@ -34,7 +35,11 @@ export default function ManualCandidateForm({
   job,
   onCreated,
   onSessionLost,
+  onCancel,
+  onSavingChange,
 }: {
+  onCancel?: () => void;
+  onSavingChange?: (saving: boolean) => void;
   job: Job;
   onCreated: () => Promise<void>;
   onSessionLost: () => void;
@@ -45,6 +50,9 @@ export default function ManualCandidateForm({
   const [form, setForm] = useState<Form>(blank);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+  useEffect(() => {
+    onSavingChange?.(status === "saving");
+  }, [status, onSavingChange]);
   const [sourceOptions, setSourceOptions] = useState<SourceOption[]>([]);
   const [sourceLoadError, setSourceLoadError] = useState("");
   const requestId = useRef<string | null>(null);
@@ -164,12 +172,29 @@ export default function ManualCandidateForm({
       <div className="panel-heading">
         <div>
           <h3>{tr("Thêm ứng viên vào Job")}</h3>
+          {onCancel && (
+            <p className="candidate-target-job">
+              {tr("Job")}: <strong>{job.title}</strong>
+              {job.job_code ? ` · ${job.job_code}` : ""}
+            </p>
+          )}
           <p>
             {tr(
               "Chỉ lưu liên kết CV trên Google Drive. ATS không tải CV lên và không gửi CV sang AI ở luồng này.",
             )}
           </p>
         </div>
+        {onCancel && (
+          <button
+            className="secondary candidate-close"
+            type="button"
+            aria-label={tr("Đóng")}
+            disabled={status === "saving"}
+            onClick={onCancel}
+          >
+            <Icon name="close" size={18} />
+          </button>
+        )}
       </div>
       {!open && (
         <p className="disabled-explanation" role="status">
@@ -285,18 +310,30 @@ export default function ManualCandidateForm({
           <p>
             {tr("Email hoặc số điện thoại là bắt buộc để chống tạo trùng.")}
           </p>
-          <button
-            className="primary"
-            type="submit"
-            disabled={!open || status === "saving"}
-            title={disabledReason || tr("Thêm ứng viên vào pipeline")}
-          >
-            {status === "saving"
-              ? tr("Đang tạo…")
-              : requestId.current
-                ? tr("Thử lại thêm ứng viên")
-                : tr("Thêm vào pipeline")}
-          </button>
+          <div className="candidate-form-buttons">
+            {onCancel && (
+              <button
+                className="secondary"
+                type="button"
+                disabled={status === "saving"}
+                onClick={onCancel}
+              >
+                {tr("Hủy")}
+              </button>
+            )}
+            <button
+              className="primary"
+              type="submit"
+              disabled={!open || status === "saving"}
+              title={disabledReason || tr("Thêm ứng viên vào pipeline")}
+            >
+              {status === "saving"
+                ? tr("Đang tạo…")
+                : requestId.current
+                  ? tr("Thử lại thêm ứng viên")
+                  : tr("Thêm vào pipeline")}
+            </button>
+          </div>
         </div>
       </form>
     </section>

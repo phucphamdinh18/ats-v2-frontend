@@ -17,7 +17,7 @@ import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import Icon from "./icon";
 import { eventLabel } from "@/lib/ui-copy";
-import ManualCandidateForm from "./manual-candidate-form";
+import CandidateEntryDialog from "./candidate-entry-dialog";
 const PAGE_SIZE = 25;
 const PIPELINE_STAGES = [
   "NEW",
@@ -80,6 +80,7 @@ export default function ApplicationPipeline({
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [candidateOpen, setCandidateOpen] = useState(false);
   const [source, setSource] = useState("all");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Application | null>(null);
@@ -352,7 +353,7 @@ export default function ApplicationPipeline({
     }
   }
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || candidateOpen) return;
     const dismiss = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         detailTicket.current += 1;
@@ -362,7 +363,7 @@ export default function ApplicationPipeline({
     };
     window.addEventListener("keydown", dismiss);
     return () => window.removeEventListener("keydown", dismiss);
-  }, [selected]);
+  }, [selected, candidateOpen]);
   const nextStage = selected ? NEXT_STAGE[selected.stage] : undefined;
   const previousStage = selected ? PREVIOUS_STAGE[selected.stage] : undefined;
   const eligible = Boolean(
@@ -444,19 +445,27 @@ export default function ApplicationPipeline({
         </div>
         {canManageApplications &&
           (state === "ready" || state === "empty" || state === "error") && (
-            <details className="add-candidate-disclosure">
-              <summary>
-                <span aria-hidden="true">＋</span>
-                {tr("Thêm ứng viên vào Job")}
-              </summary>
-              <ManualCandidateForm
-                job={job}
-                onCreated={refreshAfterCandidateCreated}
-                onSessionLost={onSessionLost}
-              />
-            </details>
+            <button
+              className="primary add-candidate-button"
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setCandidateOpen(true)}
+            >
+              <span aria-hidden="true">＋</span>
+              {tr("Thêm ứng viên vào Job")}
+            </button>
           )}
       </div>
+      {canManageApplications && (
+        <CandidateEntryDialog
+          key={job.id}
+          job={job}
+          isOpen={candidateOpen}
+          onDismiss={() => setCandidateOpen(false)}
+          onCreated={refreshAfterCandidateCreated}
+          onSessionLost={onSessionLost}
+        />
+      )}
       <div className="pipeline-toolbar">
         <label className="search">
           <Icon name="search" size={17} />

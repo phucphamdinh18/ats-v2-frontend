@@ -3,6 +3,7 @@ import { friendlyError, getCopy, type Locale } from "./i18n";
 // Explicit interface copy only. Candidate names, CVs, job titles and API payloads
 // are never translated. Placeholders keep data separate from interface wording.
 export const uiCopy: Record<string, readonly [string, string]> = {
+  Hủy: ["Hủy", "Cancel"],
   "Thông tin bổ sung": ["Thông tin bổ sung", "Additional details"],
   "1.3 Quản lý Job": ["1.3 Quản lý Job", "1.3 Manage jobs"],
   "Quản lý": ["Quản lý", "Manage"],

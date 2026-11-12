@@ -397,7 +397,9 @@ describe("application pipeline", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Chuyển sang Sơ loại" }),
     );
-    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
+    await screen.findByText(
+      "Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.",
+    );
     fireEvent.click(
       screen.getAllByRole("button", {
         name: /Thử lại chuyển (sang )?Sơ loại/,
@@ -497,11 +499,9 @@ describe("Kanban failure feedback", () => {
         limit: 25,
         offset: 0,
       });
-      api.screen
-        .mockRejectedValueOnce(failure)
-        .mockResolvedValueOnce({
-          application: { application_id: "Ada", changed: true },
-        });
+      api.screen.mockRejectedValueOnce(failure).mockResolvedValueOnce({
+        application: { application_id: "Ada", changed: true },
+      });
       renderPipeline();
       const card = await screen.findByRole("button", {
         name: /Mở hồ sơ của Ada/,
@@ -544,11 +544,15 @@ describe("Kanban failure feedback", () => {
       screen.getByRole("button", { name: /Mở hồ sơ của Ada/ }),
     );
     fireEvent.drop(screen.getByRole("region", { name: "Giai đoạn Sơ loại" }));
-    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
+    await screen.findByText(
+      "Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.",
+    );
     // Changing detail selection must not discard the board's failed operation.
     fireEvent.click(screen.getByRole("button", { name: /Mở hồ sơ của Other/ }));
     await screen.findByText("Lịch sử");
-    expect(screen.getByRole("alert").textContent).toContain("Chưa thực hiện được thao tác này");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Chưa thực hiện được thao tác này",
+    );
     fireEvent.click(
       screen.getAllByRole("button", {
         name: /Thử lại chuyển (sang )?Sơ loại/,
@@ -595,12 +599,18 @@ it("hides a prior board error when detail access is revoked", async () => {
     await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
   );
   fireEvent.drop(screen.getByRole("region", { name: "Giai đoạn Sơ loại" }));
-  await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
+  await screen.findByText(
+    "Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.",
+  );
   fireEvent.click(screen.getByRole("button", { name: /Mở hồ sơ của Other/ }));
   await waitFor(() =>
     expect(screen.getByRole("alert").textContent).toContain("Không có quyền"),
   );
-  expect(screen.queryByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.")).toBeNull();
+  expect(
+    screen.queryByText(
+      "Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.",
+    ),
+  ).toBeNull();
   expect(
     screen.queryByRole("button", { name: /Thử lại chuyển (sang )?Sơ loại/ }),
   ).toBeNull();
@@ -699,4 +709,39 @@ it("filters the current page by source without changing full-job overview totals
   expect(
     screen.getByRole("region", { name: "Tổng quan Job đang chọn" }).textContent,
   ).toContain("42");
+});
+
+it("opens candidate entry as a dismissible dialog from the Pipeline button", async () => {
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+    configurable: true,
+    value() {
+      this.setAttribute("open", "");
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {
+    configurable: true,
+    value() {
+      this.removeAttribute("open");
+    },
+  });
+  try {
+    api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
+    renderPipeline();
+    const trigger = await screen.findByRole("button", {
+      name: "Thêm ứng viên vào Job",
+    });
+    expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(trigger);
+    expect(
+      screen.getByRole("dialog", { name: "Thêm ứng viên vào Job" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.body.style.overflow).toBe("");
+  } finally {
+    cleanup();
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal");
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "close");
+  }
 });
