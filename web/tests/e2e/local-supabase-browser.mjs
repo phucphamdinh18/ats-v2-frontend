@@ -456,6 +456,8 @@ try {
   await interviewDetail.getByText("Đang chờ feedback từ người tham dự.",{exact:true}).waitFor();
   assert.equal(await interviewDetail.getByRole("button",{name:"Gửi feedback",exact:true}).count(),0);
   await page.screenshot({path:path.join(artifactDir,"interview-ta-coordinator.png"),fullPage:true});
+  activePage=interviewerPage;
+  await interviewerPage.bringToFront();
   await interviewerPage.getByRole("button",{name:"Phỏng vấn",exact:true}).click();
   await interviewerPage.getByLabel("Trạng thái lịch",{exact:true}).selectOption('COMPLETED');
   await interviewerPage.getByRole("button",{name:/TEST ONLY Manual E2E Candidate/}).click();
@@ -466,6 +468,8 @@ try {
   await participantDetail.getByRole("button",{name:"Gửi feedback",exact:true}).click();
   await participantDetail.getByText('TEST ONLY browser interview feedback',{exact:true}).waitFor();
   await interviewerPage.screenshot({path:path.join(artifactDir,"interview-participant-feedback.png"),fullPage:true});
+  activePage=hmPage;
+  await hmPage.bringToFront();
   await hmPage.getByRole("button",{name:"Phỏng vấn",exact:true}).click();
   await hmPage.getByLabel("Trạng thái lịch",{exact:true}).selectOption('COMPLETED');
   await hmPage.getByRole("button",{name:/TEST ONLY Manual E2E Candidate/}).click();
