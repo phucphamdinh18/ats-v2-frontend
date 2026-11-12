@@ -124,3 +124,38 @@ it("no roster is fetched until the scheduling action is opened", () => {
   );
   expect(api.call).not.toHaveBeenCalled();
 });
+it("a failed post-save read retries only the read, not scheduling", async () => {
+  const refreshed = vi.fn(async () => {
+    throw new Error("read failed");
+  });
+  api.call.mockImplementation(async (b) =>
+    b.action === "roster"
+      ? { participants: [person] }
+      : { interview: { created: true } },
+  );
+  render(
+    <LanguageProvider>
+      <InterviewSchedule
+        applicationId="app-1"
+        onSaved={refreshed}
+        onAccessLost={lost}
+      />
+    </LanguageProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Đặt lịch phỏng vấn" }));
+  await screen.findByText(/Synthetic Interviewer/);
+  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.change(screen.getByLabelText("Bắt đầu"), {
+    target: { value: "2026-12-01T10:00" },
+  });
+  fireEvent.change(screen.getByLabelText("Kết thúc"), {
+    target: { value: "2026-12-01T11:00" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Xác nhận đặt lịch" }));
+  await screen.findByText(/Đã đặt lịch nhưng chưa tải lại/);
+  fireEvent.click(screen.getByRole("button", { name: "Cập nhật hồ sơ" }));
+  await waitFor(() => expect(refreshed).toHaveBeenCalledTimes(2));
+  expect(
+    api.call.mock.calls.filter(([b]) => b.action === "create"),
+  ).toHaveLength(1);
+});

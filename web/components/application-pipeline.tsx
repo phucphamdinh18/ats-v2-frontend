@@ -847,9 +847,17 @@ export default function ApplicationPipeline({
                     applicationId={selected.application_id}
                     onAccessLost={onSessionLost}
                     onSaved={async () => {
-                      await load(offset);
-                      await openDetail(selected);
-                      await onDataChanged?.();
+                      await Promise.all([load(offset), refreshMetrics()]);
+                      const ticket = ++detailTicket.current;
+                      const updated = await applicationDetail(
+                        job.id,
+                        selected.application_id,
+                      );
+                      if (
+                        ticket === detailTicket.current &&
+                        selectedId.current === selected.application_id
+                      )
+                        setDetail(updated);
                     }}
                   />
                 )}

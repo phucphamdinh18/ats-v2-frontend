@@ -325,11 +325,27 @@ it("quick start opens actual open-job filtering, without creating any records", 
   const openFilter = screen.getByRole("button", { name: "Đang tuyển (1)" });
   expect(openFilter.getAttribute("aria-pressed")).toBe("true");
 });
-it('an interviewer with no Job-wide rows can open the interview workspace', async()=>{
- scope(true,['INTERVIEWER']);
- mocks.functionInvoke.mockImplementation((_name,options)=>Promise.resolve({data:options.body?.action==='overview'?{jobs:[]}:options.body?.action==='worklist'?{interviews:[]}:{applications:[]},error:null}));
- render(<LanguageProvider><Workspace/></LanguageProvider>);
- fireEvent.click(await screen.findByRole('button',{name:'Phỏng vấn',exact:true}));
- expect(await screen.findByLabelText('Trạng thái lịch')).toBeTruthy();
- expect(await screen.findByText('Chưa có lịch ở trạng thái này.')).toBeTruthy();
+it("an interviewer with no Job-wide rows can open the interview workspace", async () => {
+  scope(true, ["INTERVIEWER"]);
+  mocks.functionInvoke.mockImplementation((_name, options) =>
+    Promise.resolve({
+      data:
+        options.body?.action === "overview"
+          ? { jobs: [] }
+          : options.body?.action === "worklist"
+            ? { interviews: [] }
+            : { applications: [] },
+      error: null,
+    }),
+  );
+  render(
+    <LanguageProvider>
+      <Workspace />
+    </LanguageProvider>,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Phỏng vấn" }));
+  expect(await screen.findByLabelText("Trạng thái lịch")).toBeTruthy();
+  expect(
+    await screen.findByText("Chưa có lịch ở trạng thái này."),
+  ).toBeTruthy();
 });

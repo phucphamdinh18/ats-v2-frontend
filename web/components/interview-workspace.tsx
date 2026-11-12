@@ -138,7 +138,7 @@ export default function InterviewWorkspace({
     ])[locale === "en" ? 1 : 0];
   }
   function choose(row: InterviewRow) {
-    if (busy || pending) return;
+    if (busy || pending || selected?.id === row.id) return;
     setSelected(row);
     setSummary("");
     setStrengths("");
@@ -149,7 +149,9 @@ export default function InterviewWorkspace({
   }
   async function mutate(body: Record<string, unknown>) {
     if (writing.current) return;
-    const key = JSON.stringify(body);
+    const { request_id: ignoredRequestId, ...requestBody } = body;
+    void ignoredRequestId;
+    const key = JSON.stringify(requestBody);
     request.current ??=
       lastWrite.current?.key === key
         ? lastWrite.current.request
