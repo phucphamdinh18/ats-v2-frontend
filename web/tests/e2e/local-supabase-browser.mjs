@@ -156,6 +156,10 @@ try {
   await assertStage(taView.details, "NEW");
   await moveStage(page, taView.details, "forward");
   await moveStage(page, taView.details, "backward");
+  page.once("dialog",dialog=>dialog.accept());
+  await taView.card.dragTo(taView.pipeline.getByRole("region",{name:"Giai đoạn Sơ loại",exact:true}));
+  await assertStage(taView.details,"SCREEN");
+  await moveStage(page,taView.details,"backward");
   await checkLaptopReflow(page);
   await page.screenshot({ path: path.join(artifactDir, "ta-job-pipeline.png"), fullPage: true });
 
