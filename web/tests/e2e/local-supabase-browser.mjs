@@ -100,8 +100,14 @@ async function checkLaptopReflow(page) {
   }
   await page.setViewportSize({width:1440,height:1000});
   await page.getByRole("button",{name:"Thêm ứng viên",exact:true}).click();
-  await page.getByLabel("Họ và tên ứng viên",{exact:true}).fill("");
+  await page.getByLabel("Họ và tên ứng viên",{exact:true}).fill("TEST ONLY bilingual draft");
   await page.getByRole("button",{name:"Đóng",exact:true}).click();
+  await page.getByLabel("Ngôn ngữ / Language",{exact:true}).selectOption("en");
+  await page.getByRole("button",{name:"Add candidate",exact:true}).click();
+  assert.equal(await page.getByLabel("Candidate’s full name",{exact:true}).inputValue(),"TEST ONLY bilingual draft");
+  await page.getByLabel("Google Drive CV link",{exact:true}).waitFor();
+  await page.getByRole("button",{name:"Cancel",exact:true}).click();
+  await page.getByLabel("Ngôn ngữ / Language",{exact:true}).selectOption("vi");
 }
 
 async function createJobAndAssign(page) {
@@ -113,7 +119,7 @@ async function createJobAndAssign(page) {
   await form.getByLabel("Tên vị trí",{exact:true}).fill(title);
   await form.getByLabel("Bộ phận",{exact:true}).fill("TEST ONLY");
   await form.getByLabel("Địa điểm",{exact:true}).fill("TEST ONLY HCM");
-  await form.getByLabel("Level",{exact:true}).selectOption("3");
+  await form.getByLabel("Cấp độ",{exact:true}).selectOption("3");
   await form.getByLabel("Nhóm chức năng",{exact:true}).selectOption("Tech/Product");
   await form.getByLabel("Mùa tuyển dụng",{exact:true}).selectOption("Normal Time");
   await form.getByRole("button",{name:"Lưu Job nháp",exact:true}).click();
@@ -129,7 +135,6 @@ async function createJobAndAssign(page) {
   page.once("dialog",dialog=>dialog.accept());
   await admin.getByRole("button",{name:"Xác nhận mở tuyển",exact:true}).click();
   await admin.getByText(/Đã mở tuyển Job/).waitFor({timeout:15000});
-  await admin.getByRole("button",{name:"Đóng",exact:true}).click();
   await row.getByText("Đang nhận ứng viên",{exact:true}).waitFor();
   await page.getByRole("tab",{name:/1.1/}).click();
   return title;
