@@ -68,3 +68,13 @@ The two API writes are not a database transaction. If creation succeeds but meta
 Verification: 25 Node tests, 59 component tests, 12 root QA checks, inline syntax, typecheck and static build. New Admin tests exercise one-form creation, both retry paths, selected-Job targeting, no implicit opening/assignment, VI/EN input preservation and stale team responses. No cloud Job or permission writes were used as test fixtures. Authenticated visual QA remains pending explicit authorization of the Admin account from the previous request; no rejected authentication action is retried.
 
 Release uses path-preview only, with the unchanged main-site source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back the UI to frontend source `4d756cbc822ef5c79f2f97495d0d707cdf2547cb` to restore the previous four-tab Admin and retain the laptop text-wrap fix. Keep PR #43 draft and unmerged.
+
+## 2026-11-12 — Consolidate Job management into Job openings
+
+Job openings is now the single navigation destination and Job table. Removed the separate Manage jobs sidebar/global search destination and Admin page branch. The page heading offers Create job to Admins. Existing five-column rows contain Assign your team under organization, Edit requirements under request details, and Open for hiring under Draft status. Buttons wrap within their cells; no extra wide table column is added. Non-Admins do not receive these administrative controls.
+
+The existing Admin editor is embedded above the Job list without its own overview, search or second table. Explicit row actions select the target Job; creation, opening and access assignment remain distinct authenticated API operations. The embedded editor stays mounted while changing workspace tabs/views so in-session partial-creation retry state survives. Closing the editor preserves creation input; opening it again resumes the same draft when applicable. A partially saved draft's Open action returns to finishing requirements rather than opening the Job. Existing mutation locks, confirmations, stale-response protection and RLS remain unchanged. Guide copy is updated in Vietnamese and English.
+
+Validation: 25 Node tests and 60 component tests passed, including an embedded-editor test that verifies no duplicate table, correct row target, close/reopen and no implicit writes. Static build and TypeScript checks passed. No cloud Job or membership mutations were performed. Signed-in browser visual checks remain pending; public release verification is recorded after publishing.
+
+Publish only path-preview; keep main-site source at `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back to preview source `15358c6e2b71c7f6869a5612dbf509a9d577e92d` to restore the separate Manage jobs page. Keep PR #43 draft and unmerged.

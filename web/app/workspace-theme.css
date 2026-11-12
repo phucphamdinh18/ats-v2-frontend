@@ -583,7 +583,19 @@
   overflow-wrap: anywhere;
   word-break: normal;
 }
-.astryx-workspace .workspace-master-table td :is(strong, small, .muted, .master-sla, .job-source-summary, .job-source-summary summary, .job-source-summary li, .badge) {
+.astryx-workspace
+  .workspace-master-table
+  td
+  :is(
+    strong,
+    small,
+    .muted,
+    .master-sla,
+    .job-source-summary,
+    .job-source-summary summary,
+    .job-source-summary li,
+    .badge
+  ) {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -2024,31 +2036,142 @@
     grid-template-columns: 1fr;
   }
 }
-.astryx-workspace .pipeline-heading:has(details[open]) { flex-wrap:wrap; }
-.astryx-workspace .pipeline-heading details[open] { flex-basis:100%; }
-.astryx-workspace .pipeline-heading details[open]>summary { width:max-content; max-width:100%; }
+.astryx-workspace .pipeline-heading:has(details[open]) {
+  flex-wrap: wrap;
+}
+.astryx-workspace .pipeline-heading details[open] {
+  flex-basis: 100%;
+}
+.astryx-workspace .pipeline-heading details[open] > summary {
+  width: max-content;
+  max-width: 100%;
+}
 /* Job-based administration: one list with separate hiring and access actions. */
-.astryx-workspace .admin-list-heading,.astryx-workspace .admin-editor-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin:0 0 16px; }
-.astryx-workspace .admin-list-heading h2 { margin:0 0 6px; font-size:19px; }
-.astryx-workspace .admin-list-heading p,.astryx-workspace .admin-editor-heading p { margin:0; color:#65728b; font-size:12px; line-height:1.7; }
-.astryx-workspace .admin-list-heading>button { flex-shrink:0; }
-.astryx-workspace .admin-editor { scroll-margin-top:90px; margin-bottom:22px; }
-.astryx-workspace .admin-editor-heading h3 { margin:0 0 6px; }
-.astryx-workspace .admin-editor fieldset { grid-column:1/-1; border:0; padding:0; margin:0; min-width:0; }
-.astryx-workspace .admin-editor legend { padding:0; margin-bottom:12px; color:#394861; font-size:13px; font-weight:650; }
-.astryx-workspace .admin-editor .admin-identity-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
-.astryx-workspace .admin-editor fieldset:disabled { opacity:.75; }
-.astryx-workspace .admin-editor .job-meta-fields { padding-top:4px; }
-.astryx-workspace .admin-job-list { margin-top:16px; }
-.astryx-workspace .admin-status-filter { display:flex; align-items:center; gap:10px; color:#65728b; font-size:12px; }
-.astryx-workspace .admin-job-table { min-width:870px; }
-.astryx-workspace .admin-job-table :is(th,td):nth-child(1) { width:30%; }
-.astryx-workspace .admin-job-table :is(th,td):nth-child(2) { width:20%; }
-.astryx-workspace .admin-job-table :is(th,td):nth-child(3),.astryx-workspace .admin-job-table :is(th,td):nth-child(4) { width:25%; }
-.astryx-workspace .admin-job-table td { vertical-align:top; padding-block:18px; }
-.astryx-workspace .admin-job-table td .job-code-subtitle { margin-left:0; }
-.astryx-workspace .admin-job-table td>small { display:block; }
-.astryx-workspace .admin-job-table td>button { display:block; margin-top:12px; }
-.astryx-workspace .admin-job-table th:nth-child(4),.astryx-workspace .admin-job-table td:nth-child(4) { border-left:1px solid #e4e8f0; background:#fcfcff; }
-@media(max-width:1000px) { .astryx-workspace .admin-editor .admin-identity-fields { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:700px) { .astryx-workspace .admin-list-heading { flex-direction:column; gap:12px; } .astryx-workspace .admin-editor .admin-identity-fields { grid-template-columns:1fr; } .astryx-workspace .admin-status-filter { flex-wrap:wrap; } }
+.astryx-workspace .admin-list-heading,
+.astryx-workspace .admin-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 16px;
+}
+.astryx-workspace .admin-list-heading h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+.astryx-workspace .admin-list-heading p,
+.astryx-workspace .admin-editor-heading p {
+  margin: 0;
+  color: #65728b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.astryx-workspace .admin-list-heading > button {
+  flex-shrink: 0;
+}
+.astryx-workspace .admin-editor {
+  scroll-margin-top: 90px;
+  margin-bottom: 22px;
+}
+.astryx-workspace .admin-editor-heading h3 {
+  margin: 0 0 6px;
+}
+.astryx-workspace .admin-editor fieldset {
+  grid-column: 1/-1;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.astryx-workspace .admin-editor legend {
+  padding: 0;
+  margin-bottom: 12px;
+  color: #394861;
+  font-size: 13px;
+  font-weight: 650;
+}
+.astryx-workspace .admin-editor .admin-identity-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.astryx-workspace .admin-editor fieldset:disabled {
+  opacity: 0.75;
+}
+.astryx-workspace .admin-editor .job-meta-fields {
+  padding-top: 4px;
+}
+.astryx-workspace .admin-job-list {
+  margin-top: 16px;
+}
+.astryx-workspace .admin-status-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #65728b;
+  font-size: 12px;
+}
+.astryx-workspace .admin-job-table {
+  min-width: 870px;
+}
+.astryx-workspace .admin-job-table :is(th, td):nth-child(1) {
+  width: 30%;
+}
+.astryx-workspace .admin-job-table :is(th, td):nth-child(2) {
+  width: 20%;
+}
+.astryx-workspace .admin-job-table :is(th, td):nth-child(3),
+.astryx-workspace .admin-job-table :is(th, td):nth-child(4) {
+  width: 25%;
+}
+.astryx-workspace .admin-job-table td {
+  vertical-align: top;
+  padding-block: 18px;
+}
+.astryx-workspace .admin-job-table td .job-code-subtitle {
+  margin-left: 0;
+}
+.astryx-workspace .admin-job-table td > small {
+  display: block;
+}
+.astryx-workspace .admin-job-table td > button {
+  display: block;
+  margin-top: 12px;
+}
+.astryx-workspace .admin-job-table th:nth-child(4),
+.astryx-workspace .admin-job-table td:nth-child(4) {
+  border-left: 1px solid #e4e8f0;
+  background: #fcfcff;
+}
+@media (max-width: 1000px) {
+  .astryx-workspace .admin-editor .admin-identity-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .astryx-workspace .admin-list-heading {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .astryx-workspace .admin-editor .admin-identity-fields {
+    grid-template-columns: 1fr;
+  }
+  .astryx-workspace .admin-status-filter {
+    flex-wrap: wrap;
+  }
+}
+
+/* One Job list: administrative actions remain inside the existing five columns. */
+.astryx-workspace .job-admin-action {
+  margin-top: 10px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.astryx-workspace .admin-embedded:empty {
+  display: none;
+}
+.astryx-workspace .admin-embedded .admin-editor {
+  margin-bottom: 20px;
+}

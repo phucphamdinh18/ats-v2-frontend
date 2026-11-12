@@ -157,11 +157,23 @@ function RequirementsFields({
   );
 }
 
+export type JobAdminAction = {
+  kind: "create" | "details" | "open" | "team";
+  jobId?: string;
+  requestId: number;
+};
+
 export default function AdminConsole({
   jobs,
   onRefresh,
   onAccessLost,
+  editorOnly = false,
+  action,
+  onBusyChange,
 }: {
+  editorOnly?: boolean;
+  action?: JobAdminAction | null;
+  onBusyChange?: (busy: boolean) => void;
   jobs: Job[];
   onRefresh: () => Promise<void>;
   onAccessLost: () => void;
@@ -216,6 +228,22 @@ export default function AdminConsole({
       });
     }
   }, [section, jobId]);
+  useEffect(() => {
+    onBusyChange?.(busy);
+  }, [busy, onBusyChange]);
+  useEffect(() => {
+    if (!action || actionLock.current) return;
+    if (action.kind === "create") {
+      setSection("create");
+      setError("");
+      setMessage("");
+    } else {
+      const target = jobs.find((job) => job.id === action.jobId);
+      if (target) showAction(action.kind, target);
+    }
+    // Each explicit click selects a target; refresh must not reset in-progress input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [action?.requestId]);
   const draftRequest = useRef<{ key: string; id: string } | null>(null);
   const actionLock = useRef(false);
   const selectedJob = jobs.find((job) => job.id === jobId) || null;
@@ -515,6 +543,10 @@ export default function AdminConsole({
     selectedJob && assignableJobs.some((job) => job.id === selectedJob.id);
   function showAction(next: "details" | "open" | "team", job: Job) {
     if (busy) return;
+    if (next === "open" && job.id === createdDraftRef.current?.id) {
+      setSection("create");
+      return;
+    }
     if (next === "details" && job.id === createdDraftRef.current?.id) {
       setSection("create");
       return;
@@ -530,24 +562,33 @@ export default function AdminConsole({
     setMessage("");
   }
   return (
-    <section className="panel admin-console" aria-label={tr("Quản lý Job")}>
-      <div className="metrics admin-overview">
-        <div>
-          <small>{tr("Vị trí tuyển dụng")}</small>
-          <strong>{jobs.length}</strong>
-          <span>{tr("Trong phạm vi quản lý")}</span>
+    <section
+      className={
+        editorOnly ? "admin-console admin-embedded" : "panel admin-console"
+      }
+      aria-label={tr("Quản lý Job")}
+    >
+      {!editorOnly && (
+        <div className="metrics admin-overview">
+          <div>
+            <small>{tr("Vị trí tuyển dụng")}</small>
+            <strong>{jobs.length}</strong>
+            <span>{tr("Trong phạm vi quản lý")}</span>
+          </div>
+          <div>
+            <small>{tr("Đang tuyển")}</small>
+            <strong>
+              {jobs.filter((job) => job.status === "OPEN").length}
+            </strong>
+            <span>{tr("Sẵn sàng nhận ứng viên")}</span>
+          </div>
+          <div>
+            <small>{tr("Bản nháp")}</small>
+            <strong>{draftJobs.length}</strong>
+            <span>{tr("Chưa mở tuyển")}</span>
+          </div>
         </div>
-        <div>
-          <small>{tr("Đang tuyển")}</small>
-          <strong>{jobs.filter((job) => job.status === "OPEN").length}</strong>
-          <span>{tr("Sẵn sàng nhận ứng viên")}</span>
-        </div>
-        <div>
-          <small>{tr("Bản nháp")}</small>
-          <strong>{draftJobs.length}</strong>
-          <span>{tr("Chưa mở tuyển")}</span>
-        </div>
-      </div>
+      )}
       {error && (
         <div className="notice error" role="alert">
           {errorText(error)}
@@ -558,28 +599,30 @@ export default function AdminConsole({
           {notice(message)}
         </div>
       )}
-      <div className="admin-list-heading">
-        <div>
-          <h2>{tr("Danh sách Job")}</h2>
-          <p>
-            {tr(
-              "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.",
-            )}
-          </p>
+      {!editorOnly && (
+        <div className="admin-list-heading">
+          <div>
+            <h2>{tr("Danh sách Job")}</h2>
+            <p>
+              {tr(
+                "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.",
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="primary"
+            disabled={busy}
+            onClick={() => {
+              setSection("create");
+              setError("");
+              setMessage("");
+            }}
+          >
+            {partialDraft ? tr("Tiếp tục Job nháp") : tr("Tạo Job")}
+          </button>
         </div>
-        <button
-          type="button"
-          className="primary"
-          disabled={busy}
-          onClick={() => {
-            setSection("create");
-            setError("");
-            setMessage("");
-          }}
-        >
-          {partialDraft ? tr("Tiếp tục Job nháp") : tr("Tạo Job")}
-        </button>
-      </div>
+      )}
       {section !== "list" && (
         <section
           ref={editorRef}
@@ -820,133 +863,135 @@ export default function AdminConsole({
           )}
         </section>
       )}
-      <section
-        className="panel admin-job-list"
-        aria-label={tr("Danh sách Job")}
-      >
-        <div className="toolbar">
-          <label className="search">
-            <input
-              aria-label={tr("Tìm Job")}
-              placeholder={tr("Tìm tên vị trí hoặc mã…")}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-          <label className="admin-status-filter">
-            {tr("Trạng thái")}
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="ALL">{tr("Tất cả trạng thái")}</option>
-              {[...new Set(jobs.map((job) => job.status))].map((status) => (
-                <option key={status} value={status}>
-                  {jobStatusLabel(status, t)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="table-scroll">
-          <table className="workspace-master-table admin-job-table">
-            <thead>
-              <tr>
-                <th>{tr("Job")}</th>
-                <th>{tr("Trạng thái tuyển dụng")}</th>
-                <th>{tr("Yêu cầu tuyển dụng")}</th>
-                <th>{tr("Đội ngũ & quyền truy cập")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleJobs.map((job) => {
-                const canEdit = assignableJobs.some(
-                  (item) => item.id === job.id,
-                );
-                return (
-                  <tr key={job.id}>
-                    <td>
-                      <strong>{job.title}</strong>
-                      <small className="job-code-subtitle">
-                        {job.job_code || tr("Chưa có mã")}
-                      </small>
-                      <small className="job-code-subtitle">
-                        {job.business_unit || tr("Chưa có bộ phận")}
-                        {job.location ? ` · ${job.location}` : ""}
-                      </small>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
-                      >
-                        {jobStatusLabel(job.status, t)}
-                      </span>
-                      <small className="job-code-subtitle">
-                        {job.status === "OPEN"
-                          ? tr("Đang nhận ứng viên")
-                          : job.status === "DRAFT"
-                            ? tr("Chưa mở tuyển")
-                            : tr("Theo trạng thái hiện tại")}
-                      </small>
-                      {job.status === "DRAFT" && (
+      {!editorOnly && (
+        <section
+          className="panel admin-job-list"
+          aria-label={tr("Danh sách Job")}
+        >
+          <div className="toolbar">
+            <label className="search">
+              <input
+                aria-label={tr("Tìm Job")}
+                placeholder={tr("Tìm tên vị trí hoặc mã…")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+            <label className="admin-status-filter">
+              {tr("Trạng thái")}
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="ALL">{tr("Tất cả trạng thái")}</option>
+                {[...new Set(jobs.map((job) => job.status))].map((status) => (
+                  <option key={status} value={status}>
+                    {jobStatusLabel(status, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="table-scroll">
+            <table className="workspace-master-table admin-job-table">
+              <thead>
+                <tr>
+                  <th>{tr("Job")}</th>
+                  <th>{tr("Trạng thái tuyển dụng")}</th>
+                  <th>{tr("Yêu cầu tuyển dụng")}</th>
+                  <th>{tr("Đội ngũ & quyền truy cập")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleJobs.map((job) => {
+                  const canEdit = assignableJobs.some(
+                    (item) => item.id === job.id,
+                  );
+                  return (
+                    <tr key={job.id}>
+                      <td>
+                        <strong>{job.title}</strong>
+                        <small className="job-code-subtitle">
+                          {job.job_code || tr("Chưa có mã")}
+                        </small>
+                        <small className="job-code-subtitle">
+                          {job.business_unit || tr("Chưa có bộ phận")}
+                          {job.location ? ` · ${job.location}` : ""}
+                        </small>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
+                        >
+                          {jobStatusLabel(job.status, t)}
+                        </span>
+                        <small className="job-code-subtitle">
+                          {job.status === "OPEN"
+                            ? tr("Đang nhận ứng viên")
+                            : job.status === "DRAFT"
+                              ? tr("Chưa mở tuyển")
+                              : tr("Theo trạng thái hiện tại")}
+                        </small>
+                        {job.status === "DRAFT" && (
+                          <button
+                            type="button"
+                            className="primary"
+                            disabled={busy || partialDraft?.id === job.id}
+                            onClick={() => showAction("open", job)}
+                          >
+                            {tr("Mở tuyển")}
+                          </button>
+                        )}
+                      </td>
+                      <td>
+                        <small>
+                          {job.level != null
+                            ? `${tr("Level")} ${job.level}`
+                            : tr("Chưa có cấp độ")}{" "}
+                          ·{" "}
+                          {job.function_group
+                            ? tr(job.function_group)
+                            : tr("Chưa phân nhóm")}
+                        </small>
+                        <small className="job-code-subtitle">
+                          {job.sla_target_workdays != null
+                            ? `${tr("SLA tổng:")} ${job.sla_target_workdays} ${tr("ngày làm việc")}`
+                            : tr("Chưa xác định thời hạn")}
+                        </small>
                         <button
                           type="button"
-                          className="primary"
-                          disabled={busy || partialDraft?.id === job.id}
-                          onClick={() => showAction("open", job)}
+                          className="secondary"
+                          disabled={busy || !canEdit}
+                          onClick={() => showAction("details", job)}
                         >
-                          {tr("Mở tuyển")}
+                          {tr("Chỉnh yêu cầu")}
                         </button>
-                      )}
-                    </td>
-                    <td>
-                      <small>
-                        {job.level != null
-                          ? `${tr("Level")} ${job.level}`
-                          : tr("Chưa có cấp độ")}{" "}
-                        ·{" "}
-                        {job.function_group
-                          ? tr(job.function_group)
-                          : tr("Chưa phân nhóm")}
-                      </small>
-                      <small className="job-code-subtitle">
-                        {job.sla_target_workdays != null
-                          ? `${tr("SLA tổng:")} ${job.sla_target_workdays} ${tr("ngày làm việc")}`
-                          : tr("Chưa xác định thời hạn")}
-                      </small>
-                      <button
-                        type="button"
-                        className="secondary"
-                        disabled={busy || !canEdit}
-                        onClick={() => showAction("details", job)}
-                      >
-                        {tr("Chỉnh yêu cầu")}
-                      </button>
-                    </td>
-                    <td>
-                      <small>{tr("Người được làm việc trên Job này")}</small>
-                      <button
-                        type="button"
-                        className="secondary"
-                        disabled={busy || !canEdit}
-                        onClick={() => showAction("team", job)}
-                      >
-                        {tr("Phân công đội ngũ")}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {!visibleJobs.length && (
-          <div className="empty">
-            <h3>{tr("Không tìm thấy Job phù hợp")}</h3>
-            <p>{tr("Thử tên khác hoặc đổi trạng thái.")}</p>
+                      </td>
+                      <td>
+                        <small>{tr("Người được làm việc trên Job này")}</small>
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={busy || !canEdit}
+                          onClick={() => showAction("team", job)}
+                        >
+                          {tr("Phân công đội ngũ")}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-      </section>
+          {!visibleJobs.length && (
+            <div className="empty">
+              <h3>{tr("Không tìm thấy Job phù hợp")}</h3>
+              <p>{tr("Thử tên khác hoặc đổi trạng thái.")}</p>
+            </div>
+          )}
+        </section>
+      )}
     </section>
   );
 }

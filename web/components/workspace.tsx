@@ -17,7 +17,7 @@ import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
-import AdminConsole from "./admin-console";
+import AdminConsole, { type JobAdminAction } from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 type Access = {
   userId: string;
@@ -39,7 +39,21 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin">("jobs");
+  const [tab, setTab] = useState<"jobs" | "talent" | "jd">("jobs");
+  const [jobAdminAction, setJobAdminAction] = useState<JobAdminAction | null>(
+    null,
+  );
+  const [jobAdminBusy, setJobAdminBusy] = useState(false);
+  function openJobAction(kind: JobAdminAction["kind"], jobId?: string) {
+    if (jobAdminBusy) return;
+    setTab("jobs");
+    setJobView("master");
+    setJobAdminAction((previous) => ({
+      kind,
+      jobId,
+      requestId: (previous?.requestId || 0) + 1,
+    }));
+  }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -304,9 +318,7 @@ export default function Workspace() {
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
-  useEffect(() => {
-    if (tab === "admin" && !adminAllowed) setTab("jobs");
-  }, [tab, adminAllowed]);
+
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery
     .trim()
@@ -328,16 +340,6 @@ export default function Workspace() {
             label: locale === "en" ? "Job descriptions" : tr("JD tuyển dụng"),
             description: tr("Hàng chờ duyệt mô tả công việc"),
             destination: "jd" as const,
-          },
-        ]
-      : []),
-    ...(adminAllowed
-      ? [
-          {
-            label:
-              locale === "en" ? tr("Quản trị & quyền") : tr("Quản trị & quyền"),
-            description: tr("Quản lý Job và phân quyền"),
-            destination: "admin" as const,
           },
         ]
       : []),
@@ -540,20 +542,6 @@ export default function Workspace() {
               <span className="nav-label">{tr("Talent Pool")}</span>
             </button>
           )}
-          {adminAllowed && (
-            <button
-              className={tab === "admin" ? "nav active" : "nav"}
-              aria-current={tab === "admin" ? "page" : undefined}
-              onClick={() => setTab("admin")}
-            >
-              <Icon name="shield" />
-              <span className="nav-label">
-                {locale === "en"
-                  ? tr("Quản trị & quyền")
-                  : tr("Quản trị & quyền")}
-              </span>
-            </button>
-          )}
           {reviewAllowed && (
             <button
               className={tab === "jd" ? "nav active" : "nav"}
@@ -619,9 +607,7 @@ export default function Workspace() {
                   : tr("Bảng Master")
                 : tab === "talent"
                   ? tr("Talent Pool")
-                  : tab === "jd"
-                    ? "JD"
-                    : tr("Quản trị & quyền")}
+                  : "JD"}
             </strong>
           </div>
           <div className="header-actions">
@@ -911,9 +897,7 @@ export default function Workspace() {
                         : t.jobs
                       : tab === "talent"
                         ? tr("Talent Pool")
-                        : tab === "jd"
-                          ? tr("JD tuyển dụng")
-                          : tr("Quản trị ATS")}
+                        : tr("JD tuyển dụng")}
                   </h1>
                   <p>
                     {tab === "jobs"
@@ -945,8 +929,12 @@ export default function Workspace() {
                     </button>
                   )}
                   {tab === "jobs" && adminAllowed && (
-                    <button className="primary" onClick={() => setTab("admin")}>
-                      {tr("Quản trị Job")}
+                    <button
+                      className="primary"
+                      disabled={jobAdminBusy}
+                      onClick={() => openJobAction("create")}
+                    >
+                      {tr("Tạo Job")}
                       <Icon name="shield" size={15} />
                     </button>
                   )}
@@ -963,6 +951,19 @@ export default function Workspace() {
                   </span>
                 ))}
               </div>
+              {adminAllowed && (
+                <div hidden={tab !== "jobs" || jobView !== "master"}>
+                  <AdminConsole
+                    key={access.userId}
+                    editorOnly
+                    action={jobAdminAction}
+                    onBusyChange={setJobAdminBusy}
+                    jobs={access.jobs}
+                    onRefresh={() => refresh(true)}
+                    onAccessLost={invalidate}
+                  />
+                </div>
+              )}
               {tab === "talent" && reviewAllowed ? (
                 <TalentPool
                   key={access.userId}
@@ -973,12 +974,6 @@ export default function Workspace() {
                 <ReviewQueue
                   key={`${access.userId}-jd`}
                   fixedKind="jd"
-                  onAccessLost={invalidate}
-                />
-              ) : tab === "admin" && adminAllowed ? (
-                <AdminConsole
-                  jobs={access.jobs}
-                  onRefresh={() => refresh(true)}
                   onAccessLost={invalidate}
                 />
               ) : (
@@ -1042,9 +1037,9 @@ export default function Workspace() {
                           {adminAllowed && (
                             <button
                               className="text-link"
-                              onClick={() => setTab("admin")}
+                              onClick={() => openJobAction("create")}
                             >
-                              {t.guideAdminAction}
+                              {tr("Tạo Job")}
                               <Icon name="external" size={15} />
                             </button>
                           )}
@@ -1356,6 +1351,24 @@ export default function Workspace() {
                                           ? ` · ${job.location}`
                                           : ""}
                                       </small>
+                                      {adminAllowed && (
+                                        <button
+                                          className="secondary job-admin-action"
+                                          disabled={
+                                            jobAdminBusy ||
+                                            ![
+                                              "DRAFT",
+                                              "OPEN",
+                                              "ON_HOLD",
+                                            ].includes(job.status)
+                                          }
+                                          onClick={() =>
+                                            openJobAction("team", job.id)
+                                          }
+                                        >
+                                          {tr("Phân công đội ngũ")}
+                                        </button>
+                                      )}
                                     </td>
                                     <td>
                                       <strong>
@@ -1368,6 +1381,24 @@ export default function Workspace() {
                                       <small className="job-code-subtitle">
                                         {tr("Req:")} {job.req_date || "—"}
                                       </small>
+                                      {adminAllowed && (
+                                        <button
+                                          className="secondary job-admin-action"
+                                          disabled={
+                                            jobAdminBusy ||
+                                            ![
+                                              "DRAFT",
+                                              "OPEN",
+                                              "ON_HOLD",
+                                            ].includes(job.status)
+                                          }
+                                          onClick={() =>
+                                            openJobAction("details", job.id)
+                                          }
+                                        >
+                                          {tr("Chỉnh yêu cầu")}
+                                        </button>
+                                      )}
                                     </td>
                                     <td>
                                       <span
@@ -1395,6 +1426,18 @@ export default function Workspace() {
                                             : tr("Chưa chọn mùa tuyển dụng")}
                                         </small>
                                       </div>
+                                      {adminAllowed &&
+                                        job.status === "DRAFT" && (
+                                          <button
+                                            className="secondary job-admin-action"
+                                            disabled={jobAdminBusy}
+                                            onClick={() =>
+                                              openJobAction("open", job.id)
+                                            }
+                                          >
+                                            {tr("Mở tuyển")}
+                                          </button>
+                                        )}
                                     </td>
                                     <td>
                                       <strong>

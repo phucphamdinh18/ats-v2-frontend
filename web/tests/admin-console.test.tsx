@@ -289,3 +289,44 @@ it("retries an uncertain draft creation with the same request ID", async () => {
   expect(api.open).not.toHaveBeenCalled();
   expect(api.assign).not.toHaveBeenCalled();
 });
+
+it("embeds row actions without a second Job list and keeps the selected target", async () => {
+  const refresh = vi.fn(async () => {});
+  const accessLost = vi.fn();
+  const view = (
+    kind: "details" | "team" | "create",
+    jobId: string | undefined,
+    requestId: number,
+  ) => (
+    <LanguageProvider>
+      <AdminConsole
+        editorOnly
+        jobs={jobs}
+        action={{ kind, jobId, requestId }}
+        onRefresh={refresh}
+        onAccessLost={accessLost}
+      />
+    </LanguageProvider>
+  );
+  const rendered = render(view("details", "draft-1", 1));
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.queryByRole("searchbox")).toBeNull();
+  expect(
+    screen.getByRole("region", { name: "Chỉnh yêu cầu" }).textContent,
+  ).toContain("QA Engineer");
+  expect(api.members).not.toHaveBeenCalled();
+  expect(api.metadata).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
+  expect(screen.queryByRole("region", { name: "Chỉnh yêu cầu" })).toBeNull();
+  rendered.rerender(view("team", "open-1", 2));
+  await waitFor(() => expect(api.members).toHaveBeenCalledWith("open-1"));
+  expect(
+    screen.getByRole("region", { name: "Phân công đội ngũ" }).textContent,
+  ).toContain("Embedded Engineer");
+  expect(api.open).not.toHaveBeenCalled();
+  expect(api.assign).not.toHaveBeenCalled();
+  rendered.rerender(view("create", undefined, 3));
+  expect(screen.getByLabelText("Tên vị trí")).toBeTruthy();
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(api.create).not.toHaveBeenCalled();
+});
