@@ -39,6 +39,7 @@ function observePage(page) {
 async function loginAs(email) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
+    timezoneId: "UTC",
   });
   contexts.push(context);
   const page = await context.newPage();
@@ -425,6 +426,57 @@ try {
     0,
     "An unassigned TA must not see the Job",
   );
+  // Complete interview workflow on synthetic data only. Simulate a lost response
+  // after the schedule was committed, then verify a retry reuses the exact body.
+  await page.getByRole("tab", {name:/1.1/}).click();
+  const interviewView = await openRolePipeline(page);
+  await moveStage(page, interviewView.details, "forward");
+  await interviewView.details.getByRole("button", {name:"Đặt lịch phỏng vấn",exact:true}).click();
+  const interviewForm = interviewView.details.getByRole("form", {name:"Đặt lịch phỏng vấn",exact:true});
+  await interviewForm.getByRole("checkbox", {name:/TEST ONLY Interviewer/}).check();
+  await interviewForm.getByLabel("Bắt đầu",{exact:true}).fill(new Date(Date.now()-2*60*60*1000).toISOString().slice(0,16));
+  await interviewForm.getByLabel("Kết thúc",{exact:true}).fill(new Date(Date.now()-60*60*1000).toISOString().slice(0,16));
+  const scheduleRequests=[];
+  await page.route("**/functions/v1/interviews", async route=>{
+    const body=route.request().postDataJSON();
+    if(body?.action!=="create")return route.continue();
+    scheduleRequests.push(body);
+    if(scheduleRequests.length===1){const committed=await route.fetch();assert.equal(committed.status(),200);return route.abort('failed');}
+    return route.continue();
+  });
+  await interviewForm.getByRole("button",{name:"Xác nhận đặt lịch",exact:true}).click();
+  await interviewForm.getByRole("button",{name:"Thử lại yêu cầu",exact:true}).click();
+  await interviewView.details.getByText("Đã đặt lịch. Xem lịch trong mục Phỏng vấn.",{exact:true}).waitFor({timeout:15000});
+  assert.equal(scheduleRequests.length,2);assert.deepEqual(scheduleRequests[0],scheduleRequests[1]);
+  await page.unroute("**/functions/v1/interviews");
+  await page.getByRole("button",{name:"Phỏng vấn",exact:true}).click();
+  const interviewDetail=page.getByRole("article",{name:"Chi tiết phỏng vấn",exact:true});
+  await interviewDetail.getByRole("heading",{name:"TEST ONLY Manual E2E Candidate",exact:true}).waitFor();
+  await interviewDetail.getByRole("button",{name:"Đánh dấu đã phỏng vấn",exact:true}).click();
+  await interviewDetail.getByText("Đang chờ feedback từ người tham dự.",{exact:true}).waitFor();
+  assert.equal(await interviewDetail.getByRole("button",{name:"Gửi feedback",exact:true}).count(),0);
+  await page.screenshot({path:path.join(artifactDir,"interview-ta-coordinator.png"),fullPage:true});
+  await interviewerPage.getByRole("button",{name:"Phỏng vấn",exact:true}).click();
+  await interviewerPage.getByLabel("Trạng thái lịch",{exact:true}).selectOption('COMPLETED');
+  await interviewerPage.getByRole("button",{name:/TEST ONLY Manual E2E Candidate/}).click();
+  const participantDetail=interviewerPage.getByRole("article",{name:"Chi tiết phỏng vấn",exact:true});
+  assert.equal(await participantDetail.getByRole("button",{name:"Lưu quyết định",exact:true}).count(),0);
+  await participantDetail.getByLabel("Điểm đánh giá",{exact:true}).selectOption('4');
+  await participantDetail.getByLabel("Nhận xét chung",{exact:true}).fill('TEST ONLY browser interview feedback');
+  await participantDetail.getByRole("button",{name:"Gửi feedback",exact:true}).click();
+  await participantDetail.getByText('TEST ONLY browser interview feedback',{exact:true}).waitFor();
+  await interviewerPage.screenshot({path:path.join(artifactDir,"interview-participant-feedback.png"),fullPage:true});
+  await hmPage.getByRole("button",{name:"Phỏng vấn",exact:true}).click();
+  await hmPage.getByLabel("Trạng thái lịch",{exact:true}).selectOption('COMPLETED');
+  await hmPage.getByRole("button",{name:/TEST ONLY Manual E2E Candidate/}).click();
+  const managerDetail=hmPage.getByRole("article",{name:"Chi tiết phỏng vấn",exact:true});
+  await managerDetail.getByText('TEST ONLY browser interview feedback',{exact:true}).waitFor();
+  await managerDetail.getByLabel("Kết quả",{exact:true}).selectOption('PROCEED');
+  await managerDetail.getByLabel("Lý do / ghi chú",{exact:true}).fill('TEST ONLY browser interview decision');
+  await managerDetail.getByRole("button",{name:"Lưu quyết định",exact:true}).click();
+  await managerDetail.getByText('TEST ONLY browser interview decision',{exact:false}).waitFor();
+  await hmPage.screenshot({path:path.join(artifactDir,"interview-manager-decision.png"),fullPage:true});
+  console.log('Browser interview workflow passed: roster, committed-write response loss and same-request retry, TA completion, participant feedback and HM decision.');
   assert.deepEqual(
     pageErrors,
     [],

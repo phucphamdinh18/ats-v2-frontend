@@ -18,6 +18,7 @@ import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import Icon from "./icon";
 import { eventLabel } from "@/lib/ui-copy";
 import CandidateEntryDialog from "./candidate-entry-dialog";
+import InterviewSchedule from "./interview-schedule";
 const PAGE_SIZE = 25;
 const PIPELINE_STAGES = [
   "NEW",
@@ -838,6 +839,20 @@ export default function ApplicationPipeline({
                 <dt>{tr("Nguồn")}</dt>
                 <dd>{detail.application.source || tr("Không có")}</dd>
               </dl>
+              {canManageApplications &&
+                detail.application.status === "ACTIVE" &&
+                ["SCREEN", "INTERVIEW"].includes(detail.application.stage) && (
+                  <InterviewSchedule
+                    key={selected.application_id}
+                    applicationId={selected.application_id}
+                    onAccessLost={onSessionLost}
+                    onSaved={async () => {
+                      await load(offset);
+                      await openDetail(selected);
+                      await onDataChanged?.();
+                    }}
+                  />
+                )}
               <h3>{tr("Lịch sử")}</h3>
               <ol className="timeline">
                 {detail.events.map((event) => (

@@ -18,6 +18,7 @@ import ApplicationPipeline from "./application-pipeline";
 import PipelineJobSwitcher from "./pipeline-job-switcher";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
+import InterviewWorkspace from "./interview-workspace";
 import AdminConsole, { type JobAdminAction } from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 type Access = {
@@ -40,7 +41,9 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"jobs" | "talent" | "jd">("jobs");
+  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "interviews">(
+    "jobs",
+  );
   const [jobAdminAction, setJobAdminAction] = useState<JobAdminAction | null>(
     null,
   );
@@ -586,6 +589,18 @@ export default function Workspace() {
               </span>
             </button>
           )}
+          {allowed && (
+            <button
+              className={tab === "interviews" ? "nav active" : "nav"}
+              aria-current={tab === "interviews" ? "page" : undefined}
+              onClick={() => setTab("interviews")}
+            >
+              <Icon name="team" />
+              <span className="nav-label">
+                {locale === "en" ? "Interviews" : "Phỏng vấn"}
+              </span>
+            </button>
+          )}
         </nav>
         <div className="sidebar-help">
           <span className="help-icon">
@@ -641,7 +656,11 @@ export default function Workspace() {
                     : tr("Bảng Master")
                 : tab === "talent"
                   ? tr("Talent Pool")
-                  : "JD"}
+                  : tab === "interviews"
+                    ? locale === "en"
+                      ? "Interviews"
+                      : "Phỏng vấn"
+                    : "JD"}
             </strong>
           </div>
           <div className="header-actions">
@@ -933,7 +952,11 @@ export default function Workspace() {
                           : t.jobs
                       : tab === "talent"
                         ? tr("Talent Pool")
-                        : tr("JD tuyển dụng")}
+                        : tab === "interviews"
+                          ? locale === "en"
+                            ? "Interviews"
+                            : "Phỏng vấn"
+                          : tr("JD tuyển dụng")}
                   </h1>
                   <p>
                     {tab === "jobs"
@@ -942,13 +965,17 @@ export default function Workspace() {
                         ? tr(
                             "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp.",
                           )
-                        : tab === "jd"
-                          ? tr(
-                              "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp.",
-                            )
-                          : tr(
-                              "Quản lý vị trí tuyển dụng và phân công đội ngũ của bạn.",
-                            )}
+                        : tab === "interviews"
+                          ? locale === "en"
+                            ? "Your interview schedule, feedback and decisions."
+                            : "Lịch phỏng vấn, feedback và các quyết định cần xử lý."
+                          : tab === "jd"
+                            ? tr(
+                                "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp.",
+                              )
+                            : tr(
+                                "Quản lý vị trí tuyển dụng và phân công đội ngũ của bạn.",
+                              )}
                   </p>
                 </div>
                 <div className="heading-actions">
@@ -1067,7 +1094,12 @@ export default function Workspace() {
                 </div>
               )}
 
-              {tab === "talent" && reviewAllowed ? (
+              {tab === "interviews" ? (
+                <InterviewWorkspace
+                  key={`${access.userId}:${access.roles.join(",")}:${access.memberships.map((m) => m.job_id + m.role).join(",")}`}
+                  onAccessLost={invalidate}
+                />
+              ) : tab === "talent" && reviewAllowed ? (
                 <TalentPool
                   key={access.userId}
                   jobs={access.jobs}
