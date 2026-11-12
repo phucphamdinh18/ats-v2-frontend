@@ -98,61 +98,66 @@ function RequirementsFields({
           <option value="High Time">{tr("High Time")}</option>
         </select>
       </label>
-      <label>
-        {tr("Ngày yêu cầu")}
-        <input
-          type="date"
-          value={value.reqDate}
-          onChange={(event) =>
-            onChange({ ...value, reqDate: event.target.value })
-          }
-        />
-      </label>
-      <label>
-        {tr("Loại yêu cầu")}
-        <select
-          value={value.requestType}
-          onChange={(event) =>
-            onChange({
-              ...value,
-              requestType: event.target.value,
-            })
-          }
-        >
-          <option value="NEW">{tr("Tuyển mới")}</option>
-          <option value="REPLACEMENT">{tr("Thay thế")}</option>
-        </select>
-      </label>
-      <label>
-        {tr("Ưu tiên")}
-        <select
-          value={value.priority}
-          onChange={(event) =>
-            onChange({ ...value, priority: event.target.value })
-          }
-        >
-          <option value="CRITICAL">{tr("Critical")}</option>
-          <option value="HIGH">{tr("High")}</option>
-          <option value="NORMAL">{tr("Normal")}</option>
-          <option value="LOW">{tr("Low")}</option>
-        </select>
-      </label>
-      {value.requestType === "REPLACEMENT" && (
-        <label>
-          {tr("Thay thế vị trí")}
-          <input
-            value={value.replacementFor}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                replacementFor: event.target.value,
-              })
-            }
-            maxLength={180}
-            required
-          />
-        </label>
-      )}
+      <details className="admin-extra-fields">
+        <summary>{tr("Thông tin bổ sung")}</summary>
+        <div className="job-meta-fields">
+          <label>
+            {tr("Ngày yêu cầu")}
+            <input
+              type="date"
+              value={value.reqDate}
+              onChange={(event) =>
+                onChange({ ...value, reqDate: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            {tr("Loại yêu cầu")}
+            <select
+              value={value.requestType}
+              onChange={(event) =>
+                onChange({
+                  ...value,
+                  requestType: event.target.value,
+                })
+              }
+            >
+              <option value="NEW">{tr("Tuyển mới")}</option>
+              <option value="REPLACEMENT">{tr("Thay thế")}</option>
+            </select>
+          </label>
+          <label>
+            {tr("Ưu tiên")}
+            <select
+              value={value.priority}
+              onChange={(event) =>
+                onChange({ ...value, priority: event.target.value })
+              }
+            >
+              <option value="CRITICAL">{tr("Critical")}</option>
+              <option value="HIGH">{tr("High")}</option>
+              <option value="NORMAL">{tr("Normal")}</option>
+              <option value="LOW">{tr("Low")}</option>
+            </select>
+          </label>
+          {value.requestType === "REPLACEMENT" && (
+            <label>
+              {tr("Thay thế vị trí")}
+              <input
+                value={value.replacementFor}
+                onChange={(event) =>
+                  onChange({
+                    ...value,
+                    replacementFor: event.target.value,
+                  })
+                }
+                maxLength={180}
+                required
+              />
+            </label>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
@@ -168,10 +173,12 @@ export default function AdminConsole({
   onRefresh,
   onAccessLost,
   editorOnly = false,
+  compact = false,
   action,
   onBusyChange,
 }: {
   editorOnly?: boolean;
+  compact?: boolean;
   action?: JobAdminAction | null;
   onBusyChange?: (busy: boolean) => void;
   jobs: Job[];
@@ -347,7 +354,7 @@ export default function AdminConsole({
       });
       setMessage(
         tr(
-          "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.",
+          "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Quản lý rồi Mở tuyển khi sẵn sàng.",
           [saved.title],
         ),
       );
@@ -568,7 +575,7 @@ export default function AdminConsole({
       }
       aria-label={tr("Quản lý Job")}
     >
-      {!editorOnly && (
+      {!editorOnly && !compact && (
         <div className="metrics admin-overview">
           <div>
             <small>{tr("Vị trí tuyển dụng")}</small>
@@ -599,15 +606,11 @@ export default function AdminConsole({
           {notice(message)}
         </div>
       )}
-      {!editorOnly && (
+      {!editorOnly && section === "list" && (
         <div className="admin-list-heading">
           <div>
             <h2>{tr("Danh sách Job")}</h2>
-            <p>
-              {tr(
-                "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.",
-              )}
-            </p>
+            <p>{tr("Tạo Job mới hoặc chọn Quản lý để cập nhật một Job.")}</p>
           </div>
           <button
             type="button"
@@ -670,6 +673,42 @@ export default function AdminConsole({
               {tr("Đóng")}
             </button>
           </header>
+          {section !== "create" && selectedJob && (
+            <nav
+              className="admin-job-actions"
+              aria-label={tr("Thao tác cho Job đã chọn")}
+            >
+              <button
+                type="button"
+                className={section === "details" ? "primary" : "secondary"}
+                aria-pressed={section === "details"}
+                disabled={busy || !editable}
+                onClick={() => showAction("details", selectedJob)}
+              >
+                {tr("Chỉnh yêu cầu")}
+              </button>
+              <button
+                type="button"
+                className={section === "team" ? "primary" : "secondary"}
+                aria-pressed={section === "team"}
+                disabled={busy || !editable}
+                onClick={() => showAction("team", selectedJob)}
+              >
+                {tr("Phân công đội ngũ")}
+              </button>
+              {selectedJob.status === "DRAFT" && (
+                <button
+                  type="button"
+                  className={section === "open" ? "primary" : "secondary"}
+                  aria-pressed={section === "open"}
+                  disabled={busy}
+                  onClick={() => showAction("open", selectedJob)}
+                >
+                  {tr("Mở tuyển")}
+                </button>
+              )}
+            </nav>
+          )}
           {section === "create" && (
             <>
               <p>
@@ -863,7 +902,7 @@ export default function AdminConsole({
           )}
         </section>
       )}
-      {!editorOnly && (
+      {!editorOnly && section === "list" && (
         <section
           className="panel admin-job-list"
           aria-label={tr("Danh sách Job")}
@@ -893,13 +932,12 @@ export default function AdminConsole({
             </label>
           </div>
           <div className="table-scroll">
-            <table className="workspace-master-table admin-job-table">
+            <table className="workspace-master-table admin-job-table admin-simple-table">
               <thead>
                 <tr>
                   <th>{tr("Job")}</th>
                   <th>{tr("Trạng thái tuyển dụng")}</th>
-                  <th>{tr("Yêu cầu tuyển dụng")}</th>
-                  <th>{tr("Đội ngũ & quyền truy cập")}</th>
+                  <th>{tr("Quản lý")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -932,50 +970,15 @@ export default function AdminConsole({
                               ? tr("Chưa mở tuyển")
                               : tr("Theo trạng thái hiện tại")}
                         </small>
-                        {job.status === "DRAFT" && (
-                          <button
-                            type="button"
-                            className="primary"
-                            disabled={busy || partialDraft?.id === job.id}
-                            onClick={() => showAction("open", job)}
-                          >
-                            {tr("Mở tuyển")}
-                          </button>
-                        )}
                       </td>
                       <td>
-                        <small>
-                          {job.level != null
-                            ? `${tr("Level")} ${job.level}`
-                            : tr("Chưa có cấp độ")}{" "}
-                          ·{" "}
-                          {job.function_group
-                            ? tr(job.function_group)
-                            : tr("Chưa phân nhóm")}
-                        </small>
-                        <small className="job-code-subtitle">
-                          {job.sla_target_workdays != null
-                            ? `${tr("SLA tổng:")} ${job.sla_target_workdays} ${tr("ngày làm việc")}`
-                            : tr("Chưa xác định thời hạn")}
-                        </small>
                         <button
                           type="button"
                           className="secondary"
                           disabled={busy || !canEdit}
                           onClick={() => showAction("details", job)}
                         >
-                          {tr("Chỉnh yêu cầu")}
-                        </button>
-                      </td>
-                      <td>
-                        <small>{tr("Người được làm việc trên Job này")}</small>
-                        <button
-                          type="button"
-                          className="secondary"
-                          disabled={busy || !canEdit}
-                          onClick={() => showAction("team", job)}
-                        >
-                          {tr("Phân công đội ngũ")}
+                          {tr("Quản lý")}
                         </button>
                       </td>
                     </tr>

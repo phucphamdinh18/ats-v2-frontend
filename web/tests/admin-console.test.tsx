@@ -88,16 +88,20 @@ it("starts with one Job table and separates draft opening from team access", asy
   expect(screen.queryByRole("tablist")).toBeNull();
   expect(screen.queryByLabelText("Tên vị trí")).toBeNull();
   expect(api.members).not.toHaveBeenCalled();
+  expect(screen.getAllByRole("columnheader")).toHaveLength(3);
+  expect(within(row("Embedded Engineer")).getAllByRole("button")).toHaveLength(
+    1,
+  );
   expect(
     within(row("Embedded Engineer")).queryByRole("button", {
       name: "Mở tuyển",
     }),
   ).toBeNull();
   fireEvent.click(
-    within(row("QA Engineer")).getByRole("button", {
-      name: "Mở tuyển",
-    }),
+    within(row("QA Engineer")).getByRole("button", { name: "Quản lý" }),
   );
+  expect(screen.queryByRole("table")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Mở tuyển" }));
   const panel = screen.getByRole("region", { name: "Mở tuyển" });
   expect(panel.textContent).toContain("QA Engineer");
   expect(panel.textContent).not.toContain("Embedded Engineer");
@@ -168,9 +172,8 @@ it("translates the table and open form without losing input or changing metadata
   const season = screen.getByLabelText("Hiring season") as HTMLSelectElement;
   expect(season.value).toBe("Normal Time");
   expect(season.selectedOptions[0].textContent).toBe("Regular season");
-  expect(
-    screen.getByRole("columnheader", { name: "Team & access" }),
-  ).toBeTruthy();
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.getByRole("region", { name: "Create job" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Vietnamese UI" }));
   expect(
     (screen.getByLabelText("Mùa tuyển dụng") as HTMLSelectElement)
@@ -198,17 +201,15 @@ it("loads team access only for the selected row and ignores a stale previous Job
     });
   setup();
   fireEvent.click(
-    within(row("Embedded Engineer")).getByRole("button", {
-      name: "Phân công đội ngũ",
-    }),
+    within(row("Embedded Engineer")).getByRole("button", { name: "Quản lý" }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Phân công đội ngũ" }));
   await waitFor(() => expect(api.members).toHaveBeenCalledWith("open-1"));
   fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
   fireEvent.click(
-    within(row("QA Engineer")).getByRole("button", {
-      name: "Phân công đội ngũ",
-    }),
+    within(row("QA Engineer")).getByRole("button", { name: "Quản lý" }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Phân công đội ngũ" }));
   await screen.findByText("draft-team@example.invalid");
   await act(async () =>
     resolveFirst({
@@ -232,7 +233,7 @@ it("editing requirements targets the chosen Job without opening it or changing a
   setup();
   fireEvent.click(
     within(row("Embedded Engineer")).getByRole("button", {
-      name: "Chỉnh yêu cầu",
+      name: "Quản lý",
     }),
   );
   completeRequirements();

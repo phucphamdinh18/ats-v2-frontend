@@ -2161,17 +2161,69 @@
   }
 }
 
-/* One Job list: administrative actions remain inside the existing five columns. */
-.astryx-workspace .job-admin-action {
-  margin-top: 10px;
+/* Search is one control: focus belongs to the outer frame, not an inner box. */
+.astryx-workspace .search {
+  min-width: 0;
+}
+.astryx-workspace .search > svg {
+  flex-shrink: 0;
+}
+.astryx-workspace .search input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  box-shadow: none;
+}
+.astryx-workspace .search input:focus,
+.astryx-workspace .search input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}
+.astryx-workspace .search:focus-within {
+  border-color: #8b7ade;
+  box-shadow: 0 0 0 2px #6554df20;
+}
+.astryx-workspace .job-view-tabs button:focus-visible {
+  outline: 2px solid #8b7ade;
+  outline-offset: -2px;
+}
+.astryx-workspace .admin-job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+.astryx-workspace .admin-simple-table {
+  min-width: 540px;
+}
+.astryx-workspace .admin-simple-table :is(th, td):nth-child(1) {
+  width: 55%;
+}
+.astryx-workspace .admin-simple-table :is(th, td):nth-child(2) {
+  width: 25%;
+}
+.astryx-workspace .admin-simple-table :is(th, td):nth-child(3) {
+  width: 20%;
+}
+.astryx-workspace .admin-task :is(input, select, textarea) {
+  min-width: 0;
   max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: left;
+  box-sizing: border-box;
 }
-.astryx-workspace .admin-embedded:empty {
-  display: none;
+
+.astryx-workspace .admin-extra-fields {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
 }
-.astryx-workspace .admin-embedded .admin-editor {
-  margin-bottom: 20px;
+.astryx-workspace .admin-extra-fields > summary {
+  cursor: pointer;
+  color: #6554bf;
+  font-weight: 600;
+  padding-block: 5px;
+}
+.astryx-workspace .admin-extra-fields > .job-meta-fields {
+  margin-top: 14px;
 }

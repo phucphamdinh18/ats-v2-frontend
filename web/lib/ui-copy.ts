@@ -3,10 +3,21 @@ import { friendlyError, getCopy, type Locale } from "./i18n";
 // Explicit interface copy only. Candidate names, CVs, job titles and API payloads
 // are never translated. Placeholders keep data separate from interface wording.
 export const uiCopy: Record<string, readonly [string, string]> = {
-  "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.":
+  "Thông tin bổ sung": ["Thông tin bổ sung", "Additional details"],
+  "1.3 Quản lý Job": ["1.3 Quản lý Job", "1.3 Manage jobs"],
+  "Quản lý": ["Quản lý", "Manage"],
+  "Thao tác cho Job đã chọn": [
+    "Thao tác cho Job đã chọn",
+    "Actions for the selected job",
+  ],
+  "Tạo Job mới hoặc chọn Quản lý để cập nhật một Job.": [
+    "Tạo Job mới hoặc chọn Quản lý để cập nhật một Job.",
+    "Create a job or choose Manage to update a job.",
+  ],
+  "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Quản lý rồi Mở tuyển khi sẵn sàng.":
     [
-      "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.",
-      "Draft job and requirements saved for “{0}”. Choose Open for hiring in the table when ready.",
+      "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Quản lý rồi Mở tuyển khi sẵn sàng.",
+      "Draft job and requirements saved for “{0}”. Choose Manage, then Open for hiring when ready.",
     ],
   "Thử tên khác hoặc đổi trạng thái.": [
     "Thử tên khác hoặc đổi trạng thái.",

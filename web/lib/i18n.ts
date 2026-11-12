@@ -45,7 +45,7 @@ export const vi = {
   guideReviewAction: "Mở hàng chờ",
   guideAdmin: "Quản lý vị trí và đội ngũ",
   guideAdminBody:
-    "Tạo Job ngay tại đây. Chỉnh yêu cầu, mở tuyển hoặc phân công đội ngũ trên từng dòng Job.",
+    "Vào mục Quản lý Job để tạo vị trí, cập nhật yêu cầu và phân công đội ngũ.",
   guideAdminAction: "Tạo Job",
   guideAccess: "Chưa thấy vị trí cần tìm?",
   guideAccessBody:
@@ -230,7 +230,7 @@ export const en: Record<keyof Copy, string> = {
   guideReviewAction: "Open review queue",
   guideAdmin: "Manage roles and your team",
   guideAdminBody:
-    "Create a job here. Edit requirements, open hiring or assign your team from each job row.",
+    "Use Manage jobs to create a role, update requirements and assign your team.",
   guideAdminAction: "Create job",
   guideAccess: "Can’t find the role you need?",
   guideAccessBody:
