@@ -335,7 +335,7 @@ export default function Workspace() {
       ? [
           {
             label:
-              locale === "en" ? "Admin & permissions" : tr("Quản trị & quyền"),
+              locale === "en" ? tr("Quản trị & quyền") : tr("Quản trị & quyền"),
             description: tr("Quản lý Job và phân quyền"),
             destination: "admin" as const,
           },
@@ -549,7 +549,7 @@ export default function Workspace() {
               <Icon name="shield" />
               <span className="nav-label">
                 {locale === "en"
-                  ? "Admin & permissions"
+                  ? tr("Quản trị & quyền")
                   : tr("Quản trị & quyền")}
               </span>
             </button>

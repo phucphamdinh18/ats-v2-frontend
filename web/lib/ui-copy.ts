@@ -3,6 +3,83 @@ import { friendlyError, getCopy, type Locale } from "./i18n";
 // Explicit interface copy only. Candidate names, CVs, job titles and API payloads
 // are never translated. Placeholders keep data separate from interface wording.
 export const uiCopy: Record<string, readonly [string, string]> = {
+  "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.":
+    [
+      "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.",
+      "Draft job and requirements saved for “{0}”. Choose Open for hiring in the table when ready.",
+    ],
+  "Thử tên khác hoặc đổi trạng thái.": [
+    "Thử tên khác hoặc đổi trạng thái.",
+    "Try another name or change the status filter.",
+  ],
+  "Không tìm thấy Job phù hợp": [
+    "Không tìm thấy Job phù hợp",
+    "No matching jobs",
+  ],
+  "Người được làm việc trên Job này": [
+    "Người được làm việc trên Job này",
+    "Who can work on this job",
+  ],
+  "Chưa xác định thời hạn": ["Chưa xác định thời hạn", "Hiring target not set"],
+  "Chưa có cấp độ": ["Chưa có cấp độ", "Seniority not set"],
+  "Theo trạng thái hiện tại": [
+    "Theo trạng thái hiện tại",
+    "See current status",
+  ],
+  "Đang nhận ứng viên": ["Đang nhận ứng viên", "Accepting candidates"],
+  "Đội ngũ & quyền truy cập": ["Đội ngũ & quyền truy cập", "Team & access"],
+  "Trạng thái tuyển dụng": ["Trạng thái tuyển dụng", "Hiring status"],
+  "Tất cả trạng thái": ["Tất cả trạng thái", "All statuses"],
+  "Tìm tên vị trí hoặc mã…": [
+    "Tìm tên vị trí hoặc mã…",
+    "Search by title or reference…",
+  ],
+  "Tìm Job": ["Tìm Job", "Search jobs"],
+  "Thành viên cần đăng nhập ATS ít nhất một lần trước khi được phân công.": [
+    "Thành viên cần đăng nhập ATS ít nhất một lần trước khi được phân công.",
+    "Teammates must sign in to ATS at least once before you can assign them.",
+  ],
+  "Phân công chỉ quyết định ai được làm việc trên Job này. Thao tác này không mở tuyển và không cấp quyền Admin toàn hệ thống.":
+    [
+      "Phân công chỉ quyết định ai được làm việc trên Job này. Thao tác này không mở tuyển và không cấp quyền Admin toàn hệ thống.",
+      "Assignments control who can work on this job. They do not open hiring or grant workspace admin access.",
+    ],
+  "Lưu yêu cầu": ["Lưu yêu cầu", "Save requirements"],
+  "Chỉnh yêu cầu và thời hạn tuyển dụng cho Job đang chọn. Lưu thông tin không đổi trạng thái Job hoặc quyền của đội ngũ.":
+    [
+      "Chỉnh yêu cầu và thời hạn tuyển dụng cho Job đang chọn. Lưu thông tin không đổi trạng thái Job hoặc quyền của đội ngũ.",
+      "Update requirements and hiring targets for this job. Saving does not change hiring status or team access.",
+    ],
+  "Mở tuyển cho phép tiếp nhận ứng viên. Thao tác này không phân công hay cấp quyền cho thành viên.":
+    [
+      "Mở tuyển cho phép tiếp nhận ứng viên. Thao tác này không phân công hay cấp quyền cho thành viên.",
+      "Opening hiring allows this job to receive candidates. It does not assign teammates or grant access.",
+    ],
+  "Lưu Job nháp": ["Lưu Job nháp", "Save draft job"],
+  "Lưu tiếp yêu cầu": ["Lưu tiếp yêu cầu", "Continue saving requirements"],
+  "Thông tin Job": ["Thông tin Job", "Job details"],
+  "Job nháp đã được lưu. Hoàn tất phần yêu cầu bên dưới; thử lại sẽ không tạo thêm Job.":
+    [
+      "Job nháp đã được lưu. Hoàn tất phần yêu cầu bên dưới; thử lại sẽ không tạo thêm Job.",
+      "The draft job is saved. Complete the requirements below; retrying will continue this draft without creating another job.",
+    ],
+  "Nhập thông tin và yêu cầu tại đây. Lưu sẽ tạo Job nháp; Job chỉ nhận ứng viên sau khi bạn chọn Mở tuyển.":
+    [
+      "Nhập thông tin và yêu cầu tại đây. Lưu sẽ tạo Job nháp; Job chỉ nhận ứng viên sau khi bạn chọn Mở tuyển.",
+      "Enter job details and requirements here. Saving creates a draft; the job accepts candidates only after you choose Open for hiring.",
+    ],
+  "Chỉnh yêu cầu": ["Chỉnh yêu cầu", "Edit requirements"],
+  "Tạo Job": ["Tạo Job", "Create job"],
+  "Tiếp tục Job nháp": ["Tiếp tục Job nháp", "Continue draft job"],
+  "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.":
+    [
+      "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.",
+      "Create a job or choose an action on its row. Opening hiring and assigning access are separate actions.",
+    ],
+  "Danh sách Job": ["Danh sách Job", "All jobs"],
+  "Chưa mở tuyển": ["Chưa mở tuyển", "Not open for hiring"],
+  "Chọn thông tin": ["Chọn thông tin", "Choose an option"],
+  "Quản lý Job": ["Quản lý Job", "Manage jobs"],
   MOVED: ["Đã chuyển vòng", "Stage changed"],
   APPLICATION_CREATED: ["Đã thêm hồ sơ", "Application added"],
   APPLICATION_STAGE_CHANGED: ["Đã chuyển vòng", "Stage changed"],
@@ -20,7 +97,7 @@ export const uiCopy: Record<string, readonly [string, string]> = {
     "Hàng chờ duyệt mô tả công việc",
     "Job descriptions waiting for review",
   ],
-  "Quản trị & quyền": ["Quản trị & quyền", "Admin & permissions"],
+  "Quản trị & quyền": ["Quản lý Job", "Manage jobs"],
   "Quản lý Job và phân quyền": [
     "Quản lý Job và phân quyền",
     "Manage jobs and team access",
@@ -61,7 +138,7 @@ export const uiCopy: Record<string, readonly [string, string]> = {
       "Local test mode. Admin and recruiter access is checked against test data.",
     ],
   Preview: ["Bản xem thử", "Preview"],
-  "Quản trị ATS": ["Quản trị ATS", "Workspace administration"],
+  "Quản trị ATS": ["Quản lý Job & đội ngũ", "Jobs & team administration"],
   "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp.": [
     "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp.",
     "Manage approved candidate profiles and add candidates to suitable jobs.",

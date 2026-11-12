@@ -3,6 +3,8 @@ import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
+import { jobStatusLabel } from "@/lib/i18n";
+import { useLanguage } from "./language";
 import { ApiError } from "@/lib/supabase";
 import {
   assignJobMember,
@@ -18,6 +20,143 @@ const roleNames: Record<string, string> = {
   HIRING_MANAGER: "Hiring Manager",
   INTERVIEWER: "Interviewer",
 };
+type Requirements = {
+  level: string;
+  functionGroup: string;
+  season: string;
+  reqDate: string;
+  requestType: string;
+  priority: string;
+  replacementFor: string;
+};
+const newRequirements: Requirements = {
+  level: "",
+  functionGroup: "",
+  season: "",
+  reqDate: "",
+  requestType: "NEW",
+  priority: "NORMAL",
+  replacementFor: "",
+};
+function RequirementsFields({
+  value,
+  onChange,
+}: {
+  value: Requirements;
+  onChange: (next: Requirements) => void;
+}) {
+  const tr = useUiText();
+  return (
+    <div className="job-meta-fields">
+      <label>
+        {tr("Level")}
+        <select
+          required
+          value={value.level}
+          onChange={(event) =>
+            onChange({ ...value, level: event.target.value })
+          }
+        >
+          <option value="">{tr("Chọn thông tin")}</option>
+          {Array.from({ length: 16 }, (_, i) => 15 - i).map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {tr("Nhóm chức năng")}
+        <select
+          required
+          value={value.functionGroup}
+          onChange={(event) =>
+            onChange({
+              ...value,
+              functionGroup: event.target.value,
+            })
+          }
+        >
+          <option value="">{tr("Chọn thông tin")}</option>
+          <option value="Tech/Product">{tr("Tech/Product")}</option>
+          <option value="Non-Tech/Non-Product">
+            {tr("Non-Tech/Non-Product")}
+          </option>
+        </select>
+      </label>
+      <label>
+        {tr("Mùa tuyển dụng")}
+        <select
+          required
+          value={value.season}
+          onChange={(event) =>
+            onChange({ ...value, season: event.target.value })
+          }
+        >
+          <option value="">{tr("Chọn thông tin")}</option>
+          <option value="Normal Time">{tr("Normal Time")}</option>
+          <option value="High Time">{tr("High Time")}</option>
+        </select>
+      </label>
+      <label>
+        {tr("Ngày yêu cầu")}
+        <input
+          type="date"
+          value={value.reqDate}
+          onChange={(event) =>
+            onChange({ ...value, reqDate: event.target.value })
+          }
+        />
+      </label>
+      <label>
+        {tr("Loại yêu cầu")}
+        <select
+          value={value.requestType}
+          onChange={(event) =>
+            onChange({
+              ...value,
+              requestType: event.target.value,
+            })
+          }
+        >
+          <option value="NEW">{tr("Tuyển mới")}</option>
+          <option value="REPLACEMENT">{tr("Thay thế")}</option>
+        </select>
+      </label>
+      <label>
+        {tr("Ưu tiên")}
+        <select
+          value={value.priority}
+          onChange={(event) =>
+            onChange({ ...value, priority: event.target.value })
+          }
+        >
+          <option value="CRITICAL">{tr("Critical")}</option>
+          <option value="HIGH">{tr("High")}</option>
+          <option value="NORMAL">{tr("Normal")}</option>
+          <option value="LOW">{tr("Low")}</option>
+        </select>
+      </label>
+      {value.requestType === "REPLACEMENT" && (
+        <label>
+          {tr("Thay thế vị trí")}
+          <input
+            value={value.replacementFor}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                replacementFor: event.target.value,
+              })
+            }
+            maxLength={180}
+            required
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 export default function AdminConsole({
   jobs,
   onRefresh,
@@ -28,9 +167,25 @@ export default function AdminConsole({
   onAccessLost: () => void;
 }) {
   const tr = useUiText();
+  const { t } = useLanguage();
   const notice = useUiNotice();
   const errorText = useUiError();
-  const [section, setSection] = useState("create");
+  const [section, setSection] = useState<
+    "list" | "create" | "details" | "open" | "team"
+  >("list");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [createRequirements, setCreateRequirements] = useState<Requirements>({
+    ...newRequirements,
+  });
+  const [partialDraft, setPartialDraft] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const createdDraftRef = useRef<{ id: string; title: string } | null>(null);
+  const memberTicket = useRef(0);
+  const editorRef = useRef<HTMLElement>(null);
+
   const [title, setTitle] = useState("");
   const [unit, setUnit] = useState("");
   const [location, setLocation] = useState("");
@@ -52,7 +207,16 @@ export default function AdminConsole({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const draftRequest = useRef<string | null>(null);
+  useEffect(() => {
+    if (section !== "list") {
+      editorRef.current?.focus({ preventScroll: true });
+      editorRef.current?.scrollIntoView?.({
+        block: "start",
+        behavior: "smooth",
+      });
+    }
+  }, [section, jobId]);
+  const draftRequest = useRef<{ key: string; id: string } | null>(null);
   const actionLock = useRef(false);
   const selectedJob = jobs.find((job) => job.id === jobId) || null;
   const draftJobs = jobs.filter((job) => job.status === "DRAFT");
@@ -60,8 +224,10 @@ export default function AdminConsole({
     ["DRAFT", "OPEN", "ON_HOLD"].includes(job.status),
   );
   useEffect(() => {
-    if (!assignableJobs.some((job) => job.id === jobId))
-      setJobId(assignableJobs[0]?.id || "");
+    if (jobId && !jobs.some((job) => job.id === jobId)) {
+      setJobId("");
+      setSection("list");
+    }
   }, [jobs, jobId]);
   useEffect(() => {
     if (!selectedJob) return;
@@ -76,16 +242,18 @@ export default function AdminConsole({
     });
   }, [selectedJob?.id]); // initialize on Job changes
   const loadMembers = useCallback(async () => {
-    if (!jobId) {
+    if (!jobId || section !== "team") {
       setMembers([]);
       return;
     }
+    const ticket = ++memberTicket.current;
     setLoadingMembers(true);
     setError("");
     try {
       const result = await listJobMembers(jobId);
-      setMembers(result.members || []);
+      if (ticket === memberTicket.current) setMembers(result.members || []);
     } catch (cause) {
+      if (ticket !== memberTicket.current) return;
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0))
         onAccessLost();
       setMembers([]);
@@ -95,41 +263,87 @@ export default function AdminConsole({
           : tr("Không tải được danh sách quyền của Job."),
       );
     } finally {
-      setLoadingMembers(false);
+      if (ticket === memberTicket.current) setLoadingMembers(false);
     }
-  }, [jobId, onAccessLost]);
+  }, [jobId, section, onAccessLost]);
   useEffect(() => {
     void loadMembers();
+    return () => {
+      memberTicket.current += 1;
+    };
   }, [loadMembers]);
   async function createDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (actionLock.current) return;
+    if (
+      actionLock.current ||
+      !title.trim() ||
+      !createRequirements.level ||
+      !createRequirements.functionGroup ||
+      !createRequirements.season
+    )
+      return;
     actionLock.current = true;
     setBusy(true);
     setError("");
     setMessage("");
-    const requestId = draftRequest.current ?? crypto.randomUUID();
-    draftRequest.current = requestId;
+    let saved = createdDraftRef.current;
     try {
-      const result = await createJobDraft({
-        requestId,
-        title,
-        businessUnit: unit,
-        location,
+      if (!saved) {
+        const key = JSON.stringify({
+          title: title.trim(),
+          unit: unit.trim(),
+          location: location.trim(),
+        });
+        if (draftRequest.current?.key !== key)
+          draftRequest.current = { key, id: crypto.randomUUID() };
+        const result = await createJobDraft({
+          requestId: draftRequest.current.id,
+          title: title.trim(),
+          businessUnit: unit.trim(),
+          location: location.trim(),
+        });
+        saved = { id: result.job.job_id, title: result.job.job_title };
+        createdDraftRef.current = saved;
+        setPartialDraft(saved);
+        draftRequest.current = null;
+      }
+      await updateJobMetadata({
+        jobId: saved.id,
+        level: Number(createRequirements.level),
+        functionGroup: createRequirements.functionGroup,
+        hiringSeason: createRequirements.season,
+        reqDate: createRequirements.reqDate || null,
+        requestType: createRequirements.requestType,
+        priority: createRequirements.priority,
+        replacementFor: createRequirements.replacementFor,
       });
-      draftRequest.current = null;
+      setMessage(
+        tr(
+          "Đã tạo Job nháp và lưu yêu cầu cho “{0}”. Chọn Mở tuyển trong bảng khi sẵn sàng.",
+          [saved.title],
+        ),
+      );
+      createdDraftRef.current = null;
+      setPartialDraft(null);
       setTitle("");
       setUnit("");
       setLocation("");
-      setMessage(tr("Đã tạo Job nháp “{0}”.", [result.job.job_title]));
+      setCreateRequirements({ ...newRequirements });
+      setSection("list");
       await onRefresh();
-      setJobId(result.job.job_id);
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0))
         onAccessLost();
+      if (
+        !saved &&
+        cause instanceof ApiError &&
+        [400, 404, 409, 413].includes(cause.status || 0)
+      )
+        draftRequest.current = null;
       setError(
         cause instanceof Error ? cause.message : tr("Không tạo được Job nháp."),
       );
+      if (saved) await onRefresh().catch(() => {});
     } finally {
       actionLock.current = false;
       setBusy(false);
@@ -137,7 +351,13 @@ export default function AdminConsole({
   }
   async function activateDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedJob || selectedJob.status !== "DRAFT" || busy) return;
+    if (
+      !selectedJob ||
+      selectedJob.status !== "DRAFT" ||
+      busy ||
+      actionLock.current
+    )
+      return;
     const normalizedCode = code.trim().toUpperCase();
     if (
       !window.confirm(
@@ -148,6 +368,7 @@ export default function AdminConsole({
       )
     )
       return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     setMessage("");
@@ -168,6 +389,7 @@ export default function AdminConsole({
               selectedJob.title,
             ]),
       );
+      setSection("list");
       await onRefresh();
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0))
@@ -176,12 +398,14 @@ export default function AdminConsole({
         cause instanceof Error ? cause.message : tr("Không mở được Job."),
       );
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
   async function saveMetadata(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedJob || busy || !metadata.level) return;
+    if (!selectedJob || busy || actionLock.current || !metadata.level) return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     setMessage("");
@@ -201,6 +425,7 @@ export default function AdminConsole({
           selectedJob.title,
         ]),
       );
+      setSection("list");
       await onRefresh();
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0))
@@ -211,12 +436,14 @@ export default function AdminConsole({
           : tr("Không lưu được thông tin SLA của Job."),
       );
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
   async function assign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!jobId || !email.trim() || busy) return;
+    if (!jobId || !email.trim() || busy || actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     setMessage("");
@@ -239,6 +466,7 @@ export default function AdminConsole({
         cause instanceof Error ? cause.message : tr("Không gán được quyền."),
       );
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -246,6 +474,7 @@ export default function AdminConsole({
     if (
       !jobId ||
       busy ||
+      actionLock.current ||
       !window.confirm(
         tr("Thu hồi quyền {0} của {1} trên Job này?", [
           tr(roleNames[member.role] || member.role),
@@ -254,6 +483,7 @@ export default function AdminConsole({
       )
     )
       return;
+    actionLock.current = true;
     setBusy(true);
     setError("");
     setMessage("");
@@ -270,14 +500,37 @@ export default function AdminConsole({
           : tr("Không thu hồi được quyền."),
       );
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
+  const visibleJobs = jobs.filter(
+    (job) =>
+      (statusFilter === "ALL" || job.status === statusFilter) &&
+      `${job.title} ${job.job_code || ""} ${job.business_unit || ""}`
+        .toLocaleLowerCase()
+        .includes(search.trim().toLocaleLowerCase()),
+  );
+  const editable =
+    selectedJob && assignableJobs.some((job) => job.id === selectedJob.id);
+  function showAction(next: "details" | "open" | "team", job: Job) {
+    if (busy) return;
+    if (next === "details" && job.id === createdDraftRef.current?.id) {
+      setSection("create");
+      return;
+    }
+    memberTicket.current += 1;
+    setRole("TA_RECRUITER");
+    setJobId(job.id);
+    setSection(next);
+    setCode("");
+    setEmail("");
+    setMembers([]);
+    setError("");
+    setMessage("");
+  }
   return (
-    <section
-      className="panel admin-console"
-      aria-label={tr("Quản trị Job và quyền")}
-    >
+    <section className="panel admin-console" aria-label={tr("Quản lý Job")}>
       <div className="metrics admin-overview">
         <div>
           <small>{tr("Vị trí tuyển dụng")}</small>
@@ -292,58 +545,8 @@ export default function AdminConsole({
         <div>
           <small>{tr("Bản nháp")}</small>
           <strong>{draftJobs.length}</strong>
-          <span>{tr("Cần hoàn thiện trước khi mở tuyển")}</span>
+          <span>{tr("Chưa mở tuyển")}</span>
         </div>
-      </div>
-      <div className="admin-console-heading">
-        <h2>{tr("Quản lý vị trí & đội ngũ")}</h2>
-        <p>{tr("Chọn việc bạn muốn thực hiện bên dưới.")}</p>
-      </div>
-      <div
-        className="job-view-tabs admin-tabs"
-        role="tablist"
-        aria-label={tr("Công cụ quản trị")}
-      >
-        {[
-          ["create", tr("Tạo vị trí")],
-          ["open", tr("Mở tuyển")],
-          ["details", tr("Yêu cầu tuyển dụng")],
-          ["team", tr("Phân công đội ngũ")],
-        ].map(([id, label]) => (
-          <button
-            id={`admin-tab-${id}`}
-            aria-controls={`admin-panel-${id}`}
-            key={id}
-            role="tab"
-            aria-selected={section === id}
-            tabIndex={section === id ? 0 : -1}
-            onKeyDown={(event) => {
-              const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
-              if (!keys.includes(event.key)) return;
-              event.preventDefault();
-              const tabs = Array.from(
-                event.currentTarget.parentElement!.querySelectorAll<HTMLButtonElement>(
-                  "[role=tab]",
-                ),
-              );
-              const current = tabs.indexOf(event.currentTarget);
-              const next =
-                event.key === "Home"
-                  ? 0
-                  : event.key === "End"
-                    ? tabs.length - 1
-                    : (current +
-                        (event.key === "ArrowRight" ? 1 : -1) +
-                        tabs.length) %
-                      tabs.length;
-              tabs[next].click();
-              tabs[next].focus();
-            }}
-            onClick={() => setSection(id)}
-          >
-            {tr(label)}
-          </button>
-        ))}
       </div>
       {error && (
         <div className="notice error" role="alert">
@@ -355,362 +558,395 @@ export default function AdminConsole({
           {notice(message)}
         </div>
       )}
-      <div className="admin-console-grid">
-        <section
-          className="admin-task"
-          id="admin-panel-create"
-          role="tabpanel"
-          aria-labelledby="admin-tab-create"
-          hidden={section !== "create"}
-        >
-          <span className="admin-step">01</span>
-          <h3>{tr("Tạo Job nháp")}</h3>
-          <p>
-            {tr("Tạo vị trí ở trạng thái nháp. Mã Job được đặt khi mở tuyển.")}
-          </p>
-          <form onSubmit={(event) => void createDraft(event)}>
-            <label>
-              {tr("Tên vị trí")}
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                minLength={3}
-                maxLength={180}
-              />
-            </label>
-            <label>
-              {tr("Bộ phận")}
-              <input
-                value={unit}
-                onChange={(event) => setUnit(event.target.value)}
-                maxLength={120}
-              />
-            </label>
-            <label>
-              {tr("Địa điểm")}
-              <input
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                maxLength={120}
-              />
-            </label>
-            <button className="primary" type="submit" disabled={busy}>
-              {busy ? tr("Đang lưu…") : tr("Tạo Job nháp")}
-            </button>
-          </form>
-        </section>
-        <section
-          className="admin-task"
-          id="admin-panel-open"
-          role="tabpanel"
-          aria-labelledby="admin-tab-open"
-          hidden={section !== "open"}
-        >
-          <span className="admin-step">02</span>
-          <h3>{tr("Mở tuyển Job")}</h3>
+      <div className="admin-list-heading">
+        <div>
+          <h2>{tr("Danh sách Job")}</h2>
           <p>
             {tr(
-              "Chọn Job nháp, kiểm tra lại tên và cấp mã Job trước khi xác nhận.",
+              "Tạo Job mới hoặc chọn thao tác ngay trên từng dòng. Mở tuyển và phân công là hai việc riêng.",
             )}
           </p>
-          <form onSubmit={(event) => void activateDraft(event)}>
-            <label>
-              {tr("Job nháp")}
-              <select
-                value={draftJobs.some((job) => job.id === jobId) ? jobId : ""}
-                onChange={(event) => setJobId(event.target.value)}
-                required
-              >
-                <option value="">{tr("Chọn Job nháp")}</option>
-                {draftJobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {selectedJob?.status === "DRAFT" && (
-              <div className="selected-job-preview">
-                <strong>{selectedJob.title}</strong>
-                <small>
-                  {selectedJob.business_unit || tr("Chưa có bộ phận")} ·{" "}
-                  {selectedJob.location || tr("Chưa có địa điểm")}
-                </small>
-              </div>
-            )}
-            <label>
-              {tr("Mã Job")}
-              <input
-                value={code}
-                onChange={(event) => setCode(event.target.value.toUpperCase())}
-                required
-                minLength={3}
-                maxLength={40}
-                pattern="[A-Za-z0-9][A-Za-z0-9-]{2,39}"
-                placeholder="ATS-SENIOR-EMBEDDED-2026"
-              />
-            </label>
-            <button
-              className="primary"
-              type="submit"
-              disabled={busy || !draftJobs.length}
-            >
-              {busy ? tr("Đang xử lý…") : tr("Xác nhận mở tuyển")}
-            </button>
-          </form>
-        </section>
-        <section
-          className="admin-task"
-          id="admin-panel-details"
-          role="tabpanel"
-          aria-labelledby="admin-tab-details"
-          hidden={section !== "details"}
+        </div>
+        <button
+          type="button"
+          className="primary"
+          disabled={busy}
+          onClick={() => {
+            setSection("create");
+            setError("");
+            setMessage("");
+          }}
         >
-          <span className="admin-step">03</span>
-          <h3>{tr("Thông tin SLA và yêu cầu")}</h3>
-          <p>
-            {tr(
-              "Chọn cấp độ, nhóm công việc và mùa tuyển dụng để xác định thời hạn tuyển dụng mục tiêu.",
-            )}
-          </p>
-          <form onSubmit={(event) => void saveMetadata(event)}>
-            <label>
-              {tr("Job")}
-              <select
-                value={jobId}
-                onChange={(event) => setJobId(event.target.value)}
-                required
-              >
-                <option value="">{tr("Chọn Job")}</option>
-                {assignableJobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.job_code ? `${job.job_code} · ` : ""}
-                    {job.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="job-meta-fields">
-              <label>
-                {tr("Level")}
-                <select
-                  value={metadata.level}
-                  onChange={(event) =>
-                    setMetadata({ ...metadata, level: event.target.value })
-                  }
-                >
-                  {Array.from({ length: 16 }, (_, i) => 15 - i).map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                {tr("Nhóm chức năng")}
-                <select
-                  value={metadata.functionGroup}
-                  onChange={(event) =>
-                    setMetadata({
-                      ...metadata,
-                      functionGroup: event.target.value,
-                    })
-                  }
-                >
-                  <option value="Tech/Product">{tr("Tech/Product")}</option>
-                  <option value="Non-Tech/Non-Product">
-                    {tr("Non-Tech/Non-Product")}
-                  </option>
-                </select>
-              </label>
-              <label>
-                {tr("Mùa tuyển dụng")}
-                <select
-                  value={metadata.season}
-                  onChange={(event) =>
-                    setMetadata({ ...metadata, season: event.target.value })
-                  }
-                >
-                  <option value="Normal Time">{tr("Normal Time")}</option>
-                  <option value="High Time">{tr("High Time")}</option>
-                </select>
-              </label>
-              <label>
-                {tr("Ngày yêu cầu")}
-                <input
-                  type="date"
-                  value={metadata.reqDate}
-                  onChange={(event) =>
-                    setMetadata({ ...metadata, reqDate: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                {tr("Loại yêu cầu")}
-                <select
-                  value={metadata.requestType}
-                  onChange={(event) =>
-                    setMetadata({
-                      ...metadata,
-                      requestType: event.target.value,
-                    })
-                  }
-                >
-                  <option value="NEW">{tr("Tuyển mới")}</option>
-                  <option value="REPLACEMENT">{tr("Thay thế")}</option>
-                </select>
-              </label>
-              <label>
-                {tr("Ưu tiên")}
-                <select
-                  value={metadata.priority}
-                  onChange={(event) =>
-                    setMetadata({ ...metadata, priority: event.target.value })
-                  }
-                >
-                  <option value="CRITICAL">{tr("Critical")}</option>
-                  <option value="HIGH">{tr("High")}</option>
-                  <option value="NORMAL">{tr("Normal")}</option>
-                  <option value="LOW">{tr("Low")}</option>
-                </select>
-              </label>
-              {metadata.requestType === "REPLACEMENT" && (
-                <label>
-                  {tr("Thay thế vị trí")}
-                  <input
-                    value={metadata.replacementFor}
-                    onChange={(event) =>
-                      setMetadata({
-                        ...metadata,
-                        replacementFor: event.target.value,
-                      })
-                    }
-                    maxLength={180}
-                    required
-                  />
-                </label>
+          {partialDraft ? tr("Tiếp tục Job nháp") : tr("Tạo Job")}
+        </button>
+      </div>
+      {section !== "list" && (
+        <section
+          ref={editorRef}
+          tabIndex={-1}
+          className="admin-task admin-editor"
+          aria-label={
+            section === "create"
+              ? tr("Tạo Job")
+              : section === "details"
+                ? tr("Chỉnh yêu cầu")
+                : section === "open"
+                  ? tr("Mở tuyển")
+                  : tr("Phân công đội ngũ")
+          }
+        >
+          <header className="admin-editor-heading">
+            <div>
+              <h3>
+                {section === "create"
+                  ? tr("Tạo Job")
+                  : section === "details"
+                    ? tr("Chỉnh yêu cầu")
+                    : section === "open"
+                      ? tr("Mở tuyển")
+                      : tr("Phân công đội ngũ")}
+              </h3>
+              {section !== "create" && selectedJob && (
+                <p>
+                  <strong>{selectedJob.title}</strong> ·{" "}
+                  {selectedJob.job_code || tr("Chưa có mã")} ·{" "}
+                  <span
+                    className={`badge ${selectedJob.status === "OPEN" ? "green" : "amber-badge"}`}
+                  >
+                    {jobStatusLabel(selectedJob.status, t)}
+                  </span>
+                </p>
               )}
             </div>
-            {selectedJob?.sla_target_workdays != null && (
-              <div className="selected-job-preview">
-                <strong>
-                  {tr("SLA tổng:")} {selectedJob.sla_target_workdays}{" "}
-                  {tr("ngày làm việc")}
-                </strong>
-                <small>
-                  {tr("Tra theo Level × nhóm chức năng × mùa tuyển dụng.")}
-                </small>
-              </div>
-            )}
             <button
-              className="primary"
-              type="submit"
-              disabled={busy || !selectedJob}
+              className="secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => setSection("list")}
             >
-              {busy ? tr("Đang lưu…") : tr("Lưu thông tin Job")}
+              {tr("Đóng")}
             </button>
-          </form>
-        </section>
-        <section
-          className="admin-task admin-access-task"
-          id="admin-panel-team"
-          role="tabpanel"
-          aria-labelledby="admin-tab-team"
-          hidden={section !== "team"}
-        >
-          <span className="admin-step">04</span>
-          <h3>{tr("Gán quyền theo Job")}</h3>
-          <p>
-            {tr(
-              "Chọn vị trí, nhập email và phân công vai trò. Thành viên cần đăng nhập ATS ít nhất một lần trước khi được phân công.",
-            )}
-          </p>
-          <form onSubmit={(event) => void assign(event)}>
-            <label>
-              {tr("Job")}
-              <select
-                value={jobId}
-                onChange={(event) => setJobId(event.target.value)}
-                required
-              >
-                <option value="">{tr("Chọn Job")}</option>
-                {assignableJobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title} · {tr(job.status)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {tr("Email người dùng")}
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                maxLength={254}
-                autoComplete="off"
-                placeholder="name@company.com"
-              />
-            </label>
-            <label>
-              {tr("Vai trò trên Job")}
-              <select
-                value={role}
-                onChange={(event) => setRole(event.target.value)}
-              >
-                <option value="TA_RECRUITER">{tr("TA / Recruiter")}</option>
-                <option value="HIRING_MANAGER">{tr("Hiring Manager")}</option>
-                <option value="INTERVIEWER">{tr("Interviewer")}</option>
-              </select>
-            </label>
-            <button
-              className="primary"
-              type="submit"
-              disabled={busy || !assignableJobs.length}
-            >
-              {busy ? tr("Đang xử lý…") : tr("Gán quyền")}
-            </button>
-          </form>
-          <div className="admin-members">
-            <h4>
-              {tr("Người đã được gán")}{" "}
-              {selectedJob ? `· ${selectedJob.title}` : ""}
-            </h4>
-            {loadingMembers ? (
-              <p className="muted">{tr("Đang tải…")}</p>
-            ) : members.length ? (
-              <ul>
-                {members.map((member) => (
-                  <li key={`${member.user_id}:${member.role}`}>
-                    <span>
-                      <strong>{member.email}</strong>
-                      <small>{tr(roleNames[member.role] || member.role)}</small>
-                    </span>
-                    <button
-                      className="secondary"
-                      disabled={busy}
-                      onClick={() => void revoke(member)}
-                    >
-                      {tr("Thu hồi")}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="muted">
-                {tr("Chưa có người được gán trên Job này.")}
+          </header>
+          {section === "create" && (
+            <>
+              <p>
+                {tr(
+                  "Nhập thông tin và yêu cầu tại đây. Lưu sẽ tạo Job nháp; Job chỉ nhận ứng viên sau khi bạn chọn Mở tuyển.",
+                )}
               </p>
-            )}
-          </div>
-          <p className="admin-security-note">
-            {tr(
-              "Bạn đang phân công quyền cho từng vị trí. Cần cấp quyền quản trị toàn hệ thống? Liên hệ người quản lý ATS.",
-            )}
-          </p>
+              {partialDraft && (
+                <div className="notice" role="status">
+                  {tr(
+                    "Job nháp đã được lưu. Hoàn tất phần yêu cầu bên dưới; thử lại sẽ không tạo thêm Job.",
+                  )}
+                </div>
+              )}
+              <form onSubmit={(event) => void createDraft(event)}>
+                <fieldset
+                  disabled={busy || !!partialDraft}
+                  className="admin-identity-fields"
+                >
+                  <legend>{tr("Thông tin Job")}</legend>
+                  <label>
+                    {tr("Tên vị trí")}
+                    <input
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      required
+                      minLength={3}
+                      maxLength={180}
+                    />
+                  </label>
+                  <label>
+                    {tr("Bộ phận")}
+                    <input
+                      value={unit}
+                      onChange={(event) => setUnit(event.target.value)}
+                      maxLength={120}
+                    />
+                  </label>
+                  <label>
+                    {tr("Địa điểm")}
+                    <input
+                      value={location}
+                      onChange={(event) => setLocation(event.target.value)}
+                      maxLength={120}
+                    />
+                  </label>
+                </fieldset>
+                <fieldset disabled={busy} className="admin-requirement-fields">
+                  <legend>{tr("Yêu cầu tuyển dụng")}</legend>
+                  <RequirementsFields
+                    value={createRequirements}
+                    onChange={setCreateRequirements}
+                  />
+                </fieldset>
+                <button className="primary" type="submit" disabled={busy}>
+                  {busy
+                    ? tr("Đang lưu…")
+                    : partialDraft
+                      ? tr("Lưu tiếp yêu cầu")
+                      : tr("Lưu Job nháp")}
+                </button>
+              </form>
+            </>
+          )}
+          {section === "open" && selectedJob?.status === "DRAFT" && (
+            <>
+              <p>
+                {tr(
+                  "Mở tuyển cho phép tiếp nhận ứng viên. Thao tác này không phân công hay cấp quyền cho thành viên.",
+                )}
+              </p>
+              <form onSubmit={(event) => void activateDraft(event)}>
+                <label>
+                  {tr("Mã Job")}
+                  <input
+                    value={code}
+                    onChange={(event) =>
+                      setCode(event.target.value.toUpperCase())
+                    }
+                    required
+                    minLength={3}
+                    maxLength={40}
+                    pattern="[A-Za-z0-9][A-Za-z0-9-]{2,39}"
+                    placeholder="ATS-SENIOR-EMBEDDED-2026"
+                    disabled={busy}
+                  />
+                </label>
+                <button className="primary" type="submit" disabled={busy}>
+                  {busy ? tr("Đang xử lý…") : tr("Xác nhận mở tuyển")}
+                </button>
+              </form>
+            </>
+          )}
+          {section === "details" && editable && (
+            <>
+              <p>
+                {tr(
+                  "Chỉnh yêu cầu và thời hạn tuyển dụng cho Job đang chọn. Lưu thông tin không đổi trạng thái Job hoặc quyền của đội ngũ.",
+                )}
+              </p>
+              <form onSubmit={(event) => void saveMetadata(event)}>
+                <fieldset disabled={busy} className="admin-requirement-fields">
+                  <legend>{tr("Yêu cầu tuyển dụng")}</legend>
+                  <RequirementsFields value={metadata} onChange={setMetadata} />
+                </fieldset>
+                {selectedJob.sla_target_workdays != null && (
+                  <p className="selected-job-preview">
+                    {tr("SLA tổng:")} {selectedJob.sla_target_workdays}{" "}
+                    {tr("ngày làm việc")}
+                  </p>
+                )}
+                <button className="primary" type="submit" disabled={busy}>
+                  {busy ? tr("Đang lưu…") : tr("Lưu yêu cầu")}
+                </button>
+              </form>
+            </>
+          )}
+          {section === "team" && editable && (
+            <>
+              <p>
+                {tr(
+                  "Phân công chỉ quyết định ai được làm việc trên Job này. Thao tác này không mở tuyển và không cấp quyền Admin toàn hệ thống.",
+                )}
+              </p>
+              <form onSubmit={(event) => void assign(event)}>
+                <label>
+                  {tr("Email người dùng")}
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                    maxLength={254}
+                    autoComplete="off"
+                    disabled={busy}
+                    placeholder="name@company.com"
+                  />
+                </label>
+                <label>
+                  {tr("Vai trò trên Job")}
+                  <select
+                    value={role}
+                    onChange={(event) => setRole(event.target.value)}
+                    disabled={busy}
+                  >
+                    <option value="TA_RECRUITER">{tr("TA / Recruiter")}</option>
+                    <option value="HIRING_MANAGER">
+                      {tr("Hiring Manager")}
+                    </option>
+                    <option value="INTERVIEWER">{tr("Interviewer")}</option>
+                  </select>
+                </label>
+                <button className="primary" type="submit" disabled={busy}>
+                  {busy ? tr("Đang xử lý…") : tr("Gán quyền")}
+                </button>
+              </form>
+              <div className="admin-members">
+                <h4>{tr("Người đã được gán")}</h4>
+                {loadingMembers ? (
+                  <p role="status">{tr("Đang tải…")}</p>
+                ) : members.length ? (
+                  <ul>
+                    {members.map((member) => (
+                      <li key={`${member.user_id}:${member.role}`}>
+                        <span>
+                          <strong>{member.email}</strong>
+                          <small>
+                            {tr(roleNames[member.role] || member.role)}
+                          </small>
+                        </span>
+                        <button
+                          className="secondary"
+                          disabled={busy}
+                          onClick={() => void revoke(member)}
+                        >
+                          {tr("Thu hồi")}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>{tr("Chưa có người được gán trên Job này.")}</p>
+                )}
+              </div>
+              <p className="admin-security-note">
+                {tr(
+                  "Thành viên cần đăng nhập ATS ít nhất một lần trước khi được phân công.",
+                )}
+              </p>
+            </>
+          )}
         </section>
-      </div>
+      )}
+      <section
+        className="panel admin-job-list"
+        aria-label={tr("Danh sách Job")}
+      >
+        <div className="toolbar">
+          <label className="search">
+            <input
+              aria-label={tr("Tìm Job")}
+              placeholder={tr("Tìm tên vị trí hoặc mã…")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          <label className="admin-status-filter">
+            {tr("Trạng thái")}
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="ALL">{tr("Tất cả trạng thái")}</option>
+              {[...new Set(jobs.map((job) => job.status))].map((status) => (
+                <option key={status} value={status}>
+                  {jobStatusLabel(status, t)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="table-scroll">
+          <table className="workspace-master-table admin-job-table">
+            <thead>
+              <tr>
+                <th>{tr("Job")}</th>
+                <th>{tr("Trạng thái tuyển dụng")}</th>
+                <th>{tr("Yêu cầu tuyển dụng")}</th>
+                <th>{tr("Đội ngũ & quyền truy cập")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleJobs.map((job) => {
+                const canEdit = assignableJobs.some(
+                  (item) => item.id === job.id,
+                );
+                return (
+                  <tr key={job.id}>
+                    <td>
+                      <strong>{job.title}</strong>
+                      <small className="job-code-subtitle">
+                        {job.job_code || tr("Chưa có mã")}
+                      </small>
+                      <small className="job-code-subtitle">
+                        {job.business_unit || tr("Chưa có bộ phận")}
+                        {job.location ? ` · ${job.location}` : ""}
+                      </small>
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
+                      >
+                        {jobStatusLabel(job.status, t)}
+                      </span>
+                      <small className="job-code-subtitle">
+                        {job.status === "OPEN"
+                          ? tr("Đang nhận ứng viên")
+                          : job.status === "DRAFT"
+                            ? tr("Chưa mở tuyển")
+                            : tr("Theo trạng thái hiện tại")}
+                      </small>
+                      {job.status === "DRAFT" && (
+                        <button
+                          type="button"
+                          className="primary"
+                          disabled={busy || partialDraft?.id === job.id}
+                          onClick={() => showAction("open", job)}
+                        >
+                          {tr("Mở tuyển")}
+                        </button>
+                      )}
+                    </td>
+                    <td>
+                      <small>
+                        {job.level != null
+                          ? `${tr("Level")} ${job.level}`
+                          : tr("Chưa có cấp độ")}{" "}
+                        ·{" "}
+                        {job.function_group
+                          ? tr(job.function_group)
+                          : tr("Chưa phân nhóm")}
+                      </small>
+                      <small className="job-code-subtitle">
+                        {job.sla_target_workdays != null
+                          ? `${tr("SLA tổng:")} ${job.sla_target_workdays} ${tr("ngày làm việc")}`
+                          : tr("Chưa xác định thời hạn")}
+                      </small>
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || !canEdit}
+                        onClick={() => showAction("details", job)}
+                      >
+                        {tr("Chỉnh yêu cầu")}
+                      </button>
+                    </td>
+                    <td>
+                      <small>{tr("Người được làm việc trên Job này")}</small>
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={busy || !canEdit}
+                        onClick={() => showAction("team", job)}
+                      >
+                        {tr("Phân công đội ngũ")}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!visibleJobs.length && (
+          <div className="empty">
+            <h3>{tr("Không tìm thấy Job phù hợp")}</h3>
+            <p>{tr("Thử tên khác hoặc đổi trạng thái.")}</p>
+          </div>
+        )}
+      </section>
     </section>
   );
 }
