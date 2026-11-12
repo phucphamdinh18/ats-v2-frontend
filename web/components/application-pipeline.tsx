@@ -385,6 +385,9 @@ export default function ApplicationPipeline({
   }, [load]);
   return (
     <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
+      <h2 className="pipeline-accessible-heading">
+        {tr("Tiến độ tuyển dụng")}
+      </h2>
       <div
         className="pipeline-summary"
         role="region"
@@ -434,28 +437,6 @@ export default function ApplicationPipeline({
           </div>
         ))}
       </div>
-      <div className="pipeline-heading">
-        <div>
-          <h2>{tr("Tiến độ tuyển dụng")}</h2>
-          <p>
-            {tr(
-              "Chọn thẻ để xem hồ sơ. Khi chuyển vòng, ATS sẽ hỏi bạn xác nhận.",
-            )}
-          </p>
-        </div>
-        {canManageApplications &&
-          (state === "ready" || state === "empty" || state === "error") && (
-            <button
-              className="primary add-candidate-button"
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setCandidateOpen(true)}
-            >
-              <span aria-hidden="true">＋</span>
-              {tr("Thêm ứng viên vào Job")}
-            </button>
-          )}
-      </div>
       {canManageApplications && (
         <CandidateEntryDialog
           key={job.id}
@@ -497,6 +478,18 @@ export default function ApplicationPipeline({
             ))}
           </select>
         </label>
+        {canManageApplications &&
+          (state === "ready" || state === "empty" || state === "error") && (
+            <button
+              className="primary add-candidate-button"
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setCandidateOpen(true)}
+            >
+              <span aria-hidden="true">＋</span>
+              {tr("Thêm ứng viên")}
+            </button>
+          )}
         {state === "ready" && (
           <span className="muted">
             {stages.reduce(
@@ -603,38 +596,35 @@ export default function ApplicationPipeline({
                     void moveApplication(candidate, targetStage);
                 }}
               >
-                <h3>
-                  <span className="stage-title">
-                    <i aria-hidden="true" />
-                    {tr(STAGE_LABEL[stage] || stage)}
-                  </span>
-                  <span className="count">{applications.length}</span>
-                </h3>
-                {ROUND_SLA_DAYS[stage] > 0 && (
-                  <p className="stage-sla">
-                    {tr("Mục tiêu: ≤")} {ROUND_SLA_DAYS[stage]} {tr("ngày")}
+                <header className="stage-header">
+                  <h3>
+                    <span className="stage-title">
+                      <i aria-hidden="true" />
+                      {tr(STAGE_LABEL[stage] || stage)}
+                    </span>
+                    <span className="count">{applications.length}</span>
+                  </h3>
+                  <p
+                    className="stage-meta"
+                    title={
+                      stage === "OFFER"
+                        ? tr("Theo dõi đề nghị đang chờ hoặc đã được duyệt.")
+                        : undefined
+                    }
+                  >
+                    {ROUND_SLA_DAYS[stage] > 0 ? (
+                      <>
+                        {tr("Mục tiêu: ≤")} {ROUND_SLA_DAYS[stage]} {tr("ngày")}
+                      </>
+                    ) : stage === "OFFER" ? (
+                      tr("Theo dõi đề nghị")
+                    ) : stage === "HIRED" ? (
+                      tr("Hoàn tất tuyển dụng")
+                    ) : (
+                      tr("Hồ sơ đã kết thúc")
+                    )}
                   </p>
-                )}
-                {stage === "NEW" && (
-                  <p className="drop-hint">
-                    {tr("Tiếp nhận và liên hệ ứng viên.")}
-                  </p>
-                )}
-                {stage === "SCREEN" && (
-                  <p className="drop-hint">
-                    {tr("Đánh giá hồ sơ và trao đổi ban đầu.")}
-                  </p>
-                )}
-                {stage === "INTERVIEW" && (
-                  <p className="drop-hint">
-                    {tr("Theo dõi các vòng phỏng vấn.")}
-                  </p>
-                )}
-                {stage === "OFFER" && (
-                  <p className="drop-hint">
-                    {tr("Theo dõi đề nghị đang chờ hoặc đã được duyệt.")}
-                  </p>
-                )}
+                </header>
                 {applications.length === 0 && (
                   <p className="empty-stage">
                     {tr("Chưa có ứng viên ở vòng này.")}
@@ -690,7 +680,7 @@ export default function ApplicationPipeline({
                       }}
                       onDragEnd={() => setDragging(null)}
                       onClick={() => void openDetail(application)}
-                      title={dragReason}
+                      title={`${application.candidate_name}\n${application.source || tr("Chưa ghi nguồn")}\n${dragReason}`}
                       aria-label={tr("Mở hồ sơ của {0}. {1}", [
                         application.candidate_name,
                         dragReason,
@@ -708,26 +698,21 @@ export default function ApplicationPipeline({
                         </span>
                         <span>
                           <strong>{application.candidate_name}</strong>
-                          <span className="application-card-code">
-                            {application.source || tr("Chưa ghi nguồn")}
-                          </span>
                         </span>
                       </span>
-                      <span className="application-card-status">
-                        {offer
-                          ? offer.offer_status === "APPROVED"
-                            ? tr("Offer đã duyệt")
-                            : tr("Offer chờ duyệt")
-                          : application.status === "ACTIVE"
-                            ? tr("Đang xử lý")
+                      {(offer || application.status !== "ACTIVE") && (
+                        <span className="application-card-status">
+                          {offer
+                            ? offer.offer_status === "APPROVED"
+                              ? tr("Offer đã duyệt")
+                              : tr("Offer chờ duyệt")
                             : tr(application.status)}
-                      </span>
-                      <span className="application-card-next">
-                        <small>{tr("BƯỚC HIỆN TẠI")}</small>
-                        <span>{tr(STAGE_LABEL[stage] || stage)}</span>
-                      </span>
+                        </span>
+                      )}
                       <span className="application-card-footer">
-                        <small>
+                        <small
+                          title={application.source || tr("Chưa ghi nguồn")}
+                        >
                           {application.source || tr("Chưa ghi nguồn")}
                         </small>
                         <span aria-hidden="true">{tr("Xem hồ sơ →")}</span>

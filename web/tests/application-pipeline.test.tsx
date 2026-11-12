@@ -728,7 +728,7 @@ it("opens candidate entry as a dismissible dialog from the Pipeline button", asy
     api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
     renderPipeline();
     const trigger = await screen.findByRole("button", {
-      name: "Thêm ứng viên vào Job",
+      name: "Thêm ứng viên",
     });
     expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -744,4 +744,29 @@ it("opens candidate entry as a dismissible dialog from the Pipeline button", asy
     Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal");
     Reflect.deleteProperty(HTMLDialogElement.prototype, "close");
   }
+});
+
+it("keeps compact cards free of duplicate source and current-stage labels", async () => {
+  api.list.mockResolvedValue({
+    applications: [
+      {
+        ...application("Long candidate name for compact card"),
+        source: "Unique source for compact card",
+      },
+    ],
+    limit: 25,
+    offset: 0,
+  });
+  renderPipeline();
+  const card = await screen.findByRole("button", {
+    name: /Mở hồ sơ của Long candidate/,
+  });
+  expect(
+    card.textContent?.split("Unique source for compact card"),
+  ).toHaveLength(2);
+  expect(card.textContent).not.toContain("BƯỚC HIỆN TẠI");
+  expect(card.textContent).not.toContain("Đang xử lý");
+  expect(card.getAttribute("title")).toContain(
+    "Long candidate name for compact card",
+  );
 });

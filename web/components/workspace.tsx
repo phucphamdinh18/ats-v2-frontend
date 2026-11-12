@@ -15,6 +15,7 @@ import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
+import PipelineJobSwitcher from "./pipeline-job-switcher";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import AdminConsole, { type JobAdminAction } from "./admin-console";
@@ -1526,43 +1527,14 @@ export default function Workspace() {
                   ) : selectedJob ? (
                     <section className="job-pipeline-view">
                       <div className="job-pipeline-toolbar">
-                        <button
-                          className="secondary"
-                          onClick={() => setJobView("master")}
+                        <PipelineJobSwitcher
+                          jobs={access.jobs}
+                          selected={selectedJob}
+                          onChange={setSelectedJob}
+                        />
+                        <span
+                          className={`badge ${selectedJob.status === "OPEN" ? "green" : selectedJob.status === "DRAFT" ? "amber-badge" : ""}`}
                         >
-                          <Icon name="arrow" size={15} />
-                          {tr("Quay lại Bảng Master")}
-                        </button>
-                        <span className="pipeline-job-icon">
-                          <Icon name="jobs" size={23} />
-                        </span>
-                        <label>
-                          {locale === "en"
-                            ? "Pipeline for Job"
-                            : tr("Đang xem pipeline của Job")}
-                          <select
-                            aria-label={tr("Chọn Job cho Hiring Pipeline")}
-                            value={selectedJob.id}
-                            onChange={(event) =>
-                              setSelectedJob(
-                                access.jobs.find(
-                                  (job) => job.id === event.target.value,
-                                ) || null,
-                              )
-                            }
-                          >
-                            {access.jobs.map((job) => (
-                              <option key={job.id} value={job.id}>
-                                [{job.job_code || tr("Chưa có mã")}] {job.title}
-                              </option>
-                            ))}
-                          </select>
-                          <small>
-                            {selectedJob.job_code || t.noCode} ·{" "}
-                            {selectedJob.business_unit || tr("Chưa có bộ phận")}
-                          </small>
-                        </label>
-                        <span className="badge green">
                           {jobStatusLabel(selectedJob.status, t)}
                         </span>
                       </div>

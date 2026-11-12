@@ -41,10 +41,16 @@ vi.mock("../lib/supabase", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.review.mockResolvedValue({ drafts: [] });
-  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
-    Promise.resolve({ data: options.body?.action === "overview"
-      ? { jobs: [] }
-      : { applications: [], limit: 25, offset: 0 }, error: null }));
+  mocks.functionInvoke.mockImplementation(
+    (_name: string, options: { body?: { action?: string } }) =>
+      Promise.resolve({
+        data:
+          options.body?.action === "overview"
+            ? { jobs: [] }
+            : { applications: [], limit: 25, offset: 0 },
+        error: null,
+      }),
+  );
   mocks.session.mockResolvedValue({
     data: {
       session: { user: { id: "synthetic", email: "qa@example.invalid" } },
@@ -53,7 +59,12 @@ beforeEach(() => {
   });
 });
 afterEach(cleanup);
-function scope(active: boolean, roles: string[], jobs: unknown[] = [], memberships: unknown[] = []) {
+function scope(
+  active: boolean,
+  roles: string[],
+  jobs: unknown[] = [],
+  memberships: unknown[] = [],
+) {
   mocks.from.mockImplementation((table: string) => {
     const result =
       table === "app_users"
@@ -64,11 +75,20 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
             ? { data: jobs, error: null }
             : table === "job_memberships"
               ? { data: memberships, error: null }
-            : table === "job_sla_rules"
-              ? { data: [], error: null }
-              : table === "hiring_source_catalog"
-                ? { data: [{ sub_source: "TEST ONLY", source: "TEST ONLY", source_ownership: "TEST ONLY" }], error: null }
-                : { data: [], error: null };
+              : table === "job_sla_rules"
+                ? { data: [], error: null }
+                : table === "hiring_source_catalog"
+                  ? {
+                      data: [
+                        {
+                          sub_source: "TEST ONLY",
+                          source: "TEST ONLY",
+                          source_ownership: "TEST ONLY",
+                        },
+                      ],
+                      error: null,
+                    }
+                  : { data: [], error: null };
     const query = {
       select: () => query,
       eq: () => query,
@@ -82,10 +102,24 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
   });
 }
 it("passes stage permission only when the TA membership matches the selected Job", async () => {
-  scope(true, ["TA_RECRUITER"], [{ id: "job1", title: "Synthetic Engineer", status: "OPEN", job_code: "TEST-1" }], []);
+  scope(
+    true,
+    ["TA_RECRUITER"],
+    [
+      {
+        id: "job1",
+        title: "Synthetic Engineer",
+        status: "OPEN",
+        job_code: "TEST-1",
+      },
+    ],
+    [],
+  );
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
-  fireEvent.click(screen.getByRole("button", { name: "Mở pipeline Synthetic Engineer" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Mở pipeline Synthetic Engineer" }),
+  );
   expect(await screen.findByRole("status")).toBeTruthy();
   expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
 });
@@ -123,19 +157,32 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   expect(screen.queryByText("Synthetic Engineer")).toBeNull();
 });
 it("opens Pipeline from Job Master and switches requisitions", async () => {
-  scope(true, ["HIRING_MANAGER"], [
-    { id: "job1", title: "First Job", status: "OPEN", job_code: "JOB-1" },
-    { id: "job2", title: "Second Job", status: "DRAFT", job_code: "JOB-2" },
-  ]);
+  scope(
+    true,
+    ["HIRING_MANAGER"],
+    [
+      { id: "job1", title: "First Job", status: "OPEN", job_code: "JOB-1" },
+      { id: "job2", title: "Second Job", status: "DRAFT", job_code: "JOB-2" },
+    ],
+  );
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "Mở pipeline First Job" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Mở pipeline First Job" }),
+  );
   await screen.findByRole("region", { name: "Pipeline First Job" });
-  const requisition = screen.getByRole("combobox", { name: "Chọn Job cho Hiring Pipeline" });
-  fireEvent.change(requisition, { target: { value: "job2" } });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Chọn Job cho Hiring Pipeline" }),
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "Tìm Job" }), {
+    target: { value: "JOB-2" },
+  });
+  fireEvent.click(screen.getByRole("option", { name: /Second Job/ }));
   await screen.findByRole("region", { name: "Pipeline Second Job" });
-  fireEvent.click(screen.getByRole("button", { name: "Quay lại Bảng Master" }));
+  fireEvent.click(screen.getByRole("tab", { name: /1.1 Bảng Master/ }));
   await screen.findByRole("button", { name: "Mở pipeline First Job" });
-  expect(screen.getByRole("button", { name: "Mở pipeline Second Job" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Mở pipeline Second Job" }),
+  ).toBeTruthy();
 });
 it("logout removes already displayed private data immediately", async () => {
   scope(
@@ -162,7 +209,9 @@ it("Supabase SIGNED_OUT event clears displayed scoped data immediately", async (
     mocks.authCallback?.("SIGNED_OUT", null);
   });
   await screen.findByRole("button", { name: "Đăng nhập bằng Google" });
-  expect(screen.queryByRole("button", { name: /Mở pipeline Scoped Job/ })).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: /Mở pipeline Scoped Job/ }),
+  ).toBeNull();
 });
 
 it("signed-out login starts only one OAuth request on repeated clicks", async () => {
@@ -261,13 +310,17 @@ it("quick start opens actual open-job filtering, without creating any records", 
     ],
   );
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "Hiện hướng dẫn" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Hiện hướng dẫn" }),
+  );
   fireEvent.click(
     await screen.findByRole("button", {
       name: "Xem vị trí đang tuyển",
     }),
   );
-  expect(screen.getByRole("button", { name: "Chọn Job Open role" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Chọn Job Open role" }),
+  ).toBeTruthy();
   expect(screen.queryByText("Draft role")).toBeNull();
   const openFilter = screen.getByRole("button", { name: "Đang tuyển (1)" });
   expect(openFilter.getAttribute("aria-pressed")).toBe("true");
