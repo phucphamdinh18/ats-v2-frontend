@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: phucphamdinh18/ats-v2-independent
-          ref: main
+          ref: 975c6cef5e876094ce4b19a581524f089a3a68c0
           path: backend
           token: ${{ secrets.ATS_CROSS_REPO_READ_TOKEN }}
       - uses: actions/setup-node@v4
@@ -65,6 +65,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.79.0
+      - name: Verify configured CORS without widening default origins
+        working-directory: backend
+        run: node --test tests/configurable-browser-cors.test.cjs
       - name: Start disposable Supabase local
         working-directory: backend
         run: |
@@ -74,7 +77,24 @@ jobs:
         working-directory: backend
         env:
           RUNNER_TEMP: ${{ runner.temp }}
-        run: bash tests/run-supabase-local-e2e.sh
+        run: |
+          bash tests/run-supabase-local-e2e.sh
+          eval "$(supabase status -o env)"
+          psql "$DB_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          do $check$
+          declare v_actor uuid; v_candidate uuid;
+          begin
+            if has_function_privilege('anon','public.list_candidates(uuid,text,integer,integer)','EXECUTE')
+              or has_function_privilege('authenticated','public.candidate_directory_allowed(uuid)','EXECUTE') then
+              raise exception 'Candidate read helpers exposed to client roles';
+            end if;
+            if public.candidate_directory_allowed(null) then raise exception 'Null actor was authorized'; end if;
+            select id into strict v_actor from auth.users where email='ta-e2e@example.invalid';
+            perform * from public.list_candidates(v_actor,null,25,0);
+            select id into strict v_candidate from public.candidates where email='manual-e2e@example.invalid';
+            perform public.get_candidate_profile(v_actor,v_candidate);
+          end $check$;
+          SQL
       - name: Install frontend and pinned browser runner
         working-directory: web
         run: |

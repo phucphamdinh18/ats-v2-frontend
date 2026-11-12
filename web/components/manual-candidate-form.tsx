@@ -288,7 +288,7 @@ export default function ManualCandidateForm({
         <label>
           {tr("Link CV trên Drive *")}
           <input
-            aria-label="Link CV Google Drive"
+            aria-label={tr("Link CV Google Drive")}
             type="url"
             value={form.driveUrl}
             onChange={(event) => update("driveUrl", event.target.value)}

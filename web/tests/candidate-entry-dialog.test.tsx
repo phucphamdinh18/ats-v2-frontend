@@ -191,3 +191,14 @@ it("translates close/cancel while retaining candidate data", () => {
     (screen.getByLabelText("Candidate’s full name") as HTMLInputElement).value,
   ).toBe("Giữ nguyên tên");
 });
+
+it("wraps Tab and Shift+Tab inside the form instead of leaving for browser chrome", () => {
+  setup();
+  const first = screen.getByRole("button", { name: "Đóng" });
+  const last = screen.getByRole("button", { name: "Thêm vào pipeline" });
+  last.focus();
+  fireEvent.keyDown(last, { key: "Tab" });
+  expect(document.activeElement).toBe(first);
+  fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+  expect(document.activeElement).toBe(last);
+});
