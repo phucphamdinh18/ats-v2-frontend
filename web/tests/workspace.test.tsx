@@ -81,6 +81,21 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
     return query;
   });
 }
+it("exposes Interview to a scoped Hiring Manager but never offers privileged Offer module", async () => {
+  scope(true, ["HIRING_MANAGER"], [{ id: "job1", title: "Test Job", status: "OPEN", job_code: "TEST-1" }]);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline Test Job" });
+  expect(screen.getAllByRole("button", { name: "Phỏng vấn" }).length).toBeGreaterThan(0);
+  expect(screen.queryByRole("button", { name: "Offers" })).toBeNull();
+});
+
+it("limits the Offers navigation to active Admin or TA roles", async () => {
+  scope(true, ["TA_RECRUITER"], [{ id: "job1", title: "TA Job", status: "OPEN", job_code: "TA-1" }]);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline TA Job" });
+  expect(screen.getAllByRole("button", { name: "Offers" }).length).toBeGreaterThan(0);
+});
+
 it("passes stage permission only when the TA membership matches the selected Job", async () => {
   scope(true, ["TA_RECRUITER"], [{ id: "job1", title: "Synthetic Engineer", status: "OPEN", job_code: "TEST-1" }], []);
   render(<Workspace />);
