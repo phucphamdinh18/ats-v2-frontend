@@ -9,6 +9,7 @@ import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
+import RecruitmentOperations from "./recruitment-operations";
 import AdminConsole from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
@@ -31,7 +32,7 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin">("jobs");
+  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin" | "interviews" | "offers">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -276,7 +277,8 @@ export default function Workspace() {
   }, []);
   useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
-  }, [tab, adminAllowed]);
+    if ((tab === "interviews" || tab === "offers") && !allowed) setTab("jobs");
+  }, [tab, adminAllowed, allowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
   const globalNavMatches = [
@@ -404,6 +406,8 @@ export default function Workspace() {
             <Icon name="jobs" />
             <span className="nav-label">{t.jobs}</span>
           </button>
+          {reviewAllowed && <button className={tab === "interviews" ? "nav active" : "nav"} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review" /><span className="nav-label">{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
+          {reviewAllowed && <button className={tab === "offers" ? "nav active" : "nav"} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs" /><span className="nav-label">Offers</span></button>
           {reviewAllowed && (
             <button
               className={tab === "talent" ? "nav active" : "nav"}
@@ -467,14 +471,16 @@ export default function Workspace() {
         <header className="topbar">
           <nav className="enterprise-top-nav" aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
             <button type="button" className={tab === "jobs" ? "active" : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>{locale === "en" ? "Jobs" : "Công việc"}</button>
-            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>Talent Pool</button>}
+            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
+            {reviewAllowed && <button type="button" className={tab === "interviews" ? "active" : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
+            {reviewAllowed && <button type="button" className={tab === "offers" ? "active" : ""} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}>Offers</button>}
             {reviewAllowed && <button type="button" className={tab === "jd" ? "active" : ""} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}>{locale === "en" ? "Job Reviews" : "Duyệt JD"}</button>}
             {adminAllowed && <button type="button" className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}>{locale === "en" ? "Administration" : "Quản trị"}</button>}
           </nav>
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
-            <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
+            <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? "Candidates" : tab === "interviews" ? "Interviews" : tab === "offers" ? "Offers" : tab === "jd" ? "JD" : "Quản trị & quyền"}</strong>
           </div>
           <div className="header-actions">
             <div className={`global-search ${globalSearchOpen ? "is-open" : ""}`}>
@@ -644,8 +650,8 @@ export default function Workspace() {
               <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? "Talent Pool" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
-                  <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp." : tab === "jd" ? "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp." : "Tạo Job và cấp quyền theo từng Job; backend kiểm tra lại trước khi lưu."}</p>
+                  <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? "Candidates" : tab === "interviews" ? "Interviews" : tab === "offers" ? "Offers" : tab === "jd" ? "JD tuyển dụng" : "Quản trị ATS"}</h1>
+                  <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? "Quản lý hồ sơ ứng viên đã duyệt trong phạm vi được phân quyền." : tab === "interviews" ? "Theo dõi ứng viên đang ở Interview theo Job và lịch sử tuyển dụng." : tab === "offers" ? "Theo dõi Offer PENDING / APPROVED theo Job được cấp quyền." : tab === "jd" ? "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp." : "Tạo Job và cấp quyền theo từng Job; backend kiểm tra lại trước khi lưu."}</p>
                 </div>
                 <div className="heading-actions">
                   {tab === "jobs" && (
@@ -679,6 +685,10 @@ export default function Workspace() {
               </div>
               {tab === "talent" && reviewAllowed ? (
                 <TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} />
+              ) : tab === "interviews" && reviewAllowed ? (
+                <RecruitmentOperations mode="interviews" jobs={access.jobs} onAccessLost={invalidate} />
+              ) : tab === "offers" && reviewAllowed ? (
+                <RecruitmentOperations mode="offers" jobs={access.jobs} onAccessLost={invalidate} />
               ) : tab === "jd" && reviewAllowed ? (
                 <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
               ) : tab === "admin" && adminAllowed ? (
