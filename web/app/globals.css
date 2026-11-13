@@ -2600,3 +2600,68 @@ th { padding: 11px 18px; }
   .shell .sidebar { top: 58px; }
   .shell main:not(.auth-screen) { padding: 14px 10px; }
 }
+
+
+/* Bosch Enterprise operational modules: read-only Interview/Offer views; Candidate database table */
+.shell .candidate-database-scroll { min-width: 0; width: 100%; overflow-x: auto; }
+.shell .candidate-database-table { width: 100%; border-collapse: collapse; min-width: 550px; font-size: 12px; background: #fff; }
+.shell .candidate-database-table th,
+.shell .candidate-database-table td { padding: 10px 12px; border-bottom: 1px solid #e5e8ec; text-align: left; vertical-align: middle; }
+.shell .candidate-database-table th { background: #f5f6f8; font-size: 11px; color: #344052; font-weight: 700; }
+.shell .candidate-database-table tr.selected,
+.shell .candidate-database-table tbody tr:hover { background: #fff2f3; }
+.shell .candidate-database-table td button { border: 0; padding: 0; background: none; color: #1558b0; font-size: 12px; font-weight: 600; text-align: left; }
+.shell .candidate-database-table td button:hover { text-decoration: underline; }
+.shell .talent-grid { grid-template-columns: minmax(0, 1fr) minmax(290px, 32%); gap: 12px; background: transparent; }
+.shell .talent-list,
+.shell .talent-profile { background: #fff; border: 1px solid #dbe0e6; border-radius: 4px; min-width: 0; }
+.shell .talent-profile { padding: 15px; }
+.shell .talent-profile-heading .talent-avatar { display: none; }
+.shell .talent-profile-heading h3 { font-size: 19px; font-weight: 700; }
+.shell .talent-profile .talent-facts { font-size: 12px; }
+.shell .talent-toolbar { border-color: #dbe0e6; }
+.shell .ops-workspace { margin-top: 12px; }
+.shell .ops-controls { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 14px; padding: 13px 15px; background: #fff; border: 1px solid #dbe0e6; border-radius: 4px; }
+.shell .ops-controls h2 { font-size: 18px; color: #182535; }
+.shell .ops-controls p { margin: 4px 0 0; color: #5c6979; font-size: 12px; }
+.shell .ops-job-selector { display: grid; gap: 5px; min-width: 245px; max-width: 44%; color: #415065; font-size: 11px; }
+.shell .ops-job-selector select { width: 100%; min-height: 34px; padding: 7px 10px; }
+.shell .ops-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 31%); gap: 12px; align-items: start; }
+.shell .ops-primary, .shell .ops-detail { min-width: 0; background: #fff; border: 1px solid #dbe0e6; border-radius: 4px; }
+.shell .ops-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid #dbe0e6; }
+.shell .ops-summary > div { padding: 13px 9px; text-align: center; border-right: 1px solid #dbe0e6; }
+.shell .ops-summary > div:last-child { border: 0; }
+.shell .ops-summary span { display: block; color: #465469; font-size: 11px; }
+.shell .ops-summary strong { display: block; margin-top: 4px; color: #172537; font-size: 19px; }
+.shell .ops-table-wrap { overflow-x: auto; }
+.shell .ops-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+.shell .ops-table th { padding: 10px; text-align: left; color: #344052; font-size: 11px; font-weight: 700; background: #f5f6f8; border-bottom: 1px solid #dbe0e6; }
+.shell .ops-table td { padding: 11px 10px; border-bottom: 1px solid #e5e8ec; }
+.shell .ops-table tr.selected, .shell .ops-table tbody tr:hover { background: #fff2f3; }
+.shell .ops-table td button { padding: 0; background: transparent; border: 0; color: #1558b0; text-align: left; font-weight: 600; }
+.shell .ops-table td button:hover { text-decoration: underline; }
+.shell .ops-status { display: inline-block; padding: 3px 7px; background: #f2f3f5; border-radius: 3px; }
+.shell .ops-detail { position: sticky; top: 75px; padding: 17px; }
+.shell .ops-detail h3 { font-size: 19px; margin: 0 0 16px; }
+.shell .ops-detail h4 { margin: 18px 0 9px; font-size: 13px; }
+.shell .ops-fields { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 11px 14px; font-size: 12px; overflow-wrap: anywhere; }
+.shell .ops-fields dt { color: #697584; }
+.shell .ops-fields dd { margin: 0; font-weight: 600; }
+.shell .ops-muted { font-size: 12px; }
+.shell .ops-events { padding: 0 0 0 20px; }
+.shell .ops-events li { margin: 12px 0; }
+.shell .ops-events strong, .shell .ops-events span, .shell .ops-events small { display: block; }
+.shell .ops-events small { color: #647084; font-size: 11px; }
+.shell .ops-pagination { display: flex; gap: 12px; align-items: center; justify-content: center; padding: 12px; font-size: 11px; flex-wrap: wrap; }
+.shell .ops-disclaimer { margin: 0; padding: 12px; background: #fafbfc; border-top: 1px solid #e5e8ec; font-size: 11px; color: #586579; }
+.shell .ops-empty { padding: 24px; color: #657184; }
+@media (max-width: 1100px) {
+  .shell .ops-content, .shell .talent-grid { grid-template-columns: minmax(0, 1fr); }
+  .shell .ops-detail { position: static; }
+}
+@media (max-width: 640px) {
+  .shell .ops-controls { align-items: stretch; flex-direction: column; }
+  .shell .ops-job-selector { max-width: 100%; min-width: 0; }
+  .shell .ops-summary span { font-size: 10px; }
+  .shell .ops-summary strong { font-size: 14px; }
+}
