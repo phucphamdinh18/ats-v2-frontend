@@ -127,12 +127,8 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
   expect(screen.queryByRole("button", { name: /Duyệt CV/ })).toBeNull();
-  expect(
-    screen.getByText(
-      "Hiển thị 1 / 1 vị trí đã tải · Dữ liệu theo quyền của bạn",
-    ),
-  ).toBeTruthy();
-  fireEvent.change(screen.getByRole("textbox", { name: "Tìm vị trí" }), {
+  expect(screen.getByText("1 of 1 Job openings")).toBeTruthy();
+  fireEvent.change(screen.getByRole("textbox", { name: "Tìm Job" }), {
     target: { value: "Unmatched" },
   });
   expect(screen.queryByText("Synthetic Engineer")).toBeNull();
@@ -284,6 +280,6 @@ it("quick start opens actual open-job filtering, without creating any records", 
   );
   expect(screen.getByRole("button", { name: "Chọn Job Open role" })).toBeTruthy();
   expect(screen.queryByText("Draft role")).toBeNull();
-  const openFilter = screen.getByRole("button", { name: "Đang tuyển (1)" });
-  expect(openFilter.getAttribute("aria-pressed")).toBe("true");
+  const openFilter = screen.getByRole("combobox", { name: "Trạng thái Job" });
+  expect((openFilter as HTMLSelectElement).value).toBe("OPEN");
 });
