@@ -174,7 +174,7 @@ describe("application pipeline", () => {
     renderPipeline();
     fireEvent.click(await screen.findByRole("button", { name: /Old/ }));
     fireEvent.click(screen.getByRole("button", { name: /New/ }));
-    await screen.findByText("New");
+    await waitFor(() => expect(screen.getByLabelText("Chi tiết ứng viên").textContent).toContain("New"));
     await act(async () => resolveOld(detail("Old")));
     expect(screen.queryByText("Old")).toBeTruthy(); // Old remains a card, but not detail content.
     expect(screen.getByLabelText("Chi tiết ứng viên").textContent).toContain("New");
