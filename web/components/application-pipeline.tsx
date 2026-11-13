@@ -131,7 +131,6 @@ export default function ApplicationPipeline({
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
-  const autoSelected = useRef(false);
   const load = useCallback(
     async (nextOffset = offset, nextQuery = query) => {
       const ticket = ++listTicket.current;
@@ -197,7 +196,6 @@ export default function ApplicationPipeline({
     // This prevents a previous Application from looking like a match for the new query.
     detailTicket.current += 1;
     selectedId.current = null;
-    autoSelected.current = false;
     setSelected(null);
     setDetail(null);
     setDetailError("");
@@ -311,11 +309,6 @@ export default function ApplicationPipeline({
     },
     [job.id, onSessionLost],
   );
-  useEffect(() => {
-    if (autoSelected.current || state !== "ready" || !visibleTableRows.length) return;
-    autoSelected.current = true;
-    void openDetail(visibleTableRows[0].application);
-  }, [state, visibleTableRows, openDetail]);
   async function moveApplication(
     application: Application,
     targetStage: TransitionStage,
