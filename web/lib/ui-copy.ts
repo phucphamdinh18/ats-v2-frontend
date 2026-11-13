@@ -461,11 +461,10 @@ export const uiCopy: Record<string, readonly [string, string]> = {
   "Lọc nguồn ứng viên": ["Lọc nguồn ứng viên", "Filter candidates by source"],
   "Tất cả nguồn": ["Tất cả nguồn", "All sources"],
   "hồ sơ đang hiển thị": ["hồ sơ đang hiển thị", "applications shown"],
-  "Ngày ứng tuyển": ["Ngày ứng tuyển", "Application date"],
-  "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.":
+  "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.":
     [
-      "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.",
-      "Candidates are shown in pages; source filters apply to the current page. Overview totals cover the full job. Stage time targets are for reference.",
+      "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.",
+      "The board is paginated; source filters apply to the current page. Overview totals cover the full job. Stage targets are for reference.",
     ],
   "Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.":
     [
@@ -530,6 +529,19 @@ export const uiCopy: Record<string, readonly [string, string]> = {
   Đóng: ["Đóng", "Close"],
   "Đang tải chi tiết…": ["Đang tải chi tiết…", "Loading details…"],
   "Ứng viên": ["Ứng viên", "Candidate"],
+  "Bảng ứng viên": ["Bảng ứng viên", "Candidate table"],
+  "Lọc theo giai đoạn": ["Lọc theo giai đoạn", "Filter by stage"],
+  "Cách hiển thị": ["Cách hiển thị", "View options"],
+  Bảng: ["Bảng", "Table"],
+  Kanban: ["Kanban", "Kanban"],
+  "Tất cả": ["Tất cả", "All"],
+  "Ngày ứng tuyển": ["Ngày ứng tuyển", "Applied"],
+  "Không có ứng viên trong giai đoạn này.": [
+    "Không có ứng viên trong giai đoạn này.",
+    "No candidates in this stage.",
+  ],
+  "Xem hồ sơ": ["Xem hồ sơ", "View profile"],
+  "Hồ sơ": ["Hồ sơ", "Profile"],
   "Giai đoạn": ["Giai đoạn", "Stage"],
   "Trạng thái": ["Trạng thái", "Status"],
   "Không có": ["Không có", "None recorded"],
@@ -601,11 +613,11 @@ export const uiCopy: Record<string, readonly [string, string]> = {
     ],
   "Mở CV chờ duyệt": ["Mở CV chờ duyệt", "Open CV review queue"],
   "Đang mở hồ sơ…": ["Đang mở hồ sơ…", "Opening profile…"],
+  Email: ["Email", "Email"],
+  "Điện thoại": ["Điện thoại", "Phone"],
   "Vị trí hiện tại": ["Vị trí hiện tại", "Current role"],
   "Vòng phỏng vấn": ["Vòng phỏng vấn", "Interview round"],
   "Matching": ["Matching", "Matching"],
-  Email: ["Email", "Email"],
-  "Điện thoại": ["Điện thoại", "Phone"],
   "Công ty hiện tại": ["Công ty hiện tại", "Current company"],
   "Kinh nghiệm": ["Kinh nghiệm", "Experience"],
   "{0} năm": ["{0} năm", "{0} years"],

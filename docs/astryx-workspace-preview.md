@@ -1,6 +1,6 @@
-# Archived Astryx design notes
+# Archived design history: Astryx workspace preview
 
-> Superseded on 2026-11-13 by the Bosch-inspired live frontend in `bosch-reference-preview.md`. The old standalone preview routes were removed. This document is retained as history, not as the current UI specification.
+> Superseded on 2026-11-13 by the Bosch-inspired live frontend described in `bosch-reference-preview.md`. The old standalone Astryx and Bosch mock routes have been removed. This file is retained as a record of the workflow and design decisions; it is not the current UI specification.
 
 The actual ATS workspace now uses the visual direction approved in the isolated Astryx Master and Pipeline demo. Shared colors, navigation, controls, tables, candidate cards and forms are scoped in web/app/workspace-theme.css. The independent mock route remains available for comparison.
 

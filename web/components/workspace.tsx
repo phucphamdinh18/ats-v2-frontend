@@ -20,7 +20,7 @@ import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import InterviewWorkspace from "./interview-workspace";
 import AdminConsole, { type JobAdminAction } from "./admin-console";
-import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
+import { format, friendlyError, jobStatusLabel } from "@/lib/i18n";
 type Access = {
   userId: string;
   email: string;
@@ -52,11 +52,20 @@ export default function Workspace() {
     if (jobAdminBusy) return;
     setTab("jobs");
     setJobView("manage");
+    setInitialPipelineFilter("ALL");
     setJobAdminAction((previous) => ({
       kind,
       jobId,
       requestId: (previous?.requestId || 0) + 1,
     }));
+  }
+  function openJobsView(
+    view: "master" | "pipeline" | "manage",
+    filter = "ALL",
+  ) {
+    setTab("jobs");
+    setJobView(view);
+    setInitialPipelineFilter(filter);
   }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -361,8 +370,8 @@ export default function Workspace() {
     .toLocaleLowerCase(locale);
   const globalNavMatches = [
     {
-      label: t.jobs,
-      description: tr("Job overview and hiring progress"),
+      label: locale === "en" ? "Job Openings" : "Vị trí tuyển dụng",
+      description: locale === "en" ? "Browse open and draft jobs" : "Xem các vị trí đang tuyển và bản nháp",
       destination: "jobs" as const,
     },
     ...(reviewAllowed
@@ -373,12 +382,32 @@ export default function Workspace() {
             destination: "talent" as const,
           },
           {
-            label: locale === "en" ? "Job descriptions" : tr("JD tuyển dụng"),
-            description: tr("Hàng chờ duyệt mô tả công việc"),
+            label: locale === "en" ? "Job Review" : "Duyệt Job & JD",
+            description: locale === "en" ? "Review job descriptions" : "Kiểm tra mô tả công việc",
             destination: "jd" as const,
+          },
+          {
+            label: locale === "en" ? "Manage Jobs" : "Quản lý Job",
+            description: locale === "en" ? "Create jobs and assign your team" : "Tạo Job và phân công đội ngũ",
+            destination: "manage" as const,
+          },
+          {
+            label: locale === "en" ? "Candidates" : "Ứng viên",
+            description: locale === "en" ? "Candidate database and talent pool" : "Cơ sở dữ liệu và nguồn ứng viên",
+            destination: "talent" as const,
+          },
+          {
+            label: locale === "en" ? "Interviews" : "Phỏng vấn",
+            description: locale === "en" ? "Schedule and interview feedback" : "Lịch phỏng vấn và đánh giá",
+            destination: "interviews" as const,
           },
         ]
       : []),
+    {
+      label: locale === "en" ? "Hiring Pipeline" : "Tiến độ tuyển dụng",
+      description: locale === "en" ? "Track candidates by hiring stage" : "Theo dõi ứng viên theo từng vòng tuyển dụng",
+      destination: "pipeline" as const,
+    },
   ].filter(
     (item) =>
       !normalizedGlobalQuery ||
@@ -560,13 +589,25 @@ export default function Workspace() {
         </a>
         <div className="workspace-label">{t.workspace}</div>
         <nav aria-label={t.navigation}>
+          <div className="sidebar-section-label">{locale === "en" ? "Recruitment" : "Tuyển dụng"}</div>
           <button
-            className={tab === "jobs" ? "nav active" : "nav"}
-            aria-current={tab === "jobs" ? "page" : undefined}
-            onClick={() => setTab("jobs")}
+            className={tab === "jobs" && jobView === "master" ? "nav active" : "nav"}
+            aria-current={tab === "jobs" && jobView === "master" ? "page" : undefined}
+            onClick={() => openJobsView("master")}
           >
             <Icon name="jobs" />
-            <span className="nav-label">{t.jobs}</span>
+            <span className="nav-label">{locale === "en" ? "Job Openings" : "Vị trí tuyển dụng"}</span>
+          </button>
+          <button
+            className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter !== "OFFER" ? "nav active" : "nav"}
+            aria-current={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter !== "OFFER" ? "page" : undefined}
+            onClick={() => {
+              if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]);
+              openJobsView("pipeline");
+            }}
+          >
+            <Icon name="review" />
+            <span className="nav-label">{locale === "en" ? "Hiring Pipeline" : "Tiến độ tuyển dụng"}</span>
           </button>
           {reviewAllowed && (
             <button
@@ -575,19 +616,7 @@ export default function Workspace() {
               onClick={() => setTab("talent")}
             >
               <Icon name="team" />
-              <span className="nav-label">{tr("Talent Pool")}</span>
-            </button>
-          )}
-          {reviewAllowed && (
-            <button
-              className={tab === "jd" ? "nav active" : "nav"}
-              aria-current={tab === "jd" ? "page" : undefined}
-              onClick={() => setTab("jd")}
-            >
-              <Icon name="review" />
-              <span className="nav-label">
-                {locale === "en" ? "Job descriptions" : tr("JD tuyển dụng")}
-              </span>
+              <span className="nav-label">{locale === "en" ? "Candidates" : "Ứng viên"}</span>
             </button>
           )}
           {allowed && (
@@ -600,6 +629,36 @@ export default function Workspace() {
               <span className="nav-label">
                 {locale === "en" ? "Interviews" : "Phỏng vấn"}
               </span>
+            </button>
+          )}
+          {access?.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER") && (
+            <button
+              className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "nav active" : "nav"}
+              aria-current={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "page" : undefined}
+              onClick={() => {
+                if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]);
+                openJobsView("pipeline", "OFFER");
+              }}
+            >
+              <Icon name="review" />
+              <span className="nav-label">{locale === "en" ? "Offers" : "Thư mời nhận việc"}</span>
+            </button>
+          )}
+          {adminAllowed && <div className="sidebar-section-label">{locale === "en" ? "Administration" : "Quản trị"}</div>}
+          {adminAllowed && (
+            <button className={tab === "jobs" && jobView === "manage" ? "nav active" : "nav"} aria-current={tab === "jobs" && jobView === "manage" ? "page" : undefined} onClick={() => openJobsView("manage")}>
+              <Icon name="shield" />
+              <span className="nav-label">{locale === "en" ? "Manage Jobs" : "Quản lý Job"}</span>
+            </button>
+          )}
+          {reviewAllowed && (
+            <button
+              className={tab === "jd" ? "nav active" : "nav"}
+              aria-current={tab === "jd" ? "page" : undefined}
+              onClick={() => setTab("jd")}
+            >
+              <Icon name="review" />
+              <span className="nav-label">{locale === "en" ? "Job Review" : "Duyệt Job & JD"}</span>
             </button>
           )}
         </nav>
@@ -645,13 +704,14 @@ export default function Workspace() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <a className="bosch-lockup" href={`${basePath}/`} aria-label="Bosch ATS V2"><img src={`${basePath}/bosch-ats-lockup.jpg`} alt="Bosch · ATS V2" /></a>
+          <a className="bosch-lockup" href={`${basePath}/`} aria-label="Bosch ATS V2">
+            <img src={`${basePath}/bosch-ats-lockup.jpg`} alt="Bosch · ATS V2" />
+          </a>
           <nav className="global-nav" aria-label={locale === "en" ? "Main navigation" : "Điều hướng chính"}>
-            <button type="button" aria-label={locale === "en" ? "Go to Home" : "Mở Trang chủ"} onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Home" : "Trang chủ"}</button>
-            <button type="button" aria-label={locale === "en" ? "Go to Jobs" : "Mở Việc làm"} className={tab === "jobs" && jobView !== "manage" && initialPipelineFilter === "ALL" ? "active" : ""} onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Jobs" : "Việc làm"}</button>
-            {reviewAllowed && <button type="button" aria-label={locale === "en" ? "Go to Candidates" : "Mở Ứng viên"} className={tab === "talent" ? "active" : ""} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
-            {allowed && <button type="button" aria-label={locale === "en" ? "Go to Interviews" : "Mở Phỏng vấn"} className={tab === "interviews" ? "active" : ""} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
-            {access?.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER") && <button type="button" aria-label={locale === "en" ? "Go to Offers" : "Mở Offer"} className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "active" : ""} onClick={() => { if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]); setTab("jobs"); setJobView("pipeline"); setInitialPipelineFilter("OFFER"); }}>{locale === "en" ? "Offers" : "Offer"}</button>}
+            <button type="button" className={tab === "jobs" && initialPipelineFilter !== "OFFER" ? "active" : ""} onClick={() => openJobsView("master")}>{locale === "en" ? "Jobs" : "Việc làm"}</button>
+            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
+            {allowed && <button type="button" className={tab === "interviews" ? "active" : ""} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
+            {access?.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER") && <button type="button" className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "active" : ""} onClick={() => { if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]); openJobsView("pipeline", "OFFER"); }}>{locale === "en" ? "Offers" : "Offer"}</button>}
           </nav>
           <div className="header-actions">
             <div
@@ -703,6 +763,7 @@ export default function Workspace() {
                           setSelectedJob(job);
                           setTab("jobs");
                           setJobView("pipeline");
+                          setInitialPipelineFilter("ALL");
                           setGlobalSearchOpen(false);
                           setGlobalSearchQuery("");
                         }}
@@ -727,7 +788,14 @@ export default function Workspace() {
                         role="option"
                         aria-selected="false"
                         onClick={() => {
-                          setTab(item.destination);
+                          if (item.destination === "pipeline") {
+                            if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]);
+                            openJobsView("pipeline");
+                          } else if (item.destination === "manage") {
+                            openJobsView("manage");
+                          } else {
+                            setTab(item.destination);
+                          }
                           setGlobalSearchOpen(false);
                           setGlobalSearchQuery("");
                         }}
@@ -806,7 +874,7 @@ export default function Workspace() {
             )}
           </div>
         </header>
-        <main id="main-content" className={tab === "jobs" && jobView === "pipeline" ? "is-job-pipeline" : ""}>
+        <main id="main-content" className={tab === "jobs" && jobView === "pipeline" ? `is-job-pipeline ${initialPipelineFilter === "OFFER" ? "is-offers-page" : ""}` : ""}>
           {error && (
             <div className="notice error" role="alert">
               <Icon name="help" />
@@ -925,7 +993,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <div className="page-heading">
+              <div className={`page-heading ${tab === "jobs" && jobView === "pipeline" ? "page-heading-pipeline" : ""}`}>
                 <div>
                   <span className="eyebrow">
                     {t.workspace}
@@ -936,21 +1004,37 @@ export default function Workspace() {
                   <h1>
                     {tab === "jobs"
                       ? jobView === "manage"
-                        ? tr("Quản lý Job")
+                        ? locale === "en" ? "Manage Jobs" : "Quản lý Job"
                         : jobView === "pipeline"
-                          ? selectedJob?.title || tr("Hiring Pipeline")
+                          ? initialPipelineFilter === "OFFER"
+                            ? locale === "en" ? "Offers" : "Offer"
+                                  : tr("Hiring Pipeline")
                           : t.jobs
                       : tab === "talent"
-                        ? tr("Talent Pool")
+                        ? locale === "en" ? "Candidates" : "Ứng viên"
                         : tab === "interviews"
-                          ? locale === "en"
-                            ? "Interviews"
-                            : "Phỏng vấn"
-                          : tr("JD tuyển dụng")}
+                          ? locale === "en" ? "Interviews" : "Phỏng vấn"
+                          : locale === "en" ? "Job Review" : "Duyệt Job & JD"}
                   </h1>
                   <p>
                     {tab === "jobs"
-                      ? t.jobsIntro
+                      ? jobView === "manage"
+                        ? locale === "en"
+                          ? "Create job openings, set requirements and assign your team."
+                          : "Tạo vị trí tuyển dụng, thiết lập yêu cầu và phân công đội ngũ."
+                        : jobView === "pipeline"
+                          ? initialPipelineFilter === "OFFER"
+                            ? locale === "en"
+                              ? "Track pending and approved offers for this Job."
+                              : "Theo dõi Offer đang chờ duyệt hoặc đã được duyệt theo Job."
+                            : selectedJob
+                              ? locale === "en"
+                                ? "Review candidates and move them through the hiring stages."
+                                : "Xem hồ sơ và theo dõi ứng viên qua từng vòng tuyển dụng."
+                              : locale === "en"
+                                ? "Choose a Job to see its hiring progress."
+                                : "Chọn Job để xem tiến độ tuyển dụng."
+                          : t.jobsIntro
                       : tab === "talent"
                         ? tr(
                             "Quản lý hồ sơ ứng viên đã được duyệt và đưa ứng viên vào Job phù hợp.",
@@ -960,12 +1044,10 @@ export default function Workspace() {
                             ? "Your interview schedule, feedback and decisions."
                             : "Lịch phỏng vấn, feedback và các quyết định cần xử lý."
                           : tab === "jd"
-                            ? tr(
-                                "Kiểm tra, duyệt và theo dõi mô tả công việc trước khi tạo Job nháp.",
-                              )
-                            : tr(
-                                "Quản lý vị trí tuyển dụng và phân công đội ngũ của bạn.",
-                              )}
+                            ? locale === "en"
+                              ? "Review job descriptions before creating a job opening."
+                              : "Kiểm tra và duyệt mô tả công việc trước khi tạo vị trí tuyển dụng."
+                            : tr("Quản lý vị trí tuyển dụng và phân công đội ngũ của bạn.")}
                   </p>
                 </div>
                 <div className="heading-actions">
@@ -985,89 +1067,6 @@ export default function Workspace() {
                     <Icon name="refresh" size={17} />
                     {t.refreshAccess}
                   </button>
-                </div>
-              </div>
-              <div className="role-line">
-                {access.roles.map((role) => (
-                  <span className="role" key={role}>
-                    {roleLabel(role, t)}
-                  </span>
-                ))}
-              </div>
-              <div className="job-view-tabs-shell" hidden={tab !== "jobs"}>
-                <div
-                  className="job-view-tabs"
-                  role="tablist"
-                  aria-label={tr("Chế độ xem Job")}
-                  onKeyDown={(event) => {
-                    if (
-                      !["ArrowRight", "ArrowLeft", "Home", "End"].includes(
-                        event.key,
-                      )
-                    )
-                      return;
-                    const tabs = Array.from(
-                      event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                        '[role="tab"]',
-                      ),
-                    );
-                    const current = tabs.indexOf(
-                      event.target as HTMLButtonElement,
-                    );
-                    if (current < 0) return;
-                    event.preventDefault();
-                    const index =
-                      event.key === "Home"
-                        ? 0
-                        : event.key === "End"
-                          ? tabs.length - 1
-                          : (current +
-                              (event.key === "ArrowRight" ? 1 : -1) +
-                              tabs.length) %
-                            tabs.length;
-                    tabs[index].focus();
-                    tabs[index].click();
-                  }}
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={jobView === "master"}
-                    tabIndex={jobView === "master" ? 0 : -1}
-                    className={jobView === "master" ? "active" : ""}
-                    onClick={() => setJobView("master")}
-                  >
-                    <Icon name="jobs" size={16} />
-                    {tr("1.1 Bảng Master")}
-                    <span>
-                      {access.jobs.length} {tr("Job")}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={jobView === "pipeline"}
-                    tabIndex={jobView === "pipeline" ? 0 : -1}
-                    className={jobView === "pipeline" ? "active" : ""}
-                    onClick={() => setJobView("pipeline")}
-                  >
-                    <Icon name="review" size={16} />
-                    {tr("1.2 Hiring Pipeline")}
-                    <span>{selectedJob?.job_code || tr("Chọn Job")}</span>
-                  </button>
-                  {adminAllowed && (
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={jobView === "manage"}
-                      tabIndex={jobView === "manage" ? 0 : -1}
-                      className={jobView === "manage" ? "active" : ""}
-                      onClick={() => setJobView("manage")}
-                    >
-                      <Icon name="shield" size={16} />
-                      {tr("1.3 Quản lý Job")}
-                    </button>
-                  )}
                 </div>
               </div>
               {adminAllowed && (
@@ -1538,6 +1537,7 @@ export default function Workspace() {
                                         onClick={() => {
                                           setSelectedJob(job);
                                           setJobView("pipeline");
+                                          setInitialPipelineFilter("ALL");
                                         }}
                                       >
                                         {tr("Pipeline")}
@@ -1589,10 +1589,10 @@ export default function Workspace() {
                           {jobStatusLabel(selectedJob.status, t)}
                         </span>
                       </div>
-                      <ApplicationPipeline
+                  <ApplicationPipeline
                         key={`${selectedJob.id}:${initialPipelineFilter}`}
-                        initialStageFilter={initialPipelineFilter}
                         job={selectedJob}
+                        initialStageFilter={initialPipelineFilter}
                         onSessionLost={invalidate}
                         onDataChanged={refreshJobMetrics}
                         canViewOffers={access.roles.some(

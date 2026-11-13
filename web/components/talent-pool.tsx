@@ -232,27 +232,14 @@ export default function TalentPool({
       </section>
     );
   return (
-    <section className="panel talent-page" aria-label="Talent Pool">
-      <div className="talent-heading">
-        <div>
-          <span className="eyebrow">{tr("Talent Pool")}</span>
-          <h2>{tr("Kho ứng viên")}</h2>
-          <p>
-            {tr(
-              "CV được duyệt sẽ xuất hiện ở đây. Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.",
-            )}
-          </p>
-        </div>
-        <button className="primary" onClick={() => setView("cv-review")}>
-          {tr("CV chờ duyệt")}
-        </button>
-      </div>
+    <section className="panel talent-page" aria-label="Candidates">
       <div className="talent-toolbar">
+        <h2>{tr("Ứng viên")} ({candidates.length})</h2>
         <label className="search">
           <span aria-hidden="true">⌕</span>
           <input
-            aria-label={tr("Tìm trong Talent Pool")}
-            placeholder={tr("Tìm tên, kỹ năng, công ty…")}
+            aria-label={tr("Tìm ứng viên")}
+            placeholder={tr("Tìm tên, chức danh, công ty…")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -262,6 +249,9 @@ export default function TalentPool({
             ? tr("Đang tải hồ sơ…")
             : tr("{0} hồ sơ trên trang", [candidates.length])}
         </span>
+        <button className="secondary" onClick={() => setView("cv-review")}>
+          {tr("CV cần duyệt")}
+        </button>
       </div>
       {error && (
         <div className="notice error" role="alert">
@@ -276,35 +266,53 @@ export default function TalentPool({
           {loading ? (
             <p className="talent-empty">{tr("Đang tải ứng viên…")}</p>
           ) : candidates.length ? (
-            candidates.map((candidate) => (
-              <button
-                key={candidate.id}
-                className={`talent-item ${selectedId === candidate.id ? "selected" : ""}`}
-                aria-pressed={selectedId === candidate.id}
-                onClick={() => setSelectedId(candidate.id)}
-              >
-                <span className="talent-avatar" aria-hidden="true">
-                  {candidate.full_name.trim().charAt(0).toUpperCase()}
-                </span>
-                <span className="talent-item-copy">
-                  <strong>{candidate.full_name}</strong>
-                  <small>
-                    {candidate.current_title ||
-                      candidate.primary_role ||
-                      tr("Chưa có chức danh")}
-                  </small>
-                  <small>
-                    {[candidate.current_company, candidate.location]
-                      .filter(Boolean)
-                      .join(" · ") ||
-                      tr("Chưa có thông tin công ty / địa điểm")}
-                  </small>
-                </span>
-                <span className="talent-chevron" aria-hidden="true">
-                  ›
-                </span>
-              </button>
-            ))
+            <div className="table-scroll talent-table-scroll">
+              <table className="talent-table">
+                <thead>
+                  <tr>
+                    <th>{tr("Ứng viên")}</th>
+                    <th>{tr("Vị trí hiện tại")}</th>
+                    <th>{tr("Kinh nghiệm")}</th>
+                    <th>{tr("Địa điểm")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates.map((candidate) => (
+                    <tr
+                      key={candidate.id}
+                      className={selectedId === candidate.id ? "selected" : ""}
+                      aria-selected={selectedId === candidate.id}
+                    >
+                      <td>
+                        <button
+                          type="button"
+                          className="talent-candidate-link"
+                          aria-pressed={selectedId === candidate.id}
+                          onClick={() => setSelectedId(candidate.id)}
+                        >
+                          <span className="talent-avatar" aria-hidden="true">
+                            {candidate.full_name.trim().charAt(0).toUpperCase()}
+                          </span>
+                          <strong>{candidate.full_name}</strong>
+                        </button>
+                      </td>
+                      <td>
+                        <strong>
+                          {candidate.current_title || candidate.primary_role || "—"}
+                        </strong>
+                        <small>{candidate.current_company || "—"}</small>
+                      </td>
+                      <td>
+                        {candidate.total_experience_years == null
+                          ? "—"
+                          : tr("{0} năm", [candidate.total_experience_years])}
+                      </td>
+                      <td>{candidate.location || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : !error ? (
             <div className="talent-empty">
               <h3>{tr("Talent Pool chưa có hồ sơ")}</h3>

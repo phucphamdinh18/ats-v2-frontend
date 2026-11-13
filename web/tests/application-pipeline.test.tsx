@@ -82,29 +82,14 @@ const detail = (id: string, stage = "NEW") => ({
   limit: 50,
   offset: 0,
 });
-async function renderPipeline(
-  canManageApplications = true,
-  view: "board" | "table" = "board",
-): Promise<ReturnType<typeof render>> {
-  const result = render(
+function renderPipeline(canManageApplications = true) {
+  return render(
     <ApplicationPipeline
       job={job}
       onSessionLost={vi.fn()}
       canManageApplications={canManageApplications}
     />,
   );
-  if (view === "board") {
-    await waitFor(() => {
-      if (
-        !screen.queryByRole("button", { name: "Kanban" }) &&
-        !screen.queryByRole("alert")
-      )
-        throw new Error("Pipeline has not finished loading");
-    });
-    const boardButton = screen.queryByRole("button", { name: "Kanban" });
-    if (boardButton) fireEvent.click(boardButton);
-  }
-  return result;
 }
 
 beforeEach(() => {
@@ -122,24 +107,9 @@ afterEach(() => {
 });
 
 describe("application pipeline", () => {
-  it("opens with the compact candidate table and stage summary", async () => {
-    api.list.mockResolvedValue({
-      applications: [application("Ada")],
-      limit: 25,
-      offset: 0,
-    });
-    await renderPipeline(true, "table");
-    expect(await screen.findByRole("table")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Bảng" }).getAttribute("aria-pressed")).toBe("true");
-    expect(
-      screen.getAllByRole("button", { name: /Phỏng vấn/ }).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("Ada").length).toBeGreaterThan(0);
-  });
-
   it("shows explicit forbidden state rather than an empty list", async () => {
     api.list.mockRejectedValue(new ApiError("Không có quyền", 403));
-    await renderPipeline();
+    renderPipeline();
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Không có quyền",
     );
@@ -147,7 +117,7 @@ describe("application pipeline", () => {
   });
   it("keeps the board visible when the Job has no Applications", async () => {
     api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
-    await renderPipeline();
+    renderPipeline();
     await screen.findByText("Chưa có ứng viên");
     expect(
       screen.getByRole("region", { name: "Giai đoạn Mới ứng tuyển" }),
@@ -163,7 +133,7 @@ describe("application pipeline", () => {
       limit: 25,
       offset: 0,
     });
-    await renderPipeline();
+    renderPipeline();
     await screen.findByRole("region", { name: "Giai đoạn Mới ứng tuyển" });
     expect(
       screen.getByRole("region", { name: "Giai đoạn Sơ loại" }).textContent,
@@ -186,7 +156,7 @@ describe("application pipeline", () => {
       offset: 0,
     });
     api.detail.mockResolvedValue(detail("Ada", "SCREEN"));
-    await renderPipeline(false);
+    renderPipeline(false);
     const card = await screen.findByRole("button", { name: /Ada/ });
     expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
     expect(card.getAttribute("draggable")).toBe("false");
@@ -212,7 +182,7 @@ describe("application pipeline", () => {
     api.screen.mockResolvedValue({
       application: { application_id: "Ada", changed: true },
     });
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", { name: /Ada/ });
     const target = screen.getByRole("region", { name: "Giai đoạn Sơ loại" });
     fireEvent.dragStart(card);
@@ -236,7 +206,7 @@ describe("application pipeline", () => {
     api.back.mockResolvedValue({
       application: { application_id: "Ada", changed: true },
     });
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", { name: /Ada/ });
     const target = screen.getByRole("region", { name: "Giai đoạn Sơ loại" });
     fireEvent.dragStart(card);
@@ -261,7 +231,7 @@ describe("application pipeline", () => {
     api.back.mockResolvedValue({
       application: { application_id: "Ada", changed: true },
     });
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", { name: /Ada/ });
     const target = screen.getByRole("region", {
       name: "Giai đoạn Mới ứng tuyển",
@@ -287,7 +257,7 @@ describe("application pipeline", () => {
     });
     api.detail.mockResolvedValue(detail("Ada"));
     api.screen.mockRejectedValue(new ApiError("Không có quyền", 403));
-    await renderPipeline();
+    renderPipeline();
 
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     await screen.findByText("Lịch sử");
@@ -320,7 +290,7 @@ describe("application pipeline", () => {
     api.interview.mockResolvedValue({
       application: { application_id: "Ada", changed: true },
     });
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", { name: /Ada/ });
     const target = screen.getByRole("region", { name: "Giai đoạn Phỏng vấn" });
     fireEvent.dragStart(card);
@@ -348,16 +318,12 @@ describe("application pipeline", () => {
           })
         : Promise.resolve(detail("New")),
     );
-    await renderPipeline();
+    renderPipeline();
     fireEvent.click(await screen.findByRole("button", { name: /Old/ }));
     fireEvent.click(screen.getByRole("button", { name: /New/ }));
-    await waitFor(() =>
-      expect(
-        screen.getByLabelText("Chi tiết ứng viên").textContent,
-      ).toContain("New"),
-    );
+    await screen.findByText("New");
     await act(async () => resolveOld(detail("Old")));
-    expect(screen.getAllByText("Old").length).toBeGreaterThan(0); // Old remains a card, but not detail content.
+    expect(screen.queryByText("Old")).toBeTruthy(); // Old remains a card, but not detail content.
     expect(screen.getByLabelText("Chi tiết ứng viên").textContent).toContain(
       "New",
     );
@@ -373,7 +339,7 @@ describe("application pipeline", () => {
     });
     api.detail.mockResolvedValue(detail("Ada"));
     api.search.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
-    await renderPipeline();
+    renderPipeline();
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     await screen.findByText("Lịch sử");
 
@@ -409,7 +375,7 @@ describe("application pipeline", () => {
       ],
       matching_context: null,
     });
-    await renderPipeline();
+    renderPipeline();
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     expect(
       (await screen.findByLabelText("Chi tiết ứng viên")).textContent,
@@ -426,7 +392,7 @@ describe("application pipeline", () => {
     api.screen
       .mockRejectedValueOnce(new Error("Mạng lỗi"))
       .mockResolvedValue({ application: application("Ada") });
-    await renderPipeline();
+    renderPipeline();
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Chuyển sang Sơ loại" }),
@@ -449,7 +415,7 @@ describe("application pipeline", () => {
 describe("Kanban drag and drop", () => {
   it("shows an empty SCREEN column for a Job with no applications", async () => {
     api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
-    await renderPipeline();
+    renderPipeline();
     await screen.findByText("Chưa có ứng viên");
     expect(
       screen.getByRole("region", { name: "Giai đoạn Sơ loại" }),
@@ -471,7 +437,7 @@ describe("Kanban drag and drop", () => {
     api.screen.mockResolvedValue({
       application: { application_id: "Ada", changed: true },
     });
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", {
       name: /Mở hồ sơ của Ada/,
     });
@@ -507,7 +473,7 @@ describe("Kanban drag and drop", () => {
       offset: 0,
     });
     confirmMock.mockReturnValue(false);
-    await renderPipeline();
+    renderPipeline();
     const card = await screen.findByRole("button", {
       name: /Mở hồ sơ của Ada/,
     });
@@ -536,7 +502,7 @@ describe("Kanban failure feedback", () => {
       api.screen.mockRejectedValueOnce(failure).mockResolvedValueOnce({
         application: { application_id: "Ada", changed: true },
       });
-      await renderPipeline();
+      renderPipeline();
       const card = await screen.findByRole("button", {
         name: /Mở hồ sơ của Ada/,
       });
@@ -569,7 +535,7 @@ describe("Kanban failure feedback", () => {
       .mockResolvedValueOnce({
         application: { application_id: "Ada", changed: true },
       });
-    await renderPipeline();
+    renderPipeline();
     fireEvent.click(
       await screen.findByRole("button", { name: /Mở hồ sơ của Other/ }),
     );
@@ -603,7 +569,7 @@ describe("Kanban failure feedback", () => {
       offset: 0,
     });
     api.screen.mockRejectedValue(new ApiError("Denied", 403));
-    await renderPipeline();
+    renderPipeline();
     fireEvent.dragStart(
       await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
     );
@@ -628,7 +594,7 @@ it("hides a prior board error when detail access is revoked", async () => {
   });
   api.screen.mockRejectedValue(new Error("Network failed"));
   api.detail.mockRejectedValue(new ApiError("Denied", 403));
-  await renderPipeline();
+  renderPipeline();
   fireEvent.dragStart(
     await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
   );
@@ -680,7 +646,6 @@ it("switches the live pipeline and open detail between Vietnamese and English wi
       />
     </LanguageProvider>,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Kanban" }));
   fireEvent.click(
     await screen.findByRole("button", { name: /Mở hồ sơ của Nguyễn An/ }),
   );
@@ -735,7 +700,6 @@ it("filters the current page by source without changing full-job overview totals
       onSessionLost={vi.fn()}
     />,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Kanban" }));
   await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ });
   fireEvent.change(
     screen.getByRole("combobox", { name: "Lọc nguồn ứng viên" }),
@@ -744,10 +708,7 @@ it("filters the current page by source without changing full-job overview totals
   expect(screen.queryByRole("button", { name: /Mở hồ sơ của Lin/ })).toBeNull();
   expect(
     screen.getByRole("region", { name: "Tổng quan Job đang chọn" }).textContent,
-  ).toContain("40");
-  expect(
-    screen.getByRole("region", { name: "Tổng quan Job đang chọn" }).textContent,
-  ).toContain("2");
+  ).toContain("42");
 });
 
 it("opens candidate entry as a dismissible dialog from the Pipeline button", async () => {
@@ -765,7 +726,7 @@ it("opens candidate entry as a dismissible dialog from the Pipeline button", asy
   });
   try {
     api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
-    await renderPipeline();
+    renderPipeline();
     const trigger = await screen.findByRole("button", {
       name: "Thêm ứng viên",
     });
@@ -796,7 +757,7 @@ it("keeps compact cards free of duplicate source and current-stage labels", asyn
     limit: 25,
     offset: 0,
   });
-  await renderPipeline();
+  renderPipeline();
   const card = await screen.findByRole("button", {
     name: /Mở hồ sơ của Long candidate/,
   });
@@ -832,7 +793,6 @@ it("refreshes totals after a successful move and retries only the read when tota
       onDataChanged={refresh}
     />,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Kanban" }));
   fireEvent.click(
     await screen.findByRole("button", { name: /Mở hồ sơ của Ada/ }),
   );

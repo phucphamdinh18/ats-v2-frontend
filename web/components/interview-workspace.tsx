@@ -203,21 +203,37 @@ export default function InterviewWorkspace({
       dateStyle: "medium",
       timeStyle: "short",
     });
+  const statusText = (value: string) =>
+    value === "COMPLETED"
+      ? say("Hoàn tất", "Completed")
+      : value === "CANCELLED"
+        ? say("Đã hủy", "Cancelled")
+        : say("Đã lên lịch", "Scheduled");
   return (
     <section
       className="interview-workspace"
       aria-label={say("Lịch phỏng vấn", "Interviews")}
     >
-      <div className="panel-heading">
-        <div>
-          <h2>{say("Lịch phỏng vấn", "Interviews")}</h2>
-          <p>
-            {say(
-              "Lịch bạn được xem và những việc cần xử lý. Giờ hiển thị theo thiết bị của bạn.",
-              "Interviews you can access and the actions available to you. Times use your device timezone.",
-            )}
-          </p>
-        </div>
+      <div className="interview-toolbar">
+        <h2>{say("Lịch phỏng vấn", "Interview Schedule")} ({items.length})</h2>
+        <label>
+          {say("Trạng thái", "Status")}
+          <select
+            aria-label={say("Trạng thái lịch", "Interview status")}
+            disabled={busy || pending}
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setOffset(0);
+              setSelected(null);
+              setNotice("");
+            }}
+          >
+            <option value="SCHEDULED">{say("Đã lên lịch", "Scheduled")}</option>
+            <option value="COMPLETED">{say("Đã hoàn tất", "Completed")}</option>
+            <option value="CANCELLED">{say("Đã hủy", "Cancelled")}</option>
+          </select>
+        </label>
         <button
           className="secondary"
           disabled={locked}
@@ -226,24 +242,6 @@ export default function InterviewWorkspace({
           {say("Tải lại lịch", "Refresh interviews")}
         </button>
       </div>
-      <label>
-        {say("Trạng thái lịch", "Interview status")}
-        <select
-          aria-label={say("Trạng thái lịch", "Interview status")}
-          disabled={busy || pending}
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setOffset(0);
-            setSelected(null);
-            setNotice("");
-          }}
-        >
-          <option value="SCHEDULED">{say("Đã đặt lịch", "Scheduled")}</option>
-          <option value="COMPLETED">{say("Đã hoàn tất", "Completed")}</option>
-          <option value="CANCELLED">{say("Đã hủy", "Cancelled")}</option>
-        </select>
-      </label>
       {error && <p role="alert">{errorLabel(error)}</p>}
       {notice && (
         <p role="status">
@@ -274,29 +272,51 @@ export default function InterviewWorkspace({
       ) : (
         <div className="interview-columns">
           <div className="interview-list">
-            {items.length === 0 && (
-              <p>
-                {say(
-                  "Chưa có lịch ở trạng thái này.",
-                  "No interviews with this status.",
-                )}
-              </p>
-            )}
-            {items.map((i) => (
-              <button
-                key={i.id}
-                className={`secondary interview-item ${row?.id === i.id ? "selected" : ""}`}
-                disabled={busy || pending}
-                aria-pressed={row?.id === i.id}
-                onClick={() => choose(i)}
-              >
-                <strong>{i.candidate_name}</strong>
-                <span>{i.job_title}</span>
-                <span>
-                  {round(i.interview_type)} · {time(i.starts_at)}
-                </span>
-              </button>
-            ))}
+            <div className="table-scroll interview-table-scroll">
+              <table className="interview-table">
+                <thead>
+                  <tr>
+                    <th>{say("Ứng viên", "Candidate")}</th>
+                    <th>{say("Vị trí tuyển dụng", "Job Opening")}</th>
+                    <th>{say("Vòng", "Round")}</th>
+                    <th>{say("Ngày & giờ", "Date & Time")}</th>
+                    <th>{say("Người phỏng vấn", "Interviewers")}</th>
+                    <th>{say("Trạng thái", "Status")}</th>
+                    <th>{say("Đánh giá", "Feedback")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((i) => (
+                    <tr
+                      key={i.id}
+                      className={row?.id === i.id ? "selected" : ""}
+                      aria-selected={row?.id === i.id}
+                    >
+                      <td>
+                        <button
+                          type="button"
+                          className="interview-candidate-link"
+                          aria-pressed={row?.id === i.id}
+                          disabled={busy || pending}
+                          onClick={() => choose(i)}
+                        >
+                          {i.candidate_name}
+                        </button>
+                      </td>
+                      <td>{i.job_title}</td>
+                      <td>{round(i.interview_type)}</td>
+                      <td>{time(i.starts_at)}</td>
+                      <td>{i.participants.map((p) => p.display_name).join(", ") || "—"}</td>
+                      <td><span className={`interview-status status-${i.status.toLowerCase()}`}>{statusText(i.status)}</span></td>
+                      <td>{i.feedback_count ? `${say("Đã gửi", "Submitted")} · ${i.feedback_count}` : i.status === "COMPLETED" ? say("Đang chờ", "Pending") : "—"}</td>
+                    </tr>
+                  ))}
+                  {!items.length && (
+                    <tr><td className="interview-empty" colSpan={7}>{say("Chưa có lịch ở trạng thái này.", "No interviews with this status.")}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
             <div className="panel-heading">
               <button
                 className="secondary"

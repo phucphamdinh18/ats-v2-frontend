@@ -131,6 +131,7 @@ export default function ApplicationPipeline({
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
+  const autoSelected = useRef(false);
   const load = useCallback(
     async (nextOffset = offset, nextQuery = query) => {
       const ticket = ++listTicket.current;
@@ -259,6 +260,9 @@ export default function ApplicationPipeline({
   const visibleTableRows = tableRows.filter(
     ({ stage }) => stageFilter === "ALL" || stage === stageFilter,
   );
+  useEffect(() => {
+    autoSelected.current = false;
+  }, [job.id, query]);
   const openDetail = useCallback(
     async (application: Application) => {
       const ticket = ++detailTicket.current;
@@ -309,6 +313,12 @@ export default function ApplicationPipeline({
     },
     [job.id, onSessionLost],
   );
+  useEffect(() => {
+    if (selected || candidateOpen || state !== "ready" || autoSelected.current) return;
+    const firstApplication = visibleTableRows[0]?.application;
+    autoSelected.current = true;
+    if (firstApplication) void openDetail(firstApplication);
+  }, [candidateOpen, openDetail, selected, state, visibleTableRows]);
   async function moveApplication(
     application: Application,
     targetStage: TransitionStage,
@@ -434,20 +444,37 @@ export default function ApplicationPipeline({
       <div
         className="pipeline-summary pipeline-stage-summary"
         role="region"
-        aria-label={tr("Tổng quan Job đang chọn")}
+        aria-label={initialStageFilter === "OFFER" ? tr("Tổng quan Offer") : tr("Tổng quan Job đang chọn")}
       >
-        {[
-          { key: "NEW", label: tr("Mới ứng tuyển"), value: job.metrics?.new_count },
-          { key: "SCREEN", label: tr("Sơ loại"), value: job.metrics?.screening_count },
-          { key: "INTERVIEW", label: tr("Phỏng vấn"), value: job.metrics?.interview_count },
-          { key: "OFFER", label: tr("Offer"), value: offerItems.length },
-          { key: "HIRED", label: tr("Đã tuyển"), value: job.metrics?.hired_count },
-        ].map((stage) => (
-          <button key={stage.key} type="button" aria-pressed={stageFilter === stage.key} className={stageFilter === stage.key ? "active" : ""} onClick={() => { setPipelineView("table"); setStageFilter(stageFilter === stage.key ? "ALL" : stage.key); }}>
-            <small>{stage.label}</small>
-            <strong>{metricsStatus === "idle" ? (stage.value ?? "—") : "—"}</strong>
-          </button>
-        ))}
+        {initialStageFilter === "OFFER" ? (
+          <>
+            <div className="offer-summary-item">
+              <small>{tr("Tổng Offer")}</small>
+              <strong>{offerItems.length}</strong>
+            </div>
+            <div className="offer-summary-item">
+              <small>{tr("Chờ duyệt")}</small>
+              <strong>{offerItems.filter((item) => item.offer_status === "PENDING").length}</strong>
+            </div>
+            <div className="offer-summary-item approved">
+              <small>{tr("Đã duyệt")}</small>
+              <strong>{offerItems.filter((item) => item.offer_status === "APPROVED").length}</strong>
+            </div>
+          </>
+        ) : (
+          [
+            { key: "NEW", label: tr("Mới ứng tuyển"), value: job.metrics?.new_count },
+            { key: "SCREEN", label: tr("Sơ loại"), value: job.metrics?.screening_count },
+            { key: "INTERVIEW", label: tr("Phỏng vấn"), value: job.metrics?.interview_count },
+            { key: "OFFER", label: tr("Offer"), value: offerItems.length },
+            { key: "HIRED", label: tr("Đã tuyển"), value: job.metrics?.hired_count },
+          ].map((stage) => (
+            <button key={stage.key} type="button" aria-pressed={stageFilter === stage.key} className={stageFilter === stage.key ? "active" : ""} onClick={() => { setPipelineView("table"); setStageFilter(stageFilter === stage.key ? "ALL" : stage.key); }}>
+              <small>{stage.label}</small>
+              <strong>{metricsStatus === "idle" ? (stage.value ?? "—") : "—"}</strong>
+            </button>
+          ))
+        )}
       </div>
       {metricsStatus === "loading" && (
         <p role="status">{tr("Đang cập nhật số liệu…")}</p>
@@ -501,7 +528,7 @@ export default function ApplicationPipeline({
             ))}
           </select>
         </label>
-        {canManageApplications &&
+        {initialStageFilter !== "OFFER" && canManageApplications &&
           (state === "ready" || state === "empty" || state === "error") && (
             <button
               className="primary add-candidate-button"
@@ -525,7 +552,7 @@ export default function ApplicationPipeline({
       </div>
       <p className="pipeline-scope-note">
         {tr(
-          "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.",
+          "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.",
         )}
       </p>
       {!canManageApplications && (
@@ -593,6 +620,7 @@ export default function ApplicationPipeline({
         <>
         <section className="pipeline-table-view" hidden={pipelineView !== "table"} aria-label={tr("Bảng ứng viên")}>
           <div className="pipeline-table-toolbar">
+            <h2 className="pipeline-candidates-heading">{initialStageFilter === "OFFER" ? tr("Offers") : tr("Ứng viên")} ({tableRows.length})</h2>
             <div className="pipeline-stage-filters" role="group" aria-label={tr("Lọc theo giai đoạn")}>
               {[{ key: "ALL", label: tr("Tất cả"), count: tableRows.length }, ...stages.map(([key, applications]) => ({ key, label: tr(STAGE_LABEL[key] || key), count: applications.length }))].map((item) => (
                 <button key={item.key} type="button" className={stageFilter === item.key ? "active" : ""} aria-pressed={stageFilter === item.key} onClick={() => setStageFilter(item.key)}>
@@ -600,27 +628,18 @@ export default function ApplicationPipeline({
                 </button>
               ))}
             </div>
-            <div className="pipeline-view-switch" role="group" aria-label={tr("Cách hiển thị")}>
+            {initialStageFilter !== "OFFER" && <div className="pipeline-view-switch" role="group" aria-label={tr("Cách hiển thị")}>
               <button type="button" className={pipelineView === "table" ? "active" : ""} aria-pressed={pipelineView === "table"} onClick={() => setPipelineView("table")}>{tr("Bảng")}</button>
               <button type="button" className={pipelineView === "board" ? "active" : ""} aria-pressed={pipelineView === "board"} onClick={() => setPipelineView("board")}>{tr("Kanban")}</button>
-            </div>
+            </div>}
           </div>
           <div className="application-table-scroll">
             <table className="application-table">
-              <colgroup>
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "14%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "10%" }} />
-                <col style={{ width: "17%" }} />
-                <col style={{ width: "12%" }} />
-              </colgroup>
               <thead><tr><th>{tr("Ứng viên")}</th><th>{tr("Giai đoạn")}</th><th>{tr("Vòng phỏng vấn")}</th><th>{tr("Matching")}</th><th>{tr("Kinh nghiệm")}</th><th>{tr("Nguồn")}</th><th>{tr("Ngày ứng tuyển")}</th></tr></thead>
               <tbody>{visibleTableRows.map(({ stage, application }) => (
                 <tr key={application.application_id} className={selected?.application_id === application.application_id ? "selected" : ""} aria-selected={selected?.application_id === application.application_id}>
                   <td><button type="button" className="application-table-candidate" onClick={() => void openDetail(application)}><span className="application-avatar" aria-hidden="true">{application.candidate_name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase() || "UV"}</span><strong>{application.candidate_name}</strong></button></td>
-                  <td><span className={`application-stage-pill stage-${stage.toLocaleLowerCase()}`}>{tr(STAGE_LABEL[stage] || stage)}</span></td>
+                  <td><span className={`application-stage-pill stage-${stage.toLocaleLowerCase()}`}>{stage === "OFFER" ? (() => { const offer = offerItems.find((item) => item.application_id === application.application_id); return offer?.offer_status === "APPROVED" ? tr("Offer đã duyệt") : tr("Offer chờ duyệt"); })() : tr(STAGE_LABEL[stage] || stage)}</span></td>
                   <td>—</td><td>—</td><td>—</td>
                   <td>{application.source || tr("Chưa ghi nguồn")}</td>
                   <td>{new Date(application.created_at).toLocaleDateString(locale === "en" ? "en-GB" : "vi-VN")}</td>
@@ -831,8 +850,12 @@ export default function ApplicationPipeline({
         >
           <div className="panel-heading">
             <div className="candidate-detail-title">
-              <h2>{detail?.application.candidate_name || tr("Chi tiết ứng viên")}</h2>
-              {detail && <div className="candidate-contact-line">{profile?.candidate.email || tr("Chưa có email")}</div>}
+              <h2>{detail?.application.candidate_name || selected.candidate_name}</h2>
+              <div className="candidate-contact-line">
+                {profile?.candidate.email && <span><Icon name="mail" size={15} />{profile.candidate.email}</span>}
+                {profile?.candidate.phone && <span><Icon name="phone" size={15} />{profile.candidate.phone}</span>}
+              </div>
+              {profile?.candidate.location && <span className="candidate-location"><Icon name="location" size={15} />{profile.candidate.location}</span>}
             </div>
             <button
               className="quiet"
@@ -872,7 +895,7 @@ export default function ApplicationPipeline({
                 <dt>{tr("Công ty hiện tại")}</dt>
                 <dd>{profile?.candidate.current_company || "—"}</dd>
                 <dt>{tr("Kinh nghiệm")}</dt>
-                <dd>{profile?.candidate.total_experience_years != null ? tr("{0} năm", [profile.candidate.total_experience_years]) : "—"}</dd>
+                <dd>{profile?.candidate.total_experience_years != null ? `${profile.candidate.total_experience_years} ${tr("năm")}` : "—"}</dd>
                 <dt>{tr("Địa điểm")}</dt>
                 <dd>{profile?.candidate.location || "—"}</dd>
                 <dt>{tr("Giai đoạn")}</dt>
