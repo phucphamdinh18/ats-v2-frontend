@@ -2665,3 +2665,19 @@ th { padding: 11px 18px; }
   .shell .ops-summary span { font-size: 10px; }
   .shell .ops-summary strong { font-size: 14px; }
 }
+
+
+/* Scheduled Interview worklist: same Bosch enterprise table and detail design. */
+.shell .interview-status-tabs { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid #dbe0e6; border-radius: 4px; overflow: hidden; }
+.shell .interview-status-tabs button { padding: 8px 13px; border: 0; border-right: 1px solid #dbe0e6; border-radius: 0; background: #fff; color: #314052; font-size: 12px; }
+.shell .interview-status-tabs button:last-child { border-right: 0; }
+.shell .interview-status-tabs button.active { background: #fff1f3; color: #b5122b; font-weight: 700; }
+.shell .interview-worklist .ops-summary strong { font-size: 13px; overflow-wrap: anywhere; }
+.shell .interview-worklist .ops-detail a { color: #1558b0; font-size: 12px; font-weight: 600; }
+.shell .interview-participants { list-style: none; padding: 0; margin: 0 0 16px; }
+.shell .interview-participants li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e6e9ee; font-size: 12px; }
+.shell .interview-participants small { color: #697586; }
+@media (max-width: 720px) {
+ .shell .interview-status-tabs { width: 100%; }
+ .shell .interview-status-tabs button { flex: 1; }
+}
