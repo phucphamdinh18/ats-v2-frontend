@@ -394,7 +394,7 @@ export default function Workspace() {
       </a>
       <aside className="sidebar">
         <a className="brand bosch-identity" href={`${basePath}/`} aria-label="Bosch ATS V2">
-          <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch — Invented for life" width="135" height="40" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/1/16/Bosch-logo.svg" alt="Bosch — Invented for life" width="135" height="40" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `${basePath}/bosch-inspired-wordmark.svg`; }} />
           <span className="bosch-brand-divider" aria-hidden="true"/>
           <strong>ATS V2</strong>
         </a>
