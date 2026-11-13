@@ -407,7 +407,7 @@ export default function Workspace() {
             <span className="nav-label">{t.jobs}</span>
           </button>
           {reviewAllowed && <button className={tab === "interviews" ? "nav active" : "nav"} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review" /><span className="nav-label">{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
-          {reviewAllowed && <button className={tab === "offers" ? "nav active" : "nav"} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs" /><span className="nav-label">Offers</span></button>
+          {reviewAllowed && <button className={tab === "offers" ? "nav active" : "nav"} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs" /><span className="nav-label">Offers</span></button>}
           {reviewAllowed && (
             <button
               className={tab === "talent" ? "nav active" : "nav"}
