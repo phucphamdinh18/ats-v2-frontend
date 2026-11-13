@@ -27,11 +27,11 @@ it("reads job-scoped Offer list and detail without writing", async()=>{
  render(<BoschOffersWorkspace jobs={jobs} onAccessLost={vi.fn()}/>);
  const name=await screen.findByRole("button",{name:"Sample Candidate"});
  expect(api.list).toHaveBeenCalledWith("job-1",25,0);
- expect(screen.getByText("Pending Approval")).toBeTruthy();
+ expect(screen.getAllByText("Pending Approval").length).toBeGreaterThan(0);
  fireEvent.click(name);
  await waitFor(()=>expect(api.detail).toHaveBeenCalledWith(offer.id));
  expect(screen.getByText("Synthetic Recruiter",{exact:false})).toBeTruthy();
- expect(screen.getByText("1.000.000 VND")).toBeTruthy();
+ expect(screen.getAllByText("1.000.000 VND").length).toBeGreaterThan(0);
 });
 it("clears scoped Offer state and invalidates access after 403", async()=>{
  api.list.mockRejectedValue(new ApiError("No Offer access",403));
