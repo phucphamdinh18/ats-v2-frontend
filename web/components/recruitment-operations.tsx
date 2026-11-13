@@ -27,6 +27,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
 }) {
   const [jobId, setJobId] = useState(jobs[0]?.id || "");
   const [offset, setOffset] = useState(0);
+  const [pageResultCount, setPageResultCount] = useState(0);
   const [rows, setRows] = useState<Row[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
@@ -47,6 +48,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
     setLoading(true);
     setError("");
     setRows([]);
+    setPageResultCount(0);
     if (!id) { setLoading(false); return; }
     try {
       let result: Row[];
@@ -57,6 +59,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
         }));
       } else {
         const response = await listApplications(id, PAGE_SIZE, nextOffset);
+        if (ticket === revision.current) setPageResultCount(response.applications.length);
         result = response.applications.filter((item) => item.stage === "INTERVIEW").map((item) => ({
           key: item.application_id, application: item, status: item.status,
         }));
@@ -151,7 +154,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
         {!isOffers && <div className="ops-pagination">
           <button className="secondary" type="button" disabled={loading || offset === 0} onClick={() => void load(jobId, Math.max(0, offset - PAGE_SIZE))}>Trang trước</button>
           <span>Trang {Math.floor(offset / PAGE_SIZE) + 1} · Lọc stage trong trang dữ liệu trả về</span>
-          <button className="secondary" type="button" disabled={loading || rows.length === 0} onClick={() => void load(jobId, offset + PAGE_SIZE)}>Trang sau</button>
+          <button className="secondary" type="button" disabled={loading || pageResultCount < PAGE_SIZE} onClick={() => void load(jobId, offset + PAGE_SIZE)}>Trang sau</button>
         </div>}
         <p className="ops-disclaimer">{isOffers ? "Offer API hiện chỉ cung cấp trạng thái PENDING / APPROVED. Không hiển thị lương, approver hoặc expiry nếu API chưa cung cấp." : "Stage Interview không đại diện cho lịch phỏng vấn hay từng round. Để xem lịch và feedback phải tích hợp API Interview đã được kiểm chứng."}</p>
       </div>
