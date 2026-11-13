@@ -1,4 +1,6 @@
-# Approved light design applied to the ATS preview
+# Archived Astryx design notes
+
+> Superseded on 2026-11-13 by the Bosch-inspired live frontend in `bosch-reference-preview.md`. The old standalone preview routes were removed. This document is retained as history, not as the current UI specification.
 
 The actual ATS workspace now uses the visual direction approved in the isolated Astryx Master and Pipeline demo. Shared colors, navigation, controls, tables, candidate cards and forms are scoped in web/app/workspace-theme.css. The independent mock route remains available for comparison.
 

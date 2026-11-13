@@ -3,6 +3,7 @@ import { useLanguage } from "./language";
 import { useUiText, useUiNotice, useUiError } from "./ui-text";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
+import { candidateProfile, type CandidateProfile } from "@/lib/candidates";
 import {
   applicationDetail,
   interviewApplication,
@@ -85,9 +86,12 @@ export default function ApplicationPipeline({
   const [query, setQuery] = useState("");
   const [candidateOpen, setCandidateOpen] = useState(false);
   const [source, setSource] = useState("all");
+  const [stageFilter, setStageFilter] = useState("ALL");
+  const [pipelineView, setPipelineView] = useState<"table" | "board">("table");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Application | null>(null);
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
+  const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
   const [transitionRequestId, setTransitionRequestId] = useState<string | null>(
@@ -247,12 +251,19 @@ export default function ApplicationPipeline({
         ] as [string, Application[]],
     );
   }, [items, offerItems, canViewOffers, query, source]);
+  const tableRows = stages.flatMap(([stage, applications]) =>
+    applications.map((application) => ({ stage, application })),
+  );
+  const visibleTableRows = tableRows.filter(
+    ({ stage }) => stageFilter === "ALL" || stage === stageFilter,
+  );
   const openDetail = useCallback(
     async (application: Application) => {
       const ticket = ++detailTicket.current;
       setSelected(application);
       selectedId.current = application.application_id;
       setDetail(null);
+      setProfile(null);
       setDetailError("");
       setTransitionRequestId(null);
       setTransitionRequestTarget(null);
@@ -266,6 +277,13 @@ export default function ApplicationPipeline({
         setDetail(result);
         // Detail is the authoritative post-action state; the screen RPC returns only ID + changed.
         setSelected(result.application);
+        // Candidate details use the existing RLS-protected candidates endpoint.
+        try {
+          const candidate = await candidateProfile(result.application.candidate_id);
+          if (ticket === detailTicket.current) setProfile(candidate);
+        } catch (profileCause) {
+          if (profileCause instanceof ApiError && profileCause.status === 401) onSessionLost();
+        }
       } catch (cause) {
         if (ticket !== detailTicket.current) return;
         const apiError = cause instanceof ApiError ? cause : undefined;
@@ -412,54 +430,21 @@ export default function ApplicationPipeline({
         {tr("Tiến độ tuyển dụng")}
       </h2>
       <div
-        className="pipeline-summary"
+        className="pipeline-summary pipeline-stage-summary"
         role="region"
         aria-label={tr("Tổng quan Job đang chọn")}
       >
         {[
-          {
-            label: tr("Tổng hồ sơ"),
-            value: job.metrics?.total_candidates,
-            icon: "team",
-            tone: "blue",
-          },
-          {
-            label: tr("Đang xét tuyển"),
-            value: job.metrics
-              ? job.metrics.total_candidates -
-                job.metrics.hired_count -
-                job.metrics.rejected_count
-              : undefined,
-            icon: "dashboard",
-            tone: "purple",
-          },
-          {
-            label: tr("Đang phỏng vấn"),
-            value: job.metrics?.interview_count,
-            icon: "clock",
-            tone: "amber",
-          },
-          {
-            label: tr("Đã tuyển"),
-            value: job.metrics?.hired_count,
-            icon: "check",
-            tone: "mint",
-          },
-        ].map((metric) => (
-          <div key={tr(metric.label)}>
-            <span className={`metric-icon ${metric.tone}`}>
-              <Icon
-                name={metric.icon as "team" | "dashboard" | "clock" | "check"}
-                size={20}
-              />
-            </span>
-            <span>
-              <small>{tr(metric.label)}</small>
-              <strong>
-                {metricsStatus === "idle" ? (metric.value ?? "—") : "—"}
-              </strong>
-            </span>
-          </div>
+          { key: "NEW", label: tr("Mới ứng tuyển"), value: job.metrics?.new_count },
+          { key: "SCREEN", label: tr("Sơ loại"), value: job.metrics?.screening_count },
+          { key: "INTERVIEW", label: tr("Phỏng vấn"), value: job.metrics?.interview_count },
+          { key: "OFFER", label: tr("Offer"), value: offerItems.length },
+          { key: "HIRED", label: tr("Đã tuyển"), value: job.metrics?.hired_count },
+        ].map((stage) => (
+          <button key={stage.key} type="button" aria-pressed={stageFilter === stage.key} className={stageFilter === stage.key ? "active" : ""} onClick={() => { setPipelineView("table"); setStageFilter(stageFilter === stage.key ? "ALL" : stage.key); }}>
+            <small>{stage.label}</small>
+            <strong>{metricsStatus === "idle" ? (stage.value ?? "—") : "—"}</strong>
+          </button>
         ))}
       </div>
       {metricsStatus === "loading" && (
@@ -601,8 +586,39 @@ export default function ApplicationPipeline({
           </button>
         </div>
       )}
+      <div className={`pipeline-layout ${selected ? "has-detail" : ""}`}>
       {(state === "ready" || state === "empty") && (
-        <div className="pipeline-grid">
+        <>
+        <section className="pipeline-table-view" hidden={pipelineView !== "table"} aria-label={tr("Bảng ứng viên")}>
+          <div className="pipeline-table-toolbar">
+            <div className="pipeline-stage-filters" role="group" aria-label={tr("Lọc theo giai đoạn")}>
+              {[{ key: "ALL", label: tr("Tất cả"), count: tableRows.length }, ...stages.map(([key, applications]) => ({ key, label: tr(STAGE_LABEL[key] || key), count: applications.length }))].map((item) => (
+                <button key={item.key} type="button" className={stageFilter === item.key ? "active" : ""} aria-pressed={stageFilter === item.key} onClick={() => setStageFilter(item.key)}>
+                  {item.label}<span>{item.count}</span>
+                </button>
+              ))}
+            </div>
+            <div className="pipeline-view-switch" role="group" aria-label={tr("Cách hiển thị")}>
+              <button type="button" className={pipelineView === "table" ? "active" : ""} aria-pressed={pipelineView === "table"} onClick={() => setPipelineView("table")}>{tr("Bảng")}</button>
+              <button type="button" className={pipelineView === "board" ? "active" : ""} aria-pressed={pipelineView === "board"} onClick={() => setPipelineView("board")}>{tr("Kanban")}</button>
+            </div>
+          </div>
+          <div className="application-table-scroll">
+            <table className="application-table">
+              <thead><tr><th>{tr("Ứng viên")}</th><th>{tr("Giai đoạn")}</th><th>{tr("Vòng phỏng vấn")}</th><th>{tr("Matching")}</th><th>{tr("Kinh nghiệm")}</th><th>{tr("Nguồn")}</th><th>{tr("Ngày ứng tuyển")}</th></tr></thead>
+              <tbody>{visibleTableRows.map(({ stage, application }) => (
+                <tr key={application.application_id} className={selected?.application_id === application.application_id ? "selected" : ""} aria-selected={selected?.application_id === application.application_id}>
+                  <td><button type="button" className="application-table-candidate" onClick={() => void openDetail(application)}><span className="application-avatar" aria-hidden="true">{application.candidate_name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase() || "UV"}</span><strong>{application.candidate_name}</strong></button></td>
+                  <td><span className={`application-stage-pill stage-${stage.toLocaleLowerCase()}`}>{tr(STAGE_LABEL[stage] || stage)}</span></td>
+                  <td>—</td><td>—</td><td>—</td>
+                  <td>{application.source || tr("Chưa ghi nguồn")}</td>
+                  <td>{new Date(application.created_at).toLocaleDateString(locale === "en" ? "en-GB" : "vi-VN")}</td>
+                </tr>
+              ))}{visibleTableRows.length === 0 && <tr><td colSpan={7} className="application-table-empty">{tr("Không có ứng viên trong giai đoạn này.")}</td></tr>}</tbody>
+            </table>
+          </div>
+        </section>
+        <div className="pipeline-grid" hidden={pipelineView !== "board"}>
           {stages.map(([stage, applications]) => {
             const allowedTargets =
               canManageApplications && dragging
@@ -760,6 +776,7 @@ export default function ApplicationPipeline({
             );
           })}
         </div>
+        </>
       )}
       {state === "ready" && (
         <div className="panel-footer">
@@ -832,6 +849,18 @@ export default function ApplicationPipeline({
               <dl className="application-fields">
                 <dt>{tr("Ứng viên")}</dt>
                 <dd>{detail.application.candidate_name}</dd>
+                <dt>{tr("Email")}</dt>
+                <dd>{profile?.candidate.email || "—"}</dd>
+                <dt>{tr("Điện thoại")}</dt>
+                <dd>{profile?.candidate.phone || "—"}</dd>
+                <dt>{tr("Vị trí hiện tại")}</dt>
+                <dd>{profile?.candidate.current_title || "—"}</dd>
+                <dt>{tr("Công ty hiện tại")}</dt>
+                <dd>{profile?.candidate.current_company || "—"}</dd>
+                <dt>{tr("Kinh nghiệm")}</dt>
+                <dd>{profile?.candidate.total_experience_years != null ? tr("{0} năm", [profile.candidate.total_experience_years]) : "—"}</dd>
+                <dt>{tr("Địa điểm")}</dt>
+                <dd>{profile?.candidate.location || "—"}</dd>
                 <dt>{tr("Giai đoạn")}</dt>
                 <dd>{tr(detail.application.stage)}</dd>
                 <dt>{tr("Trạng thái")}</dt>
@@ -959,6 +988,7 @@ export default function ApplicationPipeline({
           )}
         </aside>
       )}
+      </div>
     </section>
   );
 }

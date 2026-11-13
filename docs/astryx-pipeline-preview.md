@@ -1,6 +1,8 @@
-# Astryx Master and Hiring Pipeline preview
+# Archived: Astryx Master and Hiring Pipeline preview
 
-The isolated route /master-astryx-preview/ now includes Master and Hiring Pipeline views. It uses synthetic candidates only and makes no Supabase requests.
+> Superseded on 2026-11-13 by the Bosch-inspired live frontend. The standalone `/master-astryx-preview/` and `/bosch-reference-preview/` demo routes have been removed; this file records the old prototype only.
+
+The removed `/master-astryx-preview/` route included Master and Hiring Pipeline views. It used synthetic candidates only and made no Supabase requests. The details below describe that historical prototype, not the live app.
 
 - Open a Job pipeline from its Master row or the Hiring Pipeline view button.
 - Select one of four demo Jobs; counts, source choices and cards follow that Job.
