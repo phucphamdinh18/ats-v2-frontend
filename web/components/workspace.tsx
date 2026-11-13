@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
@@ -242,13 +242,13 @@ export default function Workspace() {
     }
   }
   const allowed = access?.active && access.roles.length > 0;
-  const jobs = (access?.jobs || []).filter(
+  const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
       (status === "ALL" || job.status === status) &&
       `${job.title} ${job.job_code || ""}`
         .toLocaleLowerCase(locale)
         .includes(search.toLocaleLowerCase(locale)),
-  );
+  ), [access?.jobs, status, search, locale]);
   useEffect(() => {
     setSelectedJob((current) =>
       jobs.find((job) => job.id === current?.id) || jobs[0] || null,
@@ -277,8 +277,9 @@ export default function Workspace() {
   }, []);
   useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
-    if ((tab === "interviews" || tab === "offers") && !allowed) setTab("jobs");
-  }, [tab, adminAllowed, allowed]);
+    if (tab === "interviews" && !allowed) setTab("jobs");
+    if (tab === "offers" && !reviewAllowed) setTab("jobs");
+  }, [tab, adminAllowed, allowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
   const globalNavMatches = [
