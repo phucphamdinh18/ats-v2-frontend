@@ -2974,3 +2974,88 @@ th { padding: 11px 18px; }
 @media (max-width: 900px) {
   .shell .bosch-job-page .bosch-candidate-placeholder { grid-column: 1; grid-row: auto; position: static; }
 }
+
+
+/* Unified screenshot-level module frame — Candidates / Interviews / Offers */
+.shell main#main-content:has(.bosch-module-page) { padding: 0 22px 30px; }
+.shell .bosch-module-page { padding-top: 17px; min-width: 0; }
+.shell .bosch-module-page > .bosch-breadcrumb { margin-bottom: 6px; }
+.shell .bosch-module-page > .bosch-job-title-row h1 { font-size: 25px; font-weight: 750; }
+.shell .bosch-module-page > .bosch-job-metadata { padding-bottom: 13px; color: #232b38; }
+.shell .bosch-module-page > .bosch-job-tabs { margin-bottom: 18px; }
+.shell .bosch-module-page > .bosch-job-tabs span { display: inline-block; font-size: 13px; padding: 12px 15px 10px; white-space: nowrap; }
+.shell .bosch-module-page > .bosch-job-tabs span.active { color: #e0001b; border-bottom: 3px solid #e0001b; font-weight: 700; }
+.shell .bosch-module-page > .bosch-job-tabs span.bosch-unavailable-tab { color: #343d4b; }
+.shell .bosch-module-content { min-width: 0; }
+.shell .bosch-module-candidates .talent-page { border: 0; padding: 0; box-shadow: none; background: transparent; }
+.shell .bosch-module-candidates .talent-heading { display: flex; border: 1px solid #dbe0e6; border-radius: 5px 5px 0 0; margin-bottom: 0; background: white; padding: 12px 15px; }
+.shell .bosch-module-candidates .talent-heading h2 { font-size: 16px; }
+.shell .bosch-module-candidates .talent-heading .eyebrow { display: none; }
+.shell .bosch-module-candidates .talent-heading p { font-size: 11px; color: #677588; margin-top: 3px; }
+.shell .bosch-module-candidates .talent-toolbar { border: 1px solid #dbe0e6; border-top: 0; padding: 10px 15px; background: white; }
+.shell .bosch-module-candidates .talent-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,33%); gap: 12px; }
+.shell .bosch-module-candidates .talent-list { border: 1px solid #dbe0e6; border-radius: 4px; background: white; }
+.shell .bosch-module-candidates .candidate-database-table { min-width: 720px; font-size: 11px; }
+.shell .bosch-module-candidates .candidate-database-table th { font-size: 11px; padding: 10px 8px; background: #f7f8fa; }
+.shell .bosch-module-candidates .candidate-database-table td { padding: 8px; font-size: 11px; }
+.shell .bosch-module-candidates .candidate-database-table td button { color: #1558b0; font-size: 11px; }
+.shell .bosch-module-candidates .talent-profile { padding: 15px; position: sticky; top: 75px; }
+.shell .bosch-module-candidates .talent-profile-heading h3 { font-size: 19px; }
+.shell .bosch-module-candidates .talent-subheading { border-top: 1px solid #e1e5ea; margin-top: 16px; padding-top: 14px; font-size: 14px; }
+.shell .bosch-module-interviews .interview-worklist { margin-top: 0; }
+.shell .bosch-module-interviews .ops-controls { border: 1px solid #dbe0e6; border-radius: 5px; margin-bottom: 12px; padding: 12px 15px; }
+.shell .bosch-module-interviews .ops-controls h2 { font-size: 16px; }
+.shell .bosch-module-interviews .ops-controls p { font-size: 11px; color: #667184; }
+.shell .bosch-module-interviews .ops-content { grid-template-columns: minmax(0,1fr) minmax(300px,33%); }
+.shell .bosch-module-interviews .ops-primary,.shell .bosch-module-interviews .ops-detail { border-radius: 5px; }
+.shell .bosch-module-interviews .ops-summary strong { font-size: 15px; }
+.shell .bosch-module-interviews .ops-table th { font-size: 11px; background: #f7f8fa; }
+.shell .bosch-module-interviews .ops-table td { font-size: 11px; }
+.shell .bosch-offer-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,33%); gap: 12px; align-items: start; }
+.shell .bosch-offer-summary { grid-column: 1; grid-row: 1; border: 1px solid #dbe0e6; border-radius: 5px; padding-bottom: 5px; background: white; }
+.shell .bosch-offer-stages { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin: 0 14px 8px; border: 1px solid #dbe0e6; border-radius: 5px; overflow: hidden; }
+.shell .bosch-offer-stages > div { border-right: 1px solid #e2e5e9; text-align: center; padding: 12px 3px; }
+.shell .bosch-offer-stages > div:last-child { border: none; }
+.shell .bosch-offer-stages > div.accepted { background: #e7f6e8; }
+.shell .bosch-offer-stages span { display: block; font-size: 11px; font-weight: 650; }
+.shell .bosch-offer-stages strong { display: block; font-size: 21px; margin-top: 4px; }
+.shell .bosch-summary-footnote { font-size: 10px; color: #677284; margin: 2px 14px 8px; }
+.shell .bosch-job-filter { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #657286; }
+.shell .bosch-job-filter select { max-width: 240px; min-width: 135px; border: 1px solid #d4dce4; background: white; border-radius: 3px; padding: 7px; font-size: 11px; }
+.shell .bosch-offer-list { grid-column: 1; grid-row: 2; border: 1px solid #dbe0e6; border-radius: 5px; background: white; min-width: 0; }
+.shell .bosch-offer-list .bosch-section-title { border-bottom: 1px solid #e0e4ea; }
+.shell .bosch-list-search { display: flex; gap: 6px; align-items: center; border: 1px solid #d2d9e1; border-radius: 4px; padding: 5px 9px; min-width: 175px; width: min(240px,45%); }
+.shell .bosch-list-search input { width: 100%; min-width: 0; border: none; background: none; padding: 0; font-size: 11px; box-shadow: none; outline: none; }
+.shell .bosch-offer-table-scroll { overflow-x: auto; width: 100%; }
+.shell .bosch-offer-list .bosch-native-table { min-width: 920px; table-layout: auto; font-size: 11px; }
+.shell .bosch-offer-list .bosch-native-table th { background: #f7f8fa; font-size: 10px; white-space: nowrap; font-weight: 700; }
+.shell .bosch-offer-list .bosch-native-table th,.shell .bosch-offer-list .bosch-native-table td { padding: 9px 7px; font-size: 10px; white-space: nowrap; border-bottom: 1px solid #e4e8ed; }
+.shell .bosch-offer-list .bosch-native-table tr.selected,.shell .bosch-offer-list .bosch-native-table tbody tr:hover { background: #fee9eb; }
+.shell .bosch-table-link { background: none; padding: 0; border: 0; color: #1558b0; font-weight: 650; font-size: 11px; }
+.shell .bosch-offer-status { border-radius: 9px; background: #edf0f5; padding: 3px 8px; font-size: 10px; }
+.shell .bosch-offer-status.status-pending { background: #ffe8d7; color: #84521b; }
+.shell .bosch-offer-status.status-approved,.shell .bosch-offer-status.status-accepted { background: #ddf5e1; color: #206435; }
+.shell .bosch-offer-status.status-declined,.shell .bosch-offer-status.status-rejected { background: #fee5e8; color: #9b1429; }
+.shell .bosch-offer-status.status-sent { background: #e2eefc; color: #244f93; }
+.shell .bosch-offer-detail { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 74px; border: 1px solid #dbe0e6; background: white; border-radius: 5px; padding: 15px; max-height: calc(100vh - 100px); overflow-y: auto; }
+.shell .bosch-offer-detail .bosch-candidate-profile-head h2 { font-size: 19px; }
+.shell .bosch-detail-arrows { display: flex; gap: 5px; }
+.shell .bosch-detail-arrows button { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #d4dce5; border-radius: 4px; background: white; color: #182332; }
+.shell .bosch-detail-arrows button:disabled { opacity: .4; }
+.shell .bosch-offer-detail .bosch-facts { grid-template-columns: 100px minmax(0,1fr); font-size: 11px; }
+.shell .bosch-offer-events { margin: 0; padding: 0 0 0 16px; }
+.shell .bosch-offer-events li { padding-bottom: 12px; }
+.shell .bosch-offer-events strong,.shell .bosch-offer-events span { display: block; font-size: 11px; }
+.shell .bosch-offer-events span { color: #697484; margin-top: 3px; }
+@media (max-width: 1120px) {
+ .shell .bosch-offer-workspace,.shell .bosch-module-candidates .talent-grid,.shell .bosch-module-interviews .ops-content { grid-template-columns: minmax(0,1fr); }
+ .shell .bosch-offer-detail { grid-column: 1; grid-row: auto; position: static; max-height: none; }
+ .shell .bosch-module-candidates .talent-profile { position: static; }
+}
+@media (max-width: 640px) {
+ .shell main#main-content:has(.bosch-module-page) { padding: 0 10px 20px; }
+ .shell .bosch-module-page > .bosch-job-tabs span { padding: 10px 8px; font-size: 11px; }
+ .shell .bosch-offer-stages { margin: 0 6px 8px; }
+ .shell .bosch-offer-stages span { font-size: 9px; }
+ .shell .bosch-offer-stages strong { font-size: 17px; }
+}
