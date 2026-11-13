@@ -27,14 +27,16 @@ export async function listInterviewWorklist(
   status: InterviewStatus,
   limit = 25,
   offset = 0,
+  applicationId?: string,
 ): Promise<InterviewWorklistItem[]> {
   if (!["SCHEDULED", "COMPLETED", "CANCELLED"].includes(status) ||
       !Number.isInteger(limit) || limit < 1 || limit > 100 ||
-      !Number.isInteger(offset) || offset < 0)
+      !Number.isInteger(offset) || offset < 0 ||
+      (applicationId !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(applicationId)))
     throw new Error("Bộ lọc lịch phỏng vấn không hợp lệ.");
 
   const { data, error } = await getClient().functions.invoke("interviews", {
-    body: { action: "worklist", status, limit, offset },
+    body: { action: "worklist", status, limit, offset, ...(applicationId ? { application_id: applicationId } : {}) },
   });
 
   if (error) {
