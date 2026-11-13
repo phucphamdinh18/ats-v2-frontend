@@ -70,7 +70,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
     } catch (cause) {
       if (ticket !== revision.current) return;
       setError(safeMessage(cause));
-      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
+      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     } finally {
       if (ticket === revision.current) setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
     } catch (cause) {
       if (ticket === detailRevision.current) {
         setDetailError(safeMessage(cause));
-        if (cause instanceof ApiError && cause.status === 401) onAccessLost();
+        if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
       }
     } finally {
       if (ticket === detailRevision.current) setDetailLoading(false);
