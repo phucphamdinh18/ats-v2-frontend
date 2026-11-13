@@ -11,6 +11,7 @@ vi.mock("../lib/offers", () => ({ listOfferBoard: api.offers }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
 }));
+import { ApiError } from "../lib/supabase";
 const jobs = [{ id: "job1", job_code: "TEST-1", title: "Test Job", status: "OPEN" }];
 const record = { application_id: "app1", candidate_id: "cand1", candidate_name: "Test Candidate", stage: "INTERVIEW", status: "ACTIVE", source: "Referral", created_at: "2026-01-01T00:00:00Z" };
 beforeEach(() => {
@@ -47,4 +48,12 @@ it("shows API errors and permits a retry without inventing results", async () =>
   expect((await screen.findByRole("alert")).textContent).toContain("API failed");
   fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
   await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
+});
+
+it("invalidates restricted workspace when job permissions are revoked", async () => {
+  api.list.mockRejectedValue(new ApiError("Forbidden", 403));
+  const onAccessLost = vi.fn();
+  render(<RecruitmentOperations mode="interviews" jobs={jobs} onAccessLost={onAccessLost} />);
+  await waitFor(() => expect(onAccessLost).toHaveBeenCalledTimes(1));
+  expect(screen.queryByRole("button", { name: "Test Candidate" })).toBeNull();
 });
