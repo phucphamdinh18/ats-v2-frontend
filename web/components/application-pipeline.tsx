@@ -15,6 +15,7 @@ import {
 import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
+import CandidateInterviewProgress from "./candidate-interview-progress";
 import { useLanguage } from "./language";
 
 const PAGE_SIZE = 25;
@@ -346,6 +347,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     </div>}
     {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     </div>
+    {!selected && <aside className="bosch-candidate-placeholder" aria-label="Candidate overview"><h2>Candidate Overview</h2><p>Select a candidate from the list to view Interview Progress, summary, stage actions and activity history.</p></aside>}
     {selected && <aside className="application-detail enterprise-candidate-detail" aria-label="Chi tiết ứng viên">
       <div className="bosch-candidate-profile-head">
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
@@ -356,8 +358,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <>
         <div className="bosch-profile-card">
-          <h3>Interview Progress</h3>
-          <p className="bosch-muted-help">Interview rounds require authorized interview records. Application stage history is shown below.</p>
+          <CandidateInterviewProgress applicationId={detail.application.application_id} />
           <dl className="application-fields"><dt>Stage</dt><dd>{detail.application.stage === "SCREEN" ? "Screening" : detail.application.stage}</dd><dt>Status</dt><dd>{detail.application.status}</dd><dt>Source</dt><dd>{detail.application.source || "—"}</dd></dl>
         </div>
         <div className="bosch-profile-card">
