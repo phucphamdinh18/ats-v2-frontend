@@ -994,7 +994,7 @@ export default function Workspace() {
                   </span>
                 ))}
               </div>
-              <div hidden={tab !== "jobs"}>
+              <div className="job-view-tabs-shell" hidden={tab !== "jobs"}>
                 <div
                   className="job-view-tabs"
                   role="tablist"
