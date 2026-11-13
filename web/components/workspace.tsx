@@ -647,11 +647,11 @@ export default function Workspace() {
         <header className="topbar">
           <a className="bosch-lockup" href={`${basePath}/`} aria-label="Bosch ATS V2"><img src={`${basePath}/bosch-ats-lockup.jpg`} alt="Bosch · ATS V2" /></a>
           <nav className="global-nav" aria-label={locale === "en" ? "Main navigation" : "Điều hướng chính"}>
-            <button type="button" onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Home" : "Trang chủ"}</button>
-            <button type="button" className={tab === "jobs" && jobView !== "manage" && initialPipelineFilter === "ALL" ? "active" : ""} onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Jobs" : "Việc làm"}</button>
-            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
-            {allowed && <button type="button" className={tab === "interviews" ? "active" : ""} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
-            {access?.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER") && <button type="button" className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "active" : ""} onClick={() => { if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]); setTab("jobs"); setJobView("pipeline"); setInitialPipelineFilter("OFFER"); }}>{locale === "en" ? "Offers" : "Offer"}</button>}
+            <button type="button" aria-label={locale === "en" ? "Go to Home" : "Mở Trang chủ"} onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Home" : "Trang chủ"}</button>
+            <button type="button" aria-label={locale === "en" ? "Go to Jobs" : "Mở Việc làm"} className={tab === "jobs" && jobView !== "manage" && initialPipelineFilter === "ALL" ? "active" : ""} onClick={() => { setTab("jobs"); setJobView("master"); setInitialPipelineFilter("ALL"); }}>{locale === "en" ? "Jobs" : "Việc làm"}</button>
+            {reviewAllowed && <button type="button" aria-label={locale === "en" ? "Go to Candidates" : "Mở Ứng viên"} className={tab === "talent" ? "active" : ""} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
+            {allowed && <button type="button" aria-label={locale === "en" ? "Go to Interviews" : "Mở Phỏng vấn"} className={tab === "interviews" ? "active" : ""} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
+            {access?.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER") && <button type="button" aria-label={locale === "en" ? "Go to Offers" : "Mở Offer"} className={tab === "jobs" && jobView === "pipeline" && initialPipelineFilter === "OFFER" ? "active" : ""} onClick={() => { if (!selectedJob && access.jobs[0]) setSelectedJob(access.jobs[0]); setTab("jobs"); setJobView("pipeline"); setInitialPipelineFilter("OFFER"); }}>{locale === "en" ? "Offers" : "Offer"}</button>}
           </nav>
           <div className="header-actions">
             <div
