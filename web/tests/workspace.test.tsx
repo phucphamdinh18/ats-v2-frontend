@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
   waitFor,
 } from "@testing-library/react";
 import Workspace from "../components/workspace";
@@ -178,7 +179,12 @@ it("opens Pipeline from Job Master and switches requisitions", async () => {
   });
   fireEvent.click(screen.getByRole("option", { name: /Second Job/ }));
   await screen.findByRole("region", { name: "Pipeline Second Job" });
-  fireEvent.click(screen.getByRole("tab", { name: /1.1 Bảng Master/ }));
+  fireEvent.click(
+    within(document.querySelector(".sidebar nav")!).getByRole(
+      "button",
+      { name: "Vị trí tuyển dụng" },
+    ),
+  );
   await screen.findByRole("button", { name: "Mở pipeline First Job" });
   expect(
     screen.getByRole("button", { name: "Mở pipeline Second Job" }),
@@ -236,7 +242,7 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
 it("same-user auth refresh preserves the current review kind while rechecking roles", async () => {
   scope(true, ["ADMIN"]);
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Duyệt Job & JD" }));
   await screen.findByRole("heading", { name: /Chưa có.*cần duyệt/ });
   const callsBefore = mocks.session.mock.calls.length;
   await act(async () => {
@@ -247,7 +253,7 @@ it("same-user auth refresh preserves the current review kind while rechecking ro
   );
   expect(
     screen
-      .getByRole("button", { name: "JD tuyển dụng" })
+      .getByRole("button", { name: "Duyệt Job & JD" })
       .getAttribute("aria-current"),
   ).toBe("page");
   await act(async () => {
@@ -255,20 +261,20 @@ it("same-user auth refresh preserves the current review kind while rechecking ro
   });
   expect(
     screen
-      .getByRole("button", { name: "JD tuyển dụng" })
+      .getByRole("button", { name: "Duyệt Job & JD" })
       .getAttribute("aria-current"),
   ).toBe("page");
 });
 it("silent same-user auth refresh removes review when current roles are revoked", async () => {
   scope(true, ["ADMIN"]);
   render(<Workspace />);
-  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Duyệt Job & JD" }));
   scope(false, []);
   await act(async () => {
     mocks.authCallback?.("TOKEN_REFRESHED", { user: { id: "synthetic" } });
   });
   await screen.findByRole("heading", { name: "Tài khoản đang chờ kích hoạt" });
-  expect(screen.queryByRole("button", { name: "JD tuyển dụng" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Duyệt Job & JD" })).toBeNull();
 });
 
 it("switching languages preserves the actual review kind and does not refetch scope", async () => {
@@ -279,7 +285,7 @@ it("switching languages preserves the actual review kind and does not refetch sc
       <Workspace />
     </LanguageProvider>,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "JD tuyển dụng" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Duyệt Job & JD" }));
   await screen.findByRole("heading", { name: /Chưa có JD cần duyệt/ });
   const sessionCalls = mocks.session.mock.calls.length;
   fireEvent.change(
@@ -288,7 +294,7 @@ it("switching languages preserves the actual review kind and does not refetch sc
   );
   expect(
     screen
-      .getByRole("button", { name: "Job descriptions" })
+      .getByRole("button", { name: "Job Review" })
       .getAttribute("aria-current"),
   ).toBe("page");
   await screen.findByRole("heading", { name: "No JD waiting for review" });
@@ -343,7 +349,15 @@ it("an interviewer with no Job-wide rows can open the interview workspace", asyn
       <Workspace />
     </LanguageProvider>,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Phỏng vấn" }));
+  await waitFor(() =>
+    expect(document.querySelector(".sidebar nav")).not.toBeNull(),
+  );
+  fireEvent.click(
+    within(document.querySelector(".sidebar nav")!).getByRole(
+      "button",
+      { name: "Phỏng vấn" },
+    ),
+  );
   expect(await screen.findByLabelText("Trạng thái lịch")).toBeTruthy();
   expect(
     await screen.findByText("Chưa có lịch ở trạng thái này."),

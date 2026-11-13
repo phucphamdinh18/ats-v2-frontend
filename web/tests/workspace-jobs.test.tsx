@@ -90,34 +90,26 @@ function setup() {
     </LanguageProvider>,
   );
 }
-it("keeps overview clear, opens management as a Job tab and preserves creation input across views", async () => {
+it("keeps job opening, pipeline and job management as separate destinations", async () => {
   setup();
-  const manageTab = await screen.findByRole("tab", { name: "1.3 Quản lý Job" });
-  expect(
-    screen.queryByRole("button", { name: "Phân công đội ngũ" }),
-  ).toBeNull();
-  expect(screen.queryByRole("button", { name: "Chỉnh yêu cầu" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Mở tuyển" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Tạo Job" })).toBeNull();
-  const firstTab = screen.getAllByRole("tab")[0];
-  firstTab.focus();
-  fireEvent.keyDown(firstTab, { key: "End" });
-  expect(document.activeElement).toBe(manageTab);
-  expect(manageTab.getAttribute("aria-selected")).toBe("true");
-  expect(screen.getAllByRole("table")).toHaveLength(1);
-  const jobRow = screen.getByRole("row", { name: /Fixture Engineer/ });
-  expect(within(jobRow).getAllByRole("button")).toHaveLength(1);
-  fireEvent.click(within(jobRow).getByRole("button", { name: "Quản lý" }));
-  expect(screen.queryByRole("table")).toBeNull();
+  await screen.findByRole("button", { name: "Vị trí tuyển dụng" });
+  const navigation = within(
+    document.querySelector(".sidebar nav")!,
+  );
+  expect(navigation.getByRole("button", { name: "Vị trí tuyển dụng" })).toBeTruthy();
+  expect(navigation.getByRole("button", { name: "Tiến độ tuyển dụng" })).toBeTruthy();
+  const manage = navigation.getByRole("button", { name: "Quản lý Job" });
+  fireEvent.click(manage);
+  expect(await screen.findByRole("heading", { name: "Quản lý Job" })).toBeTruthy();
+  expect(screen.getByRole("table")).toBeTruthy();
   expect(fixtures.members).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Đóng" }));
   fireEvent.click(screen.getByRole("button", { name: "Tạo Job" }));
   fireEvent.change(screen.getByLabelText("Tên vị trí"), {
     target: { value: "Keep this job title" },
   });
-  fireEvent.click(screen.getByRole("tab", { name: /1.2 Tiến độ tuyển dụng/ }));
+  fireEvent.click(navigation.getByRole("button", { name: "Tiến độ tuyển dụng" }));
   expect(screen.queryByRole("textbox", { name: "Tên vị trí" })).toBeNull();
-  fireEvent.click(manageTab);
+  fireEvent.click(navigation.getByRole("button", { name: "Quản lý Job" }));
   expect((screen.getByLabelText("Tên vị trí") as HTMLInputElement).value).toBe(
     "Keep this job title",
   );
@@ -126,9 +118,9 @@ it("keeps overview clear, opens management as a Job tab and preserves creation i
   });
   expect(
     screen
-      .getByRole("tab", { name: "1.3 Manage jobs" })
-      .getAttribute("aria-selected"),
-  ).toBe("true");
+      .getByRole("button", { name: "Manage Jobs" })
+      .getAttribute("aria-current"),
+  ).toBe("page");
   expect((screen.getByLabelText("Job title") as HTMLInputElement).value).toBe(
     "Keep this job title",
   );
@@ -136,8 +128,12 @@ it("keeps overview clear, opens management as a Job tab and preserves creation i
 it("does not expose the management tab or controls to a recruiter", async () => {
   fixtures.role = "TA_RECRUITER";
   setup();
-  await screen.findByRole("tab", { name: /1.2 Tiến độ tuyển dụng/ });
-  expect(screen.queryByRole("tab", { name: "1.3 Quản lý Job" })).toBeNull();
+  await screen.findByRole("button", { name: "Vị trí tuyển dụng" });
+  const navigation = within(
+    document.querySelector(".sidebar nav")!,
+  );
+  expect(navigation.getByRole("button", { name: "Tiến độ tuyển dụng" })).toBeTruthy();
+  expect(navigation.queryByRole("button", { name: "Quản lý Job" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Tạo Job" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Quản lý" })).toBeNull();
   expect(fixtures.members).not.toHaveBeenCalled();

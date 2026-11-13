@@ -262,7 +262,7 @@ export default function ApplicationPipeline({
   );
   useEffect(() => {
     autoSelected.current = false;
-  }, [job.id, query]);
+  }, [job.id]);
   const openDetail = useCallback(
     async (application: Application) => {
       const ticket = ++detailTicket.current;
