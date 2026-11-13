@@ -218,3 +218,47 @@
   .astryx-workspace #main-content.is-job-pipeline .application-table { min-width: 700px; }
   .astryx-workspace #main-content.is-job-pipeline .application-detail { padding: 13px; }
 }
+
+
+/* Laptop widths: keep the job tabs on one line and protect the candidate table. */
+@media (min-width: 981px) and (max-width: 1500px) {
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .job-view-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .job-view-tabs button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .job-view-tabs button:nth-child(2) span {
+    display: none;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(3),
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table td:nth-child(3),
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(5),
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table td:nth-child(5) {
+    display: none;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(1) { width: 34%; }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(2) { width: 19%; }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(4) { width: 13%; }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(6) { width: 21%; }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th:nth-child(7) { width: 13%; }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table th {
+    color: #111820;
+    font-size: 11px;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .application-table td {
+    height: 38px;
+    color: #171d25;
+  }
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .pipeline-scope-note,
+  .astryx-workspace #main-content.is-job-pipeline:has(.application-detail) .pipeline-toolbar .muted {
+    color: #344054;
+  }
+}
