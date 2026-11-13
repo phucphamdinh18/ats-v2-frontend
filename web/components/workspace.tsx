@@ -8,6 +8,7 @@ import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import BoschJobDetail from "./bosch-job-detail";
+import BoschJobsMaster from "./bosch-jobs-master";
 import BoschModuleLayout from "./bosch-module-layout";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
 import { jobOverview } from "@/lib/applications";
@@ -651,7 +652,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <div className={`page-heading ${((tab === "jobs" && jobView === "pipeline") || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
+              <div className={`page-heading ${(tab === "jobs" || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
                   <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
@@ -680,7 +681,7 @@ export default function Workspace() {
                   </button>
                 </div>
               </div>
-              <div className={`role-line ${((tab === "jobs" && jobView === "pipeline") || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
+              <div className={`role-line ${(tab === "jobs" || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
                 {access.roles.map((role) => (
                   <span className="role" key={role}>
                     {roleLabel(role, t)}
@@ -765,7 +766,7 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  <div className={`job-view-tabs ${jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`} role="tablist" aria-label="Chế độ xem Job">
+                  <div className="job-view-tabs bosch-hidden-page-heading" role="tablist" aria-label="Chế độ xem Job">
                     <button type="button" role="tab" aria-selected={jobView === "master"} className={jobView === "master" ? "active" : ""} onClick={() => setJobView("master")}>
                       <Icon name="jobs" size={16} /> 1.1 Bảng Master <span>{access.jobs.length} Job</span>
                     </button>
@@ -773,181 +774,17 @@ export default function Workspace() {
                       <Icon name="review" size={16} /> 1.2 Hiring Pipeline <span>{selectedJob?.job_code || "Chọn Job"}</span>
                     </button>
                   </div>
-                  {jobView === "master" ? <>
-                  <section className="metrics" aria-label={t.totalJobs}>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.totalJobs}</small>
-                        <span className="metric-icon purple">
-                          <Icon name="jobs" />
-                        </span>
-                      </div>
-                      <strong>{access.jobs.length}</strong>
-                      <span>{t.totalHint}</span>
-                    </div>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.openJobs}</small>
-                        <span className="metric-icon mint">
-                          <Icon name="team" />
-                        </span>
-                      </div>
-                      <strong>
-                        {access.jobs.filter((j) => j.status === "OPEN").length}
-                      </strong>
-                      <span>{t.openHint}</span>
-                    </div>
-                    <div>
-                      <div className="metric-top">
-                        <small>{t.draftJobs}</small>
-                        <span className="metric-icon amber">
-                          <Icon name="review" />
-                        </span>
-                      </div>
-                      <strong>
-                        {access.jobs.filter((j) => j.status === "DRAFT").length}
-                      </strong>
-                      <span>{t.draftHint}</span>
-                    </div>
-                  </section>
-                  <p className="scope-note">
-                    <Icon name="shield" size={14} />
-                    {t.scopeHint}
-                  </p>
-                  <section className="panel">
-                    <div className="panel-heading">
-                      <h2>
-                        {t.jobList} · Master
-                        <span className="count">{jobs.length}</span>
-                      </h2>
-                    </div>
-                    <div className="toolbar">
-                      <label className="search">
-                        <Icon name="search" size={18} />
-                        <input
-                          aria-label={t.searchJobs}
-                          placeholder={t.searchPlaceholder}
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                        />
-                      </label>
-                      <div className="job-status-filters" role="group" aria-label={t.jobStatus}>
-                        <button
-                          type="button"
-                          className={`job-filter-chip filter-all ${status === "ALL" ? "selected" : ""}`}
-                          aria-label={`${t.allStatuses} (${access.jobs.length})`}
-                          aria-pressed={status === "ALL"}
-                          onClick={() => setStatus("ALL")}
-                        >
-                          {t.allStatuses}<span>{access.jobs.length}</span>
-                        </button>
-                        {Array.from(
-                          new Set([
-                            "OPEN",
-                            "DRAFT",
-                            ...access.jobs.map((j) => j.status),
-                          ]),
-                        )
-                          .sort()
-                          .map((s) => {
-                            const count = access.jobs.filter((job) => job.status === s).length;
-                            return (
-                              <button
-                                key={s}
-                                type="button"
-                                className={`job-filter-chip status-${s.toLowerCase().replace(/_/g, "-")} ${status === s ? "selected" : ""}`}
-                                aria-label={`${jobStatusLabel(s, t)} (${count})`}
-                                aria-pressed={status === s}
-                                onClick={() => setStatus(s)}
-                              >
-                                {jobStatusLabel(s, t)}<span>{count}</span>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    </div>
-                    {jobs.length ? (
-                      <div className="table-scroll">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>1. Định danh & vị trí</th>
-                              <th>2. Đơn vị & chức năng</th>
-                              <th>3. Loại yêu cầu & ngày Req</th>
-                              <th>4. Level & ưu tiên</th>
-                              <th>5. Trạng thái</th>
-                              <th>6. SLA tổng</th>
-                              <th>7. Funnel & nguồn</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {jobs.map((job) => (
-                              <tr key={job.id} className={selectedJob?.id === job.id ? "selected-job-row" : undefined}>
-                                <td>
-                                  <div className="job-title">
-                                    <span className="job-icon">
-                                      <Icon name="jobs" size={18} />
-                                    </span>
-                                    <button
-                                      className="job-title-link"
-                                      aria-pressed={selectedJob?.id === job.id}
-                                      aria-label={`Chọn Job ${job.title}`}
-                                      onClick={() => setSelectedJob(job)}
-                                    >
-                                      {job.title}
-                                    </button>
-                                  </div>
-                                  <small className="job-code-subtitle">{job.job_code || t.noCode}</small>
-                                </td>
-                                <td><strong>{job.business_unit || "Chưa có BU"}</strong><small className="job-code-subtitle">{job.function_group || "Chưa phân nhóm"}{job.location ? ` · ${job.location}` : ""}</small></td>
-                                <td><strong>{job.request_type === "REPLACEMENT" ? "Thay thế" : job.request_type === "NEW" ? "Tuyển mới" : "Chưa xác định"}</strong><small className="job-code-subtitle">Req: {job.req_date || "—"}</small></td>
-                                <td><strong>{job.level == null ? "Level —" : `Level ${job.level}`}</strong><small className="job-code-subtitle">{job.priority || "Chưa có ưu tiên"}</small></td>
-                                <td>
-                                  <span
-                                    className={`badge ${job.status === "OPEN" ? "green" : job.status === "DRAFT" ? "amber-badge" : ""}`}
-                                  >
-                                    <span className="status-dot" />
-                                    {jobStatusLabel(job.status, t)}
-                                  </span>
-                                </td>
-                                <td>{job.sla_target_workdays == null ? <span className="muted">Thiếu Level / Function / Season</span> : <span className="badge blue">≤ {job.sla_target_workdays} ngày làm việc</span>}<small className="job-code-subtitle">{job.hiring_season || "Chưa chọn mùa tuyển dụng"}</small></td>
-                                <td>
-                                  <strong>{job.metrics?.total_candidates ?? "—"} ứng viên</strong>
-                                  {job.metrics && <small className="job-code-subtitle">NEW {job.metrics.new_count} · Sơ loại {job.metrics.screening_count} · Phỏng vấn {job.metrics.interview_count} · Đã tuyển {job.metrics.hired_count}</small>}
-                                  {job.metrics?.source_summary?.length ? <details className="job-source-summary"><summary>Nguồn ({job.metrics.source_summary.length})</summary><ul>{job.metrics.source_summary.map((source) => <li key={`${source.source}:${source.sub_source}:${source.source_ownership}`}>{source.sub_source ? `${source.sub_source} · ` : ""}{source.source}: {source.count}</li>)}</ul></details> : <small className="job-code-subtitle">Nguồn: chưa có dữ liệu</small>}
-                                  <button className="job-pipeline-action" aria-label={`Mở pipeline ${job.title}`} onClick={() => { setSelectedJob(job); setJobView("pipeline"); }}>Pipeline <Icon name="arrow" size={14} /></button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="empty">
-                        <span className="empty-icon">
-                          <Icon name="search" size={25} />
-                        </span>
-                        <h3>{t.noJobs}</h3>
-                        <p>{t.noJobsBody}</p>
-                        <button
-                          className="secondary"
-                          onClick={() => {
-                            setSearch("");
-                            setStatus("ALL");
-                          }}
-                        >
-                          {t.clearFilters}
-                        </button>
-                      </div>
-                    )}
-                    <div className="panel-footer">
-                      {format(t.jobsShown, {
-                        shown: jobs.length,
-                        total: access.jobs.length,
-                      })}
-                    </div>
-                  </section>
-                  </> : selectedJob ? <BoschJobDetail
+                  {jobView === "master" ? <BoschJobsMaster
+                    jobs={jobs}
+                    allJobs={access.jobs}
+                    selectedJobId={selectedJob?.id}
+                    query={search}
+                    onQuery={setSearch}
+                    status={status}
+                    onStatus={setStatus}
+                    onSelect={setSelectedJob}
+                    onOpen={(job) => { setSelectedJob(job); setJobView("pipeline"); }}
+                  /> : selectedJob ? <BoschJobDetail
                     key={selectedJob.id}
                     job={selectedJob}
                     allJobs={access.jobs}
