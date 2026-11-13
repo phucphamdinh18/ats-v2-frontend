@@ -1,0 +1,116 @@
+# Archived design history: Astryx workspace preview
+
+> Superseded on 2026-11-13 by the Bosch-inspired live frontend described in `bosch-reference-preview.md`. The old standalone Astryx and Bosch mock routes have been removed. This file is retained as a record of the workflow and design decisions; it is not the current UI specification.
+
+The actual ATS workspace now uses the visual direction approved in the isolated Astryx Master and Pipeline demo. Shared colors, navigation, controls, tables, candidate cards and forms are scoped in web/app/workspace-theme.css. The independent mock route remains available for comparison.
+
+## Screens
+
+- Light Google sign-in and loading state.
+- Sidebar, topbar, quick search, language control, role badges and help.
+- Master with Bento metrics and five grouped columns. Level/priority moved into the identity cell; status and SLA share a cell. Existing data fields remain available.
+- Pipeline with Job selector, quiet stage colors, initials from candidate names, source footer and a non-modal detail drawer. Escape dismisses the drawer. Existing stage guards, confirmations, retry request IDs and API calls remain in place.
+- Talent Pool list/profile, CV review, JD review, Admin Job forms and Job membership forms share the same tokens.
+- Narrow layouts stack panels, preserve horizontal table/board scrolling and provide a compact navigation bar.
+
+## Data and access
+
+The workspace still uses its existing Supabase session, RLS and Edge Function contracts. No migrations, role changes, API modifications or new demo data are introduced. Candidate skill/title/experience fields are not invented for Pipeline cards when the API does not return them. Bento counts describe Applications across loaded Jobs, not unique people. Missing metric responses display a dash. SLA targets retain their existing semantics.
+
+## Release and rollback
+
+Use the existing path-preview mode. Preserve the deployed root source 5b53cb18145e2ec03fa815fb5825c1a2a1882bef and publish only the preview source from PR 43. Keep the PR draft and unmerged. Roll back by publishing prior preview commit 7076d0bc5aafbb13f059a207133c6f47d5cf0ac5 with the same root source.
+
+## Validation boundary
+
+Run the existing frontend tests, root QA, typecheck and static build. Check the public sign-in in the cloud browser after release. Opening the existing Admin Google account was rejected by automatic approval review in this session, so signed-in browser QA requires explicit account authorization. Do not treat successful mock UI tests as live cloud role verification. No sign-in bypass or database fixture substitute is permitted.
+
+## 2026-11-12 — Pipeline fidelity, focused Admin and complete interface language
+
+Reviewed the V6 share directly. Its selected combination was Astryx components, Sidebar navigation, Bento summaries, Full-width Kanban and Split Screen profiles. shadcn/ui/lint was a consistency reference, not an installed dependency; no Tailwind migration is included.
+
+- Pipeline now follows the approved pilot structure: Job identity/selector, four full-Job overview cards, board heading, search and source filter, compact stage lanes and source-backed candidate cards. Missing fields such as current employer, skills and stage age are not fabricated from the demo. The API still paginates at 25 records. Source filters explicitly apply to the current page; overview values use existing Job metrics and show a dash if unavailable.
+- Admin now follows the Job openings pattern: summary cards, section tabs and one focused form. Fields remain visible with explicit borders. Forms retain their values when switching sections or languages. Tabs support arrow/Home/End keys.
+- Master, navigation, Pipeline, details/history, Admin, Talent Pool and manual candidate entry use explicit VI/EN interface copy, including accessibility names, placeholders, confirmation text and known notices. Persisted protocol values and user-entered names/job titles/CV content stay unchanged. Existing CV/JD review and login translations are retained.
+- Stage controls show recruitment terms instead of NEW/SCREEN codes. Guarded API actions, confirmations, idempotent retry IDs and role/Job membership checks remain intact. Offers remain a presentation lane governed by existing offer permission checks.
+
+Validation: 25 Node tests, 54 component tests, 12 root QA checks, inline syntax, typecheck and static export passed. Added actual language-switch tests with an open candidate drawer and an open Admin form, plus a source-filter/full-Job-total check. Existing stage guard, permission and retry tests remain in place. Full signed-in cloud browser testing still requires an authorized Admin session; component tests do not replace it. Local Chromium screenshot capture was attempted but the runtime denied its process socket, and the cloud browser cannot reach the local fixture server.
+
+Publish with the existing `path-preview` workflow from main, keeping root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Keep PR #43 draft and unmerged. Roll back this revision by publishing prior preview source `2323094a9524c2323fd283227036bcaad0be6243` with the same root source.
+
+Unknown backend errors now use the existing localized friendly-error fallback. Known application event codes are translated; unknown event codes display a neutral profile-update label. No raw backend error/code is required for the recruiter to interpret.
+
+### Signed-in browser follow-up
+
+The existing Admin session subsequently restored without a new sign-in or an account selection. Read-only browser checks confirmed the live four-card Pipeline summary and compact lanes, candidate drawer, VI/EN switching while the drawer stays open, and all four Admin sections (including readable input borders and translated metadata/role options). Laptop layout was visually inspected. No stage changes, Job creates/opens, assignments or permission removals were submitted in this browser check.
+
+Talent Pool returned a candidate-list load error in this existing TEST environment. This UI revision localizes the error fallback; it does not repair the underlying candidate API. Full backend role E2E remains opt-in and was skipped by CI. This is distinct from the signed-in Admin UI checks.
+
+The final deployed frontend source is `87bb0607611c7f405492429f51d2d909d7d107c5`; Pages run #121 (`43071356438`) succeeded and the live `ats-release` meta tag matches that source with `path-preview`. The main-site root source remains `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. A subsequent documentation-only commit records this verification without changing deployed frontend files.
+
+Final-source browser checks also confirmed Manual Drive reduces the board to two cards while the full-Job total stays six; resetting the filter restores six cards. The candidate history displays “Đã chuyển vòng” on the final revision. The preview was left open in Vietnamese with no data or access mutations.
+
+
+## 2026-11-12 — Laptop Master table text overflow
+
+The fixed-width Master table inherited `white-space: nowrap` from the base table rule. Long department/location, SLA explanations and candidate-stage summaries could therefore paint into adjacent cells. Scoped Master rules now restore normal wrapping, allow long unbroken references/source strings to wrap, constrain nested content to its cell, and allow the title flex item to shrink. No ellipsis or data removal is introduced. The existing 940px table minimum and table-only horizontal scrolling remain for narrow viewports. Other tables, workflow, API and access rules are unchanged.
+
+Validation: typecheck and static build; browser checks are recorded after deployment. Rollback by publishing frontend source `87bb0607611c7f405492429f51d2d909d7d107c5` with the unchanged root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`.
+
+Release follow-up: Pages run #124 (`43145786272`) passed build and deploy. The public preview ats-release meta tag confirms frontend source `4d756cbc822ef5c79f2f97495d0d707cdf2547cb:path-preview`. Authenticated laptop/zoom/VI-EN visual checks remain pending: automatic approval review rejected choosing the saved Google Admin account because the user has not explicitly authorized that account. No alternate authentication path was used. Confirmation of account `phuc.phamdinh18@gmail.com` is requested before continuing that check.
+
+## 2026-11-12 — Admin simplified to a Job table and one creation form
+
+Removed the four global action tabs. The Admin page now starts with a searchable/status-filtered Job table. Each row has separate Hiring status, Requirements and Team & access columns. Only Draft rows offer Open for hiring. Editing requirements and assigning access are row-scoped actions with the selected Job title/reference/status pinned above the form; there is no second Job selector that could accidentally redirect a write. The navigation label now reads Manage jobs / Quản lý Job.
+
+Create job opens one form containing identity and requirements together. Saving creates a Draft and saves metadata through the two existing admin-jobs actions; it never automatically opens hiring or grants access. Level/function/season require explicit selection for a new Job. Existing API schemas, backend/RLS and enums are unchanged.
+
+The two API writes are not a database transaction. If creation succeeds but metadata fails, the session retains the created Job ID, locks identity fields and offers Continue saving requirements; retry cannot create another draft. Uncertain creation retries reuse the same request ID for an unchanged identity payload. While this partial create is pending, its row cannot be opened for hiring, and Edit requirements resumes the same creation form. Member lists load only when opening a row's team action; stale responses from a previous Job are discarded. Mutations retain busy locks, backend authorization and the existing opening/removal confirmations.
+
+Verification: 25 Node tests, 59 component tests, 12 root QA checks, inline syntax, typecheck and static build. New Admin tests exercise one-form creation, both retry paths, selected-Job targeting, no implicit opening/assignment, VI/EN input preservation and stale team responses. No cloud Job or permission writes were used as test fixtures. Authenticated visual QA remains pending explicit authorization of the Admin account from the previous request; no rejected authentication action is retried.
+
+Release uses path-preview only, with the unchanged main-site source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back the UI to frontend source `4d756cbc822ef5c79f2f97495d0d707cdf2547cb` to restore the previous four-tab Admin and retain the laptop text-wrap fix. Keep PR #43 draft and unmerged.
+
+## 2026-11-12 — Consolidate Job management into Job openings
+
+Job openings is now the single navigation destination and Job table. Removed the separate Manage jobs sidebar/global search destination and Admin page branch. The page heading offers Create job to Admins. Existing five-column rows contain Assign your team under organization, Edit requirements under request details, and Open for hiring under Draft status. Buttons wrap within their cells; no extra wide table column is added. Non-Admins do not receive these administrative controls.
+
+The existing Admin editor is embedded above the Job list without its own overview, search or second table. Explicit row actions select the target Job; creation, opening and access assignment remain distinct authenticated API operations. The embedded editor stays mounted while changing workspace tabs/views so in-session partial-creation retry state survives. Closing the editor preserves creation input; opening it again resumes the same draft when applicable. A partially saved draft's Open action returns to finishing requirements rather than opening the Job. Existing mutation locks, confirmations, stale-response protection and RLS remain unchanged. Guide copy is updated in Vietnamese and English.
+
+Validation: 25 Node tests and 60 component tests passed, including an embedded-editor test that verifies no duplicate table, correct row target, close/reopen and no implicit writes. Static build and TypeScript checks passed. No cloud Job or membership mutations were performed. Signed-in browser visual checks remain pending; public release verification is recorded after publishing.
+
+Publish only path-preview; keep main-site source at `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back to preview source `15358c6e2b71c7f6869a5612dbf509a9d577e92d` to restore the separate Manage jobs page. Keep PR #43 draft and unmerged.
+
+## 2026-11-12 — Simplify Jobs into Overview / Pipeline / Manage jobs
+
+User review found that administrative buttons scattered through Master columns made the overview difficult to scan. Job openings now contains three view tabs: Job overview, Hiring Pipeline, and Admin-only Manage jobs. There is no separate sidebar destination. Overview has no creation, requirements, opening or assignment buttons. Manage jobs has one Create job button and a compact three-column list: Job, hiring status, Manage. Selecting Manage hides the list and opens one Job's editor with explicit requirements/team/opening actions. Opening is available only for Draft Jobs. Creating a Job remains one form; less common request/date/priority fields are grouped under Additional details. No fields or saved protocol values are removed.
+
+Management remains mounted while changing Job views or other workspace sections, preserving in-session creation input and partial-save retry IDs. Job-view tabs now support Arrow Left/Right and Home/End navigation with focus following selection. Existing API authorization, RLS, confirmations, mutation locks and partial-create handling are unchanged. The new management copy and guides are bilingual.
+
+Reported input defect: the outer search frame and inner input both received focus indicators. Search now uses one outer focus-within ring; the inner input has no separate outline/border/shadow. Flexible input sizing and a fixed icon prevent overlap. Keyboard focus remains visible. Job-tab focus uses an inset indicator to avoid the oversized rectangle shown in the screenshot. Admin form controls retain explicit borders and are constrained to their grid cells.
+
+Validation: 25 Node tests and 62 component tests; TypeScript/static build. New workspace integration tests use a mock session to exercise the real Job workspace and Admin editor: clear overview, third tab, one row action, one focused editor, input preservation across view/language changes and Admin/Recruiter visibility. Existing creation retry, selected-target, stale member response, search and language tests remain. No cloud Job or membership mutations were performed. Local Chromium visual verification was attempted but failed at startup with `socket() failed: Operation not permitted`; authenticated cloud visual QA remains pending. This is a visual focus fix based on the screenshots, not a claim that an unspecified backend save error was reproduced.
+
+Publish only path-preview, retaining root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back to preview source `1d4be6cf8f7db7d0ccfc2571fc02b52d0052fea8` to restore the prior inline-admin overview. Keep PR #43 draft and unmerged.
+
+## 2026-11-12 — Centered, dismissible Add candidate dialog
+
+Replaced the right-anchored details/popover in Hiring Pipeline with a native modal dialog. The entry form is centered in the viewport, with a dimmed/inert background, an initial focus on Full name, and native focus containment/restoration. A visible X/Close button, footer Cancel button, and Escape dismissal are provided. Dismissal preserves the in-session form and retry state for the same Job. Dismissal is blocked while a candidate write is pending; existing request IDs, confirmation, duplicate guards, Drive-link validation and authorization are unchanged. Underlying candidate-detail Escape handling is suspended while entry is open.
+
+The dialog is at most 760px wide and fits within the viewport, with internal scrolling for short laptop screens and a single-column layout below 640px. Form columns, labels, inputs and source selects use shrinkable widths to prevent the source field overlapping the Drive-link field. The selected Job title/reference appear inside the dialog. Close/Cancel copy follows VI/EN.
+
+Validation: 25 Node tests and 66 component tests passed; TypeScript and static export passed. New dialog tests cover opening/initial focus, X/Cancel/Escape paths, draft preservation, body-scroll restoration, blocking dismissal during a pending write, re-enabling after success, and VI/EN input preservation. A Pipeline integration test verifies the Add candidate button launches and closes the dialog. jsdom tests stub only missing native dialog methods; they do not verify browser top-layer geometry or focus trapping. Local Chromium was attempted and failed at startup with `socket() failed: Operation not permitted`. Signed-in visual checks remain pending. No cloud candidate or permission mutation was performed.
+
+Publish path-preview only, keeping root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back to preview source `fe09a2797d2495d8bcb63cbc49e1e9d1a210f0f8` to restore the old candidate popover. Keep PR #43 draft and unmerged.
+
+## 2026-11-12 — Compact Hiring Pipeline
+
+Applied the accepted compact Kanban direction. Replaced the full-width Pipeline for Job panel and native requisition select with a bounded Job switcher showing title, reference and optional department once. Its styled popover searches existing authorized Jobs by title/reference/department, supports keyboard selection, Escape, outside dismissal and selected-state announcements; typing alone never changes the Job. Returning to Overview uses its existing tab. The Job switcher does not grant access or fetch additional Jobs.
+
+The four full-Job metrics now share one low-height strip (two columns on narrow viewports). Search, source filter, result count and the shorter Add candidate action share one toolbar. The existing centered entry dialog and all its dismissal/retry guards remain. The detailed pagination/source/SLA scope note is retained.
+
+Kanban lanes are 288px wide with horizontal board scrolling rather than compressing all lanes into the viewport. All lane headers use the same title/count plus short target/status structure. Column backgrounds are lighter. Cards show the candidate name (visually capped at two lines), source once in the footer (one line), and View profile. Removed the duplicate source, Current step/stage and common In progress text; Offer approval state and non-ACTIVE application states remain visible. Full names/source/drag guidance remain in tooltips and full names in accessible labels; profile data is unchanged. No invented current-job-title field or extra backend fetch was introduced. Cards use a common minimum height with automatic content growth, not a fixed clipping height.
+
+Validation: 25 Node tests and 69 component tests, TypeScript/static export. New tests cover searchable/keyboard Job selection without implicit changes, empty searches, Escape/outside dismissal, return focus, and no duplicate card source/stage text. The workspace integration test now changes Jobs through the picker and returns via the Overview tab. Existing permission, drag/drop, source scope, timeline, VI/EN and candidate-dialog tests remain. No cloud data mutations. Local Chromium was attempted and failed with `socket() failed: Operation not permitted`; authenticated laptop/zoom visual QA remains pending, so the screenshot geometry has not been independently verified in a signed-in browser.
+
+Publish path-preview only, retaining root source `5b53cb18145e2ec03fa815fb5825c1a2a1882bef`. Roll back to preview source `7bf87a32770416deeb259addd44a225f2a1f6830` to restore the prior spacious Pipeline and keep the candidate dialog. Keep PR #43 draft and unmerged.

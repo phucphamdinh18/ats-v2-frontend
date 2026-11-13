@@ -18,6 +18,9 @@ import {
   RefreshCw,
   FileCheck2,
   Sparkles,
+  Mail,
+  Phone,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 import type { CSSProperties } from "react";
@@ -42,6 +45,9 @@ const icons = {
   collapse: PanelLeftClose,
   expand: PanelLeftOpen,
   sparkles: Sparkles,
+  mail: Mail,
+  phone: Phone,
+  location: MapPin,
 } satisfies Record<string, LucideIcon>;
 
 export default function Icon({

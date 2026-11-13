@@ -45,8 +45,8 @@ export const vi = {
   guideReviewAction: "Mở hàng chờ",
   guideAdmin: "Quản lý vị trí và đội ngũ",
   guideAdminBody:
-    "Cần tạo vị trí hoặc phân công người phụ trách? Dùng công cụ quản trị hiện có.",
-  guideAdminAction: "Mở công cụ quản trị",
+    "Vào mục Quản lý Job để tạo vị trí, cập nhật yêu cầu và phân công đội ngũ.",
+  guideAdminAction: "Tạo Job",
   guideAccess: "Chưa thấy vị trí cần tìm?",
   guideAccessBody:
     "Bạn chỉ thấy các vị trí được chia sẻ với mình. Nhờ quản trị viên kiểm tra phân công nếu cần.",
@@ -202,11 +202,11 @@ export const en: Record<keyof Copy, string> = {
   loading: "Loading your workspace…",
   loginEyebrow: "WELCOME TO YOUR WORKSPACE",
   loginTitle: "Your hiring workspace",
-  loginIntro:
-    "Manage jobs, candidates and recruiting progress in one place.",
+  loginIntro: "Manage jobs, candidates and recruiting progress in one place.",
   signIn: "Continue with Google",
   signingIn: "Taking you to Google…",
-  loginNote: "You need an ATS account activated by an administrator to sign in.",
+  loginNote:
+    "You need an ATS account activated by an administrator to sign in.",
   loginFeature1: "See which roles are hiring",
   loginFeature2: "Check resumes before adding them to ATS",
   loginFeature3: "See only what has been shared with you",
@@ -230,8 +230,8 @@ export const en: Record<keyof Copy, string> = {
   guideReviewAction: "Open review queue",
   guideAdmin: "Manage roles and your team",
   guideAdminBody:
-    "Need to create a role or assign a teammate? Use the existing admin tools.",
-  guideAdminAction: "Open admin tools",
+    "Use Manage jobs to create a role, update requirements and assign your team.",
+  guideAdminAction: "Create job",
   guideAccess: "Can’t find the role you need?",
   guideAccessBody:
     "You only see roles shared with you. Ask your workspace admin to check your assignments.",

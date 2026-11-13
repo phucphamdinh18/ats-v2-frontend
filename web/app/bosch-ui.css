@@ -1,0 +1,234 @@
+/* Shared Bosch-inspired enterprise UI for every live ATS workspace module. */
+.astryx-workspace,
+.astryx-auth {
+  --ink: #1c232b;
+  --muted: #667085;
+  --line: #d9dee5;
+  --primary: #d5001c;
+  --primary-hover: #ae0018;
+  --tint: #fae9eb;
+  --bg: #f7f8fa;
+  --white: #fff;
+  --radius: 5px;
+  color: var(--ink);
+  background: var(--bg);
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.astryx-workspace :is(button, input, select, textarea),
+.astryx-auth :is(button, input, select, textarea) { font-family: inherit; }
+.astryx-workspace :is(button, a, input, select, textarea, summary):focus-visible,
+.astryx-auth :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #f2a8b1; outline-offset: 2px; }
+.astryx-workspace .sidebar { background: #f1f3f5; border-right-color: #d9dee5; color: #344054; }
+.astryx-workspace .brand { color: #243142; }
+.astryx-workspace .brand-mark { background: #243142; border-radius: 4px; box-shadow: none; }
+.astryx-workspace .brand-caption,
+.astryx-workspace .workspace-label,
+.astryx-workspace .sidebar-help,
+.astryx-workspace .sidebar-note,
+.astryx-workspace .sidebar-collapse { color: #526079; }
+.astryx-workspace .nav { border-radius: 4px; color: #526079; }
+.astryx-workspace .nav:hover { background: #e7eaee; color: #243142; }
+.astryx-workspace .nav.active { color: #a90017; background: #fff; border-color: #d9dee5; box-shadow: inset 3px 0 #d5001c; }
+.astryx-workspace .sidebar-help { background: #fff; border-color: #d9dee5; border-radius: 4px; box-shadow: none; }
+.astryx-workspace .sidebar-help strong,
+.astryx-workspace .sidebar-help .quiet { color: #243142; }
+.astryx-workspace .main { background: var(--bg); }
+.astryx-workspace .topbar { color: #f7f8fa; background: #243142; border-bottom-color: #1c2836; box-shadow: none; }
+.astryx-workspace .breadcrumb,
+.astryx-workspace .breadcrumb strong,
+.astryx-workspace .language-picker,
+.astryx-workspace .account { color: #f1f3f5; }
+.astryx-workspace .global-search-trigger,
+.astryx-workspace .language-picker,
+.astryx-workspace .account { background: #2e3d50; border-color: #49576a; border-radius: 4px; }
+.astryx-workspace .global-search-trigger:hover,
+.astryx-workspace .language-picker:hover { background: #38485c; }
+.astryx-workspace .language-picker select { color: #fff; background: transparent; }
+.astryx-workspace .language-picker option { color: #1c232b; }
+.astryx-workspace .avatar { color: #243142; background: #fff; }
+.astryx-workspace .account-email { color: #f1f3f5; }
+.astryx-workspace .global-search-results { color: #344054; }
+.astryx-workspace main { background: var(--bg); }
+.astryx-workspace .page-heading h1,
+.astryx-workspace .panel-heading h2,
+.astryx-workspace .admin-editor-heading h2 { color: #243142; }
+.astryx-workspace .eyebrow { color: #a90017; }
+.astryx-workspace .workspace-preview-label { color: #344054; background: #e7eaee; }
+.astryx-workspace :is(.primary, .secondary, .danger, .panel, .job-view-tabs button, .job-filter-chip) { border-radius: 4px; box-shadow: none; }
+.astryx-workspace .primary,
+.astryx-auth .primary { color: #fff; background: #d5001c; border-color: #d5001c; box-shadow: none; }
+.astryx-workspace .primary:hover:not(:disabled),
+.astryx-auth .primary:hover:not(:disabled) { color: #fff; background: #ae0018; border-color: #ae0018; }
+.astryx-workspace .secondary { color: #344054; background: #fff; border-color: #cbd2db; }
+.astryx-workspace .secondary:hover:not(:disabled) { color: #a90017; background: #fae9eb; border-color: #d5001c; }
+.astryx-workspace .danger { color: #a90017; border-color: #efd0d4; background: #fff; }
+.astryx-workspace .quiet,
+.astryx-workspace .text-link { color: #a90017; }
+.astryx-workspace :is(input:not([type="checkbox"]), select, textarea) { color: #344054; background: #fff; border-color: #cbd2db; border-radius: 4px; }
+.astryx-workspace input::placeholder,
+.astryx-workspace textarea::placeholder { color: #7a8493; }
+.astryx-workspace .search { color: #667085; background: #fff; border-color: #cbd2db; border-radius: 4px; box-shadow: none; }
+.astryx-workspace .search input { background: transparent; border: 0; }
+.astryx-workspace .notice { color: #526079; background: #eef1f4; border-color: #d9dee5; border-radius: 4px; }
+.astryx-workspace .notice.error { color: #8c2030; background: #fff3f4; border-color: #f0c9cf; }
+.astryx-workspace .notice.success { color: #35694a; background: #eff7f1; border-color: #cde3d3; }
+.astryx-workspace .muted,
+.astryx-workspace .disabled-explanation { color: #667085; }
+
+/* Job overview, admin, talent and review surfaces share one compact table language. */
+.astryx-workspace .job-view-tabs { border: 0; border-bottom: 1px solid #cbd2db; border-radius: 0; background: transparent; }
+.astryx-workspace .job-view-tabs button { color: #526079; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; }
+.astryx-workspace .job-view-tabs button.active { color: #a90017; border-bottom-color: #d5001c; background: transparent; }
+.astryx-workspace .job-view-tabs button.active span { color: #243142; background: #eceff2; }
+.astryx-workspace .workspace-bento > div,
+.astryx-workspace .panel,
+.astryx-workspace .job-pipeline-toolbar,
+.astryx-workspace .pipeline .pipeline-toolbar,
+.astryx-workspace .admin-task,
+.astryx-workspace .interview-detail { background: #fff; border-color: #d9dee5; border-radius: 5px; box-shadow: none; }
+.astryx-workspace .workspace-bento > div::after { display: none; }
+.astryx-workspace .metrics small { color: #667085; }
+.astryx-workspace .metrics strong { color: #243142; }
+.astryx-workspace .workspace-master-table { min-width: 900px; }
+.astryx-workspace :is(.workspace-master-table, .admin-job-table) th { color: #465365; background: #eef1f4; border-color: #d9dee5; }
+.astryx-workspace :is(.workspace-master-table, .admin-job-table) td { color: #465365; border-color: #e5e8ec; }
+.astryx-workspace tbody tr:hover { background: #faf1f2; }
+.astryx-workspace .selected-job-row { background: #fbf1f2; }
+.astryx-workspace .selected-job-row td:first-child { box-shadow: inset 3px 0 #d5001c; }
+.astryx-workspace .job-icon,
+.astryx-workspace .talent-avatar,
+.astryx-workspace .draft-kind { color: #243142; background: #eceff2; border-radius: 4px; }
+.astryx-workspace .job-title-link { color: #243142; }
+.astryx-workspace .job-pipeline-action { color: #a90017; background: #fff; border-color: #cbd2db; border-radius: 4px; }
+.astryx-workspace .job-pipeline-action:hover { background: #fae9eb; border-color: #d5001c; }
+.astryx-workspace .job-filter-chip.filter-all.selected { color: #a90017; background: #fae9eb; border-color: #efd0d4; }
+.astryx-workspace .pipeline-job-icon { color: #243142; background: #eceff2; border-radius: 4px; }
+.astryx-workspace .pipeline-job-trigger:hover { background: #f7f8fa; border-color: #d9dee5; }
+.astryx-workspace .pipeline-job-menu .job-option.active,
+.astryx-workspace .pipeline-job-menu .job-option:hover { background: #fae9eb; }
+.astryx-workspace .pipeline-job-menu .job-option[aria-selected="true"] { color: #a90017; }
+.astryx-workspace .admin-tabs [aria-selected="true"] { color: #a90017; border-bottom-color: #d5001c; }
+.astryx-workspace .admin-extra-fields > summary { color: #a90017; }
+.astryx-workspace .role { color: #344054; background: #eceff2; border-color: #d9dee5; border-radius: 4px; }
+.astryx-workspace .metric-icon.purple { color: #344054; background: #eceff2; }
+.astryx-workspace .job-pipeline-toolbar { padding: 12px; border: 0; }
+.astryx-workspace .job-pipeline-toolbar select { border-radius: 4px; }
+.astryx-workspace .panel-heading,
+.astryx-workspace .talent-heading,
+.astryx-workspace .review-heading,
+.astryx-workspace .admin-console-heading,
+.astryx-workspace .admin-editor-heading { background: #fff; border-color: #d9dee5; }
+.astryx-workspace :is(.talent-heading, .review-heading, .admin-console-heading) h2 { color: #243142; }
+.astryx-workspace .admin-task { padding: 16px; }
+.astryx-workspace .admin-job-actions { border-color: #d9dee5; }
+.astryx-workspace .admin-status-filter { color: #526079; }
+.astryx-workspace .admin-members,
+.astryx-workspace .selected-job-preview,
+.astryx-workspace .admin-security-note { border-color: #d9dee5; background: #f7f8fa; color: #526079; }
+.astryx-workspace .talent-grid,
+.astryx-workspace .review-grid { background: #fff; }
+.astryx-workspace .talent-item,
+.astryx-workspace .draft-item { color: #465365; background: #fff; border-color: #e5e8ec; }
+.astryx-workspace .talent-item.selected,
+.astryx-workspace .draft-item.selected { background: #fbf1f2; border-color: #efd0d4; box-shadow: inset 3px 0 #d5001c; }
+.astryx-workspace .talent-item:hover,
+.astryx-workspace .draft-item:hover { background: #faf1f2; }
+.astryx-workspace .talent-profile,
+.astryx-workspace .detail { color: #344054; background: #fff; }
+.astryx-workspace .talent-documents a,
+.astryx-workspace .source-link { color: #a90017; }
+.astryx-workspace :is(.add-to-job, .talent-documents li, .talent-applications li, .review-form, .review-steps) { background: #f7f8fa; border-color: #d9dee5; border-radius: 4px; }
+.astryx-workspace .review-steps li[aria-current="step"] { color: #a90017; }
+.astryx-workspace .draft-kind { color: #344054; }
+.astryx-workspace .badge { color: #344054; background: #eef1f4; border-color: #d9dee5; border-radius: 4px; }
+.astryx-workspace .badge.green { color: #35694a; background: #eff7f1; border-color: #cde3d3; }
+.astryx-workspace .badge.amber-badge { color: #80602b; background: #fbf5e8; border-color: #ecdcb5; }
+.astryx-workspace .badge.blue { color: #3d5e8d; background: #eef3f9; border-color: #d5e0ee; }
+
+/* Keep the operational pipeline intact while matching the reference layout. */
+.astryx-workspace .pipeline { margin-top: 18px; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.astryx-workspace .pipeline .pipeline-heading { background: transparent; border: 0; padding: 0 0 14px; }
+.astryx-workspace .pipeline .pipeline-heading h2 { color: #243142; }
+.astryx-workspace .pipeline .pipeline-toolbar { background: #fff; border-color: #d9dee5; border-radius: 5px; }
+.astryx-workspace .pipeline-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.astryx-workspace .pipeline-layout [hidden] { display: none !important; }
+.astryx-workspace .pipeline-layout.has-detail { grid-template-columns: minmax(0, 1fr) minmax(320px, 360px); }
+.astryx-workspace .pipeline-table-view,
+.astryx-workspace .pipeline-grid { grid-column: 1; min-width: 0; }
+.astryx-workspace .pipeline-stage-summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; overflow: hidden; border: 1px solid #d9dee5; border-radius: 5px; background: #fff; }
+.astryx-workspace .pipeline-stage-summary > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 68px; padding: 8px; border: 0; border-right: 1px solid #d9dee5; color: #243142; background: #fff; }
+.astryx-workspace .pipeline-stage-summary > button:last-child { border-right: 0; }
+.astryx-workspace .pipeline-stage-summary > button.active { background: #fae9eb; box-shadow: inset 0 -3px #d5001c; }
+.astryx-workspace .pipeline-stage-summary small { color: #526079; font-size: 11px; }
+.astryx-workspace .pipeline-stage-summary strong { color: #243142; font-size: 20px; }
+.astryx-workspace .pipeline-table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid #d9dee5; border-bottom: 0; background: #fff; }
+.astryx-workspace .pipeline-stage-filters,
+.astryx-workspace .pipeline-view-switch { display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; }
+.astryx-workspace .pipeline-stage-filters button,
+.astryx-workspace .pipeline-view-switch button { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; color: #526079; background: transparent; white-space: nowrap; font-size: 11px; }
+.astryx-workspace .pipeline-stage-filters button span { padding: 1px 6px; border-radius: 3px; color: #344054; background: #eef1f4; font-size: 10px; }
+.astryx-workspace .pipeline-stage-filters button.active,
+.astryx-workspace .pipeline-view-switch button.active { color: #a90017; background: #fae9eb; border-color: #efd0d4; }
+.astryx-workspace .application-table-scroll { overflow: auto; border: 1px solid #d9dee5; background: #fff; }
+.astryx-workspace .application-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: fixed; }
+.astryx-workspace .application-table th { padding: 9px 10px; border-bottom: 1px solid #d9dee5; color: #465365; background: #eef1f4; text-align: left; text-transform: uppercase; letter-spacing: .025em; font-size: 10px; }
+.astryx-workspace .application-table td { padding: 8px 10px; border-bottom: 1px solid #e8ebef; color: #465365; font-size: 11px; overflow-wrap: anywhere; }
+.astryx-workspace .application-table tr:hover,
+.astryx-workspace .application-table tr.selected { background: #fbf1f2; }
+.astryx-workspace .application-table tr.selected td:first-child { box-shadow: inset 3px 0 #d5001c; }
+.astryx-workspace .application-table-candidate { display: flex; align-items: center; gap: 8px; padding: 0; border: 0; color: #243142; background: transparent; text-align: left; }
+.astryx-workspace .application-table .application-avatar { width: 28px; height: 28px; border-radius: 4px; color: #243142; background: #eef1f4; font-size: 10px; }
+.astryx-workspace .application-stage-pill { display: inline-flex; padding: 3px 6px; border: 1px solid #d9dee5; border-radius: 3px; color: #465365; background: #f7f8fa; white-space: nowrap; }
+.astryx-workspace .application-stage-pill.stage-interview { color: #765d22; background: #fcf5e8; border-color: #ead9ae; }
+.astryx-workspace .application-stage-pill.stage-hired { color: #35694a; background: #eff7f1; border-color: #cde3d3; }
+.astryx-workspace .application-stage-pill.stage-rejected { color: #8c2030; background: #fff3f4; border-color: #f0c9cf; }
+.astryx-workspace .application-table-empty { padding: 24px !important; color: #667085 !important; text-align: center; }
+.astryx-workspace .pipeline-layout .application-detail { position: static; inset: auto; z-index: auto; grid-column: 2; grid-row: 1 / span 3; width: auto; max-height: calc(100dvh - 116px); min-width: 0; margin: 0; padding: 16px; overflow: auto; border: 1px solid #d9dee5; border-radius: 5px; background: #fff; box-shadow: none; }
+.astryx-workspace .pipeline-layout .application-detail .panel-heading { padding: 0 0 12px; border-bottom: 1px solid #e5e8ec; }
+.astryx-workspace .pipeline-grid { grid-auto-columns: minmax(225px, 1fr); padding: 0 0 12px; }
+.astryx-workspace .stage { border-radius: 4px; box-shadow: none; }
+
+/* Interview, schedule and candidate entry dialogs. */
+.astryx-workspace .interview-workspace { color: #344054; }
+.astryx-workspace .interview-columns { gap: 0; border: 1px solid #d9dee5; background: #fff; }
+.astryx-workspace .interview-list { background: #f7f8fa; border-color: #d9dee5; }
+.astryx-workspace .interview-item { border-radius: 4px; }
+.astryx-workspace .interview-item.selected { color: #a90017; background: #fae9eb; border-color: #efd0d4; }
+.astryx-workspace .interview-detail { border-radius: 0; box-shadow: none; }
+.astryx-workspace .candidate-entry-dialog { border: 1px solid #d9dee5; border-radius: 5px; box-shadow: 0 16px 45px #1c232b30; }
+.astryx-workspace .candidate-entry-dialog::backdrop { background: #1c232b80; }
+
+/* Sign-in uses the same brand system without altering auth behavior. */
+.astryx-auth.auth-screen { color: #243142; background: #f7f8fa; }
+.astryx-auth .auth-brand-panel { background: #f1f3f5; border-right-color: #d9dee5; }
+.astryx-auth .auth-brand-panel::after { display: none; }
+.astryx-auth .auth-brand,
+.astryx-auth .auth-brand-copy h1,
+.astryx-auth .auth-login-content h2 { color: #243142; }
+.astryx-auth .auth-brand-mark { color: #fff; background: #243142; border-radius: 4px; box-shadow: none; }
+.astryx-auth :is(.auth-brand-copy .auth-kicker, .auth-kicker) { color: #a90017; }
+.astryx-auth .auth-welcome-icon { color: #a90017; border-color: #efd0d4; background: #fae9eb; }
+.astryx-auth .auth-google-button { border-radius: 4px; background: #d5001c; box-shadow: none; }
+.astryx-auth .auth-google-button:hover:not(:disabled) { background: #ae0018; box-shadow: none; }
+.astryx-auth .auth-scope-note { color: #465365; border-color: #d9dee5; background: #f1f3f5; }
+.astryx-auth .auth-scope-icon { color: #243142; background: #e7eaee; }
+
+@media (max-width: 1100px) {
+  .astryx-workspace .pipeline-layout.has-detail { grid-template-columns: minmax(0, 1fr); }
+  .astryx-workspace .pipeline-layout .application-detail { grid-column: 1; grid-row: auto; max-height: none; }
+  .astryx-workspace .workspace-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .astryx-workspace .topbar { background: #243142; }
+  .astryx-workspace main { padding: 18px 14px 24px; }
+  .astryx-workspace .pipeline-table-toolbar { align-items: flex-start; flex-direction: column; }
+  .astryx-workspace .pipeline-stage-summary { grid-template-columns: repeat(5, minmax(88px, 1fr)); overflow-x: auto; }
+  .astryx-workspace .pipeline-stage-filters { width: 100%; }
+  .astryx-workspace .application-table { min-width: 760px; }
+  .astryx-workspace .workspace-bento { grid-template-columns: 1fr; }
+  .astryx-workspace .interview-columns,
+  .astryx-workspace .talent-grid,
+  .astryx-workspace .review-grid { grid-template-columns: 1fr; }
+}

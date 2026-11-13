@@ -9,6 +9,9 @@
     "test": "node --import tsx --test tests/*.test.ts tests/pages.test.mjs && vitest run"
   },
   "dependencies": {
+    "@astryxdesign/core": "^0.7.13",
+    "@astryxdesign/theme-neutral": "^0.7.13",
+    "@stylexjs/stylex": "^0.19.1",
     "@supabase/supabase-js": "2.118.0",
     "lucide-react": "^0.468.0",
     "next": "16.4.1",

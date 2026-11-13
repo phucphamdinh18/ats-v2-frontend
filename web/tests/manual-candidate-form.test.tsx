@@ -23,7 +23,7 @@ describe("manual candidate form", () => {
     api.create.mockRejectedValueOnce(new Error("Mạng lỗi")).mockResolvedValueOnce({ created: true });
     render(<ManualCandidateForm job={openJob} onCreated={vi.fn(async () => {})} onSessionLost={vi.fn()} />);
     await complete(); fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
-    await screen.findByText("Mạng lỗi"); fireEvent.click(screen.getByRole("button", { name: "Thử lại với cùng request_id" }));
+    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên."); fireEvent.click(screen.getByRole("button", { name: "Thử thêm lại" }));
     await waitFor(() => expect(api.create).toHaveBeenCalledTimes(2));
     expect(api.create.mock.calls[0][0].requestId).toBe(api.create.mock.calls[1][0].requestId);
   });
@@ -55,9 +55,9 @@ describe("candidate request identity", () => {
     api.create.mockRejectedValueOnce(new Error("Network uncertain")).mockResolvedValueOnce({ created: true });
     render(<ManualCandidateForm job={openJob} onCreated={vi.fn(async () => {})} onSessionLost={vi.fn()} />);
     await complete(); fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
-    await screen.findByText("Network uncertain");
+    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
-    expect(screen.queryByRole("button", { name: "Thử lại với cùng request_id" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Thử thêm lại" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
     await waitFor(() => expect(api.create).toHaveBeenCalledTimes(2));
     expect(api.create.mock.calls[0][0].requestId).not.toBe(api.create.mock.calls[1][0].requestId);
@@ -69,8 +69,8 @@ describe("candidate request identity", () => {
     api.create.mockRejectedValueOnce(new ApiError("Conflict", 409)).mockResolvedValueOnce({ created: true });
     render(<ManualCandidateForm job={openJob} onCreated={vi.fn(async () => {})} onSessionLost={vi.fn()} />);
     await complete(); fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
-    await screen.findByText("Conflict");
-    expect(screen.queryByRole("button", { name: "Thử lại với cùng request_id" })).toBeNull();
+    await screen.findByText("Chưa thực hiện được thao tác này. Bạn thử lại nhé. Nếu vẫn gặp lỗi, hãy liên hệ quản trị viên.");
+    expect(screen.queryByRole("button", { name: "Thử thêm lại" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Thêm vào pipeline" }));
     await waitFor(() => expect(api.create).toHaveBeenCalledTimes(2));
     expect(api.create.mock.calls[0][0].requestId).not.toBe(api.create.mock.calls[1][0].requestId);

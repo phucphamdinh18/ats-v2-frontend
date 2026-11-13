@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./workspace-theme.css";
+import "./bosch-ui.css";
+import "./bosch-reference-overrides.css";
 export const metadata: Metadata = {
   title: "ATS · Tuyển dụng",
   description: "Không gian tuyển dụng ATS V2",
