@@ -10,6 +10,7 @@ import ApplicationPipeline from "./application-pipeline";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
+import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
@@ -687,7 +688,7 @@ export default function Workspace() {
               {tab === "talent" && reviewAllowed ? (
                 <TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} />
               ) : tab === "interviews" && allowed ? (
-                <RecruitmentOperations mode="interviews" jobs={access.jobs} onAccessLost={invalidate} />
+                <InterviewWorklist onAccessLost={invalidate} />
               ) : tab === "offers" && reviewAllowed ? (
                 <RecruitmentOperations mode="offers" jobs={access.jobs} onAccessLost={invalidate} />
               ) : tab === "jd" && reviewAllowed ? (
