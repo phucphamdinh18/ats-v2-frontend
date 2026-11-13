@@ -47,6 +47,8 @@ function message(error: unknown) {
 
 export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
   const [items, setItems] = useState<Application[]>([]);
+  // List is the primary Bosch enterprise workspace. Existing Kanban remains available.
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
   const [state, setState] = useState<State>("loading");
@@ -255,7 +257,17 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <div><span className="eyebrow">HIRING PIPELINE</span><h2>Pipeline tuyển dụng</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> {job.title}</p></div>
       <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
     </div>
+    <div className="enterprise-stage-summary" aria-label="Tổng hợp giai đoạn trên trang đang xem">
+      {stages.map(([stage, applications]) => <div className="enterprise-stage-cell" key={stage}>
+        <span>{STAGE_LABEL[stage] || stage}</span>
+        <strong>{applications.length}</strong>
+      </div>)}
+    </div>
     <div className="pipeline-toolbar">
+      <div className="enterprise-view-toggle" role="group" aria-label="Chế độ xem ứng viên">
+        <button type="button" className={viewMode === "list" ? "active" : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>Danh sách</button>
+        <button type="button" className={viewMode === "kanban" ? "active" : ""} aria-pressed={viewMode === "kanban"} onClick={() => setViewMode("kanban")}>Kanban</button>
+      </div>
       {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
       <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
       {state === "ready" && <span className="muted">{items.length} ứng viên đang hiển thị</span>}
@@ -267,7 +279,24 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {offerError && canViewOffers && <div className="notice error" role="alert">Không tải được dữ liệu Offer: {offerError}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && !offerError && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
     {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
-    {(state === "ready" || state === "empty") && <div className="pipeline-grid">
+    {(state === "ready" || state === "empty") && viewMode === "list" && <div className="enterprise-candidate-scroll">
+      <table className="enterprise-candidate-table">
+        <thead><tr><th>Ứng viên</th><th>Giai đoạn</th><th>Trạng thái</th><th>Nguồn</th><th>Job</th></tr></thead>
+        <tbody>
+          {stages.flatMap(([stage, applications]) => applications.map((application) => (
+            <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? "selected" : ""}>
+              <td><button className="enterprise-candidate-link" type="button" onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
+              <td><span className="enterprise-stage-label">{STAGE_LABEL[stage] || stage}</span></td>
+              <td>{application.status === "ACTIVE" ? "Đang xử lý" : application.status}</td>
+              <td>{application.source || "—"}</td>
+              <td>{job.job_code || "—"}</td>
+            </tr>
+          )))}
+        </tbody>
+      </table>
+      {!items.length && !offerItems.length && <p className="empty-stage">Chưa có ứng viên ở trang này.</p>}
+    </div>}
+    {(state === "ready" || state === "empty") && viewMode === "kanban" && <div className="pipeline-grid">
       {stages.map(([stage, applications]) => {
         const allowedTargets = canManageApplications && dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
         const acceptsDrop = allowedTargets.includes(stage as "NEW" | "SCREEN" | "INTERVIEW") && dragging?.status === "ACTIVE";
@@ -300,7 +329,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       })}
     </div>}
     {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
-    {selected && <aside className="application-detail" aria-label="Chi tiết ứng viên">
+    {selected && <aside className="application-detail enterprise-candidate-detail" aria-label="Chi tiết ứng viên">
       <div className="panel-heading"><h2>Chi tiết ứng viên</h2><button className="quiet" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>Đóng</button></div>
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
