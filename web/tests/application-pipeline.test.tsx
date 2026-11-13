@@ -27,8 +27,12 @@ vi.mock("../lib/supabase", () => ({
 const job = { id: "job-1", job_code: "TEST-1", title: "Test only job", status: "OPEN" };
 const application = (id: string, stage = "NEW") => ({ application_id: id, candidate_id: `candidate-${id}`, candidate_name: id, stage, status: "ACTIVE", source: "TEST ONLY", created_at: "2026-01-01T00:00:00Z" });
 const detail = (id: string, stage = "NEW") => ({ application: application(id, stage), events: [], event_count: 0, limit: 50, offset: 0 });
-function renderPipeline(canManageApplications = true) {
-  return render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} canManageApplications={canManageApplications} />);
+function renderPipeline(canManageApplications = true, view: "kanban" | "list" = "kanban") {
+  const result = render(<ApplicationPipeline job={job} onSessionLost={vi.fn()} canManageApplications={canManageApplications} />);
+  // Legacy drag-and-drop tests exercise the retained Kanban mode.
+  // The actual product defaults to the new list workspace.
+  if (view === "kanban") fireEvent.click(screen.getByRole("button", { name: "Kanban" }));
+  return result;
 }
 
 beforeEach(() => {
@@ -41,6 +45,19 @@ beforeEach(() => {
   vi.stubGlobal("crypto", { randomUUID: randomUuidMock });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+describe("Bosch enterprise list view", () => {
+  it("uses the compact candidate table by default and opens detail", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
+    api.detail.mockResolvedValue(detail("Ada"));
+    renderPipeline(true, "list");
+    const name = await screen.findByRole("button", { name: "Ada" });
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Giai đoạn NEW" })).toBeNull();
+    fireEvent.click(name);
+    await screen.findByRole("heading", { name: "Lịch sử" });
+  });
+});
 
 describe("application pipeline", () => {
   it("shows explicit forbidden state rather than an empty list", async () => {
