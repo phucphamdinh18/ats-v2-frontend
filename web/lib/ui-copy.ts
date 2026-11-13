@@ -461,10 +461,11 @@ export const uiCopy: Record<string, readonly [string, string]> = {
   "Lọc nguồn ứng viên": ["Lọc nguồn ứng viên", "Filter candidates by source"],
   "Tất cả nguồn": ["Tất cả nguồn", "All sources"],
   "hồ sơ đang hiển thị": ["hồ sơ đang hiển thị", "applications shown"],
-  "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.":
+  "Ngày ứng tuyển": ["Ngày ứng tuyển", "Application date"],
+  "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.":
     [
-      "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.",
-      "The board is paginated; source filters apply to the current page. Overview totals cover the full job. Stage targets are for reference.",
+      "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.",
+      "Candidates are shown in pages; source filters apply to the current page. Overview totals cover the full job. Stage time targets are for reference.",
     ],
   "Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.":
     [

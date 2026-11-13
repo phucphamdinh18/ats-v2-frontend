@@ -523,7 +523,7 @@ export default function ApplicationPipeline({
       </div>
       <p className="pipeline-scope-note">
         {tr(
-          "Bảng hiển thị theo từng trang; lọc nguồn áp dụng cho trang hiện tại. Tổng quan lấy từ toàn bộ Job. Mục tiêu từng vòng chỉ để tham khảo.",
+          "Danh sách ứng viên được chia trang; bộ lọc nguồn áp dụng cho trang đang xem. Số liệu tổng quan tính trên toàn bộ Job. Mục tiêu thời gian từng vòng chỉ để tham khảo.",
         )}
       </p>
       {!canManageApplications && (
@@ -605,6 +605,15 @@ export default function ApplicationPipeline({
           </div>
           <div className="application-table-scroll">
             <table className="application-table">
+              <colgroup>
+                <col style={{ width: "25%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "17%" }} />
+                <col style={{ width: "12%" }} />
+              </colgroup>
               <thead><tr><th>{tr("Ứng viên")}</th><th>{tr("Giai đoạn")}</th><th>{tr("Vòng phỏng vấn")}</th><th>{tr("Matching")}</th><th>{tr("Kinh nghiệm")}</th><th>{tr("Nguồn")}</th><th>{tr("Ngày ứng tuyển")}</th></tr></thead>
               <tbody>{visibleTableRows.map(({ stage, application }) => (
                 <tr key={application.application_id} className={selected?.application_id === application.application_id ? "selected" : ""} aria-selected={selected?.application_id === application.application_id}>
