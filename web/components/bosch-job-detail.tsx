@@ -35,7 +35,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
   return <section className="bosch-job-page" aria-label={`Job detail: ${job.title}`}>
-    <div className="bosch-breadcrumb"><button type="button" onClick={onBack}>Jobs</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
+    <div className="bosch-breadcrumb"><button type="button" aria-label="Quay lại Bảng Master" onClick={onBack}>Jobs</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
     <div className="bosch-job-title-row">
       <h1>{job.title}</h1>
       <span className={`bosch-status ${job.status === "OPEN" ? "is-open" : ""}`}>{job.status === "OPEN" ? "Open" : job.status === "DRAFT" ? "Draft" : job.status}</span>
