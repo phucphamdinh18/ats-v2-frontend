@@ -3059,3 +3059,54 @@ th { padding: 11px 18px; }
  .shell .bosch-offer-stages span { font-size: 9px; }
  .shell .bosch-offer-stages strong { font-size: 17px; }
 }
+
+
+/* Bosch Job Openings module — replaces the legacy oversized dashboard and numbered master tabs. */
+.shell main#main-content:has(.bosch-master) { background:#fff; padding:0 22px 28px; }
+.shell .bosch-master { padding:18px 0 26px; font-family:Arial,"Helvetica Neue",sans-serif; color:#171d25; font-size:12px; }
+.shell .bosch-master-header { padding:0 0 16px; }
+.shell .bosch-master-header h1 { margin:8px 0 5px; font-weight:750; font-size:25px; letter-spacing:-.5px; }
+.shell .bosch-master-header p { margin:0; color:#667184; font-size:12px; }
+.shell .bosch-master-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid #dce1e7; border-radius:5px; overflow:hidden; margin:0 0 16px; background:#fff; }
+.shell .bosch-master-summary div { text-align:center; padding:10px 8px; border-right:1px solid #dce1e7; }
+.shell .bosch-master-summary div:last-child { border:0; }
+.shell .bosch-master-summary span { display:block; font-size:11px; color:#394658; font-weight:600; }
+.shell .bosch-master-summary strong { display:block; font-size:22px; font-weight:700; margin:3px 0 0; }
+.shell .bosch-master-panel { border:1px solid #dce1e7; background:white; border-radius:5px; min-width:0; overflow:hidden; }
+.shell .bosch-master-panel-head { display:flex; align-items:center; flex-wrap:wrap; gap:12px; justify-content:space-between; padding:14px 15px 12px; }
+.shell .bosch-master-panel-head h2 { font-size:17px; margin:0; font-weight:700; }
+.shell .bosch-master-panel-head h2 span { color:#526074; font-size:14px; font-weight:500; }
+.shell .bosch-master-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.shell .bosch-master-search, .shell .bosch-master-select { display:flex; align-items:center; gap:7px; background:white; border:1px solid #cfd6df; border-radius:4px; height:34px; padding:0 10px; }
+.shell .bosch-master-search { width:245px; }
+.shell .bosch-master-search input { height:30px; width:100%; min-width:0; border:0; padding:0; background:transparent; font-size:11px; box-shadow:none; }
+.shell .bosch-master-select select { background:white; border:0; min-height:30px; padding:0; font-size:11px; }
+.shell .bosch-master-table-scroll { overflow-x:auto; width:100%; }
+.shell .bosch-master-table { width:100%; min-width:960px; border-collapse:collapse; table-layout:auto; font-size:11px; }
+.shell .bosch-master-table th { text-align:left; background:#f6f7f9; color:#273242; white-space:nowrap; padding:11px 10px; border-top:1px solid #e1e5ea; border-bottom:1px solid #dce2e8; font-size:11px; font-weight:700; }
+.shell .bosch-master-table td { padding:10px; border-bottom:1px solid #e5e9ed; vertical-align:middle; color:#2b3542; }
+.shell .bosch-master-table tr:last-child td { border-bottom:none; }
+.shell .bosch-master-table tr.selected,.shell .bosch-master-table tbody tr:hover { background:#fff1f3; }
+.shell .bosch-master-job-title { display:flex; gap:8px; align-items:center; min-width:240px; }
+.shell .bosch-master-job-title svg { color:#c8102e; flex-shrink:0; }
+.shell .bosch-master-job-title button { color:#1558b0; font-size:12px; text-align:left; font-weight:700; border:0; background:transparent; padding:0; }
+.shell .bosch-master-job-title button:hover,.shell .bosch-master-job-code:hover { text-decoration:underline; }
+.shell .bosch-master-job-code { margin:6px 0 0 25px; border:0; background:none; color:#667388; padding:0; font-size:10px; }
+.shell .bosch-master-state { display:inline-block; border-radius:12px; background:#eceef1; padding:3px 10px; font-size:10px; }
+.shell .bosch-master-state.state-open { color:#226a3a; background:#e4f5e7; }
+.shell .bosch-master-state.state-draft { color:#845d1a; background:#fff3d8; }
+.shell .bosch-master-funnel { display:flex; align-items:center; gap:0; }
+.shell .bosch-master-funnel span { padding:2px 6px; min-width:25px; text-align:center; border-right:1px solid #dfe4e9; }
+.shell .bosch-master-funnel span:last-child { border-right:0; }
+.shell .bosch-master-open { display:inline-flex; gap:5px; align-items:center; padding:6px 8px; background:#fff; color:#1558b0; border:1px solid #cfd6df; border-radius:4px; font-size:11px; }
+.shell .bosch-master-open:hover { background:#f6f8fb; }
+.shell .bosch-master-empty { text-align:center; padding:28px 10px; color:#647287; }
+.shell .bosch-master-empty button { color:#1558b0; border:0; background:transparent; padding:6px; }
+.shell .bosch-master-footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; font-size:11px; padding:11px 15px; border-top:1px solid #dce2e8; color:#5e6c7f; }
+@media(max-width:760px){
+ .shell main#main-content:has(.bosch-master){ padding:0 10px 20px; }
+ .shell .bosch-master-summary strong{font-size:18px}
+ .shell .bosch-master-panel-head{align-items:stretch}
+ .shell .bosch-master-controls{width:100%}
+ .shell .bosch-master-search{flex:1;min-width:145px}
+}
