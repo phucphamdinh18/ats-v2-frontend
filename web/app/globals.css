@@ -2950,3 +2950,27 @@ th { padding: 11px 18px; }
  .shell .bosch-section-title { padding: 10px; }
  .shell .bosch-summary-filters { display: none; }
 }
+
+
+/* Candidate detail defaults and persisted Interview rounds */
+.shell .bosch-job-page .bosch-candidate-placeholder {
+  grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 72px;
+  padding: 20px; border: 1px solid #d9dfe6; border-radius: 5px; background: #fff;
+  min-height: 270px;
+}
+.shell .bosch-candidate-placeholder h2 { font-size: 18px; margin-bottom: 12px; }
+.shell .bosch-candidate-placeholder p { font-size: 12px; line-height: 1.65; color: #687586; }
+.shell .bosch-progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.shell .bosch-progress-head h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+.shell .bosch-progress-head span { font-size: 10px; color: #475369; }
+.shell .bosch-round-timeline { padding: 0; list-style: none; margin: 3px 0 12px; }
+.shell .bosch-round-timeline li { display: flex; align-items: flex-start; gap: 10px; padding: 0 0 13px; }
+.shell .bosch-round-timeline li svg { flex: 0 0 auto; }
+.shell .bosch-round-timeline .completed { color: #128344; }
+.shell .bosch-round-timeline .cancelled { color: #ad1c2d; }
+.shell .bosch-round-timeline .scheduled { color: #68778c; }
+.shell .bosch-round-timeline strong { font-size: 11px; font-weight: 700; display: block; }
+.shell .bosch-round-timeline span,.shell .bosch-round-timeline small { display: block; color: #4f5c6c; font-size: 10px; margin-top: 3px; }
+@media (max-width: 900px) {
+  .shell .bosch-job-page .bosch-candidate-placeholder { grid-column: 1; grid-row: auto; position: static; }
+}
