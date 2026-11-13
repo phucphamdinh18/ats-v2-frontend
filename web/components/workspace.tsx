@@ -8,6 +8,7 @@ import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import BoschJobDetail from "./bosch-job-detail";
+import BoschModuleLayout from "./bosch-module-layout";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
@@ -649,7 +650,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <div className={`page-heading ${tab === "jobs" && jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`}>
+              <div className={`page-heading ${((tab === "jobs" && jobView === "pipeline") || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
                   <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
@@ -678,7 +679,7 @@ export default function Workspace() {
                   </button>
                 </div>
               </div>
-              <div className={`role-line ${tab === "jobs" && jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`}>
+              <div className={`role-line ${((tab === "jobs" && jobView === "pipeline") || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
                 {access.roles.map((role) => (
                   <span className="role" key={role}>
                     {roleLabel(role, t)}
@@ -686,11 +687,11 @@ export default function Workspace() {
                 ))}
               </div>
               {tab === "talent" && reviewAllowed ? (
-                <TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} />
+                <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
-                <InterviewWorklist onAccessLost={invalidate} />
+                <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "offers" && reviewAllowed ? (
-                <RecruitmentOperations mode="offers" jobs={access.jobs} onAccessLost={invalidate} />
+                <BoschModuleLayout module="offers"><RecruitmentOperations mode="offers" jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "jd" && reviewAllowed ? (
                 <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
               ) : tab === "admin" && adminAllowed ? (
