@@ -38,3 +38,12 @@ Create a **new presentation component tree**, rather than continuing to patch th
 
 ## Non-acceptance
 A green CI run or a screenshot that merely resembles the approved color scheme is **not** completion. PR #44 must remain Draft until complete visual/functional QA.
+
+## 2026-11-14 — Jobs Master replacement, PR #44
+
+- User screenshot confirmed `Job Openings → Bảng Master` was still rendered from the legacy dashboard-like layout.
+- Replaced the legacy master view with `web/components/bosch-jobs-master.tsx`, an independent compact enterprise table and four-cell summary. Removed oversized cards, 1.1/1.2 master tabs from visible navigation, multi-line numbered field headers and old action presentation.
+- Job table displays only previously authorized `access.jobs`: title, ID, BU, location, status, actual backend metrics, priority and Pipeline action. Search/status remain frontend filters. Clicking Job ID or Pipeline opens the independent Bosch Job Detail; stage logic is not touched.
+- Backend schema, RLS, Edge Functions, APIs, request IDs, interview/offer approval logic are unchanged.
+- Release safeguards: do not merge/destroy old code until signed-off screenshot QA; CI run after the last change must pass, Supabase E2E and authenticated browser visual QA remain separate required gates. Green PR build does **not** automatically publish `/preview/`.
+- Production root source SHA is not yet independently confirmed from live `release.json`; do not dispatch `path-preview` using a guessed default `production_ref`.
