@@ -15,19 +15,16 @@ import {
 import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
+import { useLanguage } from "./language";
 
 const PAGE_SIZE = 25;
 const PIPELINE_STAGES = ["NEW", "SCREEN", "INTERVIEW", "HIRED", "REJECTED"] as const;
 const NEXT_STAGE: Record<string, "SCREEN" | "INTERVIEW" | undefined> = { NEW: "SCREEN", SCREEN: "INTERVIEW" };
 const PREVIOUS_STAGE: Record<string, "NEW" | "SCREEN" | undefined> = { SCREEN: "NEW", INTERVIEW: "SCREEN" };
-const STAGE_LABEL: Record<string, string> = {
-  NEW: "Mới ứng tuyển",
-  SCREEN: "Sơ loại",
-  INTERVIEW: "Phỏng vấn",
-  OFFER: "Offer",
-  HIRED: "Đã tuyển",
-  REJECTED: "Từ chối",
-};
+const STAGE_LABELS = {
+  vi: { NEW: "Mới ứng tuyển", SCREEN: "Sơ loại", INTERVIEW: "Phỏng vấn", OFFER: "Đề nghị tuyển dụng", HIRED: "Đã tuyển", REJECTED: "Từ chối" },
+  en: { NEW: "New application", SCREEN: "Screening", INTERVIEW: "Interview", OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected" },
+} as const;
 // Interim round limits from the supplied UI reference. These are presentation
 // targets; the TA-SLA Master file defines requisition-level targets separately.
 const ROUND_SLA_DAYS: Record<string, number> = {
@@ -46,6 +43,9 @@ function message(error: unknown) {
 }
 
 export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
+  const { locale } = useLanguage();
+  const stageLabel = (stage: string) => STAGE_LABELS[locale][stage as keyof typeof STAGE_LABELS.vi] || stage;
+  const en = locale === "en";
   const [items, setItems] = useState<Application[]>([]);
   // List is the primary Bosch enterprise workspace. Existing Kanban remains available.
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
@@ -254,23 +254,23 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
 
   return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
     <div className="pipeline-heading">
-      <div><span className="eyebrow">HIRING PIPELINE</span><h2>Pipeline tuyển dụng</h2><p>{job.job_code || "Job chưa có mã"} <span aria-hidden="true">·</span> {job.title}</p></div>
-      <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? "Đang tuyển" : job.status === "DRAFT" ? "Bản nháp" : job.status}</span>
+      <div><span className="eyebrow">{en ? "HIRING PIPELINE" : "QUY TRÌNH TUYỂN DỤNG"}</span><h2>{en ? "Hiring pipeline" : "Pipeline tuyển dụng"}</h2><p>{job.job_code || (en ? "No job reference" : "Vị trí chưa có mã")} <span aria-hidden="true">·</span> {job.title}</p></div>
+      <span className={`badge ${job.status === "OPEN" ? "green" : "amber-badge"}`}><span className="status-dot" />{job.status === "OPEN" ? (en ? "Hiring" : "Đang tuyển") : job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : job.status}</span>
     </div>
-    <div className="enterprise-stage-summary" aria-label="Tổng hợp giai đoạn trên trang đang xem">
+    <div className="enterprise-stage-summary" aria-label={en ? "Stage counts for this page" : "Số hồ sơ theo giai đoạn trên trang này"}>
       {stages.map(([stage, applications]) => <div className="enterprise-stage-cell" key={stage}>
-        <span>{STAGE_LABEL[stage] || stage}</span>
+        <span>{stageLabel(stage)}</span>
         <strong>{applications.length}</strong>
       </div>)}
     </div>
     <div className="pipeline-toolbar">
-      <div className="enterprise-view-toggle" role="group" aria-label="Chế độ xem ứng viên">
-        <button type="button" className={viewMode === "list" ? "active" : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>Danh sách</button>
+      <div className="enterprise-view-toggle" role="group" aria-label={en ? "Candidate view" : "Chế độ xem ứng viên"}>
+        <button type="button" className={viewMode === "list" ? "active" : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>{en ? "List" : "Danh sách"}</button>
         <button type="button" className={viewMode === "kanban" ? "active" : ""} aria-pressed={viewMode === "kanban"} onClick={() => setViewMode("kanban")}>Kanban</button>
       </div>
-      {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> Thêm ứng viên vào Job</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
-      <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm ứng viên trong Job" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm ứng viên trong Job…" /></label>
-      {state === "ready" && <span className="muted">{items.length} ứng viên đang hiển thị</span>}
+      {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> {en ? "Add candidate to job" : "Thêm ứng viên vào vị trí"}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
+      <label className="search"><span aria-hidden="true">⌕</span><input aria-label={en ? "Search candidates in this job" : "Tìm ứng viên trong vị trí này"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates in this job…" : "Tìm ứng viên trong vị trí này…"} /></label>
+      {state === "ready" && <span className="muted">{en ? `${items.length} applications on this page` : `${items.length} hồ sơ đang hiển thị`}</span>}
     </div>
     {!canManageApplications && <div className="notice" role="status">Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.</div>}
     {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
@@ -281,20 +281,20 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
     {(state === "ready" || state === "empty") && viewMode === "list" && <div className="enterprise-candidate-scroll">
       <table className="enterprise-candidate-table">
-        <thead><tr><th>Ứng viên</th><th>Giai đoạn</th><th>Trạng thái</th><th>Nguồn</th><th>Job</th></tr></thead>
+        <thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>{en ? "Stage" : "Vòng tuyển dụng"}</th><th>{en ? "Status" : "Trạng thái"}</th><th>{en ? "Source" : "Nguồn"}</th><th>{en ? "Job" : "Vị trí"}</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? "selected" : ""}>
               <td><button className="enterprise-candidate-link" type="button" onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
-              <td><span className="enterprise-stage-label">{STAGE_LABEL[stage] || stage}</span></td>
-              <td>{application.status === "ACTIVE" ? "Đang xử lý" : application.status}</td>
+              <td><span className="enterprise-stage-label">{stageLabel(stage)}</span></td>
+              <td>{application.status === "ACTIVE" ? (en ? "In progress" : "Đang xử lý") : application.status}</td>
               <td>{application.source || "—"}</td>
               <td>{job.job_code || "—"}</td>
             </tr>
           )))}
         </tbody>
       </table>
-      {!items.length && !offerItems.length && <p className="empty-stage">Chưa có ứng viên ở trang này.</p>}
+      {!items.length && !offerItems.length && <p className="empty-stage">{en ? "No candidates on this page." : "Chưa có ứng viên ở trang này."}</p>}
     </div>}
     {(state === "ready" || state === "empty") && viewMode === "kanban" && <div className="pipeline-grid">
       {stages.map(([stage, applications]) => {
@@ -303,7 +303,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
           onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
-          <h3><span className="stage-title"><i aria-hidden="true" />{STAGE_LABEL[stage] || stage}</span><span className="count">{applications.length}</span></h3>
+          <h3><span className="stage-title"><i aria-hidden="true" />{stageLabel(stage)}</span><span className="count">{applications.length}</span></h3>
           {ROUND_SLA_DAYS[stage] > 0 && <p className="stage-sla">SLA vòng: ≤ {ROUND_SLA_DAYS[stage]} ngày</p>}
           {stage === "NEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để đưa về NEW.</p>}
           {stage === "SCREEN" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng NEW hoặc INTERVIEW đang xử lý vào đây.</p>}

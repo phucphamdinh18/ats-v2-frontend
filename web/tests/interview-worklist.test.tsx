@@ -34,7 +34,7 @@ it("switches worklist status using existing backend API, without any write", asy
   api.worklist.mockResolvedValue([appointment]);
   render(<InterviewWorklist onAccessLost={vi.fn()} />);
   await screen.findByText("Interviewer One");
-  fireEvent.click(screen.getByRole("button", { name: "Completed" }));
+  fireEvent.click(screen.getByRole("button", { name: "Đã hoàn tất" }));
   await waitFor(() => expect(api.worklist).toHaveBeenCalledWith("COMPLETED", 25, 0));
 });
 it("clears private worklist data when the server revokes access", async () => {

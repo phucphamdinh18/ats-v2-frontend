@@ -29,7 +29,7 @@ it("lists only interview-stage applicants from existing API and opens detail wit
   expect(screen.queryByText("app2")).toBeNull();
   fireEvent.click(btn);
   await waitFor(() => expect(api.detail).toHaveBeenCalledWith("job1", "app1"));
-  expect(screen.getByText("Application timeline")).toBeTruthy();
+  expect(screen.getByText("Lịch sử hồ sơ")).toBeTruthy();
   expect(api.list).toHaveBeenCalledWith("job1", 25, 0);
 });
 
@@ -37,7 +37,7 @@ it("shows only actual offer status without salary or fake approvals", async () =
   api.offers.mockResolvedValue({ applications: [{ application_id: "app1", application: record, offer_status: "PENDING" }] });
   render(<RecruitmentOperations mode="offers" jobs={jobs} onAccessLost={vi.fn()} />);
   await screen.findByRole("button", { name: "Test Candidate" });
-  expect(screen.getByText("Pending approval")).toBeTruthy();
+  expect(screen.getAllByText("Chờ duyệt").length).toBeGreaterThan(0);
   expect(screen.queryByText("Salary package")).toBeNull();
   expect(api.offers).toHaveBeenCalledWith("job1");
 });

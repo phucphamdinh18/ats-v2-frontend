@@ -5,6 +5,7 @@ import { listApplications, applicationDetail, type Application, type Application
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
+import { useLanguage } from "./language";
 
 const PAGE_SIZE = 25;
 type Mode = "interviews" | "offers";
@@ -12,8 +13,10 @@ type Row = { key: string; application: Application; status: string };
 function safeMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Không tải được dữ liệu.";
 }
-function stageText(stage: string): string {
-  const labels: Record<string, string> = { NEW: "New", SCREEN: "Screening", INTERVIEW: "Interview", OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected" };
+function stageText(stage: string, locale: "vi" | "en"): string {
+  const labels: Record<string, string> = locale === "en"
+    ? { NEW: "New application", SCREEN: "Screening", INTERVIEW: "Interview", OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected" }
+    : { NEW: "Mới ứng tuyển", SCREEN: "Sơ loại", INTERVIEW: "Phỏng vấn", OFFER: "Đề nghị tuyển dụng", HIRED: "Đã tuyển", REJECTED: "Từ chối" };
   return labels[stage] || stage;
 }
 
@@ -25,6 +28,8 @@ function stageText(stage: string): string {
 export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
   mode: Mode; jobs: Job[]; onAccessLost: () => void;
 }) {
+  const { locale } = useLanguage();
+  const en = locale === "en";
   const [jobId, setJobId] = useState(jobs[0]?.id || "");
   const [offset, setOffset] = useState(0);
   const [pageResultCount, setPageResultCount] = useState(0);
@@ -110,16 +115,16 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
   return <section className="ops-workspace" aria-label={isOffers ? "Offer workspace" : "Interview workspace"}>
     <div className="ops-controls">
       <div>
-        <h2>{isOffers ? "Offers" : "Interviews"}</h2>
-        <p>{isOffers ? "Danh sách Offer theo Job trong phạm vi được cấp quyền." : "Danh sách ứng viên đang ở stage Interview theo Job."}</p>
+        <h2>{isOffers ? (en ? "Offers" : "Đề nghị tuyển dụng") : (en ? "Interviews" : "Phỏng vấn")}</h2>
+        <p>{isOffers ? (en ? "Offers for Jobs you can access." : "Danh sách đề nghị tuyển dụng trong phạm vi bạn được xem.") : (en ? "Candidates currently at the Interview stage for each Job." : "Danh sách ứng viên đang ở vòng phỏng vấn theo từng vị trí.")}</p>
       </div>
       <label className="ops-job-selector">
-        <span>Job Opening</span>
+        <span>{en ? "Job opening" : "Vị trí tuyển dụng"}</span>
         <select aria-label="Chọn Job" value={jobId} onChange={(event) => {
           setJobId(event.target.value);
           void load(event.target.value, 0);
         }}>
-          {jobs.length === 0 && <option value="">Không có Job được phân quyền</option>}
+          {jobs.length === 0 && <option value="">{en ? "No assigned job openings" : "Chưa có vị trí được phân công"}</option>}
           {jobs.map((item) => <option key={item.id} value={item.id}>{item.job_code || "—"} · {item.title}</option>)}
         </select>
       </label>
@@ -128,45 +133,47 @@ export default function RecruitmentOperations({ mode, jobs, onAccessLost }: {
       <div className="ops-primary">
         <div className="ops-summary" aria-label="Tóm tắt trạng thái trên trang">
           {isOffers ? <>
-            <div><span>Offers được trả về</span><strong>{rows.length}</strong></div>
-            <div><span>Pending approval</span><strong>{pending}</strong></div>
-            <div><span>Approved</span><strong>{approved}</strong></div>
+            <div><span>{en ? "Offers returned" : "Đề nghị tuyển dụng"}</span><strong>{rows.length}</strong></div>
+            <div><span>{en ? "Pending approval" : "Chờ duyệt"}</span><strong>{pending}</strong></div>
+            <div><span>{en ? "Approved" : "Đã duyệt"}</span><strong>{approved}</strong></div>
           </> : <>
-            <div><span>Interview trên trang</span><strong>{rows.length}</strong></div>
-            <div><span>Job</span><strong>{job?.job_code || "—"}</strong></div>
-            <div><span>Hiển thị</span><strong>{PAGE_SIZE} / trang</strong></div>
+            <div><span>{en ? "Interviews on this page" : "Lịch trong trang"}</span><strong>{rows.length}</strong></div>
+            <div><span>{en ? "Job" : "Vị trí"}</span><strong>{job?.job_code || "—"}</strong></div>
+            <div><span>{en ? "Showing" : "Hiển thị"}</span><strong>{PAGE_SIZE} / {en ? "page" : "trang"}</strong></div>
           </>}
         </div>
         {error && <div className="notice error" role="alert">{error} <button type="button" className="quiet" onClick={() => void load(jobId, offset)}>Thử lại</button></div>}
         {loading ? <p role="status" className="ops-empty">Đang tải dữ liệu…</p> : <div className="ops-table-wrap">
           <table className="ops-table">
-            <thead><tr><th>Ứng viên</th><th>Job Opening</th><th>{isOffers ? "Offer Status" : "Stage"}</th><th>Application Status</th><th>Nguồn</th></tr></thead>
+            <thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>{en ? "Job opening" : "Vị trí tuyển dụng"}</th><th>{isOffers ? (en ? "Offer status" : "Trạng thái đề nghị") : (en ? "Stage" : "Vòng tuyển dụng")}</th><th>{en ? "Application status" : "Trạng thái hồ sơ"}</th><th>{en ? "Source" : "Nguồn"}</th></tr></thead>
             <tbody>{rows.map((row) => <tr key={row.key} className={selectedId === row.key ? "selected" : ""}>
               <td><button type="button" onClick={() => void selectRow(row)}>{row.application.candidate_name}</button></td>
               <td>{job?.job_code || job?.title || "—"}</td>
-              <td><span className="ops-status">{isOffers ? row.status : stageText(row.application.stage)}</span></td>
+              <td><span className="ops-status">{isOffers ? (row.status === "PENDING" ? (en ? "Pending" : "Chờ duyệt") : row.status === "APPROVED" ? (en ? "Approved" : "Đã duyệt") : row.status) : stageText(row.application.stage, locale)}</span></td>
               <td>{row.application.status}</td>
               <td>{row.application.source || "—"}</td>
             </tr>)}</tbody>
           </table>
-          {rows.length === 0 && !error && <div className="ops-empty">Không tìm thấy dữ liệu ở phạm vi Job/trang này.</div>}
+          {rows.length === 0 && !error && <div className="ops-empty">{en ? "No records found for this job and page." : "Không tìm thấy dữ liệu ở vị trí hoặc trang này."}</div>}
         </div>}
         {!isOffers && <div className="ops-pagination">
-          <button className="secondary" type="button" disabled={loading || offset === 0} onClick={() => void load(jobId, Math.max(0, offset - PAGE_SIZE))}>Trang trước</button>
-          <span>Trang {Math.floor(offset / PAGE_SIZE) + 1} · Lọc stage trong trang dữ liệu trả về</span>
-          <button className="secondary" type="button" disabled={loading || pageResultCount < PAGE_SIZE} onClick={() => void load(jobId, offset + PAGE_SIZE)}>Trang sau</button>
+          <button className="secondary" type="button" disabled={loading || offset === 0} onClick={() => void load(jobId, Math.max(0, offset - PAGE_SIZE))}>{en ? "Previous" : "Trang trước"}</button>
+          <span>{en ? `Page ${Math.floor(offset / PAGE_SIZE) + 1} · Stage filter applies to returned records` : `Trang ${Math.floor(offset / PAGE_SIZE) + 1} · Lọc vòng trên dữ liệu được trả về`}</span>
+          <button className="secondary" type="button" disabled={loading || pageResultCount < PAGE_SIZE} onClick={() => void load(jobId, offset + PAGE_SIZE)}>{en ? "Next" : "Trang sau"}</button>
         </div>}
-        <p className="ops-disclaimer">{isOffers ? "Offer API hiện chỉ cung cấp trạng thái PENDING / APPROVED. Không hiển thị lương, approver hoặc expiry nếu API chưa cung cấp." : "Stage Interview không đại diện cho lịch phỏng vấn hay từng round. Để xem lịch và feedback phải tích hợp API Interview đã được kiểm chứng."}</p>
+        <p className="ops-disclaimer">{isOffers
+          ? (en ? "The current Offer API returns only PENDING / APPROVED status. Compensation, approvers, and expiry dates are not shown because the API does not provide them." : "API đề nghị hiện chỉ trả trạng thái chờ duyệt hoặc đã duyệt. Hệ thống chưa hiển thị lương, người duyệt hay hạn phản hồi vì API chưa cung cấp các thông tin này.")
+          : (en ? "The Interview stage is not the same as a scheduled interview or interview round. Use the Interviews module to see actual appointments and feedback." : "Vòng Phỏng vấn không đồng nghĩa với một lịch hẹn hay vòng phỏng vấn cụ thể. Mở mục Phỏng vấn để xem lịch hẹn và feedback thực tế.")}</p>
       </div>
       <aside className="ops-detail" aria-label="Chi tiết hồ sơ">
-        <h3>{chosen?.application.candidate_name || "Chi tiết ứng viên"}</h3>
-        {detailLoading && <p role="status">Đang tải hồ sơ…</p>}
+        <h3>{chosen?.application.candidate_name || (en ? "Candidate details" : "Chi tiết ứng viên")}</h3>
+        {detailLoading && <p role="status">{en ? "Loading candidate details…" : "Đang tải hồ sơ…"}</p>}
         {detailError && <div className="notice error" role="alert">{detailError}</div>}
-        {!chosen && <p className="ops-muted">Chọn ứng viên từ bảng để xem lịch sử trong Job.</p>}
+        {!chosen && <p className="ops-muted">{en ? "Choose a candidate from the table to view their history for this job." : "Chọn ứng viên trong bảng để xem lịch sử tuyển dụng ở vị trí này."}</p>}
         {chosen && <>
-          <dl className="ops-fields"><dt>Job</dt><dd>{job?.title || "—"}</dd><dt>Stage</dt><dd>{stageText(chosen.application.stage)}</dd><dt>Trạng thái</dt><dd>{chosen.status}</dd><dt>Nguồn</dt><dd>{chosen.application.source || "—"}</dd></dl>
-          {detail && <><h4>Application timeline</h4>
-            {detail.events.length ? <ol className="ops-events">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{stageText(event.from_stage || "—")} → {stageText(event.to_stage || "—")}</span><small>{event.actor_display_name || "—"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol> : <p className="ops-muted">Chưa có lịch sử được trả về.</p>}
+          <dl className="ops-fields"><dt>{en ? "Job" : "Vị trí"}</dt><dd>{job?.title || "—"}</dd><dt>{en ? "Stage" : "Vòng"}</dt><dd>{stageText(chosen.application.stage, locale)}</dd><dt>{en ? "Status" : "Trạng thái"}</dt><dd>{chosen.status}</dd><dt>{en ? "Source" : "Nguồn"}</dt><dd>{chosen.application.source || "—"}</dd></dl>
+          {detail && <><h4>{en ? "Application timeline" : "Lịch sử hồ sơ"}</h4>
+            {detail.events.length ? <ol className="ops-events">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{stageText(event.from_stage || "—", locale)} → {stageText(event.to_stage || "—", locale)}</span><small>{event.actor_display_name || "—"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol> : <p className="ops-muted">{en ? "No history is available yet." : "Chưa có lịch sử được trả về."}</p>}
           </>}
         </>}
       </aside>

@@ -188,7 +188,7 @@ describe("application pipeline", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Ada/ }));
     await screen.findByText("Lịch sử");
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Tìm ứng viên trong Job" }), {
+    fireEvent.change(screen.getByRole("textbox", { name: "Tìm ứng viên trong vị trí này" }), {
       target: { value: "No matching candidate" },
     });
 

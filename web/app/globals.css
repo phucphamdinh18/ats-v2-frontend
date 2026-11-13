@@ -2681,3 +2681,35 @@ th { padding: 11px 18px; }
  .shell .interview-status-tabs { width: 100%; }
  .shell .interview-status-tabs button { flex: 1; }
 }
+
+/* Laptop-safe table sizing: keep each value inside its own column. */
+.shell .enterprise-candidate-table {
+  min-width: 640px;
+  table-layout: fixed;
+}
+.shell .enterprise-candidate-table th:nth-child(1) { width: 28%; }
+.shell .enterprise-candidate-table th:nth-child(2) { width: 17%; }
+.shell .enterprise-candidate-table th:nth-child(3) { width: 19%; }
+.shell .enterprise-candidate-table th:nth-child(4) { width: 21%; }
+.shell .enterprise-candidate-table th:nth-child(5) { width: 15%; }
+.shell .enterprise-candidate-table :is(th, td) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  vertical-align: middle;
+}
+.shell .enterprise-candidate-link { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.shell .ops-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+.shell .ops-table :is(th, td) { overflow-wrap: anywhere; word-break: normal; vertical-align: middle; }
+.shell .ops-table td button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.shell .interview-worklist .ops-table th:nth-child(1) { width: 27%; }
+.shell .interview-worklist .ops-table th:nth-child(2) { width: 20%; }
+.shell .interview-worklist .ops-table th:nth-child(3) { width: 16%; }
+.shell .interview-worklist .ops-table th:nth-child(4) { width: 27%; }
+.shell .interview-worklist .ops-table th:nth-child(5) { width: 10%; }
+@media (max-width: 760px) {
+  .shell .enterprise-candidate-table { min-width: 600px; }
+  .shell .interview-worklist .ops-table { min-width: 620px; }
+}
