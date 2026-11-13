@@ -63,12 +63,14 @@ function message(error: unknown) {
 }
 export default function ApplicationPipeline({
   job,
+  initialStageFilter = "ALL",
   onSessionLost,
   canViewOffers = false,
   canManageApplications = false,
   onDataChanged,
 }: {
   job: Job;
+  initialStageFilter?: string;
   onSessionLost: () => void;
   canViewOffers?: boolean;
   canManageApplications?: boolean;
@@ -86,7 +88,7 @@ export default function ApplicationPipeline({
   const [query, setQuery] = useState("");
   const [candidateOpen, setCandidateOpen] = useState(false);
   const [source, setSource] = useState("all");
-  const [stageFilter, setStageFilter] = useState("ALL");
+  const [stageFilter, setStageFilter] = useState(initialStageFilter);
   const [pipelineView, setPipelineView] = useState<"table" | "board">("table");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Application | null>(null);
@@ -129,6 +131,7 @@ export default function ApplicationPipeline({
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
+  const autoSelected = useRef(false);
   const load = useCallback(
     async (nextOffset = offset, nextQuery = query) => {
       const ticket = ++listTicket.current;
@@ -194,6 +197,7 @@ export default function ApplicationPipeline({
     // This prevents a previous Application from looking like a match for the new query.
     detailTicket.current += 1;
     selectedId.current = null;
+    autoSelected.current = false;
     setSelected(null);
     setDetail(null);
     setDetailError("");
@@ -307,6 +311,11 @@ export default function ApplicationPipeline({
     },
     [job.id, onSessionLost],
   );
+  useEffect(() => {
+    if (autoSelected.current || state !== "ready" || !visibleTableRows.length) return;
+    autoSelected.current = true;
+    void openDetail(visibleTableRows[0].application);
+  }, [state, visibleTableRows, openDetail]);
   async function moveApplication(
     application: Application,
     targetStage: TransitionStage,
@@ -828,7 +837,10 @@ export default function ApplicationPipeline({
           aria-label={tr("Chi tiết ứng viên")}
         >
           <div className="panel-heading">
-            <h2>{tr("Chi tiết ứng viên")}</h2>
+            <div className="candidate-detail-title">
+              <h2>{detail?.application.candidate_name || tr("Chi tiết ứng viên")}</h2>
+              {detail && <div className="candidate-contact-line">{profile?.candidate.email || tr("Chưa có email")}</div>}
+            </div>
             <button
               className="quiet"
               aria-label={tr("Đóng chi tiết")}

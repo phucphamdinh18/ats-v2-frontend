@@ -172,15 +172,14 @@
 .astryx-workspace .pipeline-stage-filters button.active,
 .astryx-workspace .pipeline-view-switch button.active { color: #a90017; background: #fae9eb; border-color: #efd0d4; }
 .astryx-workspace .application-table-scroll { overflow: auto; border: 1px solid #d9dee5; background: #fff; }
-.astryx-workspace .application-table { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; }
-.astryx-workspace .application-table th { padding: 9px 10px; border-bottom: 1px solid #d9dee5; color: #465365; background: #eef1f4; text-align: left; text-transform: uppercase; letter-spacing: .025em; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.astryx-workspace .application-table td { padding: 8px 10px; border-bottom: 1px solid #e8ebef; color: #465365; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.astryx-workspace .application-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: fixed; }
+.astryx-workspace .application-table th { padding: 9px 10px; border-bottom: 1px solid #d9dee5; color: #465365; background: #eef1f4; text-align: left; text-transform: uppercase; letter-spacing: .025em; font-size: 10px; }
+.astryx-workspace .application-table td { padding: 8px 10px; border-bottom: 1px solid #e8ebef; color: #465365; font-size: 11px; overflow-wrap: anywhere; }
 .astryx-workspace .application-table tr:hover,
 .astryx-workspace .application-table tr.selected { background: #fbf1f2; }
 .astryx-workspace .application-table tr.selected td:first-child { box-shadow: inset 3px 0 #d5001c; }
-.astryx-workspace .application-table-candidate { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 0; border: 0; color: #243142; background: transparent; text-align: left; }
-.astryx-workspace .application-table-candidate strong { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.astryx-workspace .application-table .application-avatar { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 4px; color: #243142; background: #eef1f4; font-size: 10px; }
+.astryx-workspace .application-table-candidate { display: flex; align-items: center; gap: 8px; padding: 0; border: 0; color: #243142; background: transparent; text-align: left; }
+.astryx-workspace .application-table .application-avatar { width: 28px; height: 28px; border-radius: 4px; color: #243142; background: #eef1f4; font-size: 10px; }
 .astryx-workspace .application-stage-pill { display: inline-flex; padding: 3px 6px; border: 1px solid #d9dee5; border-radius: 3px; color: #465365; background: #f7f8fa; white-space: nowrap; }
 .astryx-workspace .application-stage-pill.stage-interview { color: #765d22; background: #fcf5e8; border-color: #ead9ae; }
 .astryx-workspace .application-stage-pill.stage-hired { color: #35694a; background: #eff7f1; border-color: #cde3d3; }
@@ -227,7 +226,7 @@
   .astryx-workspace .pipeline-table-toolbar { align-items: flex-start; flex-direction: column; }
   .astryx-workspace .pipeline-stage-summary { grid-template-columns: repeat(5, minmax(88px, 1fr)); overflow-x: auto; }
   .astryx-workspace .pipeline-stage-filters { width: 100%; }
-  .astryx-workspace .application-table { min-width: 900px; }
+  .astryx-workspace .application-table { min-width: 760px; }
   .astryx-workspace .workspace-bento { grid-template-columns: 1fr; }
   .astryx-workspace .interview-columns,
   .astryx-workspace .talent-grid,
