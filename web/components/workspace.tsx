@@ -465,6 +465,12 @@ export default function Workspace() {
       </aside>
       <div className="main">
         <header className="topbar">
+          <nav className="enterprise-top-nav" aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
+            <button type="button" className={tab === "jobs" ? "active" : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>{locale === "en" ? "Jobs" : "Công việc"}</button>
+            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>Talent Pool</button>}
+            {reviewAllowed && <button type="button" className={tab === "jd" ? "active" : ""} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}>{locale === "en" ? "Job Reviews" : "Duyệt JD"}</button>}
+            {adminAllowed && <button type="button" className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}>{locale === "en" ? "Administration" : "Quản trị"}</button>}
+          </nav>
           <div className="breadcrumb">
             {t.recruiting}
             <span>/</span>
