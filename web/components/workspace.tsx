@@ -7,6 +7,7 @@ import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
+import BoschJobDetail from "./bosch-job-detail";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
@@ -390,16 +391,14 @@ export default function Workspace() {
         {t.navigation}
       </a>
       <aside className="sidebar">
-        <a className="brand" href={`${basePath}/`}>
-          <span className="brand-mark">
-            <Icon name="jobs" size={23} />
-          </span>
-          <span>
-            ATS<span className="brand-caption">{t.workspace}</span>
-          </span>
+        <a className="brand bosch-identity" href={`${basePath}/`} aria-label="Bosch ATS V2">
+          <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch — Invented for life" width="135" height="40" />
+          <span className="bosch-brand-divider" aria-hidden="true"/>
+          <strong>ATS V2</strong>
         </a>
-        <div className="workspace-label">{t.workspace}</div>
+        <div className="workspace-label">Recruitment</div>
         <nav aria-label={t.navigation}>
+          <button className="nav bosch-home-nav" onClick={() => { setTab("jobs"); setJobView("master"); }} type="button"><Icon name="dashboard" /><span className="nav-label">Dashboard</span></button>
           <button
             className={tab === "jobs" ? "nav active" : "nav"}
             aria-current={tab === "jobs" ? "page" : undefined}
@@ -472,7 +471,8 @@ export default function Workspace() {
       <div className="main">
         <header className="topbar">
           <nav className="enterprise-top-nav" aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
-            <button type="button" className={tab === "jobs" ? "active" : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>{locale === "en" ? "Jobs" : "Công việc"}</button>
+            <button type="button" onClick={() => { setTab("jobs"); setJobView("master"); }}>Home</button>
+            <button type="button" className={tab === "jobs" ? "active" : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>Jobs</button>
             {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
             {allowed && <button type="button" className={tab === "interviews" ? "active" : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
             {reviewAllowed && <button type="button" className={tab === "offers" ? "active" : ""} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</button>}
@@ -649,7 +649,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <div className="page-heading">
+              <div className={`page-heading ${tab === "jobs" && jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`}>
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
                   <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
@@ -678,7 +678,7 @@ export default function Workspace() {
                   </button>
                 </div>
               </div>
-              <div className="role-line">
+              <div className={`role-line ${tab === "jobs" && jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`}>
                 {access.roles.map((role) => (
                   <span className="role" key={role}>
                     {roleLabel(role, t)}
@@ -763,7 +763,7 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  <div className="job-view-tabs" role="tablist" aria-label="Chế độ xem Job">
+                  <div className={`job-view-tabs ${jobView === "pipeline" ? "bosch-hidden-page-heading" : ""}`} role="tablist" aria-label="Chế độ xem Job">
                     <button type="button" role="tab" aria-selected={jobView === "master"} className={jobView === "master" ? "active" : ""} onClick={() => setJobView("master")}>
                       <Icon name="jobs" size={16} /> 1.1 Bảng Master <span>{access.jobs.length} Job</span>
                     </button>
@@ -945,17 +945,18 @@ export default function Workspace() {
                       })}
                     </div>
                   </section>
-                  </> : selectedJob ? <section className="job-pipeline-view">
-                    <div className="job-pipeline-toolbar">
-                      <button className="secondary" onClick={() => setJobView("master")}><Icon name="arrow" size={15} /> Quay lại Bảng Master</button>
-                      <label>Requisition
-                        <select aria-label="Chọn Job cho Hiring Pipeline" value={selectedJob.id} onChange={(event) => setSelectedJob(access.jobs.find((job) => job.id === event.target.value) || null)}>
-                          {access.jobs.map((job) => <option key={job.id} value={job.id}>[{job.job_code || "Chưa có mã"}] {job.title}</option>)}
-                        </select>
-                      </label>
-                    </div>
+                  </> : selectedJob ? <BoschJobDetail
+                    key={selectedJob.id}
+                    job={selectedJob}
+                    allJobs={access.jobs}
+                    onSelectJob={setSelectedJob}
+                    onBack={() => setJobView("master")}
+                    onModule={setTab}
+                    canAdmin={adminAllowed}
+                    canViewOffers={reviewAllowed}
+                  >
                     <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
-                  </section> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
+                  </BoschJobDetail> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
                 </>
               )}
             </>
