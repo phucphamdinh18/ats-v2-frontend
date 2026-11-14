@@ -1,0 +1,60 @@
+/* Bosch Enterprise App Shell — isolated from legacy .shell/.sidebar/.topbar selectors. */
+.shell{--navy:#1b3049;--red:#e20015;--line:#d9dfe6;--ink:#142132;display:grid;grid-template-columns:235px minmax(0,1fr);grid-template-rows:64px minmax(calc(100vh - 64px),auto);min-height:100vh;background:#fff;color:var(--ink);font-family:Arial,"Helvetica Neue",sans-serif;line-height:1.4;font-size:13px}
+.shell *,.shell *::before,.shell *::after{box-sizing:border-box}
+.shell button,.shell input,.shell select{font:inherit}
+.shell button{cursor:pointer}
+.skip{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip:focus{left:8px;top:8px;width:auto;height:auto;z-index:100;background:#fff;color:#111;padding:10px}
+.identity{grid-column:1;grid-row:1;background:#fff;display:flex;align-items:center;gap:12px;padding:8px 17px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap}
+.identity img{width:124px;max-height:44px;object-fit:contain;object-position:left center;display:block;flex-shrink:0}
+.identity .divider{width:1px;height:30px;background:#213044;flex-shrink:0}
+.identity strong{font-size:20px;letter-spacing:-.5px;color:#0d1929;font-weight:800}
+.topbar{grid-column:2;grid-row:1;min-width:0;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0 17px 0 22px}
+.topnav{display:flex;align-items:stretch;gap:2px;height:100%;min-width:0;overflow-x:auto;scrollbar-width:none}
+.topnav button{position:relative;background:none;border:0;color:#fff;padding:0 14px;white-space:nowrap;font-weight:700;font-size:12px}
+.topnav button:hover{background:#29425f}
+.topnav button.active::after{content:"";position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--red)}
+.headerActions{display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0}
+.searchContainer{position:relative}
+.searchTrigger{display:flex;align-items:center;gap:9px;background:#233b57;border:1px solid #52647a;border-radius:6px;color:#fff;padding:8px 11px;font-size:12px;font-weight:600}
+.searchTrigger kbd{background:#f5f6f7;color:#22334b;padding:2px 5px;border-radius:3px;font-size:10px}
+.searchInput{display:flex;align-items:center;gap:7px;border:1px solid #bac9da;border-radius:5px;padding:7px 9px;background:#fff;color:#17283c}
+.searchInput input{width:190px;max-width:22vw;border:0;outline:0;background:transparent;color:#17283c;font-size:12px}
+.searchInput kbd{font-size:10px;color:#4b5a6e}
+.results{position:absolute;z-index:30;top:calc(100% + 8px);right:0;min-width:300px;max-width:420px;background:#fff;border:1px solid #cbd3de;border-radius:7px;box-shadow:0 12px 30px #0e233833;padding:6px;max-height:360px;overflow:auto;color:#17283c}
+.results button{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:10px 8px;border:0;background:none;color:#18283e}
+.results button:hover{background:#f4f6f9}
+.results button>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.results strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.results small,.noResults{font-size:11px;color:#617189}
+.searchResultIcon{display:flex;color:var(--red)}
+.noResults{padding:10px;margin:0}
+.language{display:flex;align-items:center;background:#fff;border-radius:5px;padding:0 8px}
+.language select{min-height:34px;border:0;background:#fff;color:#23334b;font-size:12px;font-weight:700;outline:0}
+.account{display:flex;align-items:center;gap:9px;background:#fff;border-radius:25px;padding:5px 8px;color:#26334c;max-width:235px;min-width:0}
+.avatar{display:inline-flex;align-items:center;justify-content:center;background:#e6eaf0;color:#26384e;width:29px;height:29px;border-radius:50%;font-weight:800;flex-shrink:0}
+.email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#526177;max-width:142px}
+.signOut{display:inline-flex;border:0;background:#fff;color:#344763;padding:4px}
+.sidebar{grid-column:1;grid-row:2;background:#f7f8fa;border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;padding:20px 10px}
+.sidebarTitle{font-size:13px;font-weight:700;color:#314257;margin:8px 15px 11px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.navButton{display:flex;align-items:center;gap:13px;min-height:42px;border:0;background:transparent;color:#1b2e44;padding:0 13px;text-align:left;width:100%;border-radius:5px;white-space:nowrap;font-weight:600;font-size:13px}
+.navButton svg{flex-shrink:0;width:18px;height:18px}
+.navButton:hover{background:#eceff3}
+.navButton.active{background:#fde5e7;color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.sidebarGroup{display:block;margin:19px 15px 7px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:#385069;font-weight:800}
+.sidebarSpacer{flex:1}
+.scope{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;font-size:11px;color:#647187}
+.collapse{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:11px 12px;color:#4a617d;text-align:left;font-size:11px}
+.main{grid-column:2;grid-row:2;min-width:0;background:#fff;display:flex;flex-direction:column}
+.content{min-width:0;flex:1;padding:25px 23px 42px}
+.footer{display:flex;justify-content:space-between;gap:16px;padding:12px 24px;border-top:1px solid var(--line);font-size:11px;color:#69788c}
+.collapsed{grid-template-columns:68px minmax(0,1fr)}
+.collapsed .identity{padding:8px;justify-content:center}
+.collapsed .identity img{width:45px;max-width:45px;object-fit:cover;object-position:left}
+.collapsed .identity strong,.collapsed .identity .divider,.collapsed .sidebarTitle,.collapsed .sidebarGroup,.collapsed .navLabel,.collapsed .scopeCopy{display:none}
+.collapsed .sidebar{padding:20px 8px}
+.collapsed .navButton{justify-content:center;padding:0}
+.collapsed .collapse{justify-content:center}
+@media(max-width:1100px){.topnav button{padding:0 8px}.account .email{display:none}.searchTrigger kbd{display:none}.headerActions{gap:6px}}
+@media(max-width:760px){.shell{grid-template-columns:60px minmax(0,1fr)}.identity{padding:7px}.identity img{width:40px;max-width:40px;object-fit:cover;object-position:left}.identity strong,.identity .divider,.sidebarTitle,.sidebarGroup,.navLabel,.scopeCopy{display:none}.sidebar{padding:12px 6px}.navButton{justify-content:center;padding:0}.topbar{padding:0 8px}.topnav button{padding:0 7px;font-size:11px}.language{padding:0 3px}.language select{font-size:11px}.searchTrigger span,.account .email{display:none}.content{padding:16px 12px}.collapse{justify-content:center}}
