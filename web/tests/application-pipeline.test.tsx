@@ -61,7 +61,7 @@ describe("Bosch list-only hiring pipeline", () => {
     api.detail.mockResolvedValue(detail("Ada"));
     renderPipeline();
     expect(await screen.findByRole("table")).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Hiring pipeline counts" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Số hồ sơ theo giai đoạn" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Kanban" })).toBeNull();
     expect(screen.queryByRole("region", { name: "Giai đoạn NEW" })).toBeNull();
     const candidate = screen.getByRole("button", { name: "Ada" });
@@ -74,7 +74,7 @@ describe("Bosch list-only hiring pipeline", () => {
     api.list.mockResolvedValue({ applications: [], limit: 25, offset: 0 });
     renderPipeline();
     await screen.findByText("Chưa có ứng viên");
-    expect(screen.getByRole("group", { name: "Hiring pipeline counts" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Số hồ sơ theo giai đoạn" })).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Giai đoạn SCREEN" })).toBeNull();
   });
 
