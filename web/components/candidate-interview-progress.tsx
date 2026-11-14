@@ -3,15 +3,18 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, CalendarClock, XCircle } from "lucide-react";
 import { listInterviewWorklist, type InterviewWorklistItem, type InterviewStatus } from "@/lib/interviews";
+import { useLanguage } from "./language";
 
 const STATUSES: InterviewStatus[] = ["SCHEDULED", "COMPLETED", "CANCELLED"];
-function pretty(iso: string) {
+function pretty(iso: string, locale: "vi" | "en") {
   const d = new Date(iso);
-  return Number.isFinite(d.getTime()) ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d) : "—";
+  return Number.isFinite(d.getTime()) ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d) : "—";
 }
 
 /** Render authorized interview records only. No invented fixed round count or mutations. */
 export default function CandidateInterviewProgress({ applicationId }: { applicationId: string }) {
+  const { locale } = useLanguage();
+  const en = locale === "en";
   const [appointments, setAppointments] = useState<InterviewWorklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -31,17 +34,22 @@ export default function CandidateInterviewProgress({ applicationId }: { applicat
   }, [applicationId]);
 
   const complete = appointments.filter((item) => item.status === "COMPLETED").length;
-  return <section className="bosch-interview-progress" aria-label="Interview Progress">
-    <div className="bosch-progress-head"><h3>Interview Progress</h3>{!loading && !error && appointments.length > 0 && <span>{complete} of {appointments.length} completed</span>}</div>
-    {loading ? <p className="bosch-muted-help">Loading interview rounds…</p> : error ? <p className="bosch-muted-help">Interview rounds are not available for this account or environment.</p> : appointments.length === 0 ? <p className="bosch-muted-help">No scheduled interview rounds for this candidate.</p> :
+  const copy = en ? {
+    title: "Interview progress", completed: "completed", loading: "Loading interview rounds…", unavailable: "Interview rounds aren’t available for this account or environment.", empty: "No interview rounds have been scheduled for this candidate.", source: "Interview rounds come from the existing Interviews service. No fixed number of rounds is assumed.", round: "Round", phone: "Phone screen", final: "Final interview", interview: "Interview", completedStatus: "Completed", cancelled: "Cancelled", scheduled: "Scheduled",
+  } : {
+    title: "Tiến độ phỏng vấn", completed: "đã hoàn tất", loading: "Đang tải các vòng phỏng vấn…", unavailable: "Tài khoản hoặc môi trường này chưa thể xem lịch phỏng vấn.", empty: "Ứng viên này chưa có lịch phỏng vấn.", source: "Lịch phỏng vấn được lấy từ hệ thống Interviews hiện có. Không mặc định số vòng phỏng vấn.", round: "Vòng", phone: "Sàng lọc qua điện thoại", final: "Phỏng vấn cuối", interview: "Phỏng vấn", completedStatus: "Đã hoàn tất", cancelled: "Đã hủy", scheduled: "Đã lên lịch",
+  };
+  return <section className="bosch-interview-progress" aria-label={copy.title}>
+    <div className="bosch-progress-head"><h3>{copy.title}</h3>{!loading && !error && appointments.length > 0 && <span>{complete} / {appointments.length} {copy.completed}</span>}</div>
+    {loading ? <p className="bosch-muted-help">{copy.loading}</p> : error ? <p className="bosch-muted-help">{copy.unavailable}</p> : appointments.length === 0 ? <p className="bosch-muted-help">{copy.empty}</p> :
       <ol className="bosch-round-timeline">{appointments.map((row, index) =>
         <li key={row.id}>
           {row.status === "COMPLETED" ? <CheckCircle2 size={20} className="completed"/> : row.status === "CANCELLED" ? <XCircle size={20} className="cancelled"/> : <Circle size={20} className="scheduled"/>}
-          <div><strong>Round {index + 1} — {row.interview_type === "PHONE_SCREEN" ? "Phone Screening" : row.interview_type === "FINAL" ? "Final" : "Interview"}</strong>
-            <span>{row.status === "COMPLETED" ? "Completed" : row.status === "CANCELLED" ? "Cancelled" : "Scheduled"} · {pretty(row.starts_at)}</span>
+          <div><strong>{copy.round} {index + 1} — {row.interview_type === "PHONE_SCREEN" ? copy.phone : row.interview_type === "FINAL" ? copy.final : copy.interview}</strong>
+            <span>{row.status === "COMPLETED" ? copy.completedStatus : row.status === "CANCELLED" ? copy.cancelled : copy.scheduled} · {pretty(row.starts_at, locale)}</span>
             {row.participants?.length ? <small>{row.participants.map((p) => p.display_name).join(", ")}</small> : null}
           </div>
         </li>)}</ol>}
-    <p className="bosch-muted-help">Rounds are retrieved from the existing Interviews API. No fixed number of rounds is assumed.</p>
+    <p className="bosch-muted-help">{copy.source}</p>
   </section>;
 }

@@ -127,7 +127,7 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
   expect(screen.queryByRole("button", { name: /Duyệt CV/ })).toBeNull();
-  expect(screen.getByText("1 of 1 Job openings")).toBeTruthy();
+  expect(screen.getByText("1 / 1 vị trí tuyển dụng")).toBeTruthy();
   fireEvent.change(screen.getByRole("textbox", { name: "Tìm Job" }), {
     target: { value: "Unmatched" },
   });
@@ -140,10 +140,10 @@ it("opens Pipeline from Job Master and switches requisitions", async () => {
   ]);
   render(<Workspace />);
   fireEvent.click(await screen.findByRole("button", { name: "Mở pipeline First Job" }));
-  await screen.findByRole("region", { name: "Pipeline First Job" });
+  await screen.findByRole("region", { name: "Tiến độ tuyển dụng First Job" });
   const requisition = screen.getByRole("combobox", { name: "Chọn Job cho Hiring Pipeline" });
   fireEvent.change(requisition, { target: { value: "job2" } });
-  await screen.findByRole("region", { name: "Pipeline Second Job" });
+  await screen.findByRole("region", { name: "Tiến độ tuyển dụng Second Job" });
   fireEvent.click(screen.getByRole("button", { name: "Quay lại Bảng Master" }));
   await screen.findByRole("button", { name: "Mở pipeline First Job" });
   expect(screen.getByRole("button", { name: "Mở pipeline Second Job" })).toBeTruthy();
@@ -291,12 +291,12 @@ it("renders a single Bosch Jobs heading without hidden legacy tabs or duplicate 
   ]);
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Bosch QA Job" });
-  expect(screen.getByRole("heading", { name: "Job Openings", level: 1 })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Vị trí tuyển dụng", level: 1 })).toBeTruthy();
   expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
   expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
   expect(screen.queryByText("ATS Workspace", { selector: "h1" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Mở pipeline Bosch QA Job" }));
-  expect(await screen.findByRole("region", { name: "Pipeline Bosch QA Job" })).toBeTruthy();
+  expect(await screen.findByRole("region", { name: "Tiến độ tuyển dụng Bosch QA Job" })).toBeTruthy();
   expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
   expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
 });

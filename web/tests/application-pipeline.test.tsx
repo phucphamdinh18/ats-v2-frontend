@@ -100,9 +100,9 @@ describe("Bosch list-only hiring pipeline", () => {
     api.screen.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang Sơ loại" }));
     await waitFor(() => expect(api.screen).toHaveBeenCalledWith("Ada", requestId));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang SCREEN?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang Sơ loại?");
   });
 
   it("moves SCREEN back to NEW through the explicit button", async () => {
@@ -111,9 +111,9 @@ describe("Bosch list-only hiring pipeline", () => {
     api.back.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển về NEW" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển về Mới ứng tuyển" }));
     await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "NEW", requestId));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về NEW?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về Mới ứng tuyển?");
   });
 
   it("moves SCREEN to INTERVIEW via the existing workflow API", async () => {
@@ -122,9 +122,9 @@ describe("Bosch list-only hiring pipeline", () => {
     api.interview.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang INTERVIEW" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang Phỏng vấn" }));
     await waitFor(() => expect(api.interview).toHaveBeenCalledWith("Ada", requestId));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang INTERVIEW?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada sang Phỏng vấn?");
   });
 
   it("moves INTERVIEW back to SCREEN via the existing workflow API", async () => {
@@ -133,9 +133,9 @@ describe("Bosch list-only hiring pipeline", () => {
     api.back.mockResolvedValue({ application: { application_id: "Ada", changed: true } });
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển về SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển về Sơ loại" }));
     await waitFor(() => expect(api.back).toHaveBeenCalledWith("Ada", "SCREEN", requestId));
-    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về SCREEN?");
+    expect(confirmMock).toHaveBeenCalledWith("Chuyển Ada về Sơ loại?");
   });
 
   it("does not mutate stage when the recruiter cancels confirmation", async () => {
@@ -144,7 +144,7 @@ describe("Bosch list-only hiring pipeline", () => {
     confirmMock.mockReturnValue(false);
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang Sơ loại" }));
     expect(api.screen).not.toHaveBeenCalled();
   });
 
@@ -154,7 +154,7 @@ describe("Bosch list-only hiring pipeline", () => {
     api.screen.mockRejectedValue(new ApiError("Denied", 403));
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang Sơ loại" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Không có quyền");
     expect(screen.queryByRole("button", { name: "Ada" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Thử lại chuyển SCREEN" })).toBeNull();
@@ -166,9 +166,9 @@ describe("Bosch list-only hiring pipeline", () => {
     api.screen.mockRejectedValueOnce(new Error("Mạng lỗi")).mockResolvedValue({ application: application("Ada") });
     renderPipeline();
     await selectCandidate();
-    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chuyển sang Sơ loại" }));
     await screen.findByText("Mạng lỗi");
-    fireEvent.click(screen.getByRole("button", { name: "Thử lại chuyển SCREEN" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gửi lại yêu cầu: Sơ loại" }));
     await waitFor(() => expect(api.screen).toHaveBeenCalledTimes(2));
     expect(api.screen.mock.calls[1]).toEqual(api.screen.mock.calls[0]);
     expect(randomUuidMock).toHaveBeenCalledTimes(1);
