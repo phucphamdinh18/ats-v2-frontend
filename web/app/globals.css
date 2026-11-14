@@ -2829,8 +2829,8 @@ th { padding: 11px 18px; }
   background: transparent; border: 0; box-shadow: none; padding: 0; margin-top: 0;
   overflow: visible; align-items: start;
 }
-.shell .bosch-job-page .pipeline > :not(.enterprise-candidate-detail):not(.bosch-candidate-placeholder),
-.shell .bosch-job-page .pipeline:has(> .enterprise-candidate-detail) > :not(.enterprise-candidate-detail):not(.bosch-candidate-placeholder) {
+.shell .bosch-job-page .pipeline > :not(.enterprise-candidate-detail),
+.shell .bosch-job-page .pipeline:has(> .enterprise-candidate-detail) > :not(.enterprise-candidate-detail) {
   grid-column: 1;
   min-width: 0;
 }
@@ -3111,15 +3111,3 @@ th { padding: 11px 18px; }
  .shell .bosch-master-search{flex:1;min-width:145px}
 }
 
-
-/* Preview QA fixes: keep empty candidate panel beside the list and prevent
-   inherited sticky headers from covering the first Jobs Master row. */
-.shell .bosch-job-page .pipeline > .bosch-candidate-placeholder { grid-column: 2; grid-row: 1 / span 3; }
-.shell .bosch-master-table thead { position: static; }
-.shell .bosch-master-table th { position: static; top: auto; z-index: auto; }
-.shell .enterprise-top-nav { scrollbar-width: none; }
-.shell .enterprise-top-nav::-webkit-scrollbar { display: none; }
-@media (min-width: 901px) and (max-width: 1450px) {
-  .shell .enterprise-top-nav { gap: 0; }
-  .shell .enterprise-top-nav button { padding-inline: 11px; font-size: 12px; }
-}
