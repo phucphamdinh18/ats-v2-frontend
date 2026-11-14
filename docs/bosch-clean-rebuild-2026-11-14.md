@@ -80,3 +80,11 @@ Scope: PR #44 only. No Supabase schema, Edge Function, Auth, RLS, production sit
 - Preserved Job guide via an accessible Help button in the new sidebar; preserved role-based navigation, filters, API and Auth handlers.
 - Added a focused workspace regression test ensuring only the Bosch Jobs heading is shown and the old tab strip does not reappear.
 - No backend/RLS/schema/API/stage changes. This commit has not been published to live `/preview/`. Browser visual QA, authenticated E2E and owner approval still pending.
+
+## Step 7 — Preview visual QA and fixes (2026-11-15)
+- Verified PR #44 HEAD `5b18ab6d2d502fe3c09a76a58c8c83b9de99b09e`; QA, Next web checks and Pages PR build passed. Supabase local browser E2E was skipped.
+- Verified production `release.json` before publish: root revision `71ff88ebdb68bea9f6456375c4c9d970e11c0379`. Preview publish run #244 succeeded in `path-preview`; production root was not targeted.
+- Browser QA found the Jobs Master sticky table header overlapping its first row, and the empty Candidate Detail placeholder being forced into the first Pipeline grid column, overlapping the summary. Updated `web/app/globals.css` to reset sticky table headers and exclude the placeholder from the first-column rule. Also hide the top-nav scrollbar and reduce navigation spacing on laptop widths.
+- No backend, Supabase, API, RLS, workflow, or candidate data changes. No merge or production deployment.
+- Remaining QA limitation: Admin authenticated read-only view only; TA/HM/Interviewer sessions and a running local Supabase E2E environment were unavailable. No create/update/stage-transition action was taken against live hiring data. Full multi-role E2E remains BLOCKED pending safe role test accounts/local services.
+- Visual QA must be repeated on the post-fix preview SHA before accepting these changes. Compare Jobs Master first-row actions and Pipeline list/detail columns at desktop and narrow widths; verify Vietnamese labels and responsive behavior remain open findings.
