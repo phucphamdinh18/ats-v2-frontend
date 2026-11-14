@@ -81,15 +81,46 @@ Scope: PR #44 only. No Supabase schema, Edge Function, Auth, RLS, production sit
 - Added a focused workspace regression test ensuring only the Bosch Jobs heading is shown and the old tab strip does not reappear.
 - No backend/RLS/schema/API/stage changes. This commit has not been published to live `/preview/`. Browser visual QA, authenticated E2E and owner approval still pending.
 
-## Step 7 — Preview visual QA and fixes (2026-11-15)
-- Verified PR #44 HEAD `5b18ab6d2d502fe3c09a76a58c8c83b9de99b09e`; QA, Next web checks and Pages PR build passed. Supabase local browser E2E was skipped.
-- Verified production `release.json` before publish: root revision `71ff88ebdb68bea9f6456375c4c9d970e11c0379`. Preview publish run #244 succeeded in `path-preview`; production root was not targeted.
-- Browser QA first found the Jobs Master sticky table header overlapping its first row and a Pipeline side panel layout defect. The initial global CSS override did not affect the CSS Module App Shell; it was removed. The Jobs table header reset is now applied in `web/components/bosch-v2-jobs.module.css`; the Pipeline placeholder already uses the dedicated side-panel grid class in `web/components/bosch-v2-pipeline.module.css`.
-- No backend, Supabase, API, RLS, workflow, or candidate data changes. No merge or production deployment.
-- Remaining QA limitation: Admin authenticated read-only view only; TA/HM/Interviewer sessions and a running local Supabase E2E environment were unavailable. No create/update/stage-transition action was taken against live hiring data. Full multi-role E2E remains BLOCKED pending safe role test accounts/local services.
-- The preview was re-published at `31f7500cf757a7c024825a172d5428677cf7cfb1`. The Jobs first-row overlap remained visible, so this release is not accepted. The scoped CSS Module correction is being prepared as a follow-up commit. Pipeline list/detail and narrow-width screenshots remain to be rechecked; Vietnamese labels remain an open finding.
+## Step 7 — Preview visual QA and fixes (superseded 2026-11-15)
+- Historical QA at SHA `5b18ab6d2d502fe3c09a76a58c8c83b9de99b09e` found Jobs Master header overlap and incomplete Pipeline side-panel layout. These observations led to follow-up changes; they are not the current release state.
+- An earlier preview at `31f7500cf757a7c024825a172d5428677cf7cfb1` was not accepted because the Jobs header still overlapped. Do not use that release as current evidence.
 
-## Step 8 — Scoped table header fix (2026-11-15)
-- Moved the Jobs Master sticky-header reset into its actual CSS Module selector so it overrides the legacy global `th { position: sticky }` rule.
-- Kept Pipeline CSS scoped; no app-wide CSS override is used for these screens.
-- Pending: CI, preview deployment and screenshot confirmation for this new SHA.
+## Step 8 — Scoped table header fix (2026-11-15; superseded by Step 9)
+- Moved the Jobs Master table-header reset into `web/components/bosch-v2-jobs.module.css`, where it overrides the legacy global sticky-header rule.
+- Subsequent screenshot review also found long cell text clipping. Step 9 records the additional body wrapping fix and current verification.
+
+## Step 9 — Preview deployment and visual QA (2026-11-15)
+
+### Revision and safeguards
+- PR #44 remains **open, Draft, unmerged**. The verified branch HEAD deployed to preview is `1a71a843625fcc1fe2b42567266c9659ec3feb09`.
+- Live `release.json` confirms production root `71ff88ebdb68bea9f6456375c4c9d970e11c0379` and preview revision `1a71a843625fcc1fe2b42567266c9659ec3feb09`; the `path-preview` workflow published only the preview path. Production root remained unchanged.
+- Recovery branch `backup/bosch-pr44-before-clean-rebuild-20261114` remains at `938dc56382d5d48b6203786a437b20c496409873`.
+- No database, Supabase Auth/RLS, Edge Function, backend API, recruitment workflow, or real candidate record was changed. No merge or legacy/backup deletion was performed.
+
+### CI on the deployed commit
+- QA checks #259: success.
+- Next web checks #232: success.
+- Pages PR build #256: success.
+- Supabase local browser E2E #150: skipped. This is not proof of live role/RLS behavior.
+- Local verification on the frontend changes: Node tests 23/23, Vitest 59/59, typecheck and static build passed.
+
+### Visual QA at 1363 × 1023 (laptop viewport)
+- **Jobs Master — PASS for the inspected desktop viewport.** Bosch navy header, full wordmark, light sidebar, red active state and compact job table render without the previous header collision. Long status header wraps inside its own column; long department/location text wraps instead of clipping. The selected table values and counts come from the authorized API data. No legacy 1.1/1.2 tabs or duplicate old page heading are visible.
+- **Job ID / Hiring Pipeline — FAIL for strict reference fidelity.** Job title, metadata, section tabs, five-stage summary and candidate list render; selecting a test candidate opens the right-side detail panel. There is no Kanban/drag-drop. Missing API values display `—` with explanatory text instead of fabricated score, experience or interview-round data. However, the seven-column candidate table has an internal horizontal scrollbar at this laptop width; user-provided Bosch reference shows the table fitted in the left pane. The detail pane starts as a placeholder until a candidate is selected. This needs a frontend layout pass before visual acceptance.
+- Laptop viewport only. Narrow/mobile viewport and responsive behavior were not captured; no claim is made for them. Visual QA is based on supplied Bosch screenshots but does not claim pixel-identical matching.
+
+### Safe functional checks
+- Admin session `phucphamdinh18@gmail.com`: opened Jobs Master, inspected the four API-backed jobs and six applications for a marked test job, searched and cleared a candidate query, selected a marked test candidate and read its actual detail/interview history. Read-only checks only; no stage transition or add-candidate submit was performed.
+- TA, Hiring Manager and Interviewer live sessions were not available in this browser. Their authenticated flows, session refresh/logout, forbidden API paths, stage-change confirmation and `request_id` retry were not verified in live E2E. Unit/component permission and retry tests passed, but do not replace role E2E.
+- Loading appeared briefly while API data resolved, then the list/details rendered. API error and empty states were not forced in the live session.
+
+### Screen verdicts and release gate
+- Jobs Master: **PASS** (desktop visual and read-only data flow only).
+- Job ID / Hiring Pipeline: **FAIL** (table does not fit without internal horizontal scrolling at the inspected width).
+- Admin runtime read-only: **PASS** for the checks above; Admin mutation path not tested.
+- TA / Hiring Manager / Interviewer E2E: **BLOCKED** (no authorized test sessions/local browser E2E runner available).
+- Overall acceptance: **BLOCKED**. Do not merge PR #44, deploy production or remove the historical frontend until Pipeline layout is corrected and all four role test paths plus responsive checks are verified against disposable/test data.
+
+### Rollback
+- Production was not changed, so rollback of the preview is not required to restore the public site.
+- For PR code comparison/rollback, preserve `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`; use a reviewed revert commit or restore selected files from that branch. Do not reset/force-push shared history and do not delete the backup.
