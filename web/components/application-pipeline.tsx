@@ -23,20 +23,6 @@ const PAGE_SIZE = 25;
 const PIPELINE_STAGES = ["NEW", "SCREEN", "INTERVIEW", "HIRED", "REJECTED"] as const;
 const NEXT_STAGE: Record<string, "SCREEN" | "INTERVIEW" | undefined> = { NEW: "SCREEN", SCREEN: "INTERVIEW" };
 const PREVIOUS_STAGE: Record<string, "NEW" | "SCREEN" | undefined> = { SCREEN: "NEW", INTERVIEW: "SCREEN" };
-const STAGE_LABELS = {
-  vi: { NEW: "Mới ứng tuyển", SCREEN: "Sơ loại", INTERVIEW: "Phỏng vấn", OFFER: "Đề nghị tuyển dụng", HIRED: "Đã tuyển", REJECTED: "Từ chối" },
-  en: { NEW: "New application", SCREEN: "Screening", INTERVIEW: "Interview", OFFER: "Offer", HIRED: "Hired", REJECTED: "Rejected" },
-} as const;
-// Interim round limits from the supplied UI reference. These are presentation
-// targets; the TA-SLA Master file defines requisition-level targets separately.
-const ROUND_SLA_DAYS: Record<string, number> = {
-  NEW: 2,
-  SCREEN: 3,
-  INTERVIEW: 4,
-  OFFER: 0,
-  HIRED: 0,
-  REJECTED: 0,
-};
 type TransitionStage = "NEW" | "SCREEN" | "INTERVIEW";
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
 
@@ -46,11 +32,8 @@ function message(error: unknown) {
 
 export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
   const { locale } = useLanguage();
-  const stageLabel = (stage: string) => STAGE_LABELS[locale][stage as keyof typeof STAGE_LABELS.vi] || stage;
   const en = locale === "en";
   const [items, setItems] = useState<Application[]>([]);
-  // List is the primary Bosch enterprise workspace. Existing Kanban remains available.
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
   const [state, setState] = useState<State>("loading");
@@ -65,7 +48,6 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [transitionRequestTarget, setTransitionRequestTarget] = useState<TransitionStage | null>(null);
   const [failedTransition, setFailedTransition] = useState<{ application: Application; targetStage: TransitionStage; message: string } | null>(null);
   const [transitionBusy, setTransitionBusy] = useState(false);
-  const [dragging, setDragging] = useState<Application | null>(null);
   const transitionRequestIds = useRef(new Map<string, string>());
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
@@ -170,7 +152,6 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         setTransitionRequestId(null);
         setTransitionRequestTarget(null);
         setFailedTransition(null);
-        setDragging(null);
         setItems([]);
         setDetail(null);
         setSelected(null);
@@ -222,7 +203,6 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         setDetailError("");
         setSelected(null);
         selectedId.current = null;
-        setDragging(null);
         if (apiError.status === 401) {
           setState("error");
           setError(message(cause));
@@ -279,10 +259,6 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     <div className={styles.listSection}>
     <div className={styles.toolbar}>
       <h2 className={styles.tableHeading}>Candidates ({job.metrics?.total_candidates ?? items.length})</h2>
-      <div className={styles.viewToggle} role="group" aria-label={en ? "Candidate view" : "Chế độ xem ứng viên"}>
-        <button type="button" className={viewMode === "list" ? styles.active : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>{en ? "List" : "Danh sách"}</button>
-        <button type="button" className={viewMode === "kanban" ? styles.active : ""} aria-pressed={viewMode === "kanban"} onClick={() => setViewMode("kanban")}>Kanban</button>
-      </div>
       {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className={styles.disclosure}><summary><span aria-hidden="true">＋</span> {en ? "Add candidate to job" : "Thêm ứng viên vào vị trí"}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
       <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label={en ? "Search candidates in this job" : "Tìm ứng viên trong vị trí này"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates in this job…" : "Tìm ứng viên trong vị trí này…"} /></label>
       {state === "ready" && <span className="muted">{en ? `${items.length} applications on this page` : `${items.length} hồ sơ đang hiển thị`}</span>}
@@ -294,7 +270,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {offerError && canViewOffers && <div className="notice error" role="alert">Không tải được dữ liệu Offer: {offerError}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && !offerError && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
     {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
-    {(state === "ready" || state === "empty") && viewMode === "list" && <div className={styles.scroll}>
+    {(state === "ready" || state === "empty") && <div className={styles.scroll}>
       <table className={styles.table}>
         <thead><tr><th><input type="checkbox" aria-label="Select all visible candidates" checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>Candidate</th><th>Stage</th><th>Interview Round</th><th>Matching</th><th>Experience</th><th>Source</th><th>Last Activity</th></tr></thead>
         <tbody>
@@ -313,38 +289,6 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         </tbody>
       </table>
       {!items.length && !offerItems.length && <p className="empty-stage">{en ? "No candidates on this page." : "Chưa có ứng viên ở trang này."}</p>}
-    </div>}
-    {(state === "ready" || state === "empty") && viewMode === "kanban" && <div className="pipeline-grid">
-      {stages.map(([stage, applications]) => {
-        const allowedTargets = canManageApplications && dragging ? [NEXT_STAGE[dragging.stage], PREVIOUS_STAGE[dragging.stage]] : [];
-        const acceptsDrop = allowedTargets.includes(stage as "NEW" | "SCREEN" | "INTERVIEW") && dragging?.status === "ACTIVE";
-        return <section className={`stage ${acceptsDrop ? "drop-target" : ""}`} key={stage} aria-label={`Giai đoạn ${stage}`}
-          onDragOver={(event) => { if (acceptsDrop) event.preventDefault(); }}
-          onDrop={(event) => { event.preventDefault(); const candidate = dragging; const targetStage = stage as TransitionStage; setDragging(null); if (acceptsDrop && candidate) void moveApplication(candidate, targetStage); }}>
-          <h3><span className="stage-title"><i aria-hidden="true" />{stageLabel(stage)}</span><span className="count">{applications.length}</span></h3>
-          {ROUND_SLA_DAYS[stage] > 0 && <p className="stage-sla">SLA vòng: ≤ {ROUND_SLA_DAYS[stage]} ngày</p>}
-          {stage === "NEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để đưa về NEW.</p>}
-          {stage === "SCREEN" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng NEW hoặc INTERVIEW đang xử lý vào đây.</p>}
-          {stage === "INTERVIEW" && <p className="drop-hint">Kéo thẻ ứng viên ở vòng SCREEN đang xử lý vào đây để chuyển sang INTERVIEW.</p>}
-          {stage === "OFFER" && <p className="drop-hint">Hồ sơ có Offer đang chờ hoặc đã được duyệt. Application vẫn giữ nguyên vòng hiện tại.</p>}
-          {applications.length === 0 && <p className="empty-stage">Chưa có ứng viên ở vòng này.</p>}
-          {applications.map((application) => {
-            const offer = stage === "OFFER" ? offerItems.find((item) => item.application_id === application.application_id) : undefined;
-            const canDrag = canManageApplications && stage !== "OFFER" && Boolean(NEXT_STAGE[application.stage] || PREVIOUS_STAGE[application.stage]) && application.status === "ACTIVE";
-            const dragTargets = [NEXT_STAGE[application.stage], PREVIOUS_STAGE[application.stage]].filter(Boolean);
-            const dragReason = canDrag ? `Kéo sang ${dragTargets.join(" hoặc ")}` : "Chỉ hồ sơ đang xử lý ở NEW, SCREEN hoặc INTERVIEW mới có thể chuyển vòng.";
-            return <button className="application-card" key={application.application_id}
-              draggable={canDrag}
-              onDragStart={(event) => { if (!canDrag) { event.preventDefault(); return; } setDragging(application); }}
-              onDragEnd={() => setDragging(null)}
-              onClick={() => void openDetail(application)}
-              title={dragReason}
-              aria-label={`Mở hồ sơ của ${application.candidate_name}. ${dragReason}`}>
-              <span className="application-card-code">{job.job_code || "ỨNG VIÊN"}</span><strong>{application.candidate_name}</strong><span className="application-card-status">{offer ? offer.offer_status === "APPROVED" ? "Offer đã duyệt" : "Offer chờ duyệt" : application.status === "ACTIVE" ? "Đang xử lý" : application.status}</span><small>{application.source || "Chưa ghi nguồn"}</small>
-            </button>;
-          })}
-        </section>;
-      })}
     </div>}
     {state === "ready" && <div className={styles.pagination}><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     </div>
