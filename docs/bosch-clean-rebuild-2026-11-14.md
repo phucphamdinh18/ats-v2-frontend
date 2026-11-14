@@ -84,7 +84,12 @@ Scope: PR #44 only. No Supabase schema, Edge Function, Auth, RLS, production sit
 ## Step 7 — Preview visual QA and fixes (2026-11-15)
 - Verified PR #44 HEAD `5b18ab6d2d502fe3c09a76a58c8c83b9de99b09e`; QA, Next web checks and Pages PR build passed. Supabase local browser E2E was skipped.
 - Verified production `release.json` before publish: root revision `71ff88ebdb68bea9f6456375c4c9d970e11c0379`. Preview publish run #244 succeeded in `path-preview`; production root was not targeted.
-- Browser QA found the Jobs Master sticky table header overlapping its first row, and the empty Candidate Detail placeholder being forced into the first Pipeline grid column, overlapping the summary. Updated `web/app/globals.css` to reset sticky table headers and exclude the placeholder from the first-column rule. Also hide the top-nav scrollbar and reduce navigation spacing on laptop widths.
+- Browser QA first found the Jobs Master sticky table header overlapping its first row and a Pipeline side panel layout defect. The initial global CSS override did not affect the CSS Module App Shell; it was removed. The Jobs table header reset is now applied in `web/components/bosch-v2-jobs.module.css`; the Pipeline placeholder already uses the dedicated side-panel grid class in `web/components/bosch-v2-pipeline.module.css`.
 - No backend, Supabase, API, RLS, workflow, or candidate data changes. No merge or production deployment.
 - Remaining QA limitation: Admin authenticated read-only view only; TA/HM/Interviewer sessions and a running local Supabase E2E environment were unavailable. No create/update/stage-transition action was taken against live hiring data. Full multi-role E2E remains BLOCKED pending safe role test accounts/local services.
-- Visual QA must be repeated on the post-fix preview SHA before accepting these changes. Compare Jobs Master first-row actions and Pipeline list/detail columns at desktop and narrow widths; verify Vietnamese labels and responsive behavior remain open findings.
+- The preview was re-published at `31f7500cf757a7c024825a172d5428677cf7cfb1`. The Jobs first-row overlap remained visible, so this release is not accepted. The scoped CSS Module correction is being prepared as a follow-up commit. Pipeline list/detail and narrow-width screenshots remain to be rechecked; Vietnamese labels remain an open finding.
+
+## Step 8 — Scoped table header fix (2026-11-15)
+- Moved the Jobs Master sticky-header reset into its actual CSS Module selector so it overrides the legacy global `th { position: sticky }` rule.
+- Kept Pipeline CSS scoped; no app-wide CSS override is used for these screens.
+- Pending: CI, preview deployment and screenshot confirmation for this new SHA.
