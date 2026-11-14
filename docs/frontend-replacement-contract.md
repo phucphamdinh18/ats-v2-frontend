@@ -47,3 +47,25 @@ A green CI run or a screenshot that merely resembles the approved color scheme i
 - Backend schema, RLS, Edge Functions, APIs, request IDs, interview/offer approval logic are unchanged.
 - Release safeguards: do not merge/destroy old code until signed-off screenshot QA; CI run after the last change must pass, Supabase E2E and authenticated browser visual QA remain separate required gates. Green PR build does **not** automatically publish `/preview/`.
 - Production root source SHA is not yet independently confirmed from live `release.json`; do not dispatch `path-preview` using a guessed default `production_ref`.
+
+
+## 2026-11-14 — Legacy UI contamination: confirmed root cause
+
+**Owner rejected live preview screenshots after deploy of PR #44. Full visual replacement has NOT been achieved.**
+
+Code inspection of `web/app/globals.css` at PR head `f703ef545aa0916560c2c74d147882149a302584`:
+- 3,113 lines, ~128,250 characters in one global stylesheet.
+- 527 occurrences of `.shell` and 303 occurrences of `.bosch`; the new Bosch presentation layer appends selector overrides to legacy global CSS rather than replacing it.
+- Existing `workspace.tsx` is still ~812 lines and imports old `ApplicationPipeline` and `TalentPool`, as well as new Bosch components.
+- Screenshot shows clipped brand, weak typography hierarchy, excessive sidebar space and incorrect Job Master table structure compared with approved reference.
+
+### Binding remediation (do not solve with another CSS override)
+1. Create new isolated layout/CSS design system under a dedicated Bosch namespace; no inheritance of legacy shell visual classes.
+2. Extract/reuse only network/auth/permission/transition handlers from the old UI without altering their public contracts. Preserve existing status/stage keys and workflows.
+3. Replace rendered UI from app shell through Jobs Master, Job ID, Candidate list/detail, Interview, Offer with independent components.
+4. Bring over all functional controls and error/loading/empty states; do not render inert navigation or fabricate matching/round metrics.
+5. Regression test then screenshot compare at matched viewport; review alignment, typography, borders, colors, data density and responsive behavior.
+6. Remove unused legacy CSS/components **only after** the replacement is exercised end to end. Keep Git tag/commit for rollback, do not touch backend migrations or live DB.
+7. No merge, production deploy, cleanup or 100% fidelity assertion before owner approves actual screenshots.
+
+**Current implementation: NOT accepted.** Previous CI passes prove builds/tests only.
