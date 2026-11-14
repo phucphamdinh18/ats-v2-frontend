@@ -291,7 +291,7 @@ it("renders a single Bosch Jobs heading without hidden legacy tabs or duplicate 
   ]);
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Bosch QA Job" });
-  expect(screen.getAllByRole("heading", { name: "Job Openings" })).toHaveLength(2);
+  expect(screen.getByRole("heading", { name: "Job Openings", level: 1 })).toBeTruthy();
   expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
   expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
   expect(screen.queryByText("ATS Workspace", { selector: "h1" })).toBeNull();
