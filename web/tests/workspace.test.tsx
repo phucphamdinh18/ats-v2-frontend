@@ -283,3 +283,20 @@ it("quick start opens actual open-job filtering, without creating any records", 
   const openFilter = screen.getByRole("combobox", { name: "Trạng thái Job" });
   expect((openFilter as HTMLSelectElement).value).toBe("OPEN");
 });
+
+
+it("renders a single Bosch Jobs heading without hidden legacy tabs or duplicate headers", async () => {
+  scope(true, ["HIRING_MANAGER"], [
+    { id: "job-bosch", title: "Bosch QA Job", status: "OPEN", job_code: "BOSCH-QA" },
+  ]);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline Bosch QA Job" });
+  expect(screen.getAllByRole("heading", { name: "Job Openings" })).toHaveLength(2);
+  expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
+  expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
+  expect(screen.queryByText("ATS Workspace", { selector: "h1" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Mở pipeline Bosch QA Job" }));
+  expect(await screen.findByRole("region", { name: "Pipeline Bosch QA Job" })).toBeTruthy();
+  expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
+  expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
+});
