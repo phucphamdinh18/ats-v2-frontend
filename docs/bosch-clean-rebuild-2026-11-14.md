@@ -57,3 +57,17 @@ Scope: PR #44 only. No Supabase schema, Edge Function, Auth, RLS, production sit
 - Removed nonfunctional summary filter-looking placeholders and scoped Pipeline notices, retry buttons, and stage actions to its CSS Module.
 - **Not changed:** Supabase schema, RLS, Auth, Edge Functions, production or pipeline state machine.
 - **Still pending:** browser screenshot fidelity/role E2E, remaining ManualCandidateForm legacy CSS and other modules. Preserve backup and PR Draft.
+
+
+## Step 5 — Bosch candidate intake form isolation (2026-11-14)
+
+- Created `web/components/bosch-v2-candidate-intake.module.css`, independent from `globals.css` legacy selectors, for form grid, controls, source selector, Drive CV URL, validation/success/error states, retry, submit and responsive layout.
+- Refactored `web/components/manual-candidate-form.tsx` to use scoped module classes only.
+- Preserved `createManualCandidateApplication`, OPEN-job gate, catalog lookup, email/phone dedupe requirements, Drive-link-only rule, request confirmation, idempotent request ID, 401 session revocation, retry and error handling.
+- Scope remains PR #44, with backup at `938dc56382d5d48b6203786a437b20c496409873` and production unchanged.
+- UI component is now visually isolated, **but no browser screenshot QA or role-based end-to-end verification has yet occurred**. Do not remove legacy global CSS until all remaining modules are migrated and evidence of no dependencies exists.
+
+### Current release gate
+- Jobs Master, Job Detail, App Shell, Pipeline primary table/side panel and candidate intake have isolated CSS modules.
+- The other modules (Candidates/Talent Pool, Interviews, Offers, Admin, and ancillary login/review components) still require isolation or safe integration.
+- Test the rendered preview against the selected Bosch screenshots before any release/merge.
