@@ -243,7 +243,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
           <span>{en ? "All Sources" : "Tất cả nguồn"}</span>
         </div>
       </div>
-      <div className={styles.stageSummary} aria-label={en ? "Hiring pipeline counts" : "Số hồ sơ theo giai đoạn"}>
+      <div className={styles.stageSummary} role="group" aria-label={en ? "Hiring pipeline counts" : "Số hồ sơ theo giai đoạn"}>
         {(["NEW", "SCREEN", "INTERVIEW", "OFFER", "HIRED"] as const).map((stage) => {
           const loaded = stages.find(([value]) => value === stage)?.[1].length ?? 0;
           const total = stage === "NEW" ? job.metrics?.new_count : stage === "SCREEN" ? job.metrics?.screening_count : stage === "INTERVIEW" ? job.metrics?.interview_count : stage === "HIRED" ? job.metrics?.hired_count : undefined;
