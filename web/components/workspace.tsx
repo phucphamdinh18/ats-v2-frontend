@@ -470,7 +470,7 @@ export default function Workspace() {
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
-        {allowed && <button className={styles.collapse} type="button" onClick={() => { setTab("jobs"); setGuideOpen(true); }}><Icon name="help" size={16}/><span className={styles.navLabel}>{t.help}</span></button>}
+        {allowed && <button className={styles.collapse} type="button" aria-label={guideOpen ? "Ẩn hướng dẫn" : "Hiện hướng dẫn"} onClick={() => { setTab("jobs"); setGuideOpen(open => !open); }}><Icon name="help" size={16}/><span className={styles.navLabel}>{t.help}</span></button>}
         <button className={styles.collapse} type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed(value => !value)}><Icon name={sidebarCollapsed ? "expand" : "collapse"} size={16}/><span className={styles.navLabel}>{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span></button>
       </aside>
       <div className={styles.main}>
@@ -590,7 +590,7 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              <div className={`page-heading ${(tab === "jobs" || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
+              {(tab === "jd" || tab === "admin") && <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
                   <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
@@ -618,14 +618,14 @@ export default function Workspace() {
                     {t.refreshAccess}
                   </button>
                 </div>
-              </div>
-              <div className={`role-line ${(tab === "jobs" || ["talent","interviews","offers"].includes(tab)) ? "bosch-hidden-page-heading" : ""}`}>
+              </div>}
+              {(tab === "jd" || tab === "admin") && <div className="role-line">
                 {access.roles.map((role) => (
                   <span className="role" key={role}>
                     {roleLabel(role, t)}
                   </span>
                 ))}
-              </div>
+              </div>}
               {tab === "talent" && reviewAllowed ? (
                 <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
@@ -704,14 +704,6 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  <div className="job-view-tabs bosch-hidden-page-heading" role="tablist" aria-label="Chế độ xem Job">
-                    <button type="button" role="tab" aria-selected={jobView === "master"} className={jobView === "master" ? "active" : ""} onClick={() => setJobView("master")}>
-                      <Icon name="jobs" size={16} /> 1.1 Bảng Master <span>{access.jobs.length} Job</span>
-                    </button>
-                    <button type="button" role="tab" aria-selected={jobView === "pipeline"} className={jobView === "pipeline" ? "active" : ""} onClick={() => setJobView("pipeline")}>
-                      <Icon name="review" size={16} /> 1.2 Hiring Pipeline <span>{selectedJob?.job_code || "Chọn Job"}</span>
-                    </button>
-                  </div>
                   {jobView === "master" ? <BoschJobsMaster
                     jobs={jobs}
                     allJobs={access.jobs}
