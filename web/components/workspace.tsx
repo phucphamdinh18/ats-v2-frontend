@@ -9,6 +9,7 @@ import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import BoschJobDetail from "./bosch-job-detail";
 import BoschJobsMaster from "./bosch-jobs-master";
+import styles from "./bosch-v2-shell.module.css";
 import BoschModuleLayout from "./bosch-module-layout";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
 import { jobOverview } from "@/lib/applications";
@@ -389,122 +390,41 @@ export default function Workspace() {
     );
   }
   return (
-    <div className={`shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
-      <a className="skip-link" href="#main-content">
-        {t.navigation}
+    <div className={`${styles.shell} ${sidebarCollapsed ? styles.collapsed : ""}`}>
+      <a className={styles.skip} href="#main-content">{t.navigation}</a>
+      <a className={styles.identity} href={`${basePath}/`} aria-label="Bosch ATS V2">
+        <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="124" height="42"/>
+        <span className={styles.divider} aria-hidden="true"/>
+        <strong>ATS V2</strong>
       </a>
-      <aside className="sidebar">
-        <a className="brand bosch-identity" href={`${basePath}/`} aria-label="Bosch ATS V2">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/1/16/Bosch-logo.svg" alt="Bosch — Invented for life" width="135" height="40" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = `${basePath}/bosch-inspired-wordmark.svg`; }} />
-          <span className="bosch-brand-divider" aria-hidden="true"/>
-          <strong>ATS V2</strong>
-        </a>
-        <div className="workspace-label">Recruitment</div>
-        <nav aria-label={t.navigation}>
-          <button className="nav bosch-home-nav" onClick={() => { setTab("jobs"); setJobView("master"); }} type="button"><Icon name="dashboard" /><span className="nav-label">Dashboard</span></button>
-          <button
-            className={tab === "jobs" ? "nav active" : "nav"}
-            aria-current={tab === "jobs" ? "page" : undefined}
-            onClick={() => setTab("jobs")}
-          >
-            <Icon name="jobs" />
-            <span className="nav-label">{t.jobs}</span>
-          </button>
-          {allowed && <button className={tab === "interviews" ? "nav active" : "nav"} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review" /><span className="nav-label">{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
-          {reviewAllowed && <button className={tab === "offers" ? "nav active" : "nav"} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs" /><span className="nav-label">{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</span></button>}
-          {reviewAllowed && (
-            <button
-              className={tab === "talent" ? "nav active" : "nav"}
-              aria-current={tab === "talent" ? "page" : undefined}
-              onClick={() => setTab("talent")}
-            >
-              <Icon name="team" />
-              <span className="nav-label">Talent Pool</span>
-            </button>
-          )}
-          {adminAllowed && (
-            <button
-              className={tab === "admin" ? "nav active" : "nav"}
-              aria-current={tab === "admin" ? "page" : undefined}
-              onClick={() => setTab("admin")}
-            >
-              <Icon name="shield" />
-              <span className="nav-label">{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span>
-            </button>
-          )}
-          {reviewAllowed && (
-            <button
-              className={tab === "jd" ? "nav active" : "nav"}
-              aria-current={tab === "jd" ? "page" : undefined}
-              onClick={() => setTab("jd")}
-            >
-              <Icon name="review" />
-              <span className="nav-label">{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span>
-            </button>
-          )}
-        </nav>
-        <div className="sidebar-help">
-          <span className="help-icon">
-            <Icon name="help" />
-          </span>
-          <strong>{t.helpHint}</strong>
-          <p>{allowed ? t.guideIntro : t.loginNote}</p>
-          {allowed && (
-            <button
-              className="quiet"
-              onClick={() => {
-                setTab("jobs");
-                setGuideOpen(true);
-              }}
-            >
-              {t.help}
-              <Icon name="arrow" size={15} />
-            </button>
-          )}
-        </div>
-        <div className="sidebar-note">
-          <Icon name="shield" size={16} />
-          <span className="sidebar-note-copy">{t.scoped}</span>
-        </div>
-        <button className="sidebar-collapse" type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed((value) => !value)}>
-          <Icon name={sidebarCollapsed ? "expand" : "collapse"} size={17} />
-          <span className="nav-label">{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span>
-        </button>
-      </aside>
-      <div className="main">
-        <header className="topbar">
-          <nav className="enterprise-top-nav" aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
+        <header className={styles.topbar}>
+          <nav className={styles.topnav} aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
             <button type="button" onClick={() => { setTab("jobs"); setJobView("master"); }}>Home</button>
-            <button type="button" className={tab === "jobs" ? "active" : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>Jobs</button>
-            {reviewAllowed && <button type="button" className={tab === "talent" ? "active" : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
-            {allowed && <button type="button" className={tab === "interviews" ? "active" : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
-            {reviewAllowed && <button type="button" className={tab === "offers" ? "active" : ""} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</button>}
-            {reviewAllowed && <button type="button" className={tab === "jd" ? "active" : ""} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}>{locale === "en" ? "Job Reviews" : "Duyệt JD"}</button>}
-            {adminAllowed && <button type="button" className={tab === "admin" ? "active" : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}>{locale === "en" ? "Administration" : "Quản trị"}</button>}
+            <button type="button" className={tab === "jobs" ? styles.active : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>Jobs</button>
+            {reviewAllowed && <button type="button" className={tab === "talent" ? styles.active : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
+            {allowed && <button type="button" className={tab === "interviews" ? styles.active : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
+            {reviewAllowed && <button type="button" className={tab === "offers" ? styles.active : ""} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</button>}
+            {reviewAllowed && <button type="button" className={tab === "jd" ? styles.active : ""} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}>{locale === "en" ? "Job Reviews" : "Duyệt JD"}</button>}
+            {adminAllowed && <button type="button" className={tab === "admin" ? styles.active : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}>{locale === "en" ? "Administration" : "Quản trị"}</button>}
           </nav>
-          <div className="breadcrumb">
-            {t.recruiting}
-            <span>/</span>
-            <strong>{tab === "jobs" ? (selectedJob?.title || t.jobs) : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD") : (locale === "en" ? "Administration" : "Quản trị & quyền")}</strong>
-          </div>
-          <div className="header-actions">
-            <div className={`global-search ${globalSearchOpen ? "is-open" : ""}`}>
+          <div className={styles.headerActions}>
+            <div className={styles.searchContainer}>
               {globalSearchOpen ? (
                 <>
-                  <label className="global-search-input">
+                  <label className={styles.searchInput}>
                     <Icon name="search" size={17} />
                     <input ref={globalSearchRef} value={globalSearchQuery} onChange={(event) => setGlobalSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setGlobalSearchOpen(false); setGlobalSearchQuery(""); } }} placeholder={locale === "en" ? "Search jobs and pages…" : "Tìm Job hoặc màn hình…"} aria-label={locale === "en" ? "Search ATS" : "Tìm trong ATS"} />
                     <kbd>ESC</kbd>
                   </label>
-                  <div className="global-search-results" role="listbox" aria-label={locale === "en" ? "Search results" : "Kết quả tìm kiếm"}>
-                    {globalJobMatches.map((job) => <button key={job.id} type="button" role="option" aria-selected="false" onClick={() => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name="jobs" size={16} /></span><span><strong>{job.title}</strong><small>{job.job_code || t.noCode} · {jobStatusLabel(job.status, t)}</small></span><Icon name="arrow" size={15} /></button>)}
-                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className="search-result-icon"><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : item.destination === "jd" ? "review" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
-                    {!globalJobMatches.length && !globalNavMatches.length && <p className="global-search-empty">{locale === "en" ? "No matching Jobs or pages." : "Không tìm thấy Job hoặc màn hình phù hợp."}</p>}
+                  <div className={styles.results} role="listbox" aria-label={locale === "en" ? "Search results" : "Kết quả tìm kiếm"}>
+                    {globalJobMatches.map((job) => <button key={job.id} type="button" role="option" aria-selected="false" onClick={() => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className={styles.searchResultIcon}><Icon name="jobs" size={16} /></span><span><strong>{job.title}</strong><small>{job.job_code || t.noCode} · {jobStatusLabel(job.status, t)}</small></span><Icon name="arrow" size={15} /></button>)}
+                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className={styles.searchResultIcon}><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : item.destination === "jd" ? "review" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
+                    {!globalJobMatches.length && !globalNavMatches.length && <p className={styles.noResults}>{locale === "en" ? "No matching Jobs or pages." : "Không tìm thấy Job hoặc màn hình phù hợp."}</p>}
                   </div>
                 </>
-              ) : <button className="global-search-trigger" type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
+              ) : <button className={styles.searchTrigger} type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
             </div>
-            <label className="language-picker">
+            <label className={styles.language}>
               <Icon name="globe" size={17} />
               <select
                 aria-label={t.language}
@@ -518,13 +438,13 @@ export default function Workspace() {
               </select>
             </label>
             {access && (
-              <div className="account">
-                <span className="avatar" aria-hidden="true">
+              <div className={styles.account}>
+                <span className={styles.avatar} aria-hidden="true">
                   {access.email[0]?.toUpperCase() || "A"}
                 </span>
-                <span className="account-email">{access.email}</span>
+                <span className={styles.email}>{access.email}</span>
                 <button
-                  className="icon-button"
+                  className={styles.signOut}
                   aria-label={t.signOut}
                   title={t.signOut}
                   onClick={logout}
@@ -536,7 +456,25 @@ export default function Workspace() {
             )}
           </div>
         </header>
-        <main id="main-content">
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarTitle}>Recruitment</div>
+        <nav className={styles.nav} aria-label={t.navigation}>
+          <button type="button" className={styles.navButton} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="dashboard"/><span className={styles.navLabel}>Dashboard</span></button>
+          <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
+          {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
+          {allowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
+          {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "offers" ? styles.active : ""}`} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs"/><span className={styles.navLabel}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</span></button>}
+          <span className={styles.sidebarGroup}>Administration</span>
+          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span></button>}
+          {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "jd" ? styles.active : ""}`} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span></button>}
+        </nav>
+        <div className={styles.sidebarSpacer}/>
+        <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
+        {allowed && <button className={styles.collapse} type="button" onClick={() => { setTab("jobs"); setGuideOpen(true); }}><Icon name="help" size={16}/><span className={styles.navLabel}>{t.help}</span></button>}
+        <button className={styles.collapse} type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed(value => !value)}><Icon name={sidebarCollapsed ? "expand" : "collapse"} size={16}/><span className={styles.navLabel}>{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span></button>
+      </aside>
+      <div className={styles.main}>
+        <main id="main-content" className={styles.content}>
           {error && (
             <div className="notice error" role="alert">
               <Icon name="help" />
@@ -801,7 +739,7 @@ export default function Workspace() {
             </>
           )}
         </main>
-        <footer>
+        <footer className={styles.footer}>
           <strong>ATS Workspace</strong>
           <span>{t.footer}</span>
         </footer>
