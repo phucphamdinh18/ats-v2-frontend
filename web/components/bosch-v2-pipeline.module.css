@@ -81,3 +81,15 @@
 .profileFields{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px 8px;margin:12px 0;font-size:12px}
 .profileFields dt{color:#536276}.profileFields dd{margin:0;font-weight:650;min-width:0;overflow-wrap:anywhere}
 .timeline{padding-left:20px;font-size:11px}.timeline li{padding-bottom:9px}.timeline li strong,.timeline li small,.timeline li span{display:block;margin-bottom:3px}.timeline li small{color:#5f6d81}
+
+/* Action and feedback controls are scoped; they no longer rely on legacy globals. */
+.summaryScope{font-size:12px;color:#586b80;font-weight:600}
+.muted{color:#607188;font-size:11px}
+.retry{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:#0752a6;font-size:12px;font-weight:750;text-decoration:underline;padding:5px 8px;margin-left:8px}
+.actionSecondary,.actionPrimary{display:inline-flex;justify-content:center;align-items:center;gap:7px;min-height:35px;border-radius:5px;padding:8px 13px;font-size:12px;font-weight:750;margin-right:8px;margin-top:8px}
+.actionSecondary{border:1px solid #bdc9d7;background:#fff;color:#233c5b}
+.actionPrimary{border:1px solid #c8102e;background:#c8102e;color:#fff}
+.actionPrimary:hover{background:#ac0a24}
+.actionSecondary:hover{background:#f4f7fa}
+.actionPrimary:disabled,.actionSecondary:disabled{cursor:not-allowed;opacity:.55}
+.disabledExplanation{font-size:11px;color:#5c6b7c;margin:10px 0 0;line-height:1.5}
