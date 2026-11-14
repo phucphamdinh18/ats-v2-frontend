@@ -1,0 +1,42 @@
+/* ATS V2 — Job ID workspace, isolated from legacy .shell .bosch-* declarations. */
+.root { --b2-red:#e20015;--b2-ink:#121921;--b2-muted:#4f6072;--b2-line:#d9dfe6; font-family:Arial,"Helvetica Neue",sans-serif; font-size:14px; line-height:1.45; color:var(--b2-ink); background:#fff; min-width:0; width:100%; }
+.root *, .root *::before,.root *::after {box-sizing:border-box}
+.root button,.root select {font:inherit}
+.root button {cursor:pointer}
+.root h1,.root h2,.root p {margin:0;color:inherit}
+.crumb {display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;margin-bottom:14px;color:#28364d}
+.crumb button {border:0;padding:0;color:#172c45;background:none;font-size:12px;font-weight:600}
+.crumb button:hover {text-decoration:underline}
+.titleRow {display:flex;align-items:center;flex-wrap:wrap;gap:15px;position:relative;margin-bottom:14px}
+.titleRow h1 {font-size:26px;letter-spacing:-.5px;line-height:1.2;font-weight:800}
+.status {padding:4px 16px;border-radius:30px;font-size:12px;font-weight:800;background:#f1f2f4;color:#485366}
+.statusOpen {background:#d9f3dc;color:#14682c}
+.actions {margin-left:auto;position:relative}
+.outline {display:inline-flex;align-items:center;gap:9px;justify-content:center;border:1px solid #bfc9d6;border-radius:5px;background:#fff;color:#172c43;padding:9px 15px;font-size:13px;font-weight:700}
+.outline:hover {background:#f4f6f8}
+.actionMenu {position:absolute;right:0;top:calc(100% + 5px);z-index:5;background:#fff;border:1px solid #cad3de;box-shadow:0 9px 22px #13253c22;border-radius:6px;min-width:190px;padding:5px}
+.actionMenu button {display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-radius:3px;color:#1d314a;font-size:12px}
+.actionMenu button:hover {background:#f1f4f8}
+.metadata {display:flex;flex-wrap:wrap;align-items:center;gap:0;margin-bottom:22px;font-size:12px;color:#27374d}
+.metadata span {display:inline-flex;align-items:center;gap:8px;padding:0 17px;border-right:1px solid #d1d8e2;min-height:20px}
+.metadata span:first-child {padding-left:0}
+.metadata span:last-child {border-right:0}
+.metadata svg {flex-shrink:0}
+.tabs {display:flex;align-items:stretch;gap:17px;overflow-x:auto;white-space:nowrap;border-bottom:1px solid var(--b2-line);margin-bottom:18px}
+.tabs button {position:relative;display:inline-flex;align-items:center;border:0;background:none;padding:10px 11px 14px;color:#1d2734;font-size:14px;font-weight:650;white-space:nowrap}
+.tabs button.active {color:var(--b2-red);font-weight:800}
+.tabs button.active::after {content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--b2-red)}
+.content {min-width:0}
+.aux {border:1px solid var(--b2-line);border-radius:7px;padding:18px;margin-top:8px}
+.aux h2 {font-size:18px;font-weight:800;margin-bottom:14px}
+.aux p {font-size:13px;line-height:1.55;color:var(--b2-muted);margin-bottom:14px}
+.facts {display:grid;grid-template-columns:minmax(130px,220px) minmax(0,1fr);gap:0;font-size:13px}
+.facts dt,.facts dd {padding:10px 12px;margin:0;border-bottom:1px solid var(--b2-line)}
+.facts dt {font-weight:700;background:#f6f7f8}
+.facts dd {overflow-wrap:anywhere}
+.nativeTable {width:100%;border-collapse:collapse}
+.nativeTable th,.nativeTable td {padding:10px;border-bottom:1px solid var(--b2-line);text-align:left;font-size:12px}
+.nativeTable th {background:#f3f5f7}
+.jobSwitch {display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid var(--b2-line);font-size:12px;color:#344259}
+.jobSwitch select {border:1px solid #c7cfd9;border-radius:5px;background:#fff;padding:7px 10px;color:#23384e;max-width:330px}
+@media(max-width:750px){.titleRow h1{font-size:22px}.metadata span{margin:4px 0}.tabs{gap:4px}.tabs button{font-size:12px;padding:10px 8px}.actions{margin-left:0}.jobSwitch{justify-content:flex-start;flex-wrap:wrap}}
