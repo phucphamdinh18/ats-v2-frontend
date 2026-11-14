@@ -17,6 +17,7 @@ import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
 import CandidateInterviewProgress from "./candidate-interview-progress";
 import { useLanguage } from "./language";
+import styles from "./bosch-v2-pipeline.module.css";
 
 const PAGE_SIZE = 25;
 const PIPELINE_STAGES = ["NEW", "SCREEN", "INTERVIEW", "HIRED", "REJECTED"] as const;
@@ -253,37 +254,37 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     await load(0, "");
   }, [load]);
 
-  return <section className="panel pipeline" aria-label={`Pipeline ${job.title}`}>
-    <div className="bosch-pipeline-summary">
-      <div className="bosch-section-title">
+  return <section className={styles.root} aria-label={`Pipeline ${job.title}`}>
+    <div className={styles.summary}>
+      <div className={styles.summaryHeader}>
         <h2>Hiring Pipeline <span aria-hidden="true" title="Counts from Job overview when available; otherwise loaded records only.">ⓘ</span></h2>
-        <div className="bosch-summary-filters">
+        <div className={styles.summaryFilters}>
           <span>{en ? "All Candidates" : "Tất cả ứng viên"}</span>
           <span>{en ? "All Sources" : "Tất cả nguồn"}</span>
         </div>
       </div>
-      <div className="enterprise-stage-summary" aria-label={en ? "Hiring pipeline counts" : "Số hồ sơ theo giai đoạn"}>
+      <div className={styles.stageSummary} aria-label={en ? "Hiring pipeline counts" : "Số hồ sơ theo giai đoạn"}>
         {(["NEW", "SCREEN", "INTERVIEW", "OFFER", "HIRED"] as const).map((stage) => {
           const loaded = stages.find(([value]) => value === stage)?.[1].length ?? 0;
           const total = stage === "NEW" ? job.metrics?.new_count : stage === "SCREEN" ? job.metrics?.screening_count : stage === "INTERVIEW" ? job.metrics?.interview_count : stage === "HIRED" ? job.metrics?.hired_count : undefined;
-          return <div className={`enterprise-stage-cell ${stage === "INTERVIEW" ? "bosch-stage-highlight" : ""}`} key={stage}>
+          return <div className={`${styles.stageCell} ${stage === "INTERVIEW" ? styles.stageHighlight : ""}`} key={stage}>
             <span>{stage === "SCREEN" ? "Screening" : stage === "NEW" ? "New" : stage === "INTERVIEW" ? "Interview" : stage === "HIRED" ? "Hired" : "Offer"}</span>
             <strong>{total ?? loaded}</strong>
             <small>{total == null ? "Loaded" : "Overall"}</small>
           </div>;
         })}
       </div>
-      {job.metrics?.rejected_count != null && <div className="bosch-rejected-count">Rejected: {job.metrics.rejected_count}</div>}
+      {job.metrics?.rejected_count != null && <div className={styles.rejected}>Rejected: {job.metrics.rejected_count}</div>}
     </div>
-    <div className="bosch-candidates-section">
-    <div className="pipeline-toolbar">
-      <h2 className="bosch-table-heading">Candidates ({job.metrics?.total_candidates ?? items.length})</h2>
-      <div className="enterprise-view-toggle" role="group" aria-label={en ? "Candidate view" : "Chế độ xem ứng viên"}>
-        <button type="button" className={viewMode === "list" ? "active" : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>{en ? "List" : "Danh sách"}</button>
-        <button type="button" className={viewMode === "kanban" ? "active" : ""} aria-pressed={viewMode === "kanban"} onClick={() => setViewMode("kanban")}>Kanban</button>
+    <div className={styles.listSection}>
+    <div className={styles.toolbar}>
+      <h2 className={styles.tableHeading}>Candidates ({job.metrics?.total_candidates ?? items.length})</h2>
+      <div className={styles.viewToggle} role="group" aria-label={en ? "Candidate view" : "Chế độ xem ứng viên"}>
+        <button type="button" className={viewMode === "list" ? styles.active : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>{en ? "List" : "Danh sách"}</button>
+        <button type="button" className={viewMode === "kanban" ? styles.active : ""} aria-pressed={viewMode === "kanban"} onClick={() => setViewMode("kanban")}>Kanban</button>
       </div>
-      {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className="add-candidate-disclosure"><summary><span aria-hidden="true">＋</span> {en ? "Add candidate to job" : "Thêm ứng viên vào vị trí"}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
-      <label className="search"><span aria-hidden="true">⌕</span><input aria-label={en ? "Search candidates in this job" : "Tìm ứng viên trong vị trí này"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates in this job…" : "Tìm ứng viên trong vị trí này…"} /></label>
+      {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className={styles.disclosure}><summary><span aria-hidden="true">＋</span> {en ? "Add candidate to job" : "Thêm ứng viên vào vị trí"}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
+      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label={en ? "Search candidates in this job" : "Tìm ứng viên trong vị trí này"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates in this job…" : "Tìm ứng viên trong vị trí này…"} /></label>
       {state === "ready" && <span className="muted">{en ? `${items.length} applications on this page` : `${items.length} hồ sơ đang hiển thị`}</span>}
     </div>
     {!canManageApplications && <div className="notice" role="status">Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.</div>}
@@ -293,15 +294,15 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {offerError && canViewOffers && <div className="notice error" role="alert">Không tải được dữ liệu Offer: {offerError}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
     {state === "empty" && !offerError && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
     {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
-    {(state === "ready" || state === "empty") && viewMode === "list" && <div className="enterprise-candidate-scroll">
-      <table className="enterprise-candidate-table">
+    {(state === "ready" || state === "empty") && viewMode === "list" && <div className={styles.scroll}>
+      <table className={styles.table}>
         <thead><tr><th><input type="checkbox" aria-label="Select all visible candidates" checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>Candidate</th><th>Stage</th><th>Interview Round</th><th>Matching</th><th>Experience</th><th>Source</th><th>Last Activity</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => (
-            <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? "selected" : ""}>
+            <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
-              <td><button className="enterprise-candidate-link" type="button" onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
-              <td><span className={`enterprise-stage-label stage-${stage.toLowerCase()}`}>{stage === "SCREEN" ? "Screening" : stage === "NEW" ? "New" : stage === "INTERVIEW" ? "Interview" : stage === "HIRED" ? "Hired" : stage === "OFFER" ? "Offer" : stage === "REJECTED" ? "Rejected" : stage}</span></td>
+              <td><button className={styles.candidateLink} type="button" onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
+              <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{stage === "SCREEN" ? "Screening" : stage === "NEW" ? "New" : stage === "INTERVIEW" ? "Interview" : stage === "HIRED" ? "Hired" : stage === "OFFER" ? "Offer" : stage === "REJECTED" ? "Rejected" : stage}</span></td>
               <td title="Actual interview rounds are not included in the Application list response">—</td>
               <td title="Matching score not returned by Application list API">—</td>
               <td title="Experience not returned by Application list API">—</td>
@@ -345,27 +346,27 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         </section>;
       })}
     </div>}
-    {state === "ready" && <div className="panel-footer"><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
+    {state === "ready" && <div className={styles.pagination}><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     </div>
-    {!selected && <aside className="bosch-candidate-placeholder" aria-label="Candidate overview"><h2>Candidate Overview</h2><p>Select a candidate from the list to view Interview Progress, summary, stage actions and activity history.</p></aside>}
-    {selected && <aside className="application-detail enterprise-candidate-detail" aria-label="Chi tiết ứng viên">
-      <div className="bosch-candidate-profile-head">
+    {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label="Candidate overview"><h2>Candidate Overview</h2><p>Select a candidate from the list to view Interview Progress, summary, stage actions and activity history.</p></aside>}
+    {selected && <aside className={styles.side} aria-label="Chi tiết ứng viên">
+      <div className={styles.profileHead}>
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
-        <button type="button" className="bosch-profile-close" aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>×</button>
+        <button type="button" className={styles.close} aria-label="Đóng chi tiết" onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>×</button>
       </div>
-      <nav className="bosch-profile-tabs" aria-label="Candidate details"><span className="active">Overview</span><span>Profile</span><span>Notes</span><span>Activity</span></nav>
+      <nav className={styles.profileTabs} aria-label="Candidate details"><span className={styles.active}>Overview</span><span>Profile</span><span>Notes</span><span>Activity</span></nav>
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
       {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <>
-        <div className="bosch-profile-card">
+        <div className={styles.profileCard}>
           <CandidateInterviewProgress applicationId={detail.application.application_id} />
-          <dl className="application-fields"><dt>Stage</dt><dd>{detail.application.stage === "SCREEN" ? "Screening" : detail.application.stage}</dd><dt>Status</dt><dd>{detail.application.status}</dd><dt>Source</dt><dd>{detail.application.source || "—"}</dd></dl>
+          <dl className={styles.profileFields}><dt>Stage</dt><dd>{detail.application.stage === "SCREEN" ? "Screening" : detail.application.stage}</dd><dt>Status</dt><dd>{detail.application.status}</dd><dt>Source</dt><dd>{detail.application.source || "—"}</dd></dl>
         </div>
-        <div className="bosch-profile-card">
-          <h3>Summary</h3><p className="bosch-muted-help">Candidate experience, email and matching score are not supplied by this Job's Application API.</p>
-          <dl className="application-fields"><dt>Current role</dt><dd>—</dd><dt>Experience</dt><dd>—</dd><dt>Company</dt><dd>—</dd></dl>
+        <div className={styles.profileCard}>
+          <h3>Summary</h3><p className={styles.profileMuted}>Candidate experience, email and matching score are not supplied by this Job's Application API.</p>
+          <dl className={styles.profileFields}><dt>Current role</dt><dd>—</dd><dt>Experience</dt><dd>—</dd><dt>Company</dt><dd>—</dd></dl>
         </div>
-        <div className="bosch-profile-card"><h3>Lịch sử</h3><ol className="timeline">{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol></div>
+        <div className={styles.profileCard}><h3>Lịch sử</h3><ol className={styles.timeline}>{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol></div>
         {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
       {canManageApplications && previousStage && <button className="secondary" aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
