@@ -6,6 +6,7 @@ import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
 import { getClient } from "@/lib/supabase";
 import { createManualCandidateApplication } from "@/lib/candidates";
+import styles from "./bosch-v2-candidate-intake.module.css";
 
 type Status = "idle" | "saving" | "success" | "error";
 type Form = { fullName: string; email: string; phone: string; currentTitle: string; driveUrl: string; documentName: string; subSource: string };
@@ -85,21 +86,21 @@ export default function ManualCandidateForm({ job, onCreated, onSessionLost }: {
     }
   }
 
-  return <section className="manual-candidate" aria-label="Thêm ứng viên thủ công">
-    <div className="panel-heading"><div><h3>Thêm ứng viên vào Job</h3><p>Chỉ lưu liên kết CV trên Google Drive. ATS không tải CV lên và không gửi CV sang AI ở luồng này.</p></div></div>
-    {!open && <p className="disabled-explanation" role="status">{disabledReason}</p>}
-    {status === "success" && <p className="notice success" role="status">Đã thêm ứng viên vào Job ở vòng NEW.</p>}
-    {status === "error" && <div className="notice error" role="alert">{error}{requestId.current && <button className="quiet" type="button" onClick={() => formRef.current?.requestSubmit()}>Thử lại với cùng request_id</button>}</div>}
-    <form ref={formRef} className="manual-candidate-form" onSubmit={submit}>
+  return <section className={styles.root} aria-label="Thêm ứng viên thủ công">
+    <div className={styles.header}><div><h3>Thêm ứng viên vào Job</h3><p>Chỉ lưu liên kết CV trên Google Drive. ATS không tải CV lên và không gửi CV sang AI ở luồng này.</p></div></div>
+    {!open && <p className={`${styles.notice} ${styles.disabled}`} role="status">{disabledReason}</p>}
+    {status === "success" && <p className={`${styles.notice} ${styles.success}`} role="status">Đã thêm ứng viên vào Job ở vòng NEW.</p>}
+    {status === "error" && <div className={`${styles.notice} ${styles.error}`} role="alert">{error}{requestId.current && <button className={styles.retry} type="button" onClick={() => formRef.current?.requestSubmit()}>Thử lại với cùng request_id</button>}</div>}
+    <form ref={formRef} className={styles.form} onSubmit={submit}>
       <label>Họ và tên *<input aria-label="Họ và tên ứng viên" value={form.fullName} onChange={(event) => update("fullName", event.target.value)} maxLength={160} disabled={!open || status === "saving"} /></label>
       <label>Email<input aria-label="Email ứng viên" type="email" value={form.email} onChange={(event) => update("email", event.target.value)} maxLength={254} disabled={!open || status === "saving"} /></label>
       <label>Số điện thoại<input aria-label="Số điện thoại ứng viên" value={form.phone} onChange={(event) => update("phone", event.target.value)} maxLength={40} disabled={!open || status === "saving"} /></label>
       <label>Chức danh hiện tại<input aria-label="Chức danh hiện tại" value={form.currentTitle} onChange={(event) => update("currentTitle", event.target.value)} maxLength={160} disabled={!open || status === "saving"} /></label>
       <label>Nguồn ứng viên *<select aria-label="Nguồn ứng viên" value={form.subSource} onChange={(event) => update("subSource", event.target.value)} required disabled={!open || status === "saving" || !!sourceLoadError}><option value="">Chọn nguồn</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select></label>
-      {sourceLoadError && <p className="notice error" role="alert">{sourceLoadError}</p>}
+      {sourceLoadError && <p className={`${styles.notice} ${styles.error}`} role="alert">{sourceLoadError}</p>}
       <label>Link CV trên Drive *<input aria-label="Link CV Google Drive" type="url" value={form.driveUrl} onChange={(event) => update("driveUrl", event.target.value)} placeholder="https://drive.google.com/file/d/..." disabled={!open || status === "saving"} /></label>
       <label>Tên tệp CV *<input aria-label="Tên tệp CV" value={form.documentName} onChange={(event) => update("documentName", event.target.value)} maxLength={255} disabled={!open || status === "saving"} /></label>
-      <div className="manual-candidate-action"><p>Email hoặc số điện thoại là bắt buộc để chống tạo trùng.</p><button className="primary" type="submit" disabled={!open || status === "saving"} title={disabledReason || "Thêm ứng viên vào pipeline"}>{status === "saving" ? "Đang tạo…" : requestId.current ? "Thử lại thêm ứng viên" : "Thêm vào pipeline"}</button></div>
+      <div className={styles.actions}><p>Email hoặc số điện thoại là bắt buộc để chống tạo trùng.</p><button className={styles.submit} type="submit" disabled={!open || status === "saving"} title={disabledReason || "Thêm ứng viên vào pipeline"}>{status === "saving" ? "Đang tạo…" : requestId.current ? "Thử lại thêm ứng viên" : "Thêm vào pipeline"}</button></div>
     </form>
   </section>;
 }
