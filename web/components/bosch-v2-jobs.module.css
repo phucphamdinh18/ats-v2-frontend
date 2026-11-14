@@ -30,7 +30,7 @@
 .filter select {border:0;outline:0;background:#fff;font-size:12px;color:#263b55;min-width:106px;cursor:pointer}
 .tableScroll {width:100%;overflow-x:auto}
 .table {width:100%;min-width:980px;border-collapse:collapse;table-layout:fixed;font-size:12px}
-.table th {position:static;top:auto;z-index:auto;text-align:left;background:#f3f5f7;font-size:11px;color:#243047;font-weight:800;text-transform:uppercase;letter-spacing:.025em;padding:11px 12px;border-bottom:1px solid var(--b2-border);vertical-align:middle}
+.table th {position:static;top:auto;z-index:auto;text-align:left;background:#f3f5f7;font-size:11px;color:#243047;font-weight:800;text-transform:uppercase;letter-spacing:.025em;padding:11px 12px;border-bottom:1px solid var(--b2-border);vertical-align:middle;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
 .table td {padding:12px;border-bottom:1px solid #e3e7ec;vertical-align:middle;word-break:normal;overflow-wrap:anywhere;color:#172236;font-weight:500}
 .table tbody tr:last-child td {border-bottom:0}
 .table tbody tr:hover,.selected {background:#fff1f3}
