@@ -1,0 +1,25 @@
+/* ATS V2 Bosch Candidate Intake — isolated from legacy global CSS */
+.root{--intake-ink:#172335;--intake-red:#c8102e;--intake-border:#d7dee8;--intake-muted:#526277;font:13px/1.45 Arial,"Helvetica Neue",sans-serif;color:var(--intake-ink);background:#fff;border:1px solid var(--intake-border);border-radius:7px;padding:18px 18px 16px;margin:10px 0;min-width:0;width:100%}
+.root *,.root *::before,.root *::after{box-sizing:border-box}
+.root input,.root select,.root button{font:inherit}
+.root button{cursor:pointer}
+.header{margin:0 0 16px}
+.header h3{font-size:17px;line-height:1.3;font-weight:800;margin:0 0 6px;color:#102038}
+.header p{font-size:12px;margin:0;color:var(--intake-muted);line-height:1.5}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 16px}
+.form label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;font-weight:700;color:#2c4058}
+.form input,.form select{width:100%;min-width:0;min-height:37px;border-radius:5px;border:1px solid #bfccd9;background:#fff;color:#1b2c41;padding:8px 10px;font-size:13px;font-weight:400}
+.form input:focus,.form select:focus{outline:2px solid #92b0d1;outline-offset:1px;border-color:#47739e}
+.form input:disabled,.form select:disabled{cursor:not-allowed;background:#f4f6f8;color:#68768a}
+.wide{grid-column:1/-1}
+.actions{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--intake-border);padding-top:15px;margin-top:3px}
+.actions p{margin:0;font-size:11px;color:var(--intake-muted);line-height:1.5}
+.submit{border:1px solid var(--intake-red);border-radius:5px;background:var(--intake-red);color:#fff;padding:9px 14px;min-height:38px;font-weight:800;font-size:12px;white-space:nowrap}
+.submit:hover:not(:disabled){background:#a30c26}
+.submit:disabled{opacity:.55;cursor:not-allowed}
+.notice{padding:10px 12px;border:1px solid #d3dbe6;border-radius:5px;font-size:12px;margin:12px 0;line-height:1.5}
+.error{border-color:#e7adb7;background:#fff0f2;color:#922139}
+.success{border-color:#b3ddbd;background:#eaf9ed;color:#206a36}
+.disabled{color:#8a4b1d;background:#fff6e6;border-color:#edd6a4}
+.retry{margin-left:8px;padding:4px 7px;border:0;background:transparent;color:#064b99;text-decoration:underline;font-weight:800;font-size:12px}
+@media(max-width:700px){.root{padding:12px}.form{grid-template-columns:1fr}.actions{align-items:stretch;flex-direction:column}.submit{width:100%}}
