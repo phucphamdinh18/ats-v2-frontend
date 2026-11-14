@@ -238,10 +238,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     <div className={styles.summary}>
       <div className={styles.summaryHeader}>
         <h2>Hiring Pipeline <span aria-hidden="true" title="Counts from Job overview when available; otherwise loaded records only.">ⓘ</span></h2>
-        <div className={styles.summaryFilters}>
-          <span>{en ? "All Candidates" : "Tất cả ứng viên"}</span>
-          <span>{en ? "All Sources" : "Tất cả nguồn"}</span>
-        </div>
+        <span className={styles.summaryScope}>{en ? "Job-specific pipeline" : "Pipeline theo Job"}</span>
       </div>
       <div className={styles.stageSummary} role="group" aria-label={en ? "Hiring pipeline counts" : "Số hồ sơ theo giai đoạn"}>
         {(["NEW", "SCREEN", "INTERVIEW", "OFFER", "HIRED"] as const).map((stage) => {
@@ -261,15 +258,15 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <h2 className={styles.tableHeading}>Candidates ({job.metrics?.total_candidates ?? items.length})</h2>
       {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className={styles.disclosure}><summary><span aria-hidden="true">＋</span> {en ? "Add candidate to job" : "Thêm ứng viên vào vị trí"}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
       <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label={en ? "Search candidates in this job" : "Tìm ứng viên trong vị trí này"} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates in this job…" : "Tìm ứng viên trong vị trí này…"} /></label>
-      {state === "ready" && <span className="muted">{en ? `${items.length} applications on this page` : `${items.length} hồ sơ đang hiển thị`}</span>}
+      {state === "ready" && <span className={styles.muted}>{en ? `${items.length} applications on this page` : `${items.length} hồ sơ đang hiển thị`}</span>}
     </div>
-    {!canManageApplications && <div className="notice" role="status">Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.</div>}
+    {!canManageApplications && <div className={styles.notice} role="status">Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào Job này mới có thể chuyển ứng viên giữa các vòng.</div>}
     {state === "loading" && <p role="status" aria-live="polite">Đang tải ứng viên…</p>}
-    {state === "forbidden" && <div className="notice error" role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
-    {state === "error" && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
-    {offerError && canViewOffers && <div className="notice error" role="alert">Không tải được dữ liệu Offer: {offerError}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
-    {state === "empty" && !offerError && <div className="empty"><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
-    {failedTransition && <div className="notice error" role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className="quiet" onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
+    {state === "forbidden" && <div className={`${styles.notice} ${styles.error}`} role="alert">Không có quyền. Dữ liệu của Job này đã được xoá khỏi màn hình.</div>}
+    {state === "error" && <div className={`${styles.notice} ${styles.error}`} role="alert">{error}<button className={styles.retry} onClick={() => void load()}>Thử lại</button></div>}
+    {offerError && canViewOffers && <div className={`${styles.notice} ${styles.error}`} role="alert">Không tải được dữ liệu Offer: {offerError}<button className={styles.retry} onClick={() => void load()}>Thử lại</button></div>}
+    {state === "empty" && !offerError && <div className={styles.empty}><h3>Chưa có ứng viên</h3><p>Không có kết quả trong phạm vi Job này.</p></div>}
+    {failedTransition && <div className={`${styles.notice} ${styles.error}`} role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className={styles.retry} onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>Thử lại chuyển {failedTransition.targetStage}</button></div>}
     {(state === "ready" || state === "empty") && <div className={styles.scroll}>
       <table className={styles.table}>
         <thead><tr><th><input type="checkbox" aria-label="Select all visible candidates" checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>Candidate</th><th>Stage</th><th>Interview Round</th><th>Matching</th><th>Experience</th><th>Source</th><th>Last Activity</th></tr></thead>
@@ -288,9 +285,9 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
           )))}
         </tbody>
       </table>
-      {!items.length && !offerItems.length && <p className="empty-stage">{en ? "No candidates on this page." : "Chưa có ứng viên ở trang này."}</p>}
+      {!items.length && !offerItems.length && <p className={styles.empty}>{en ? "No candidates on this page." : "Chưa có ứng viên ở trang này."}</p>}
     </div>}
-    {state === "ready" && <div className={styles.pagination}><button className="secondary" disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
+    {state === "ready" && <div className={styles.pagination}><button className={styles.actionSecondary} disabled={offset === 0} title={offset === 0 ? "Đang ở trang đầu" : "Trang trước"} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className={styles.actionSecondary} disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? "Không còn trang sau" : "Trang sau"} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>Trang sau</button></div>}
     </div>
     {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label="Candidate overview"><h2>Candidate Overview</h2><p>Select a candidate from the list to view Interview Progress, summary, stage actions and activity history.</p></aside>}
     {selected && <aside className={styles.side} aria-label="Chi tiết ứng viên">
@@ -300,7 +297,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       </div>
       <nav className={styles.profileTabs} aria-label="Candidate details"><span className={styles.active}>Overview</span><span>Profile</span><span>Notes</span><span>Activity</span></nav>
       {detailLoading && <p role="status">Đang tải chi tiết…</p>}
-      {detailError && <div className="notice error" role="alert">{detailError}<button className="quiet" onClick={() => void openDetail(selected)}>Thử lại</button></div>}
+      {detailError && <div className={`${styles.notice} ${styles.error}`} role="alert">{detailError}<button className={styles.retry} onClick={() => void openDetail(selected)}>Thử lại</button></div>}
       {detail && <>
         <div className={styles.profileCard}>
           <CandidateInterviewProgress applicationId={detail.application.application_id} />
@@ -313,9 +310,9 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         <div className={styles.profileCard}><h3>Lịch sử</h3><ol className={styles.timeline}>{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage || "—"} → {event.to_stage || "—"}</span><small>{event.actor_display_name || "Người dùng"} · {new Date(event.created_at).toLocaleString()}</small></li>)}</ol></div>
         {detail.matching_context != null && <details><summary>Matching context</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       </>}
-      {canManageApplications && previousStage && <button className="secondary" aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
-      {canManageApplications && nextStage && <button className="primary" aria-label={transitionRequestTarget === nextStage ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === nextStage ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
-      {disabledReason && <p className="disabled-explanation">{disabledReason}</p>}
+      {canManageApplications && previousStage && <button className={styles.actionSecondary} aria-label={transitionRequestTarget === previousStage ? `Thử lại chuyển về ${previousStage}` : `Chuyển về ${previousStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển về ${previousStage}`} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === previousStage ? `Thử lại chuyển ${previousStage}` : `Chuyển về ${previousStage}`}</button>}
+      {canManageApplications && nextStage && <button className={styles.actionPrimary} aria-label={transitionRequestTarget === nextStage ? `Thử lại chuyển sang ${nextStage}` : `Chuyển sang ${nextStage}`} disabled={!eligible || transitionBusy} title={disabledReason || `Chuyển sang ${nextStage}`} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? "Đang xử lý…" : transitionRequestTarget === nextStage ? `Thử lại chuyển ${nextStage}` : `Chuyển sang ${nextStage}`}</button>}
+      {disabledReason && <p className={styles.disabledExplanation}>{disabledReason}</p>}
     </aside>}
   </section>;
 }
