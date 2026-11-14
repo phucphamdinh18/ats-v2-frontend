@@ -2829,8 +2829,8 @@ th { padding: 11px 18px; }
   background: transparent; border: 0; box-shadow: none; padding: 0; margin-top: 0;
   overflow: visible; align-items: start;
 }
-.shell .bosch-job-page .pipeline > :not(.enterprise-candidate-detail),
-.shell .bosch-job-page .pipeline:has(> .enterprise-candidate-detail) > :not(.enterprise-candidate-detail) {
+.shell .bosch-job-page .pipeline > :not(.enterprise-candidate-detail):not(.bosch-candidate-placeholder),
+.shell .bosch-job-page .pipeline:has(> .enterprise-candidate-detail) > :not(.enterprise-candidate-detail):not(.bosch-candidate-placeholder) {
   grid-column: 1;
   min-width: 0;
 }
@@ -3083,7 +3083,7 @@ th { padding: 11px 18px; }
 .shell .bosch-master-select select { background:white; border:0; min-height:30px; padding:0; font-size:11px; }
 .shell .bosch-master-table-scroll { overflow-x:auto; width:100%; }
 .shell .bosch-master-table { width:100%; min-width:960px; border-collapse:collapse; table-layout:auto; font-size:11px; }
-.shell .bosch-master-table th { text-align:left; background:#f6f7f9; color:#273242; white-space:nowrap; padding:11px 10px; border-top:1px solid #e1e5ea; border-bottom:1px solid #dce2e8; font-size:11px; font-weight:700; }
+.shell .bosch-master-table th { position:static; top:auto; z-index:auto; text-align:left; background:#f6f7f9; color:#273242; white-space:nowrap; padding:11px 10px; border-top:1px solid #e1e5ea; border-bottom:1px solid #dce2e8; font-size:11px; font-weight:700; }
 .shell .bosch-master-table td { padding:10px; border-bottom:1px solid #e5e9ed; vertical-align:middle; color:#2b3542; }
 .shell .bosch-master-table tr:last-child td { border-bottom:none; }
 .shell .bosch-master-table tr.selected,.shell .bosch-master-table tbody tr:hover { background:#fff1f3; }
@@ -3109,4 +3109,17 @@ th { padding: 11px 18px; }
  .shell .bosch-master-panel-head{align-items:stretch}
  .shell .bosch-master-controls{width:100%}
  .shell .bosch-master-search{flex:1;min-width:145px}
+}
+
+
+/* Preview QA fixes: keep empty candidate panel beside the list and prevent
+   inherited sticky headers from covering the first Jobs Master row. */
+.shell .bosch-job-page .pipeline > .bosch-candidate-placeholder { grid-column: 2; grid-row: 1 / span 3; }
+.shell .bosch-master-table thead { position: static; }
+.shell .bosch-master-table th { position: static; top: auto; z-index: auto; }
+.shell .enterprise-top-nav { scrollbar-width: none; }
+.shell .enterprise-top-nav::-webkit-scrollbar { display: none; }
+@media (min-width: 901px) and (max-width: 1450px) {
+  .shell .enterprise-top-nav { gap: 0; }
+  .shell .enterprise-top-nav button { padding-inline: 11px; font-size: 12px; }
 }
