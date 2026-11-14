@@ -593,28 +593,12 @@ export default function Workspace() {
               {(tab === "jd" || tab === "admin") && <div className="page-heading">
                 <div>
                   <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jobs" ? t.jobs : tab === "talent" ? (locale === "en" ? "Candidates" : "Ứng viên") : tab === "interviews" ? (locale === "en" ? "Interviews" : "Phỏng vấn") : tab === "offers" ? (locale === "en" ? "Offers" : "Đề nghị tuyển dụng") : tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
-                  <p>{tab === "jobs" ? t.jobsIntro : tab === "talent" ? (locale === "en" ? "Manage approved candidate profiles you are allowed to see." : "Quản lý hồ sơ ứng viên đã duyệt trong phạm vi bạn được xem.") : tab === "interviews" ? (locale === "en" ? "Track interview appointments and history for your jobs." : "Theo dõi lịch hẹn phỏng vấn và lịch sử tuyển dụng theo vị trí.") : tab === "offers" ? (locale === "en" ? "Track offer status for jobs you can access." : "Theo dõi trạng thái đề nghị tuyển dụng tại các vị trí bạn được xem.") : tab === "jd" ? (locale === "en" ? "Review job descriptions before creating a draft job." : "Kiểm tra và duyệt mô tả công việc trước khi tạo vị trí nháp.") : (locale === "en" ? "Create jobs and assign teammates. Existing ATS permissions are checked before saving." : "Tạo vị trí và phân công đội ngũ. ATS sẽ kiểm tra quyền trước khi lưu.")}</p>
+                  <h1>{tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
+                  <p>{tab === "jd" ? (locale === "en" ? "Review job descriptions before creating a draft job." : "Kiểm tra và duyệt mô tả công việc trước khi tạo vị trí nháp.") : (locale === "en" ? "Create jobs and assign teammates. Existing ATS permissions are checked before saving." : "Tạo vị trí và phân công đội ngũ. ATS sẽ kiểm tra quyền trước khi lưu.")}</p>
                 </div>
                 <div className="heading-actions">
-                  {tab === "jobs" && (
-                    <button
-                      className="secondary"
-                      aria-label={guideOpen ? "Ẩn hướng dẫn" : "Hiện hướng dẫn"}
-                      onClick={() => setGuideOpen((open) => !open)}
-                    >
-                      <Icon name={guideOpen ? "close" : "help"} size={17} />
-                      {guideOpen ? t.hideGuide : t.help}
-                    </button>
-                  )}
-                  {tab === "jobs" && adminAllowed && (
-                    <button className="primary" onClick={() => setTab("admin")}>
-                      Quản trị Job
-                      <Icon name="shield" size={15} />
-                    </button>
-                  )}
                   <button className="secondary" onClick={() => void refresh()}>
-                    <Icon name="refresh" size={17} />
+                    <Icon name="refresh" size={17}/>
                     {t.refreshAccess}
                   </button>
                 </div>
