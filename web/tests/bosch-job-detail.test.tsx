@@ -11,8 +11,8 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  expect(screen.getByRole("heading",{name:"Senior Embedded Software Engineer (EPC)"})).toBeTruthy();
  expect(screen.getByText("EPC – Embedded Systems")).toBeTruthy();
  expect(screen.getByText("Pipeline Fixture")).toBeTruthy();
- expect(screen.getByRole("navigation",{name:"Job sections"})).toBeTruthy();
- expect(screen.getByText("Open")).toBeTruthy();
+ expect(screen.getByRole("navigation",{name:"Các tab của Job"})).toBeTruthy();
+ expect(screen.getByText("Đang tuyển")).toBeTruthy();
  fireEvent.click(screen.getByRole("button",{name:"Quay lại Bảng Master"}));
  expect(onBack).toHaveBeenCalledTimes(1);
  fireEvent.change(screen.getByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"}),{target:{value:"job-2"}});
@@ -31,7 +31,7 @@ it("Job Details shows real requisition metadata and configured SLA without inven
  const rich: Job = {...job, level:52, function_group:"Tech/Product", request_type:"REPLACEMENT", replacement_for:"Previous engineer", hiring_season:"Normal Time", priority:"HIGH", sla_target_workdays:35};
  render(<BoschJobDetail job={rich} allJobs={[rich]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Chi tiết Job"}));
- const detail=screen.getByRole("region",{name:"Job Details"});
+ const detail=screen.getByRole("region",{name:"Chi tiết Job"});
  expect(detail.textContent).toContain("Previous engineer");
  expect(detail.textContent).toContain("35 ngày làm việc");
  expect(detail.textContent).toContain("Normal Time");
