@@ -34,17 +34,8 @@ export default function BoschModuleLayout({ module, children }: { module: Module
   const { locale } = useLanguage();
   const en = locale === "en";
   if (module === "candidates") {
-    return <section className={candidateStyles.root} aria-label={en ? "Candidates workspace" : "Không gian ứng viên"}>
-      <div className={candidateStyles.crumb}>{en ? "Candidates" : "Ứng viên"} <ChevronRight size={14}/><strong>{en ? "Candidate Database" : "Danh sách ứng viên"}</strong></div>
-      <h1 className={candidateStyles.heading}>{en ? "Candidates" : "Ứng viên"}</h1>
-      <p className={candidateStyles.subtitle}>{en ? "Profiles in your authorized ATS workspace." : "Các hồ sơ ứng viên trong phạm vi ATS bạn được cấp quyền."}</p>
-      <nav className={candidateStyles.tabs} aria-label={en ? "Candidates sections" : "Mục ứng viên"}>
-        <span aria-current="page" className={candidateStyles.active}>{en ? "Candidate Database" : "Danh sách ứng viên"}</span>
-        <span title={en ? "Not available in current API" : "API hiện tại chưa hỗ trợ"}>Talent Pool</span>
-        <span title={en ? "Not available in current API" : "API hiện tại chưa hỗ trợ"}>{en ? "Archived" : "Đã lưu trữ"}</span>
-      </nav>
-      {children}
-    </section>;
+    // TalentPool owns the breadcrumb, heading and left-column tabs; avoid duplicates.
+    return <>{children}</>;
   }
   if (module === "interviews") {
     return <section className={interviewStyles.root} aria-label={en ? "Interviews workspace" : "Không gian phỏng vấn"}>
