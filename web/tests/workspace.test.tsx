@@ -302,7 +302,7 @@ it("renders a single Bosch Jobs heading without hidden legacy tabs or duplicate 
 });
 
 
-it("Jobs Overview displays approved seven-column contract and authorized Job Snapshot without invented values", async () => {
+it("Jobs Overview displays the approved five-column table and keeps requisition details in Job Snapshot", async () => {
   scope(true, ["HIRING_MANAGER"], [
     { id: "overview-1", title: "ATS Test Embedded", status: "OPEN", job_code: "ATS-101",
       business_unit: "EPC", function_group: "Tech/Product", request_type: "NEW", req_date: "2026-10-15",
@@ -313,9 +313,14 @@ it("Jobs Overview displays approved seven-column contract and authorized Job Sna
   ]);
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline ATS Test Embedded" });
-  expect(screen.getByRole("columnheader", { name: "Đơn vị / Chức năng" })).toBeTruthy();
-  expect(screen.getByRole("columnheader", { name: "Loại Req / Ngày" })).toBeTruthy();
-  expect(screen.getByRole("columnheader", { name: "SLA mục tiêu" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Vị trí tuyển dụng" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Đơn vị / BU" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Trạng thái" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Hồ sơ" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Thao tác" })).toBeTruthy();
+  expect(screen.getAllByRole("columnheader")).toHaveLength(5);
+  expect(screen.queryByRole("columnheader", { name: "Loại Req / Ngày" })).toBeNull();
+  expect(screen.queryByRole("columnheader", { name: "SLA mục tiêu" })).toBeNull();
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" })).toBeTruthy();
   expect(screen.getAllByText("Mục tiêu cấu hình").length).toBeGreaterThan(0);
   expect(screen.getByText("Nguồn chính").nextElementSibling?.textContent).toBe("—");
