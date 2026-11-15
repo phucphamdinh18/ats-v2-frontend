@@ -120,3 +120,9 @@
 /* Keep long candidate and job labels inside their table cells on laptop widths. */
 .table td{white-space:normal;overflow-wrap:anywhere}
 .table td button{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+
+/* Readability weight pass: scoped, no layout or workflow changes. */
+.root :is(input,select){font-weight:500}
+.table td{font-weight:600}
+.heading p,.table small,.muted,.empty{font-weight:600;color:#526174}
+.summary span{font-weight:750}
