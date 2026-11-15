@@ -17,7 +17,7 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  fireEvent.change(screen.getByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"}),{target:{value:"job-2"}});
  expect(onSelectJob).toHaveBeenCalledWith(next);
  fireEvent.click(screen.getByRole("button",{name:"Interviews"}));
- fireEvent.click(screen.getByRole("button",{name:/Open Interviews/}));
+ fireEvent.click(screen.getByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/}));
  expect(onModule).toHaveBeenCalledWith("interviews");
 });
 it("hides unauthorized Offer navigation on Job Detail",()=>{
