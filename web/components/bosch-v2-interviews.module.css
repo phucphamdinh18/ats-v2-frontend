@@ -98,3 +98,20 @@
   .summary strong{font-size:15px}
   .heading>div{min-width:0}
 }
+
+
+/* A 1440px laptop may still have a ~750px list pane next to Interview Details. */
+.listCard{container-type:inline-size}
+@container (max-width:780px){
+  /* Type + feedback remain readable in the selected Interview Details pane. */
+  .table th:nth-child(3),.table td:nth-child(3),
+  .table th:nth-child(5),.table td:nth-child(5){display:none}
+  .table th:nth-child(1),.table td:nth-child(1){width:31%}
+  .table th:nth-child(2),.table td:nth-child(2){width:34%}
+  .table th:nth-child(4),.table td:nth-child(4){width:35%}
+}
+@container (max-width:460px){
+  .table th,.table td{padding:9px 5px;font-size:10px}
+  .table button{overflow-wrap:anywhere;white-space:normal}
+}
+.tableScroll{touch-action:pan-x pan-y}
