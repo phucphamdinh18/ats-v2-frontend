@@ -50,7 +50,7 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
       if (version !== requestVersion.current) return;
       setRows([]);
       setSelectedId(null);
-      setError(cause instanceof Error ? cause.message : "Không tải được lịch phỏng vấn.");
+      setError(cause instanceof Error ? cause.message : (en ? "Could not load interview schedule." : "Không tải được lịch phỏng vấn."));
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     }).finally(() => {
       if (version === requestVersion.current) setLoading(false);
@@ -81,7 +81,7 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
         </div>
         <div className={styles.sectionTitle}><h3>{en ? "Interview Schedule" : "Danh sách lịch phỏng vấn"}</h3><small>{en ? "Authorized appointments" : "Lịch theo quyền truy cập"}</small></div>
         {error && <div className={styles.notice} role="alert">{error}</div>}
-        {loading ? <p className={styles.empty} role="status">Đang tải lịch phỏng vấn…</p> : <div className={styles.tableScroll}>
+        {loading ? <p className={styles.empty} role="status">{en ? "Loading interviews…" : "Đang tải lịch phỏng vấn…"}</p> : <div className={styles.tableScroll}>
           <table className={styles.table}>
             <thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>{en ? "Job opening" : "Vị trí tuyển dụng"}</th><th>{en ? "Type" : "Loại lịch"}</th><th>{en ? "Starts (local time)" : "Bắt đầu (giờ địa phương)"}</th><th>{en ? "Feedback" : "Đánh giá"}</th></tr></thead>
             <tbody>{rows.map((item) => <tr key={item.id} className={selectedId === item.id ? styles.selected : ""}>
