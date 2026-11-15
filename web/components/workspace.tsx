@@ -618,7 +618,7 @@ export default function Workspace() {
                   onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}
                   onOpenInterviews={() => setTab("interviews")}/>
               ) : tab === "talent" && reviewAllowed ? (
-                <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
+                <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "offers" && reviewAllowed ? (
