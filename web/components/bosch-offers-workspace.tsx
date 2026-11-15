@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import styles from "./bosch-v2-offers.module.css";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
 import { listOfferProposals, offerProposalDetail, type OfferProposal, type OfferProposalDetail } from "@/lib/offer-workspace";
@@ -66,35 +67,35 @@ export default function BoschOffersWorkspace({ jobs, onAccessLost }: { jobs: Job
   }
   const matching=rows.filter(x=>`${x.candidate_name} ${x.job_title} ${x.status}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const perStatus=(s:string)=>rows.filter(x=>x.status===s).length;
-  return <section className="bosch-offer-workspace">
-    <div className="bosch-offer-summary">
-      <div className="bosch-section-title"><h2>Offer Pipeline <span title="Counts reflect only the current page." aria-hidden="true">ⓘ</span></h2>
-        <label className="bosch-job-filter"><span>Job Opening</span><select aria-label="Chọn Job Offer" value={jobId} onChange={e=>{setJobId(e.target.value);setOffset(0);}}>{!jobs.length&&<option value="">No authorized jobs</option>}{jobs.map(x=><option key={x.id} value={x.id}>{x.job_code||"—"} · {x.title}</option>)}</select></label>
+  return <section className={styles.root}>
+    <div className={styles.summary}>
+      <div className={styles.title}><h2>Offer Pipeline <span title="Counts reflect only the current page." aria-hidden="true">ⓘ</span></h2>
+        <label className={styles.jobSelect}><span>Job Opening</span><select aria-label="Chọn Job Offer" value={jobId} onChange={e=>{setJobId(e.target.value);setOffset(0);}}>{!jobs.length&&<option value="">No authorized jobs</option>}{jobs.map(x=><option key={x.id} value={x.id}>{x.job_code||"—"} · {x.title}</option>)}</select></label>
       </div>
-      <div className="bosch-offer-stages">
+      <div className={styles.stages}>
         <div><span>Draft</span><strong>—</strong></div>
         <div><span>Pending Approval</span><strong>{perStatus("PENDING")}</strong></div>
         <div><span>Sent</span><strong>{perStatus("SENT")}</strong></div>
-        <div className="accepted"><span>Accepted</span><strong>{perStatus("ACCEPTED")}</strong></div>
+        <div className={styles.accepted}><span>Accepted</span><strong>{perStatus("ACCEPTED")}</strong></div>
         <div><span>Declined</span><strong>{perStatus("DECLINED")}</strong></div>
       </div>
-      <p className="bosch-summary-footnote">Current page: {rows.length} records · Approved: {perStatus("APPROVED")} · Draft is not a persisted backend Offer status.</p>
+      <p className={styles.hint}>Current page: {rows.length} records · Approved: {perStatus("APPROVED")} · Draft is not a persisted backend Offer status.</p>
     </div>
-    <div className="bosch-offer-list">
-      <div className="bosch-section-title"><h2>Offers ({rows.length} on page)</h2><label className="bosch-list-search"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} aria-label="Search offers in loaded page" placeholder="Search offers"/></label></div>
-      {error&&<p className="notice error" role="alert">{error}</p>}
-      {busy?<p role="status" className="ops-empty">Loading offers…</p>:<div className="bosch-offer-table-scroll"><table className="bosch-native-table"><thead><tr><th>Candidate</th><th>Job Opening</th><th>Offer Status</th><th>Grade / Level</th><th>Salary Package</th><th>Approvers</th><th>Sent Date</th><th>Expiry</th><th>Last Activity</th></tr></thead><tbody>{matching.map(item=><tr key={item.id} className={item.id===selectedId?"selected":""}><td><button type="button" className="bosch-table-link" onClick={()=>void choose(item)}>{item.candidate_name}</button></td><td>{item.job_code||item.job_title}</td><td><span className={`bosch-offer-status status-${item.status.toLowerCase()}`}>{statusLabel(item.status)}</span></td><td>—</td><td>{money(item.base_salary,item.currency)}</td><td>—</td><td>{time(item.sent_at)}</td><td>{time(item.expires_at)}</td><td>{time(item.updated_at)}</td></tr>)}</tbody></table>{!matching.length&&!error&&<p className="ops-empty">No offers match this Job and filter.</p>}</div>}
-      <div className="ops-pagination"><button className="bosch-outline-btn" disabled={busy||offset===0} onClick={()=>setOffset(x=>Math.max(0,x-PAGE_SIZE))}>Previous</button><span>Page {offset/PAGE_SIZE+1}</span><button className="bosch-outline-btn" disabled={busy||rows.length<PAGE_SIZE} onClick={()=>setOffset(x=>x+PAGE_SIZE)}>Next</button></div>
+    <div className={styles.workspace}><div className={styles.list}>
+      <div className={styles.listHead}><h2>Offers ({rows.length} on page)</h2><label className={styles.search}><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} aria-label="Search offers in loaded page" placeholder="Search offers"/></label></div>
+      {error&&<p className={styles.error} role="alert">{error}</p>}
+      {busy?<p role="status" className={styles.empty}>Loading offers…</p>:<div className={styles.scroll}><table className={styles.table}><thead><tr><th>Candidate</th><th>Job Opening</th><th>Offer Status</th><th>Grade / Level</th><th>Salary Package</th><th>Approvers</th><th>Sent Date</th><th>Expiry</th><th>Last Activity</th></tr></thead><tbody>{matching.map(item=><tr key={item.id} className={item.id===selectedId?styles.selected:""}><td><button type="button" className={styles.link} onClick={()=>void choose(item)}>{item.candidate_name}</button></td><td>{item.job_code||item.job_title}</td><td><span className={`${styles.status} ${item.status==="APPROVED"?styles.statusApproved:item.status==="ACCEPTED"?styles.statusAccepted:item.status==="REJECTED"?styles.statusRejected:item.status==="DECLINED"?styles.statusDeclined:item.status==="WITHDRAWN"?styles.statusWithdrawn:item.status==="EXPIRED"?styles.statusExpired:""}`}>{statusLabel(item.status)}</span></td><td>—</td><td>{money(item.base_salary,item.currency)}</td><td>—</td><td>{time(item.sent_at)}</td><td>{time(item.expires_at)}</td><td>{time(item.updated_at)}</td></tr>)}</tbody></table>{!matching.length&&!error&&<p className={styles.empty}>No offers match this Job and filter.</p>}</div>}
+      <div className={styles.pagination}><button className={styles.outline} disabled={busy||offset===0} onClick={()=>setOffset(x=>Math.max(0,x-PAGE_SIZE))}>Previous</button><span>Page {offset/PAGE_SIZE+1}</span><button className={styles.outline} disabled={busy||rows.length<PAGE_SIZE} onClick={()=>setOffset(x=>x+PAGE_SIZE)}>Next</button></div>
     </div>
-    <aside className="bosch-offer-detail">
-      <div className="bosch-candidate-profile-head"><h2>{selected?.candidate_name||"Offer Details"}</h2><div className="bosch-detail-arrows"><button aria-label="Previous Offer" type="button" disabled={!selected||rows.indexOf(selected)===0} onClick={()=>selected&&void choose(rows[rows.indexOf(selected)-1])}><ChevronLeft size={18}/></button><button aria-label="Next Offer" type="button" disabled={!selected||rows.indexOf(selected)>=rows.length-1} onClick={()=>selected&&void choose(rows[rows.indexOf(selected)+1])}><ChevronRight size={18}/></button></div></div>
-      <nav className="bosch-profile-tabs"><span className="active">Overview</span><span>Compensation</span><span>Approval</span><span>Activity</span></nav>
-      {!selected&&<p className="bosch-muted-help">Select an Offer to view its authorized compensation and audit timeline.</p>}
-      {detailError&&<p className="notice error" role="alert">{detailError}</p>}
-      {selected&&!detail&&!detailError&&<p role="status" className="bosch-muted-help">Loading detail…</p>}
-      {detail&&<><section className="bosch-profile-card"><h3>Compensation Summary</h3><dl className="bosch-facts"><dt>Base Salary</dt><dd>{money(detail.offer.base_salary,detail.offer.currency)}</dd><dt>Grade / Level</dt><dd>—</dd><dt>Start Date</dt><dd>{detail.offer.proposed_start_date||"—"}</dd><dt>Offer Status</dt><dd>{statusLabel(detail.offer.status)}</dd></dl></section>
-        <section className="bosch-profile-card"><h3>Offer Timeline</h3>{detail.events.length?<ol className="bosch-offer-events">{detail.events.map((ev,i)=><li key={`${ev.created_at}:${i}`}><strong>{ev.event_type}</strong><span>{time(ev.created_at)}{ev.actor_name?" · "+ev.actor_name:""}</span></li>)}</ol>:<p className="bosch-muted-help">No audit events returned.</p>}</section>
-        <section className="bosch-profile-card"><h3>Approval Details</h3><p className="bosch-muted-help">Individual approvers are not returned by this API. Existing approval workflow remains unchanged.</p></section></>}
-    </aside>
+    <aside className={styles.detail}>
+      <div className={styles.detailHead}><h2>{selected?.candidate_name||"Offer Details"}</h2><div className={styles.detailArrows}><button aria-label="Previous Offer" type="button" disabled={!selected||rows.indexOf(selected)===0} onClick={()=>selected&&void choose(rows[rows.indexOf(selected)-1])}><ChevronLeft size={18}/></button><button aria-label="Next Offer" type="button" disabled={!selected||rows.indexOf(selected)>=rows.length-1} onClick={()=>selected&&void choose(rows[rows.indexOf(selected)+1])}><ChevronRight size={18}/></button></div></div>
+      <nav className={styles.detailTabs}><span className={styles.active}>Overview</span><span>Compensation</span><span>Approval</span><span>Activity</span></nav>
+      {!selected&&<p className={styles.muted}>Select an Offer to view its authorized compensation and audit timeline.</p>}
+      {detailError&&<p className={styles.error} role="alert">{detailError}</p>}
+      {selected&&!detail&&!detailError&&<p role="status" className={styles.muted}>Loading detail…</p>}
+      {detail&&<><section className={styles.detailSection}><h3>Compensation Summary</h3><dl className={styles.facts}><dt>Base Salary</dt><dd>{money(detail.offer.base_salary,detail.offer.currency)}</dd><dt>Grade / Level</dt><dd>—</dd><dt>Start Date</dt><dd>{detail.offer.proposed_start_date||"—"}</dd><dt>Offer Status</dt><dd>{statusLabel(detail.offer.status)}</dd></dl></section>
+        <section className={styles.detailSection}><h3>Offer Timeline</h3>{detail.events.length?<ol className={styles.events}>{detail.events.map((ev,i)=><li key={`${ev.created_at}:${i}`}><strong>{ev.event_type}</strong><span>{time(ev.created_at)}{ev.actor_name?" · "+ev.actor_name:""}</span></li>)}</ol>:<p className={styles.muted}>No audit events returned.</p>}</section>
+        <section className={styles.detailSection}><h3>Approval Details</h3><p className={styles.muted}>Individual approvers are not returned by this API. Existing approval workflow remains unchanged.</p></section></>}
+    </aside></div>
   </section>;
 }
