@@ -357,12 +357,12 @@ it("Home only shows actual authorized metrics, without fabricating Offer/SLA or 
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Authorized A" });
   fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
-  await screen.findByRole("heading", { name: "Tổng quan tuyển dụng" });
+  await screen.findByRole("heading", { name: "Tổng quan tuyển dụng", level: 1 });
   const home = screen.getByRole("region", { name: "Tổng quan tuyển dụng" });
   expect(home.textContent).toContain("Offer chờ duyệt");
   expect(home.textContent).toContain("—");
   expect(home.textContent).not.toContain("Nguồn chính");
   expect(home.textContent).toContain("Authorized A");
-  fireEvent.click(screen.getByRole("button", { name: "Authorized A" }));
+  fireEvent.click(screen.getByRole("button", { name: /Authorized A/ }));
   expect(await screen.findByRole("region", { name: "Tiến độ tuyển dụng Authorized A" })).toBeTruthy();
 });
