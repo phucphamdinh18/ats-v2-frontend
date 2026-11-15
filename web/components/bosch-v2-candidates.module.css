@@ -114,3 +114,27 @@
 
 /* Prevent legacy global sticky table headers from covering the first candidate row. */
 .table th{position:static;top:auto;z-index:auto}
+
+
+/* Candidate Detail — icon facts, truthful job assignments and single Add to Job CTA. */
+.iconFacts{display:grid;grid-template-columns:minmax(112px,42%) minmax(0,1fr);gap:10px 10px;font-size:12px;line-height:1.45;margin:0}
+.iconFacts dt{display:flex;align-items:flex-start;gap:8px;color:#718096;font-weight:500;min-width:0}
+.iconFacts dt svg{color:#263449;stroke-width:1.8;flex:0 0 16px;margin-top:1px}
+.iconFacts dt span{min-width:0;overflow-wrap:anywhere}
+.iconFacts dd{margin:0;font-weight:700;color:#25344b;min-width:0;overflow-wrap:anywhere}
+.jobAssignments{padding:0;margin:0;list-style:none;min-width:0}
+.jobAssignments li{margin:0;padding:0 0 12px;border-bottom:1px solid #e9edf2;min-width:0}
+.jobAssignments li+li{padding-top:12px}
+.jobAssignments li:last-child{padding-bottom:0;border-bottom:0}
+.assignedJobTitle{display:block;color:#0757b8;font-size:14px;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
+.jobDepartment{display:flex;align-items:center;gap:7px;color:#34465f;font-size:12px;margin-top:5px;min-width:0;overflow-wrap:anywhere}
+.jobDepartment svg{flex:0 0 14px}
+.jobMeta{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:9px}
+.jobStage{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;line-height:1.25}
+.stageInterview{background:#fde5e7;color:#b21c2c}
+.stageScreen{background:#dbeafe;color:#1d4ed8}
+.stageNeutral{background:#edf0f4;color:#374151}
+.jobStatus{color:#657286;font-size:12px;line-height:1.35}
+.addControls>.primary{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;min-height:38px;padding:11px 15px;background:#d7192d;color:#fff;font-size:12px;font-weight:800}
+.addControls>.primary:disabled{background:#f3b3ba;color:#fff}
+@media(max-width:650px){.iconFacts{grid-template-columns:minmax(102px,38%) minmax(0,1fr);gap:9px 7px}}
