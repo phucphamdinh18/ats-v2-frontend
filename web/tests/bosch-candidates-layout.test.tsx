@@ -8,10 +8,13 @@ vi.mock("../lib/candidates", () => ({ listCandidates: api.list, candidateProfile
 vi.mock("../lib/applications", () => ({ createApplication: api.create }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
-  getClient: () => ({ from: () => {
-    const response = { data: [{ sub_source: "TEST ONLY", source: "TEST ONLY", source_ownership: "TEST ONLY" }], error: null };
+  getClient: () => ({ from: (table: string) => {
+    const response = table === "applications"
+      ? { data: [{ candidate_id: "Ada", source: "Referral", sub_source: "Internal employee", created_at: "2026-01-02T00:00:00Z" }], error: null }
+      : { data: [{ sub_source: "TEST ONLY", source: "TEST ONLY", source_ownership: "TEST ONLY" }], error: null };
     const query = {
       select: () => query,
+      in: () => query,
       order: () => query,
       then: (resolve: (value: typeof response) => unknown) => Promise.resolve(response).then(resolve),
     };
@@ -50,6 +53,10 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(panels?.[0].className).toContain("listCard");
     expect(panels?.[1].className).toContain("profileCard");
     expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: /Nguồn/ })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: /Nguồn chi tiết/ })).toBeTruthy();
+    expect(screen.getByText("Referral")).toBeTruthy();
+    expect(screen.getByText("Internal employee")).toBeTruthy();
     expect(screen.getByTitle("API danh sách ứng viên không có điểm phù hợp").textContent).toBe("—");
   });
 
