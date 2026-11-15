@@ -650,3 +650,45 @@ Scope restricted to Jobs Overview table markup/CSS and footer, plus the neighbor
 **Rollback:** reviewed revert commits for `5a211fc`, `e3fd058`, `243887a`, `10ad92e`, `ff13906` in reverse order; no force-push, backend/production untouched.
 
 - Follow-up `e845691`: keep sticky candidate name/close/tabs at `top:0` so they remain fully visible while the detail panel scrolls.
+
+
+## Follow-up — Pipeline table alignment and Jobs headers (2026-11-15)
+
+### Revision, CI and preview
+- PR #44 is open, Draft and unmerged. Verified HEAD before documentation update: `c7d5a79fbba76c03705093f0dd8e12e6e6729089` (includes the preceding markup fix `2de4ef1146c9e3016526056e05cc740c1e03bc59`; original requested SHA `66a960548386d948a04b5a526b4155bb19482bc2` was superseded by these fixes).
+- On `c7d5a79`: QA checks run #419 **success**; Next web checks #392 **success**; Pages PR build #437 **success**; Supabase local browser E2E #310 **skipped**.
+- Verified live `release.json` before/after preview publish: production revision `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, mode `path-preview`; preview revision `c7d5a79fbba76c03705093f0dd8e12e6e6729089`. Publish ATS Pages run #438 succeeded. Production was not changed.
+- The initial Pages build on `66a9605` failed a stale translated-header assertion. Markup now uses the existing localized Round label. Browser review then found wrapped Jobs Overview column headings; CSS now prevents word splitting and stacks the table/snapshot earlier. The resulting UI fix is in `web/components/application-pipeline.tsx` and `web/components/bosch-v2-jobs.module.css`; no API or workflow logic changed.
+
+### Actual signed-in browser observations
+- Admin session: `phuc.phamdinh18@gmail.com`. Preview opened at `/preview/?qa=c7d5a79fbba76c03705093f0dd8e12e6e6729089` (same deployed artifact as `/preview/`). Available viewport was 1363×936; no supported control to set exact viewport dimensions was exposed.
+- **Jobs Overview at this viewport:** five table columns remain aligned and their headers no longer split into fragments. Language switch to EN and VI was observed in the shell. At this width the top navigation clips “Job Reviews” to “Job Rev” (P2 visual defect). No claim for the requested 1920/1440/768/390 viewports.
+- **Job Detail → Pipeline → Candidates:** selected a marked TEST ONLY candidate; six API-backed applications and five stage summary cells rendered. Seven table columns including checkbox are present; Candidate/Source use the intended compact text treatment, table has an internal horizontal scroll, and stage/score/experience/round values absent from API are represented as “—” with explanations where available. No fabricated values were added. Candidate Detail is adjacent to the list, has a close button/tabs and its own scroll region; the History entries are exposed in the panel. The Round and Experience headers are ellipsized in the narrow left pane rather than wrapped; full labels remain in the accessible header/title and the table can scroll horizontally. On this screenshot, the table's rightmost Source column was beyond the visible portion until horizontal scrolling.
+- Current screenshot evidence was captured in Cloud Browser for the signed-in Pipeline and Jobs views. Browser screenshot dimensions are 1363×936; it is not evidence at the four requested exact sizes. Jobs Overview and Pipeline were inspected against the supplied Bosch reference, but pixel-perfect equivalence is not established.
+
+### Functional smoke checks and gaps
+- At the earlier preview revision `2de4ef1146c9e3016526056e05cc740c1e03bc59`, Jobs search and status filter, Pipeline candidate search, Add Candidate form open/close, and the stage confirmation dialog were exercised. The stage dialog was canceled; no submit or mutation occurred. The `c7d5a79` follow-up changes are Jobs CSS only, so these Pipeline behaviors are unchanged; however, these interactions were not all replayed against the final `c7d5a79` revision.
+- On final `c7d5a79`, candidate selection/detail was verified read-only. Pagination could not advance because only six applications were present and both Previous/Next were disabled. Add Candidate was not submitted. No real recruitment data was modified.
+- Admin only. TA, Hiring Manager and Interviewer sessions were unavailable; role E2E is **SKIPPED**. Supabase local browser E2E is **SKIPPED**. Exact target viewport and full VI/EN × four-size matrix are **BLOCKED** by browser viewport-control limitation.
+
+### Results
+| Area | Result | Evidence / limitation |
+| --- | --- | --- |
+| Jobs Overview headers and 5-column alignment | PASS at 1363×936 | Signed-in Preview screenshot; requested target sizes not checked |
+| Pipeline candidate selection and detail panel | PASS at 1363×936 (read-only) | TEST ONLY record; right panel and History visible in accessibility tree |
+| Candidate table widths / Round / Experience / Source | PARTIAL | No wrapping; narrow pane requires internal horizontal scroll; headers ellipsized and Source offscreen until scroll |
+| Row heights, footer centering and panel bottom alignment | PARTIAL | DOM structure and prior preview behavior; not fully measured at final revision due available browser controls/viewport |
+| Search/filter/add/stage interactions on final revision | PARTIAL | Smoke checks performed on immediately preceding markup-equivalent preview; final candidate detail selection checked; no submit |
+| 1920×1080, 1440×900, 768×1024, 390×844; VI/EN full matrix | BLOCKED | Browser did not expose viewport resizing |
+| Admin / TA / HM / Interviewer role matrix | BLOCKED | Only authorized Admin session available |
+
+Overall Visual QA for the requested responsive matrix remains **BLOCKED**, not PASS. The specific Jobs heading wrap defect is corrected and observed; Pipeline is visually usable at the available viewport with internal table scrolling, but strict Bosch fidelity and exact row/footer/baseline requirements are not fully certified.
+
+### Outstanding issues
+- P2: top navigation clips “Job Reviews” at the available 1363px viewport.
+- Pipeline headers for Round/Experience are ellipsized while the pane is narrow; users can scroll the table internally and the full accessible label remains available. Source is likewise reachable by horizontal scroll.
+- Exact responsive matrix, row-height measurement, footer alignment and bottom-edge comparison remain unverified. TA/HM/Interviewer behavior and live API error/retry cases remain unverified.
+
+### Rollback
+- No production change was made. Preserve backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`.
+- To revert this pass, use reviewed revert commits for `c7d5a79fbba76c03705093f0dd8e12e6e6729089` and `2de4ef1146c9e3016526056e05cc740c1e03bc59` on the Draft branch (reverse order), then publish the chosen preview revision with `path-preview` only after rechecking the live production ref. Do not force-push, merge or delete the backup.
