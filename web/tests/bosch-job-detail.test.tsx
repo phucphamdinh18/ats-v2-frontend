@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import BoschJobDetail from "../components/bosch-job-detail";
+import type { Job } from "../lib/policy";
 afterEach(cleanup);
 const job = {id:"job-1", job_code:"JOB-1001", title:"Senior Embedded Software Engineer (EPC)", status:"OPEN", location:"Ho Chi Minh City",business_unit:"EPC – Embedded Systems",req_date:"2026-10-10"};
 const next = {id:"job-2",job_code:"JOB-1002",title:"Software Tester",status:"DRAFT"};
@@ -27,7 +28,7 @@ it("hides unauthorized Offer navigation on Job Detail",()=>{
 
 
 it("Job Details shows real requisition metadata and configured SLA without inventing actual SLA", () => {
- const rich = {...job, level:52, function_group:"Tech/Product", request_type:"REPLACEMENT", replacement_for:"Previous engineer", hiring_season:"Normal Time", priority:"HIGH", sla_target_workdays:35};
+ const rich: Job = {...job, level:52, function_group:"Tech/Product", request_type:"REPLACEMENT", replacement_for:"Previous engineer", hiring_season:"Normal Time", priority:"HIGH", sla_target_workdays:35};
  render(<BoschJobDetail job={rich} allJobs={[rich]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Job Details"}));
  const detail=screen.getByRole("region",{name:"Job Details"});
@@ -39,7 +40,7 @@ it("Job Details shows real requisition metadata and configured SLA without inven
  expect(detail.textContent).not.toContain("On time");
 });
 it("Sourcing only shows existing authorized metrics and handles missing metrics", () => {
- const withMetrics={...job, metrics:{total_candidates:8,new_count:3,screening_count:2,interview_count:2,hired_count:1,rejected_count:0,source_summary:[{source:"Referral",sub_source:"Employee",source_ownership:"Company",count:8}]}};
+ const withMetrics: Job={...job, metrics:{total_candidates:8,new_count:3,screening_count:2,interview_count:2,hired_count:1,rejected_count:0,source_summary:[{source:"Referral",sub_source:"Employee",source_ownership:"Company",count:8}]}};
  const view=render(<BoschJobDetail job={withMetrics} allJobs={[withMetrics]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Sourcing"}));
  expect(screen.getByText("Referral")).toBeTruthy();
