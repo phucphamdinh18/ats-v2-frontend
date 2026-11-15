@@ -105,7 +105,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <div className={styles.sectionHead}><div><h2>{en ? "Offers for this Job" : "Offer theo Job"}</h2><p>{en ? "Existing authorized Offer workflow and audited detail." : "Dữ liệu Offer và lịch sử theo quyền hiện có; không thay đổi phê duyệt."}</p></div>
         <button type="button" className={styles.outline} onClick={() => onModule("offers")}>{en ? "Open Offers module" : "Mở quản lý Offers"} <ChevronRight size={15}/></button></div>
-      <BoschOffersWorkspace key={job.id} jobs={[job]} onAccessLost={() => onAccessLost?.()}/>
+      <BoschOffersWorkspace key={job.id} jobs={[job]} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
     {tab === "team" && <section className={styles.aux} aria-label="Team & Access">
       <div className={styles.sectionHead}><div><h2>Team & Access</h2><p>{en ? "Your current permissions for this Job." : "Quyền truy cập của tài khoản hiện tại đối với Job này."}</p></div></div>
@@ -121,7 +121,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
       <p className={styles.footnote}>{en ? "The current Job contract does not return a complete team roster or named assignees; only verified access rights are shown." : "API Job hiện không trả danh sách đầy đủ thành viên/TA PIC/Hiring Manager. Chỉ hiển thị quyền đã kiểm tra, không suy diễn phân công."}</p>
       {canAdmin && <button type="button" className={styles.outline} onClick={() => onModule("admin")}>{en ? "Manage permissions" : "Quản lý phân quyền"} <SlidersHorizontal size={15}/></button>}
     </section>}
-    {tab === "activity" && <BoschJobActivity key={job.id} jobId={job.id} onAccessLost={() => onAccessLost?.()}/>}
+    {tab === "activity" && <BoschJobActivity key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
     <div className={styles.jobSwitch} aria-label="Switch requisition">
       <label htmlFor="bosch-job-switcher">Job ID</label>
       <select id="bosch-job-switcher" aria-label="Chọn Job cho Hiring Pipeline" value={job.id} onChange={(event)=>onSelectJob(allJobs.find(x=>x.id===event.target.value)||null)}>
