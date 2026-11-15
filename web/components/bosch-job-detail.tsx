@@ -32,6 +32,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "team", label: "Team & Access" },
   { id: "activity", label: "Activity" },
 ];
+const NOOP_ACCESS = () => {};
 function readableDate(value: string | null | undefined) {
   if (!value) return "—";
   const parsed = new Date(value);
@@ -100,7 +101,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
       </tbody></table></div> : <p className={styles.empty}>{en ? "Sourcing data is not available for this Job." : "Job này chưa có dữ liệu nguồn tuyển dụng được API trả về."}</p>}
       <p className={styles.footnote}>{en ? "Counts are Job applications, not unique candidates or source effectiveness scores." : "Các số này là lượt hồ sơ theo Job, không phải ứng viên duy nhất hay điểm hiệu quả nguồn."}</p>
     </section>}
-    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} onAccessLost={() => onAccessLost?.()} onAllInterviews={() => onModule("interviews")}/>}
+    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <div className={styles.sectionHead}><div><h2>{en ? "Offers for this Job" : "Offer theo Job"}</h2><p>{en ? "Existing authorized Offer workflow and audited detail." : "Dữ liệu Offer và lịch sử theo quyền hiện có; không thay đổi phê duyệt."}</p></div>
         <button type="button" className={styles.outline} onClick={() => onModule("offers")}>{en ? "Open Offers module" : "Mở quản lý Offers"} <ChevronRight size={15}/></button></div>
