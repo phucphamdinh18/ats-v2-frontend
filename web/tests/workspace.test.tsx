@@ -327,3 +327,42 @@ it("Jobs Overview displays approved seven-column contract and authorized Job Sna
   fireEvent.click(screen.getByRole("button", { name: "Chọn Job ATS Draft Role" }));
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" }).textContent).toContain("ATS-102");
 });
+
+
+it("Home is a dedicated Bosch Dashboard, not a duplicate Jobs Master", async () => {
+  scope(true, ["HIRING_MANAGER"], [
+    { id: "home-job", title: "Home Test Job", status: "OPEN", job_code: "HOME-01", priority: "HIGH" },
+  ]);
+  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: options.body?.action === "overview" ? { jobs: [] }
+      : options.body?.action === "worklist" ? { interviews: [] }
+        : { applications: [], limit: 25, offset: 0 }, error: null }));
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline Home Test Job" });
+  fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+  expect(screen.getByRole("heading", { name: "Tổng quan tuyển dụng", level: 1 })).toBeTruthy();
+  expect(screen.getByText("Job ưu tiên cao / khẩn cấp")).toBeTruthy();
+  expect(screen.queryByRole("heading", { name: "Vị trí tuyển dụng", level: 1 })).toBeNull();
+  expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
+});
+it("Home only shows actual authorized metrics, without fabricating Offer/SLA or appointments", async () => {
+  scope(true, ["HIRING_MANAGER"], [
+    { id: "home-a", title: "Authorized A", status: "OPEN", job_code: "AA", priority: "HIGH" },
+    { id: "home-b", title: "Authorized B", status: "DRAFT", job_code: "BB" },
+  ]);
+  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: options.body?.action === "overview" ? { jobs: [] }
+      : options.body?.action === "worklist" ? { interviews: [] }
+        : { applications: [], limit: 25, offset: 0 }, error: null }));
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline Authorized A" });
+  fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+  await screen.findByRole("heading", { name: "Tổng quan tuyển dụng" });
+  const home = screen.getByRole("region", { name: "Tổng quan tuyển dụng" });
+  expect(home.textContent).toContain("Offer chờ duyệt");
+  expect(home.textContent).toContain("—");
+  expect(home.textContent).not.toContain("Nguồn chính");
+  expect(home.textContent).toContain("Authorized A");
+  fireEvent.click(screen.getByRole("button", { name: "Authorized A" }));
+  expect(await screen.findByRole("region", { name: "Tiến độ tuyển dụng Authorized A" })).toBeTruthy();
+});
