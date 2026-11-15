@@ -11,11 +11,22 @@ const pipeline = file("bosch-v2-pipeline.module.css");
 const applicationPipeline = file("application-pipeline.tsx");
 const detail = file("bosch-v2-job-detail.module.css");
 
-test("Candidates confines its table, keeps Source/Sub-source, and stacks the profile on small viewports", () => {
-  for (const rule of [".listCard{container-type:inline-size}", "@container (max-width:1250px)", "@container (max-width:480px)", ".scroll{overflow-x:auto", "@media(max-width:1150px)", ".table th:nth-child(10),.table td:nth-child(10){display:none}"])
+test("Candidate Database uses a single heading, five-column list and height-matched profile", () => {
+  const view = file("talent-pool.tsx");
+  const wrapper = file("bosch-module-layout.tsx");
+  for (const rule of [".pageGrid{display:grid;", ".pageLeft{display:flex;flex-direction:column", ".listCard{flex:1 1 auto;", ".scroll{flex:1 1 auto;", ".table{width:100%;min-width:640px;", ".profileScroll{position:sticky;top:16px;", "@media(max-width:1200px)"]) {
     assert.ok(candidate.includes(rule), rule);
-  assert.ok(!candidate.includes(".table th:nth-child(8),.table td:nth-child(8){display:none}"), "Source remains visible");
-  assert.ok(!candidate.includes(".table th:nth-child(9),.table td:nth-child(9){display:none}"), "Sub-source remains visible");
+  }
+  assert.ok(wrapper.includes('if (module === "candidates") {') && wrapper.includes("return <>{children}</>"), "Outer duplicate Candidates heading removed");
+  for (const col of ["checkCol", "nameCol", "jobCol", "expCol", "sourceCol"]) {
+    assert.ok(view.includes(`styles.${col}`), `Missing column ${col}`);
+  }
+  assert.ok(view.includes('title={candidate.full_name}'), "Candidate name remains available in tooltip");
+  assert.ok(view.includes("attribution?.source") && view.includes("attribution?.sub_source"), "Source/sub-source both remain visible");
+  assert.ok(!view.includes('tr("Gần nhất", "Latest")'), "Remove redundant Latest header subtitles");
+  assert.ok(!view.includes('className={styles.avatar}'), "Reference has no initials avatar");
+  assert.ok(!view.includes("Candidate Summary"), "No metrics card should be added");
+  assert.ok(view.includes("className={styles.pagerControls}"), "Pagination controls remain attached to existing handlers");
 });
 
 test("Interviews collapses detail-backed columns based on actual table-pane width", () => {
