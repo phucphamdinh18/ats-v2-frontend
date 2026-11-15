@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import Workspace from "../components/workspace";
 import { LanguageProvider } from "../components/language";
@@ -374,4 +375,22 @@ it("Home only shows actual authorized metrics, without fabricating Offer/SLA or 
   expect(home.textContent).toContain("Authorized A");
   fireEvent.click(screen.getByRole("button", { name: "Authorized A" }));
   expect(await screen.findByRole("region", { name: "Tiến độ tuyển dụng Authorized A" })).toBeTruthy();
+});
+
+
+it("Job Summary has five real status counts and retains the authorized scope while filtering", async () => {
+  const statuses = ["OPEN", "OPEN", "OPEN", "OPEN", "OPEN", "DRAFT", "DRAFT", "ON_HOLD", "CLOSED"];
+  scope(true, ["HIRING_MANAGER"], statuses.map((status, index) => ({
+    id: `summary-test-${index}`, title: `TEST Summary ${index}`, status, job_code: `TEST-SUM-${index}`,
+  })));
+  render(<Workspace />);
+  const summary = await screen.findByRole("region", { name: "Tổng quan Job" });
+  const expected = [["Tổng số Job", "9"], ["Đang tuyển", "5"], ["Bản nháp", "2"], ["Tạm dừng", "1"], ["Đã đóng", "1"]];
+  for (const [label, count] of expected) {
+    expect(within(summary).getByText(label).previousElementSibling?.textContent).toBe(count);
+  }
+  expect(within(summary).queryByText("Trạng thái khác")).toBeNull();
+  fireEvent.change(screen.getByRole("combobox", { name: "Trạng thái Job" }), { target: { value: "OPEN" } });
+  expect(within(summary).getByText("Tổng số Job").previousElementSibling?.textContent).toBe("9");
+  expect(within(summary).getByText("Đã đóng").previousElementSibling?.textContent).toBe("1");
 });

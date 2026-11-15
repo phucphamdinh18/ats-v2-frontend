@@ -56,7 +56,7 @@ export default function BoschJobsMaster({
 
   const labels = en ? {
     title: "Job Openings", subtitle: "Manage requisitions, hiring priorities and job-level performance.",
-    overview: "Job Overview", summary: "Job Summary", total: "Total Jobs", open: "Open", draft: "Draft", other: "Other Status",
+    overview: "Job Overview", summary: "Job Summary", total: "Total Jobs", open: "Open", draft: "Draft", onHold: "On Hold", closed: "Closed",
     search: "Search Job ID / position", allStatuses: "All Statuses", allPriorities: "All Priorities",
     job: "Job Opening", unit: "Department / BU", req: "Req Type / Date", level: "Level / Priority",
     status: "Status", sla: "SLA Target", volume: "Applications", action: "Action",
@@ -68,7 +68,7 @@ export default function BoschJobsMaster({
     notAvailable: "Not available", source: "Source", levelLabel: "Level", candidate: "Candidates",
   } : {
     title: "Vị trí tuyển dụng", subtitle: "Quản lý yêu cầu tuyển, mức ưu tiên và tiến độ theo từng Job.",
-    overview: "Tổng quan Job", summary: "Tổng quan Job", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", other: "Trạng thái khác",
+    overview: "Tổng quan Job", summary: "Tổng quan Job", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", onHold: "Tạm dừng", closed: "Đã đóng",
     search: "Tìm mã hoặc tên Job", allStatuses: "Tất cả trạng thái", allPriorities: "Tất cả ưu tiên",
     job: "Vị trí tuyển dụng", unit: "Đơn vị / BU", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
     status: "Trạng thái", sla: "SLA mục tiêu", volume: "Hồ sơ", action: "Thao tác",
@@ -94,10 +94,12 @@ export default function BoschJobsMaster({
     || allJobs.find((job) => job.id === selectedJobId) || visible[0] || null;
   const openCount = allJobs.filter((job) => job.status === "OPEN").length;
   const draftCount = allJobs.filter((job) => job.status === "DRAFT").length;
-  const otherCount = allJobs.length - openCount - draftCount;
+  const onHoldCount = allJobs.filter((job) => job.status === "ON_HOLD").length;
+  const closedCount = allJobs.filter((job) => job.status === "CLOSED").length;
   const summary = [
     [labels.total, allJobs.length, false], [labels.open, openCount, true],
-    [labels.draft, draftCount, false], [labels.other, otherCount, false],
+    [labels.draft, draftCount, false], [labels.onHold, onHoldCount, false],
+    [labels.closed, closedCount, false],
   ] as const;
   const choose = (job: Job) => { setSnapshotId(job.id); onSelect(job); };
   const clear = () => { onQuery(""); onStatus("ALL"); setPriority("ALL"); setPage(0); };

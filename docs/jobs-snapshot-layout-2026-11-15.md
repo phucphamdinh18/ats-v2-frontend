@@ -27,3 +27,11 @@ Scope: CSS/markup only on Draft PR #44. Supersedes previous 315px Snapshot and 7
 
 ## Rollback
 Revert this scoped commit and republish the prior verified Preview via path-preview, after rechecking production_ref. No database rollback. Do not merge PR #44, alter production, or delete the backup branch.
+
+## Five-item Job Summary — owner reference (2026-11-15)
+- Replaces Other Status with separate On Hold and Closed cells. Ordered EN: Total Jobs / Open / Draft / On Hold / Closed; VI: Tổng số Job / Đang tuyển / Bản nháp / Tạm dừng / Đã đóng.
+- Counts use the already authorized allJobs list: total length, exact OPEN, DRAFT, ON_HOLD and CLOSED status counts. No inferred closed/paused aggregation; other status codes remain included in Total Jobs. No API/RLS/schema or status mutation.
+- No demonstration counts or Sample count labels copied from the image. Zero is shown when the authorized list has no matching status. Existing summary scope remains independent of the table's search/status/priority filters.
+- Summary grid has five equal columns; <=780px uses two columns with the fifth cell spanning the row. Other table/Snapshot styles and action handlers remain unchanged.
+- Component regression fixture checks 9 total / 5 Open / 2 Draft / 1 On Hold / 1 Closed and verifies that filtering the table does not change summary scope. Fixtures are local tests, never inserted into Supabase.
+- Rollback: revert this scoped five-item summary commit and republish the previous verified Preview using the existing path-preview release process. Preserve production and backup.
