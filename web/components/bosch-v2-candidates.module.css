@@ -75,6 +75,8 @@
 .scroll{overflow-x:auto;overflow-y:hidden;scrollbar-gutter:stable}
 .table{min-width:0;width:100%;table-layout:fixed}
 .table th,.table td{overflow-wrap:anywhere;word-break:normal}
+/* Keep long headers inside their fixed table cells at laptop widths. */
+.table th{white-space:normal;line-height:1.2;overflow-wrap:anywhere}
 .table th:nth-child(1),.table td:nth-child(1){width:38px;text-align:center;padding-inline:6px}
 .table th:nth-child(2),.table td:nth-child(2){width:27%}
 .table th:nth-child(3),.table td:nth-child(3){width:30%}
