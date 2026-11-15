@@ -36,9 +36,9 @@
 .email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#526177;max-width:142px}
 .signOut{display:inline-flex;border:0;background:#fff;color:#344763;padding:4px}
 .sidebar{grid-column:1;grid-row:2;background:#f7f8fa;border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;padding:20px 10px}
-.sidebarTitle{font-size:13px;font-weight:700;color:#314257;margin:8px 15px 11px}
+.sidebarTitle{font-size:14px;font-weight:700;color:#314257;margin:8px 15px 11px}
 .nav{display:flex;flex-direction:column;gap:4px}
-.navButton{display:flex;align-items:center;gap:13px;min-height:42px;border:0;background:transparent;color:#1b2e44;padding:0 13px;text-align:left;width:100%;border-radius:5px;white-space:nowrap;font-weight:600;font-size:13px}
+.navButton{display:flex;align-items:center;gap:13px;min-height:42px;border:0;background:transparent;color:#1b2e44;padding:0 13px;text-align:left;width:100%;border-radius:5px;white-space:nowrap;font-weight:600;font-size:14px}
 .navButton svg{flex-shrink:0;width:18px;height:18px}
 .navButton:hover{background:#eceff3}
 .navButton.active{background:#fde5e7;color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
