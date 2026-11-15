@@ -248,3 +248,15 @@ Reviewed the live authenticated preview and compared its visible structure/color
 | Role E2E (Admin/TA/HM/Interviewer) | BLOCKED | Only one existing session; local E2E skipped; other test identities unavailable |
 
 Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; a preview-only rollback can rerun the existing `Publish ATS Pages` workflow with the verified previous preview SHA, after checking `release.json` and preserving the current preview SHA for recovery.
+
+
+## Step 14 — Scoped Bosch table header regression fix (2026-11-15)
+- Root cause of the observed row/header collision: legacy `globals.css` applies `th { position: sticky; top: 68px; z-index: 1 }`; the horizontally scrollable module tables create their own scroll container. Pipeline already resets its header positioning, but Jobs, Candidates, Interviews and Offers did not.
+- Added scoped static header positioning (`position: static; top: auto; z-index: auto`) to the table header rules in:
+  - `web/components/bosch-v2-jobs.module.css`
+  - `web/components/bosch-v2-candidates.module.css`
+  - `web/components/bosch-v2-interviews.module.css`
+  - `web/components/bosch-v2-offers.module.css`
+- No table data, API calls, authorization, workflow, backend, Supabase or production code changed.
+- This is a targeted frontend fix for the observed P1 table header artifact. **The fix is not accepted until CI passes and the updated preview is checked visually.** Remaining issues from Step 13 (Candidates/Interviews table width, missing VN/EN strings, Offers API error, role E2E, viewport matrix) remain open pending re-test.
+- Branch backup retained; PR #44 remains Draft.
