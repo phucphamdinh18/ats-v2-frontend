@@ -59,3 +59,42 @@
 .notice{padding:12px 14px;font-size:12px;border-left:3px solid #c8102e;background:#fff2f3;color:#942e3c}
 @media(max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.listCard,.detailCard{grid-column:1}.detailCard{position:static;max-height:none}.table{min-width:650px}}
 @media(max-width:650px){.heading h2{font-size:17px}.summary{padding:8px}.summary strong{font-size:15px}.summary>div:nth-child(2) strong{font-size:21px}.filters{width:100%}.filters button{flex:1}.sectionTitle{padding:11px}.table{min-width:640px}}
+
+
+/* Responsive schedule: keep appointment identity, start time and interview status accessible.
+   The full feedback, type and participant details remain in the selected detail panel. */
+.root{max-width:100%;overflow-x:clip}
+.layout,.listCard,.detailCard,.tableScroll{min-width:0;max-width:100%}
+.tableScroll{overflow-x:auto;overflow-y:hidden;scrollbar-gutter:stable}
+.table{width:100%;min-width:0;table-layout:fixed}
+.table th,.table td{overflow-wrap:anywhere;word-break:normal}
+.table th:nth-child(1),.table td:nth-child(1){width:24%}
+.table th:nth-child(2),.table td:nth-child(2){width:27%}
+.table th:nth-child(3),.table td:nth-child(3){width:15%}
+.table th:nth-child(4),.table td:nth-child(4){width:21%}
+.table th:nth-child(5),.table td:nth-child(5){width:13%}
+.detailHeader,.detailsBlock{min-width:0}
+.detailCard{overflow-wrap:anywhere}
+@media(max-width:1350px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:12px}
+  .listCard,.detailCard{grid-column:1}
+  .detailCard{position:static;top:auto;max-height:none;overflow-y:visible}
+  .table th:nth-child(1),.table td:nth-child(1){width:25%}
+  .table th:nth-child(2),.table td:nth-child(2){width:29%}
+}
+@media(max-width:650px){
+  .table{min-width:0;table-layout:fixed}
+  /* Type & feedback remain available in the open details; show the key schedule facts. */
+  .table th:nth-child(3),.table td:nth-child(3),
+  .table th:nth-child(5),.table td:nth-child(5){display:none}
+  .table th:nth-child(1),.table td:nth-child(1){width:28%}
+  .table th:nth-child(2),.table td:nth-child(2){width:30%}
+  .table th:nth-child(4),.table td:nth-child(4){width:42%}
+  .table th,.table td{padding:9px 6px;font-size:10px}
+  .table button{max-width:100%;overflow-wrap:anywhere}
+  .filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+  .filters button{min-width:0;padding:8px 4px;font-size:11px;white-space:normal}
+  .summary>div{min-width:0;padding:8px 4px}
+  .summary strong{font-size:15px}
+  .heading>div{min-width:0}
+}
