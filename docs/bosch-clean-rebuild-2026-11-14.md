@@ -283,3 +283,23 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - **No global ATS V2 acceptance or production merge while critical functionality/security checks remain incomplete.** Modules other than Offers may be marked independently PASS after the evidence-based test matrix, but Offers remains DEFERRED / FAIL (unresolved API) and must be explicitly excluded from any limited-scope milestone.
 - PR #44 remains Draft. No production deploy; retain the rollback/backup branch.
 - **Next task:** audit and fix VN/EN strings across non-Offer modules, then responsive layout, then visual and role-based functional QA.
+
+
+## Step 16 — Frontend VN/EN stabilization, Offers deferred (2026-11-15)
+
+**Owner priority:** complete frontend i18n and responsive/visual QA for Home, Jobs, Job Detail, Candidates, Interviews and shared App Shell. **Offer workflow and Offer UI implementation remain deferred** under Step 15.
+
+### Code applied on PR #44
+- `web/components/talent-pool.tsx`: Candidate Database headings, list columns, search, CV review entry, profile information, source selection, Add to Job and confirmation/success/fallback copy use the selected locale. This is presentation-only; the authorized candidate read API, source catalog, Add to Job validation and idempotent `request_id` are unchanged.
+- `web/components/bosch-module-layout.tsx`: localized Candidates/Interviews headings, breadcrumbs, descriptions and non-interactive availability tab labels. Offers component/frame is intentionally unchanged.
+- `web/components/interview-worklist.tsx`: localized worklist loading and generic network fallback; status filters/details were already bilingual.
+- `web/components/bosch-job-detail.tsx`, `web/components/bosch-job-activity.tsx`, `web/components/bosch-job-interviews.tsx`: localized requisition header, status, buttons, tab names, table labels, empty states, date presentation and Interview status labels. No modification to Pipeline stage transitions or permissions.
+- `web/components/workspace.tsx`: localized common App Shell sidebar headings, guide accessibility labels, sidebar expand/collapse labels, and local test login copy. Existing Auth and session controls stay intact.
+- `web/tests/bosch-candidates-layout.test.tsx`, `web/tests/interview-worklist.test.tsx`, `web/tests/bosch-job-detail.test.tsx`: updated Vietnamese-default test expectations and added VI→EN render-switch assertions without changing data or invoking business mutations.
+
+### Known limitations / acceptance gates
+- Backend error bodies currently provide arbitrary Vietnamese strings without a machine-readable locale-independent message code. The client retains these backend messages rather than guessing translations or concealing errors. Exact EN localization of backend errors requires a separate verified API contract, not a risky frontend-only string replacement.
+- Admin Console and additional older components may contain untranslated text beyond this core module scope. A browser-based bilingual sweep is still required to locate and log every visible remainder.
+- Offers remains deferred and unresolved. No migration, Edge Function, database, RLS or production changes were made.
+- **Not yet accepted:** check both locales with 1440×900, 1920×1080, 768px and 390px viewport screenshots; verify visual fit; run local/test role-based E2E for Admin, TA, HM and Interviewer. Unit tests and Next CI do not substitute for browser E2E or visual acceptance.
+- Keep Draft PR #44, branch backup and production root unchanged. Next: responsive table/layout corrections in non-Offer modules, then viewport-based Visual QA and E2E.
