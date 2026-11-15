@@ -136,3 +136,23 @@
   .pagination span{order:-1;width:100%;text-align:center}
   .search input{min-width:0}
 }
+
+
+/* Job Detail's right rail can shrink the Application list even on large monitors. */
+.listSection{container-type:inline-size}
+@container (max-width:960px){
+  /* These columns return placeholders; preserve Candidate/Stage/Source. */
+  .table th:nth-child(4),.table td:nth-child(4),
+  .table th:nth-child(5),.table td:nth-child(5),
+  .table th:nth-child(6),.table td:nth-child(6),
+  .table th:nth-child(8),.table td:nth-child(8){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:40%}
+  .table th:nth-child(3),.table td:nth-child(3){width:29%}
+  .table th:nth-child(7),.table td:nth-child(7){width:auto}
+}
+@container (max-width:440px){
+  /* Source remains visible in candidate details when the mobile list has only two useful columns. */
+  .table th:nth-child(7),.table td:nth-child(7){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:55%}
+}
+.scroll{touch-action:pan-x pan-y}
