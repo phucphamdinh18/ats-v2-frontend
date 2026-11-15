@@ -93,3 +93,46 @@
 .actionSecondary:hover{background:#f4f7fa}
 .actionPrimary:disabled,.actionSecondary:disabled{cursor:not-allowed;opacity:.55}
 .disabledExplanation{font-size:11px;color:#5c6b7c;margin:10px 0 0;line-height:1.5}
+
+
+/* Job Detail / Pipeline responsive columns. Preserve candidate, stage and source values.
+   Hide only unavailable placeholders (round, match, experience, last activity). */
+.root,.summary,.listSection,.side,.scroll{max-width:100%;min-width:0}
+.scroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+.table{min-width:0;width:100%;table-layout:fixed}
+.table td,.table th{overflow-wrap:anywhere}
+.table th:nth-child(1),.table td:nth-child(1){width:36px;text-align:center;padding-inline:5px}
+.table th:nth-child(2),.table td:nth-child(2){width:35%}
+.table th:nth-child(3),.table td:nth-child(3){width:25%}
+@media(max-width:1700px){
+  .table th:nth-child(4),.table td:nth-child(4),
+  .table th:nth-child(5),.table td:nth-child(5),
+  .table th:nth-child(6),.table td:nth-child(6),
+  .table th:nth-child(8),.table td:nth-child(8){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:39%}
+  .table th:nth-child(3),.table td:nth-child(3){width:28%}
+  .table th:nth-child(7),.table td:nth-child(7){width:auto}
+}
+@media(max-width:1250px){
+  .root{grid-template-columns:minmax(0,1fr);gap:12px}
+  .summary,.listSection,.side{grid-column:1}
+  .side{grid-row:auto;position:static;top:auto;max-height:none;overflow:visible}
+  .summaryFilters{flex-wrap:wrap}
+}
+@media(max-width:560px){
+  .table th,.table td{padding:9px 5px;font-size:11px}
+  /* Source is repeated in the candidate detail panel on mobile. */
+  .table th:nth-child(7),.table td:nth-child(7){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:54%}
+  .table th:nth-child(3),.table td:nth-child(3){width:auto}
+  .stageSummary{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .stageCell{min-width:0;padding:8px 2px}
+  .stageCell strong{font-size:17px}
+  .stageCell span{font-size:9px;overflow-wrap:anywhere}
+  .summaryHeader{gap:8px}
+  .tableHeading{font-size:16px}
+  .profileCard dl,.profileFields{grid-template-columns:minmax(85px,37%) minmax(0,1fr)}
+  .pagination{flex-wrap:wrap}
+  .pagination span{order:-1;width:100%;text-align:center}
+  .search input{min-width:0}
+}
