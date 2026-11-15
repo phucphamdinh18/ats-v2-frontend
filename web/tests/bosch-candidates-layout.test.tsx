@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TalentPool from "../components/talent-pool";
+import { LanguageProvider, useLanguage } from "../components/language";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), detail: vi.fn(), create: vi.fn() }));
 vi.mock("../lib/candidates", () => ({ listCandidates: api.list, candidateProfile: api.detail }));
@@ -80,4 +81,25 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(screen.queryByRole("table")).toBeNull();
     expect(screen.queryByText("Ada")).toBeNull();
   });
+});
+
+
+function SwitchEnglish() {
+  const { setLocale } = useLanguage();
+  return <button type="button" onClick={() => setLocale("en")}>Switch to English</button>;
+}
+
+it("changes Candidate Database labels, actions and profile facts to English without reloading records", async () => {
+  render(<LanguageProvider><SwitchEnglish /><TalentPool jobs={[job]} onAccessLost={vi.fn()} /></LanguageProvider>);
+  await screen.findByRole("button", { name: "Ada" });
+  expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Switch to English" }));
+  expect(screen.getByRole("columnheader", { name: "Stage" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Last Activity" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Review CVs" })).toBeTruthy();
+  expect(screen.getByRole("textbox", { name: "Search candidates" })).toBeTruthy();
+  expect(await screen.findByText("Candidate Information")).toBeTruthy();
+  expect(screen.getByRole("combobox", { name: "Select Job to add candidate" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Add to Job" })).toBeTruthy();
+  expect(screen.queryByText("Thông tin ứng viên")).toBeNull();
 });
