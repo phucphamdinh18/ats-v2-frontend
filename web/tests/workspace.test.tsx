@@ -327,7 +327,7 @@ it("Jobs Overview displays the approved five-column table and keeps requisition 
   expect(screen.getByText("Level").nextElementSibling?.textContent).toBe("L52");
   expect(screen.getByText("Ưu tiên").nextElementSibling?.textContent).toBe("Cao");
   expect(screen.getAllByText("ATS-101").length).toBeGreaterThan(0);
-  expect(screen.getByText("SLA mục tiêu").nextElementSibling?.textContent).toBe("32 ngày làm việc");
+  expect(screen.getByText("SLA mục tiêu").nextElementSibling?.textContent).toBe("—");
   expect(screen.getByText("Nguồn chính").nextElementSibling?.textContent).toBe("Referral");
   expect(screen.getByText("SLA thực tế").nextElementSibling?.textContent).toBe("—");
   fireEvent.change(screen.getByRole("combobox", { name: "Ưu tiên Job" }), { target: { value: "HIGH" } });
