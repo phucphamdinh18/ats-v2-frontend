@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { ChevronRight, Layers3, MapPin } from "lucide-react";
 import candidateStyles from "./bosch-v2-candidate-frame.module.css";
+import interviewStyles from "./bosch-v2-interview-frame.module.css";
 
 type Module = "candidates" | "interviews" | "offers";
 const specs: Record<Module, { title: string; crumb: string; tabs: string[]; active: string; help: string }> = {
@@ -37,6 +38,20 @@ export default function BoschModuleLayout({ module, children }: { module: Module
         <span aria-current="page" className={candidateStyles.active}>Candidate Database</span>
         <span title="Not available in current API">Talent Pool</span>
         <span title="Not available in current API">Archived</span>
+      </nav>
+      {children}
+    </section>;
+  }
+  if (module === "interviews") {
+    return <section className={interviewStyles.root} aria-label="Interviews workspace">
+      <div className={interviewStyles.crumb}>Interviews <ChevronRight size={14}/><strong>Schedule</strong></div>
+      <h1 className={interviewStyles.title}>Interviews</h1>
+      <p className={interviewStyles.subtitle}>Appointments in your authorized ATS workspace.</p>
+      <nav className={interviewStyles.tabs} aria-label="Interviews sections">
+        <span title="Coming after verified workflow integration">Pipeline</span>
+        <span className={interviewStyles.active} aria-current="page">Schedule</span>
+        <span title="Requires authorized feedback workflow integration">Feedback</span>
+        <span title="Not available in existing summary API">Analytics</span>
       </nav>
       {children}
     </section>;
