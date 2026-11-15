@@ -111,3 +111,6 @@
   .section:last-child{margin-bottom:12px}
   .facts{grid-template-columns:minmax(85px,34%) minmax(0,1fr)}
 }
+
+/* Prevent legacy global sticky table headers from covering the first candidate row. */
+.table th{position:static;top:auto;z-index:auto}
