@@ -33,10 +33,10 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "activity", label: "Activity" },
 ];
 const NOOP_ACCESS = () => {};
-function readableDate(value: string | null | undefined) {
+function readableDate(value: string | null | undefined, locale: "vi" | "en") {
   if (!value) return "—";
   const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(parsed) : "—";
+  return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { day: "2-digit", month: "short", year: "numeric" }).format(parsed) : "—";
 }
 
 /** New composition only; no API/stage/role changes. */
@@ -61,7 +61,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
     <div className={styles.metadata}>
       <span><MapPin size={16}/>{job.location || (en ? "Location —" : "Địa điểm —")}</span>
       <span><Layers3 size={16}/>{job.business_unit || job.function_group || (en ? "Department —" : "Đơn vị —")}</span>
-      <span><CalendarDays size={16}/>{en ? "Req" : "Ngày Req"}: {readableDate(job.req_date)}</span>
+      <span><CalendarDays size={16}/>{en ? "Req" : "Ngày Req"}: {readableDate(job.req_date, locale)}</span>
       <span><Target size={16}/>{en ? "SLA target" : "Mục tiêu SLA"}: {job.sla_target_workdays == null ? "—" : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</span>
     </div>
     <nav className={styles.tabs} aria-label={en ? "Job sections" : "Các tab của Job"}>
@@ -79,7 +79,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
           <dt>{en ? "Level" : "Cấp bậc"}</dt><dd>{job.level == null ? "—" : `L${job.level}`}</dd>
         </dl></section>
         <section className={styles.detailPane}><h3>{en ? "Hiring Settings" : "Thông số tuyển dụng"}</h3><dl className={styles.facts}>
-          <dt>{en ? "Request date" : "Ngày Req"}</dt><dd>{readableDate(job.req_date)}</dd>
+          <dt>{en ? "Request date" : "Ngày Req"}</dt><dd>{readableDate(job.req_date, locale)}</dd>
           <dt>{en ? "Request type" : "Loại yêu cầu"}</dt><dd>{job.request_type === "NEW" ? (en ? "New headcount" : "Tuyển mới") : job.request_type === "REPLACEMENT" ? (en ? "Replacement" : "Thay thế") : "—"}</dd>
           <dt>{en ? "Replacement for" : "Thay thế cho"}</dt><dd>{job.replacement_for || "—"}</dd>
           <dt>{en ? "Hiring season" : "Giai đoạn tuyển"}</dt><dd>{job.hiring_season || "—"}</dd>
