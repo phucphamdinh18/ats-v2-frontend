@@ -317,7 +317,7 @@ it("Jobs Overview displays approved seven-column contract and authorized Job Sna
   expect(screen.getByRole("columnheader", { name: "Loại Req / Ngày" })).toBeTruthy();
   expect(screen.getByRole("columnheader", { name: "SLA mục tiêu" })).toBeTruthy();
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" })).toBeTruthy();
-  expect(screen.getAllByText("32 ngày làm việc").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("Mục tiêu cấu hình").length).toBeGreaterThan(0);
   expect(screen.getByText("Referral")).toBeTruthy();
   expect(screen.getByText("ATS-101")).toBeTruthy();
   expect(screen.getByText("SLA thực tế").nextElementSibling?.textContent).toBe("—");
