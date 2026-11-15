@@ -612,3 +612,18 @@ Rollback: revert only the three commits above on the Draft branch with reviewed 
 ### Rollback
 - Revert the scoped Pipeline wrapper/height CSS and responsive test commits on the Draft branch with reviewed revert commits if needed. Keep backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`.
 - To restore an earlier Preview, first read live `release.json`, preserve its current production revision as `production_ref`, then run the existing `path-preview` workflow with the chosen earlier `preview_ref`. Do not change the production root.
+
+## Follow-up — Job Openings five-column alignment and equal-height cards (2026-11-15)
+
+Scope restricted to Jobs Overview table markup/CSS and footer, plus the neighboring grid/card presentation needed to align bottom edges. No API/query/filter/pagination state changes; production untouched; PR #44 remains Draft.
+
+**Changes**
+- `web/components/bosch-jobs-master.tsx` `9007911`: explicit `colgroup` 34/18/12/20/16; added full-title tooltip; normalized Department/BU to a single primary business-unit value (or one dash) instead of stacking an empty Function dash; added a structured Applications number/label/source block; scoped Job Openings panel class and right-panel final section class without altering their controls/data.
+- `web/components/bosch-v2-jobs.module.css` `4aa5117`, `c8a6289`: fixed-layout table, 84px rows and vertically centered cells, two-line truncated title with full-text hover, one-line ellipsized Job code, consistent 13px department labels, badges, standardized applications block and 34px action; full-width 56px footer with aligned 32px paging controls. Desktop workspace: flexible left track + 360px right detail; stack/card flex layout to align card bottoms; right action pinned with margin-top:auto; 12px radius cards. Below 1180px detail stacks; below 1100px table scrolls in its own region with 860px minimum instead of overflowing the page.
+- `web/tests/responsive-contract.test.ts` `f3990d7`: structural regression checks for column widths, full-title accessibility, 84px row rule, footer, desktop alignment and internal horizontal scroll.
+
+**Caveat:** Exact 84px visible rows depend on content not exceeding the allocated height; CSS `height:84px` on a table row acts as a minimum under the table layout algorithm. Source text can be long. Do not claim identical row pixel height without authenticated browser checks at target viewport sizes. Left card contains summary above the table, while right detail panel spans that full left stack; their *bottoms* align, not necessarily their tops. Do not introduce artificial blank fields or move summary data.
+
+**Verification pending:** Check QA checks, Next web checks, Pages artifact and preview-only deployment SHA; verify at 1920x1080, 1440x900, 768x1024, 390x844, VI/EN and browser zoom 100%. Test search, status/priority filters, paging, row selection, View detail and Open Job Detail. If the 860px table needs an internal horizontal scrollbar on a laptop, that is preferable to body overflow. PR remains Draft. Do not infer visual PASS from structural tests.
+
+**Rollback:** Revert only `c8a6289`, `f3990d7`, `4aa5117`, `9007911` in reverse order through reviewed commits; keep the backup branch and production root unchanged.
