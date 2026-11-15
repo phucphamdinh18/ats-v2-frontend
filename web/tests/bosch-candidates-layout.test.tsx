@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TalentPool from "../components/talent-pool";
 import { LanguageProvider, useLanguage } from "../components/language";
@@ -116,4 +117,12 @@ it("changes Candidate Database labels, actions and profile facts to English with
   expect(screen.getByRole("combobox", { name: "Select Job to add candidate" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Add to Job" })).toBeTruthy();
   expect(screen.queryByText("Liên hệ")).toBeNull();
+});
+
+
+describe("Candidate Database table isolation", () => {
+  it("opts out of inherited sticky headers that overlap the first row", () => {
+    const css = readFileSync(new URL("../components/bosch-v2-candidates.module.css", import.meta.url), "utf8");
+    expect(css).toContain(".table th{position:static;top:auto;z-index:auto}");
+  });
 });
