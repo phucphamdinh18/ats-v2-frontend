@@ -365,3 +365,11 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Made **Jobs-only** typography changes: table body 12px, header 11px, Job link 12px, secondary metadata 11px with stronger contrast, status/action labels 11–12px, Job Snapshot fact grid 12px with clearer primary/secondary hierarchy. Preserved the approved light theme, functional tables/columns, data, priority/source values and existing responsive breakpoints.
 - Scope: CSS-only; **no Supabase, API, RLS, backend, Candidates, Interviews, Job Detail or Offers workflow changes**.
 - Not yet browser-accepted: verify actual signed-in preview at the same browser zoom (100%) and identical viewport against the Bosch reference. In particular, confirm Jobs table headers do not wrap or overflow and the snapshot labels remain legible. Keep PR #44 Draft and production unchanged.
+
+
+## Follow-up: Candidate table headers and source attribution — 2026-11-15
+
+- Live path-preview review at `60bd38b4d2e881c32ba359d098f66f2648dca785` confirmed the Bosch ATS V2 wordmark is fully visible and the Candidates table includes Source and Sub-source.
+- The laptop screenshot showed `Current Job / Company` and `Experience` headings running together because table headers were forced to one line in a fixed-width table. Updated the Candidates module CSS to wrap headings within their cells (`white-space: normal`, compact line-height, safe wrapping).
+- Source/Sub-source are application-level attribution fields read through the existing authenticated Supabase client and current RLS. Existing applications with no `sub_source` continue to show an empty marker; no inferred values or backend changes were added. The shared source catalog remains the source for selectable source/sub-source options.
+- Fix commit: `6dc1409252a3ea6d8ac8e486c7c6834d4d679bae`. Preview deployment and post-fix browser verification are pending.
