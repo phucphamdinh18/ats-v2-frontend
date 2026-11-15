@@ -40,3 +40,37 @@ it("clears scoped Offer state and invalidates access after 403", async()=>{
  await waitFor(()=>expect(onAccessLost).toHaveBeenCalledTimes(1));
  expect(screen.queryByRole("button",{name:"Sample Candidate"})).toBeNull();
 });
+
+
+it("keeps Offers list and selected detail in independent Bosch columns", async()=>{
+ const view=render(<BoschOffersWorkspace jobs={jobs} onAccessLost={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Sample Candidate"}));
+ await screen.findByText("Synthetic Recruiter",{exact:false});
+ const workspace=view.container.querySelector('[class*="workspace"]');
+ expect(workspace?.children.length).toBe(2);
+ expect(workspace?.children[0].className).toContain("list");
+ expect(workspace?.children[1].className).toContain("detail");
+ expect(view.container.querySelector(".bosch-offer-workspace")).toBeNull();
+ expect(screen.getByRole("complementary").textContent).toContain("Compensation Summary");
+ expect(screen.getByRole("table")).toBeTruthy();
+});
+
+it("shows current-page Offer counts without inventing Draft approvals",async()=>{
+ render(<BoschOffersWorkspace jobs={jobs} onAccessLost={vi.fn()}/>);
+ await screen.findByRole("button",{name:"Sample Candidate"});
+ expect(screen.getByText("Draft")).toBeTruthy();
+ expect(screen.getByText(/Draft is not a persisted backend Offer status/)).toBeTruthy();
+ expect(screen.getByText("Approved: 0",{exact:false})).toBeTruthy();
+});
+
+it("clears selected sensitive detail when Job changes",async()=>{
+ const twoJobs=[...jobs,{id:"job-2",job_code:"TEST-2",title:"Second Job",status:"OPEN"}];
+ api.list.mockImplementation((jobId:string)=>Promise.resolve({offers:jobId==="job-1"?[offer]:[],limit:25,offset:0}));
+ const view=render(<BoschOffersWorkspace jobs={twoJobs} onAccessLost={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Sample Candidate"}));
+ await screen.findByText("Synthetic Recruiter",{exact:false});
+ fireEvent.change(screen.getByRole("combobox",{name:"Chọn Job Offer"}),{target:{value:"job-2"}});
+ await waitFor(()=>expect(api.list).toHaveBeenCalledWith("job-2",25,0));
+ await waitFor(()=>expect(screen.queryByText("Synthetic Recruiter",{exact:false})).toBeNull());
+ expect(view.container.textContent).not.toContain("1.000.000 VND");
+});
