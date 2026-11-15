@@ -1,6 +1,6 @@
 /* ATS V2 Candidates / Candidate Database — Bosch Enterprise scoped layout.
    Presentation-only. Shared shell, data and actions unchanged. */
-.root{--red:#e20015;--ink:#172236;--muted:#657286;--line:#dce2ea;--blue:#0757b8;width:100%;max-width:100%;min-width:0;overflow-x:clip;color:var(--ink);font:14px/1.45 Arial,Helvetica,sans-serif;background:#fff}
+.root{padding:0 3px;--red:#e20015;--ink:#172236;--muted:#657286;--line:#dce2ea;--blue:#0757b8;width:100%;max-width:100%;min-width:0;overflow-x:clip;color:var(--ink);font:14px/1.45 Arial,Helvetica,sans-serif;background:#fff}
 .root *,.root *::before,.root *::after{box-sizing:border-box}
 .root h1,.root h2,.root h3,.root p{margin:0}
 .root button,.root input,.root select{font:inherit}
@@ -56,9 +56,12 @@
 .sourceSub{display:block;color:#7a8899;font-size:11px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .placeholder{color:#9ca3af;font-size:12px;font-weight:400}
 .pagination{padding:13px 16px;border-top:1px solid var(--line);color:#6b798c;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}
-.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:4px;background:#fde5e7;color:#b21c2c;font-size:12px;font-weight:700}
-.pagination button{min-width:32px;min-height:32px;border:1px solid #ced8e2;border-radius:4px;background:#fff;padding:4px 10px;color:#34465f;font-size:12px}
+.pagination .currentPage{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:4px;background:#fde5e7;color:#b21c2c;font-size:12px;font-weight:700}
+.pagination button{width:32px;height:32px;min-width:32px;min-height:32px;border:1px solid #ced8e2;border-radius:4px;background:#fff;padding:0;color:#34465f;font-size:18px;line-height:1}
 .pagination button:disabled{opacity:.4;cursor:not-allowed}
+.pagination .pageCount{display:inline;font-size:12px;font-weight:400;color:#6b798c;background:none;padding:0;min-width:0;height:auto;border-radius:0}
+.pagerControls{display:flex;align-items:center;gap:8px}
+
 .profileCard{display:flex;flex-direction:column;min-height:0;align-self:stretch}
 .profileScroll{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;min-width:0}
 .profileHeader{display:flex;align-items:flex-start;gap:11px;padding:18px;border-bottom:1px solid var(--line);min-width:0}
