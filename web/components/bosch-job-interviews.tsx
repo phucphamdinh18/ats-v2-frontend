@@ -14,6 +14,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const en = locale === "en";
   const [status, setStatus] = useState<InterviewStatus>("SCHEDULED");
   const [items, setItems] = useState<InterviewWorklistItem[]>([]);
+  const [hasNext, setHasNext] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [busy, setBusy] = useState(true);
@@ -21,9 +22,10 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const version = useRef(0);
   useEffect(() => {
     const ticket = ++version.current;
-    setBusy(true); setError(""); setItems([]); setSelectedId(null);
+    setBusy(true); setError(""); setItems([]); setHasNext(false); setSelectedId(null);
     void listInterviewWorklist(status, LIMIT, offset).then((rows) => {
       if (ticket !== version.current) return;
+      setHasNext(rows.length === LIMIT);
       setItems(rows.filter((row) => row.job_id === jobId));
     }).catch((cause) => {
       if (ticket !== version.current) return;
@@ -66,7 +68,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       </div>}
     <div className={styles.pager}><span>{en ? "Worklist page" : "Trang lịch tổng"} {Math.floor(offset / LIMIT) + 1}</span>
       <button className={styles.outline} type="button" disabled={busy || offset === 0} onClick={() => setOffset(offset - LIMIT)}>{en ? "Previous" : "Trước"}</button>
-      <button className={styles.outline} type="button" disabled={busy || items.length < LIMIT} onClick={() => setOffset(offset + LIMIT)}>{en ? "Next" : "Tiếp"}</button>
+      <button className={styles.outline} type="button" disabled={busy || !hasNext} onClick={() => setOffset(offset + LIMIT)}>{en ? "Next" : "Tiếp"}</button>
     </div>
     <p className={styles.footnote}>{en ? "The API only paginates the global authorized worklist, not by Job. This tab may omit other Job appointments; use Full interview worklist for a complete search." : "API hiện phân trang lịch tổng, chưa lọc theo Job tại máy chủ. Tab này có thể thiếu lịch; hãy mở lịch tổng để kiểm tra đầy đủ."}</p>
   </section>;
