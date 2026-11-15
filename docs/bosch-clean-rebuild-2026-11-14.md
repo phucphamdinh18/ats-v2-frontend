@@ -303,3 +303,22 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Offers remains deferred and unresolved. No migration, Edge Function, database, RLS or production changes were made.
 - **Not yet accepted:** check both locales with 1440×900, 1920×1080, 768px and 390px viewport screenshots; verify visual fit; run local/test role-based E2E for Admin, TA, HM and Interviewer. Unit tests and Next CI do not substitute for browser E2E or visual acceptance.
 - Keep Draft PR #44, branch backup and production root unchanged. Next: responsive table/layout corrections in non-Offer modules, then viewport-based Visual QA and E2E.
+
+
+## Step 17 — Candidates, Interviews and Job Detail responsive stabilization (2026-11-15)
+
+**Owner request:** eliminate laptop table crowding while retaining usable mobile behavior; verify four viewport sizes: `1440×900`, `1920×1080`, `768px`, `390px`. Offers remains **DEFERRED** (Step 15).
+
+### Implemented on Draft PR #44
+- Existing branch commits `c5e0a29`, `1c4c5c9`, `dcf958e` and `eaf592f` already added base responsive behavior to Candidate Database, Interview Schedule, Application Pipeline and Job Detail. This iteration **preserved those changes**, rather than rewriting them.
+- `web/components/bosch-v2-candidates.module.css`: use `container-type: inline-size` on the table panel and collapse the five placeholder-only columns when **actual list-pane width <=1250px**, even at large desktop viewport widths. Preserve Candidate, current position/company and experience; further reduce columns on a narrow phone.
+- `web/components/bosch-v2-interviews.module.css`: use actual pane width <=850px to collapse Type and Feedback columns (the real values remain in Interview Details). Retain Candidate, Job and start date; preserve read-only schedule and status filters.
+- `web/components/bosch-v2-pipeline.module.css`: collapse only unavailable placeholder Application fields by pane width <=1250px. Preserve actual Candidate, Stage and Source values, and show Source in the detail area when the phone table is narrower than 440px.
+- `web/components/bosch-v2-job-detail.module.css`: enforce scroll containment on Job tab bar and audit/requisition tables, keyboard focus visibility, stacked detail cards on tablet and safe Job switching on phone.
+- Added `web/tests/responsive-contract.test.ts` structural assertions for container queries, table overflow boundaries and four target breakpoint widths. No API, Supabase, RLS, migrations, Offers workflow or production files were modified.
+
+### Verification and limits
+- Ran **local Chromium synthetic layout fixture** at `1440×900`, `1920×1080`, `768×900`, and `390×844` for representative Candidates, Interviews and Pipeline split-pane structures with the new responsive rules: document horizontal overflow **false** for all 12 combinations; detail pane stacked beneath table at 768px and 390px, side-by-side at 1440px and 1920px. Visible table columns by viewport were Candidates **4/4/4/3**, Interviews **3/5/3/3**, Pipeline **4/4/4/3** respectively (ordered 1440/1920/768/390). These are **fixture results only**, not screenshots of the live authenticated Next.js ATS.
+- **Browser-backed preview Visual QA is NOT complete.** The browser connector is unavailable outside its originating browser context, and the available container cannot reach the GitHub Pages preview domain. This iteration therefore cannot truthfully certify actual signed-in page rendering, layout screenshots, or pixel comparison at any requested viewport. Record as `SKIPPED / BLOCKED` until an authenticated preview browser with viewport controls is available.
+- Confirm CI status on the final HEAD (QA/Next/Pages) before approval. Browser role-based E2E remains `SKIPPED` until test identities and a suitable test backend are available.
+- **Rollback:** revert only the scoped responsive CSS and structural test commits on `redesign/bosch-enterprise-v2`, retaining the preexisting responsive commits and documented backup. Do not merge or modify production to test.
