@@ -47,17 +47,20 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Talent Pool" })).toBeTruthy();
     expect(await screen.findByText("qa@example.invalid")).toBeTruthy();
-    const layout = view.container.querySelector('[class*="layout"]');
+    const layout = view.container.querySelector('[class*="pageGrid"]');
     const panels = layout?.children;
     expect(panels?.length).toBe(2);
-    expect(panels?.[0].className).toContain("listCard");
+    expect(panels?.[0].className).toContain("pageLeft");
     expect(panels?.[1].className).toContain("profileCard");
-    expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Nguồn gần nhất" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Nguồn chi tiết gần nhất" })).toBeTruthy();
-    expect(screen.getByText("Referral")).toBeTruthy();
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers).toHaveLength(5);
+    for (const name of ["Chọn hồ sơ", "Ứng viên", "Vị trí / Công ty", "Kinh nghiệm", "Nguồn"]) {
+      expect(screen.getByRole("columnheader", { name })).toBeTruthy();
+    }
+    expect(screen.getByRole("navigation", { name: "Mục ứng viên" }).querySelectorAll("span")).toHaveLength(1);
+    expect(screen.queryByText("Candidate Summary")).toBeNull();
+    expect(await screen.findByText("Referral")).toBeTruthy();
     expect(screen.getByText("Internal employee")).toBeTruthy();
-    expect(screen.getByTitle("API danh sách ứng viên không có điểm phù hợp").textContent).toBe("—");
   });
 
   it("selects a new candidate and opens the matching profile without changing Job data", async () => {
@@ -99,14 +102,18 @@ function SwitchEnglish() {
 it("changes Candidate Database labels, actions and profile facts to English without reloading records", async () => {
   render(<LanguageProvider><SwitchEnglish /><TalentPool jobs={[job]} onAccessLost={vi.fn()} /></LanguageProvider>);
   await screen.findByRole("button", { name: "Ada" });
-  expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
+  expect(screen.getAllByRole("columnheader")).toHaveLength(5);
+  expect(screen.getByRole("columnheader", { name: "Ứng viên" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Switch to English" }));
-  expect(screen.getByRole("columnheader", { name: "Stage" })).toBeTruthy();
-  expect(screen.getByRole("columnheader", { name: "Last Activity" })).toBeTruthy();
+  expect(screen.getAllByRole("columnheader")).toHaveLength(5);
+  for (const name of ["Candidate", "Current Job / Company", "Experience", "Source"]) {
+    expect(screen.getByRole("columnheader", { name })).toBeTruthy();
+  }
   expect(screen.getByRole("button", { name: "Review CVs" })).toBeTruthy();
   expect(screen.getByRole("textbox", { name: "Search candidates" })).toBeTruthy();
-  expect(await screen.findByText("Candidate Information")).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Contact" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Current Role" })).toBeTruthy();
   expect(screen.getByRole("combobox", { name: "Select Job to add candidate" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Add to Job" })).toBeTruthy();
-  expect(screen.queryByText("Thông tin ứng viên")).toBeNull();
+  expect(screen.queryByText("Liên hệ")).toBeNull();
 });

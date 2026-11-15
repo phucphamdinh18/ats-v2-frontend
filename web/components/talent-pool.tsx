@@ -173,10 +173,8 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
           <div><h1>{tr("Ứng viên", "Candidates")}</h1><p>{tr("CV được duyệt sẽ xuất hiện ở đây. Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.", "Approved CVs appear here. Select a profile to view documents and assign the candidate to an open Job.")}</p></div>
           <button className={styles.primary} onClick={() => setView("cv-review")}>{tr("CV chờ duyệt", "Review CVs")}</button>
         </div>
-        <nav className={styles.tabs} aria-label={tr("Mục ứng viên", "Candidate sections")}>
+        <nav className={styles.tabs} aria-label={tr("Mục ứng viên", "Candidate section")}>
           <span className={styles.active} aria-current="page">{tr("Danh sách ứng viên", "Candidate Database")}</span>
-          <span title={tr("Chưa có chức năng riêng", "Not available as a separate module")}>Talent Pool</span>
-          <span title={tr("API chưa hỗ trợ mục lưu trữ", "Archived view not available in current API")}>{tr("Đã lưu trữ", "Archived")}</span>
         </nav>
         <div className={styles.listCard} aria-busy={loading}>
           <div className={styles.toolbar}>
