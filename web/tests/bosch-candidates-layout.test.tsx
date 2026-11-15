@@ -48,8 +48,8 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(panels?.length).toBe(2);
     expect(panels?.[0].className).toContain("listCard");
     expect(panels?.[1].className).toContain("profileCard");
-    expect(screen.getByRole("columnheader", { name: "Stage" })).toBeTruthy();
-    expect(screen.getByTitle("No matching score in Candidate list API").textContent).toBe("—");
+    expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
+    expect(screen.getByTitle("API danh sách ứng viên không có điểm phù hợp").textContent).toBe("—");
   });
 
   it("selects a new candidate and opens the matching profile without changing Job data", async () => {
