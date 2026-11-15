@@ -57,8 +57,8 @@ export default function BoschJobsMaster({
     title: "Job Openings", subtitle: "Manage requisitions, hiring priorities and job-level performance.",
     overview: "Job Overview", summary: "Job Summary", total: "Total Jobs", open: "Open", draft: "Draft", other: "Other Status",
     search: "Search Job ID / position", allStatuses: "All Statuses", allPriorities: "All Priorities",
-    job: "Job Opening / ID", unit: "BU / Function", req: "Req Type / Date", level: "Level / Priority",
-    status: "Status", sla: "SLA Target", volume: "Applications / Source", action: "Action",
+    job: "Job Opening", unit: "Department / BU", req: "Req Type / Date", level: "Level / Priority",
+    status: "Status", sla: "SLA Target", volume: "Applications", action: "Action",
     noMatch: "No Jobs match these filters.", clear: "Clear filters", select: "Select Job",
     snapshot: "Job Snapshot", requisition: "Requisition Information", progress: "Hiring Status & SLA",
     metrics: "Job-level Metrics", department: "Department", function: "Function", requestType: "Request type",
@@ -69,8 +69,8 @@ export default function BoschJobsMaster({
     title: "Vị trí tuyển dụng", subtitle: "Quản lý yêu cầu tuyển, mức ưu tiên và tiến độ theo từng Job.",
     overview: "Tổng quan Job", summary: "Tổng quan Job", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", other: "Trạng thái khác",
     search: "Tìm mã hoặc tên Job", allStatuses: "Tất cả trạng thái", allPriorities: "Tất cả ưu tiên",
-    job: "Vị trí / Mã Job", unit: "Đơn vị / Chức năng", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
-    status: "Trạng thái", sla: "SLA mục tiêu", volume: "Hồ sơ / Nguồn", action: "Thao tác",
+    job: "Vị trí tuyển dụng", unit: "Đơn vị / BU", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
+    status: "Trạng thái", sla: "SLA mục tiêu", volume: "Hồ sơ", action: "Thao tác",
     noMatch: "Không tìm thấy Job phù hợp.", clear: "Xóa bộ lọc", select: "Chọn Job",
     snapshot: "Tóm tắt Job", requisition: "Thông tin yêu cầu tuyển", progress: "Trạng thái & SLA",
     metrics: "Số liệu theo Job", department: "Đơn vị", function: "Chức năng", requestType: "Loại yêu cầu",
@@ -143,9 +143,8 @@ export default function BoschJobsMaster({
             <table className={styles.table}>
               <thead><tr>
                 <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th>
-                <th scope="col">{labels.req}</th><th scope="col">{labels.level}</th>
-                <th scope="col">{labels.status}</th><th scope="col">{labels.sla}</th>
-                <th scope="col">{labels.volume}</th><th scope="col">{labels.action}</th>
+                <th scope="col">{labels.status}</th><th scope="col">{labels.volume}</th>
+                <th scope="col">{labels.action}</th>
               </tr></thead>
               <tbody>{rows.map((job) => <tr key={job.id} className={selected?.id === job.id ? styles.selected : undefined}>
                 <td><div className={styles.jobCell}>
@@ -153,13 +152,7 @@ export default function BoschJobsMaster({
                     onClick={() => choose(job)}>{job.title}</button>
                   <span className={styles.jobCode}>{job.job_code || dash}</span></div></td>
                 <td><strong>{job.business_unit || dash}</strong><div className={styles.dim}>{job.function_group || dash}</div></td>
-                <td>{requestLabel(job.request_type, en)}<div className={styles.dim}>{reqDate(job.req_date, en)}</div></td>
-                <td>{job.level == null ? dash : `L${job.level}`}<div className={styles.pillWrap}>
-                  <span className={`${styles.state} ${job.priority === "CRITICAL" || job.priority === "HIGH" ? styles.high : job.priority === "NORMAL" ? styles.medium : ""}`}>
-                    {priorityLabel(job.priority, en)}</span></div></td>
                 <td><span className={`${styles.state} ${job.status === "OPEN" ? styles.open : job.status === "DRAFT" ? styles.draft : ""}`}>{job.status === "OPEN" ? labels.open : job.status === "DRAFT" ? labels.draft : job.status}</span></td>
-                <td>{job.sla_target_workdays == null ? dash : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}
-                  <div className={styles.dim}>{labels.target}</div></td>
                 <td><strong>{job.metrics?.total_candidates ?? dash}</strong>
                   <span className={styles.dim}> {labels.applications}</span>
                   <div className={styles.dim}>{sourceOf(job)}</div></td>
