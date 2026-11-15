@@ -53,7 +53,7 @@ test("Pipeline keeps the candidate table beside a scrollable detail panel", () =
   assert.ok(applicationPipeline.includes("<div className={styles.mainColumn}>") && applicationPipeline.includes("</div>\n    {!selected && <aside"), "Summary and candidate table stay together in the left column");
   assert.ok(pipeline.includes(".mainColumn{grid-column:1;display:flex;flex-direction:column;gap:12px;min-width:0}"), "Left column stacks the summary and candidate table with consistent spacing");
   assert.ok(pipeline.includes(".side{grid-column:2;grid-row:1;position:sticky"), "Candidate detail stays aligned beside the left column");
-  assert.ok(pipeline.includes("max-height:calc(100vh - 24px);overflow-y:auto"), "Long history remains reachable in the detail panel scroll area");
+  assert.ok(pipeline.includes("max-height:calc(100vh - 320px);overflow-y:auto"), "Long history scrolls inside the detail panel without making it taller than its workspace area");
   assert.ok(pipeline.includes("@media(max-width:1250px)"), "Small displays stack the panel");
 });
 
