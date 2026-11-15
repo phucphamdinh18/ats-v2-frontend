@@ -77,3 +77,22 @@ test("Candidate professional summary includes four icons and bilingual Education
   assert.ok(pipeline.includes(".professionalFacts{display:grid"));
   assert.ok(pipeline.includes(".professionalFacts dt svg{"));
 });
+
+
+test("Jobs Overview keeps five balanced columns, fixed rows and aligned card footers", () => {
+  const css = file("bosch-v2-jobs.module.css");
+  const view = file("bosch-jobs-master.tsx");
+  for (const width of ['"34%"', '"18%"', '"12%"', '"20%"', '"16%"']) {
+    assert.ok(view.includes(width), `Missing column width ${width}`);
+  }
+  assert.ok(view.includes("<colgroup>"), "Column proportions need an explicit colgroup");
+  assert.ok(view.includes("title={job.title}"), "Full Job title remains available on hover");
+  assert.ok(css.includes(".table tbody tr{height:84px}"), "Job rows should have a consistent height");
+  assert.ok(css.includes("-webkit-line-clamp:2"), "Visible Job titles should use at most two lines");
+  assert.ok(css.includes(".workspace{grid-template-columns:minmax(0,1fr) 360px"), "Details panel should have a 360px desktop track");
+  assert.ok(css.includes(".jobsPanel{display:flex;flex-direction:column"), "The table card must stretch");
+  assert.ok(css.includes(".snapshot{position:static;display:flex;flex-direction:column"), "Right details card must participate in row height");
+  assert.ok(css.includes(".snapshotFinal .primary{align-self:flex-start;margin-top:auto}"), "Detail action remains pinned to panel bottom");
+  assert.ok(css.includes(".footer{display:flex;align-items:center;justify-content:space-between"), "Footer should span full table card width");
+  assert.ok(css.includes("@media(max-width:1100px)"), "Narrow viewports should scroll table internally");
+});
