@@ -35,3 +35,12 @@ test("four requested viewport widths meet intended panel stacking breakpoint", (
   assert.deepEqual(widths.map((n) => n <= 1350), [false, false, true, true]);
   assert.deepEqual(widths.map((n) => n <= 1250), [false, false, true, true]);
 });
+
+
+test("Job Pipeline uses six data columns, no Last Activity, and clamps long candidate names", () => {
+  const source = readFileSync(join(process.cwd(), "components", "application-pipeline.tsx"), "utf8");
+  assert.ok(source.includes("<th>{copy.source}</th></tr>"), "Source is the last information column");
+  assert.ok(!source.includes("<th>{copy.activity}</th>"), "Last Activity must not be duplicated in the table");
+  assert.ok(pipeline.includes("-webkit-line-clamp:2"), "Long names must be clamped to two visible lines");
+  assert.ok(pipeline.includes("@container (max-width:650px)"), "Narrow panels must reflow safely");
+});
