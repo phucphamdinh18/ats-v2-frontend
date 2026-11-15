@@ -898,7 +898,7 @@ Owner requested direct implementation on PR #44, not a prompt. Scope limited to 
 **Rollback:** revert the scoped commits for this pass (including the new presentation file, import/props, style rules, tests, DOC update) by reviewed reverse-order reverts. Preserve current backup branch and verified production. Preview republish needs freshly verified live `release.json`.
 
 
-## Follow-up — Function column and frontend-wide readable type (2026-11-16 ICT)
+## Follow-up — Function column and frontend-wide readable type (2026-11-15 ICT)
 
 Owner requested six columns in Jobs, Department without `/ BU`, left-aligned detail facts everywhere, and the approved Pipeline font scale throughout the active frontend.
 
@@ -906,6 +906,15 @@ Owner requested six columns in Jobs, Department without `/ BU`, left-aligned det
 - Shared CSS tokens: body 16px, table headings 15px, section titles 20px, detail names 26px. All Bosch component styles, shared table primitives, shell navigation and login text use the readable scale; existing larger page headings/counts retained. Existing Pipeline Candidate/Source left alignment and other centered columns preserved.
 - Root cause of indented Snapshot facts: legacy global `dl { padding:20px 28px }`. New shell explicitly resets definition-list padding to zero and aligns dt/dd left. Job fact cell padding is vertical-only; Candidate inner cards lose extra horizontal indentation while retaining a consistent panel gutter. No negative margins or changes to selection/navigation handlers.
 - Scope: CSS + Jobs markup + existing regression expectations + DOC. No queries, schema, Auth, RLS, API, stages, data writes or permissions changes. PR #44 stays Draft. This work does not change publishing routes or resolve the separately recorded legacy-route blocker.
-- Local verification: 33 Node tests and 81 Vitest tests PASS; TypeScript PASS. Build and live Preview verification pending at initial commit; CI is not visual acceptance.
+- Local verification: 33 Node tests and 81 Vitest tests PASS; TypeScript and static build PASS. Remote UI commit `ecafbb8efa33df7d33e7a9c640a7c3f5224d7bad`: QA #462, Next web #435, PR Pages artifact #496 PASS; Supabase E2E #353 SKIPPED. Manual Preview publish #497 (`43737766289`) used root `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; live release.json confirms the UI SHA. CI is not visual acceptance.
 - Visual QA pending: verify VI/EN, six-column function values, Snapshot heading/fact left edges, Candidate Database, Pipeline, Interviews, Offers and navigation. Target viewports remain unaccepted until actually measured.
 - Rollback: revert this scoped commit and republish previous Preview `9e7adc083600072228284526b1a77ca2fda1cda8` with a freshly verified root release SHA. No database rollback needed.
+
+
+### Live verification of UI commit ecafbb8 — 2026-11-15
+
+- Manual Pages publish #497 completed successfully (1m58s). Root release metadata confirms unchanged root SHA and Preview `ecafbb8efa33df7d33e7a9c640a7c3f5224d7bad`.
+- Authenticated viewport 1363×936: Jobs has exactly six VI/EN headers, Department has no `/ BU`, body cells 16px, headers 15px, Snapshot name 26px and all section titles 20px. All three Snapshot definition lists have padding 0, align left, and their left edge equals their section heading (x=352). No page horizontal overflow; six-column Jobs table scrolls locally. Existing Job Summary has five counts.
+- Search `Codex` returns one TEST Job, clearing restores list; View detail opens existing TEST Pipeline. Candidate Database: five headers remain, headers 15px/body 16px, candidate name 26px, section titles 20px; all inner section headings share one left gutter. Interviews detail name 26px and section titles 20px; body paragraphs 16px. Offers empty-state name 26px; no Offer record was fabricated to validate populated details.
+- Pipeline Candidate/Source remain left aligned; other descriptive columns centered; headers 15px. Its two loaded fact lists show 0 padding and left alignment with 16px labels. Existing TEST candidate selection works. No submit, stage move, scheduling, Add to Job or Offer write was performed.
+- All inspected modules showed no page-level horizontal overflow at the actual viewport. Target 1440/1920/tablet/mobile visual acceptance remains unverified; full E2E is not claimed. UI code is deployed; PR #44 remains Draft. This documentation-only follow-up may have a newer branch SHA than the deployed UI SHA.
