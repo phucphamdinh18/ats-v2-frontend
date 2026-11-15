@@ -648,3 +648,5 @@ Scope restricted to Jobs Overview table markup/CSS and footer, plus the neighbor
 **QA gate:** CI on last HEAD, real Preview deploy revision and authenticated 1920x1080/1440x900/768x1024/390x844 VI/EN visual QA **PENDING**. Verify 56px rows, last-cell padding, footer center, full-name/Source tooltip, disclosure indicator, focus/sticky tabs, both selected/unselected detail states, and no body horizontal overflow. Preserve role E2E status accurately; do not mark PASS based on source inspection.
 
 **Rollback:** reviewed revert commits for `5a211fc`, `e3fd058`, `243887a`, `10ad92e`, `ff13906` in reverse order; no force-push, backend/production untouched.
+
+- Follow-up `e845691`: keep sticky candidate name/close/tabs at `top:0` so they remain fully visible while the detail panel scrolls.
