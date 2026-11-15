@@ -63,7 +63,7 @@ test("Job Pipeline has seven table columns and clamped accessible candidate/sour
   assert.ok(pipeline.includes("min-width:620px"), "Table scroll is local to its wrapper");
 });
 
-test("Pipeline aligns the Candidate rail with Job header and centers all six data columns", () => {
+test("Pipeline aligns the Candidate rail with Job header and keeps descriptive columns left aligned", () => {
   assert.ok(pipeline.includes(".mainColumn{display:contents}"), "Allow Candidate card and detail panel to share a grid row");
   assert.ok(pipeline.includes(".listSection{grid-column:1;grid-row:var(--job-pipeline-list-row,2);"), "Candidate list follows the header-grid placement");
   assert.ok(pipeline.includes(".side{grid-column:2;grid-row:var(--job-pipeline-side-row,1 / 3);position:relative"), "Right detail can span the Job header and Candidate list");
@@ -73,8 +73,8 @@ test("Pipeline aligns the Candidate rail with Job header and centers all six dat
   assert.ok(pipeline.includes("@media(max-width:1200px)"), "Narrow viewports stack the detail rail");
   assert.ok(detail.includes("--job-pipeline-side-row:2 / 7"), "Rail starts on Job title row and ends with Candidate list");
   assert.ok(detail.includes(".pipelineLayout>.content{display:contents}"), "Children share the Job grid without moving React state");
-  assert.ok(pipeline.includes(".table thead th{height:48px;padding:10px 8px;text-align:center"), "Six headers use the same centered alignment as cells");
-  assert.ok(pipeline.includes(".table td{height:56px;padding:8px;text-align:center"), "Six cell columns stay centered vertically and horizontally");
+  assert.ok(pipeline.includes(".table thead th{height:48px;padding:10px 8px;text-align:center"), "Default headers remain centered");
+  assert.ok(pipeline.includes(".table td{height:56px;padding:8px;text-align:center"), "Default cells remain centered vertically and horizontally");
   assert.ok(applicationPipeline.includes("className={styles.detailSticky}"), "Candidate header and tabs remain visible while scrolling");
 });
 

@@ -96,7 +96,7 @@
 .disabledExplanation{font-size:13px;color:#5c6b7c;margin:10px 0 0;line-height:1.5}
 
 
-/* Job Pipeline: selection plus six centered data columns; percentage tracks resolve in fixed table layout. */
+/* Job Pipeline: selection plus six data columns; percentage tracks resolve in fixed table layout. */
 .root{grid-template-columns:minmax(0,1fr) clamp(360px,34%,500px);grid-template-rows:auto auto;gap:16px;align-items:stretch;align-content:start;max-width:100%;min-width:0}
 .mainColumn{display:contents}
 .summary{grid-column:1;grid-row:var(--job-pipeline-summary-row,1);min-width:0}
@@ -196,3 +196,21 @@
 .side .timeline{font-size:14px;line-height:1.5}
 @media(max-width:1200px){.side{border:1px solid #e5e7eb;border-radius:8px}}
 @media(max-width:580px){.side h2{font-size:20px}.side .professionalFacts{grid-template-columns:minmax(115px,42%) minmax(0,1fr);gap:10px 8px;font-size:13px}}
+
+/* Owner typography revision: readable reference scale; descriptive columns lead left. */
+.summaryHeader h2,.tableHeading{font-size:22px;line-height:1.3}
+.stageCell span,.stageCell small,.rejected,.summaryScope{font-size:15px}
+.stageCell strong{font-size:30px}
+.table thead th{font-size:15px;line-height:1.4}
+.table td{font-size:16px;line-height:1.45}
+.table th:nth-child(2),.table td:nth-child(2),.table th:nth-child(7),.table td:nth-child(7){text-align:left;padding-left:12px}
+.candidateLink,.sourceText{text-align:left;margin-inline:0;font-size:16px;line-height:1.45}
+.stageBadge{font-size:14px;line-height:1.4}
+.emptyValue{font-size:15px}
+.search input,.disclosure summary,.toolbar>.muted,.pagination,.pagination>span,.pagination button{font-size:15px}
+.side h2{font-size:26px;line-height:1.3}
+.profileHead p,.profileTabs span{font-size:16px;line-height:1.5}
+.profileTabs span{white-space:normal;overflow-wrap:anywhere}
+.side .profileCard h3{font-size:20px;line-height:1.4}
+.side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileFields,.side .profileMuted{font-size:16px;line-height:1.5}
+.side .timeline small{font-size:14px}

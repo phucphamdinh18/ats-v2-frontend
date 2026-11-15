@@ -161,3 +161,10 @@
   .pipelineLayout{display:block;--job-pipeline-display:grid;--job-pipeline-summary-row:1;--job-pipeline-list-row:2;--job-pipeline-side-row:3;--job-pipeline-list-margin:0px}
 }
 @media(max-width:650px){.pipelineLayout>.titleRow h1{font-size:21px}}
+
+/* Pipeline-only reference typography; shell and other Job tabs are unchanged. */
+.pipelineLayout>.crumb,.pipelineLayout>.crumb button{font-size:15px}
+.pipelineLayout>.titleRow h1{font-size:28px;line-height:1.3}
+.pipelineLayout>.metadata{font-size:15px;line-height:1.5}
+.pipelineLayout>.tabs button{font-size:16px;line-height:1.5}
+@media(max-width:650px){.pipelineLayout>.titleRow h1{font-size:24px}}

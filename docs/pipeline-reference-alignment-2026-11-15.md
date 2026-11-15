@@ -25,3 +25,10 @@ Revert this scoped presentation commit on Draft PR #44 and republish the previou
 - Browser found unsupported multiplied percentage calc column widths resolving to equal-width columns, and a long Vietnamese stage badge overflowing its cell. Follow-up replaces the widths with compatible percentage-minus-pixel expressions, permits badge text wrapping, resets checkbox margins and makes source text 13px. Recheck the deployed follow-up before claiming the overflow fix passed.
 
 - On deployed 07fd4d7942c82ec12220e01a61ffa1fe0616614d, Vietnamese badges no longer overflowed and all six data cells remained centered. Rail width 360px; title/rail top -129.15625; list/rail bottom 836.5; no page overflow. Column calc expressions (including percentage-minus-pixel) still resolved to automatic equal tracks in this browser's fixed-table algorithm. Final correction uses plain percentage col widths summing to 100% (6/24/13/17/10/12/18), avoiding percentage calc entirely.
+
+## Owner revision — readable typography and descriptive-column alignment
+- Supersedes the all-centered typography decision above: Candidate and Source headers/content align left with 12px cell inset. Checkbox and Stage/Interview Round/Match/Experience remain centered.
+- Pipeline table header 15px, Candidate/Source/body 16px, stage badge 14px; summary titles 22px and labels 15px. Candidate panel name 26px, section headings 20px, body/facts/tabs 16px, history metadata 14px. Job title 28px (24px on small screens), metadata/breadcrumb 15px, Job tabs 16px.
+- Profile tabs may wrap within four equal columns so translated labels do not collide. Existing row target, column percentages, panel grid and internal scrolling are retained; growing text can increase row height when needed.
+- CSS only, plus correction of obsolete structural test descriptions. No shell, API, selection, filtering, pagination or stage handler changes.
+- Validation: CI and deployed SHA must be checked before reporting success. Rollback: revert this typography commit and republish 54b2aa381fbf64d92512ef04b0e16eaf2dcebc7c with the independently verified production SHA unchanged.
