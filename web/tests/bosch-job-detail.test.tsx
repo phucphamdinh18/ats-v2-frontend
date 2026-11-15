@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import BoschJobDetail from "../components/bosch-job-detail";
 import type { Job } from "../lib/policy";
+import { LanguageProvider, useLanguage } from "../components/language";
 afterEach(cleanup);
 const job = {id:"job-1", job_code:"JOB-1001", title:"Senior Embedded Software Engineer (EPC)", status:"OPEN", location:"Ho Chi Minh City",business_unit:"EPC – Embedded Systems",req_date:"2026-10-10"};
 const next = {id:"job-2",job_code:"JOB-1002",title:"Software Tester",status:"DRAFT"};
@@ -57,4 +58,24 @@ it("Team and Access only exposes the current role's verified permissions, not a 
  expect(screen.getByText("Chỉ xem")).toBeTruthy();
  expect(screen.queryByRole("button",{name:"Quản lý phân quyền"})).toBeNull();
  expect(screen.getByText(/API Job hiện không trả danh sách đầy đủ thành viên/)).toBeTruthy();
+});
+
+
+function EnglishToggle() {
+ const { setLocale } = useLanguage();
+ return <button type="button" onClick={() => setLocale("en")}>Switch English</button>;
+}
+it("switches Job Detail metadata, tabs and permission labels from VI to EN", () => {
+ render(<LanguageProvider><EnglishToggle/><BoschJobDetail job={job} allJobs={[job]}
+   onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}>
+   <span>Pipeline fixture</span>
+ </BoschJobDetail></LanguageProvider>);
+ expect(screen.getByRole("button", { name: "Chi tiết Job" })).toBeTruthy();
+ fireEvent.click(screen.getByRole("button", { name: "Switch English" }));
+ expect(screen.getByRole("button", { name: "Job Details" })).toBeTruthy();
+ expect(screen.getByRole("button", { name: "Sourcing" })).toBeTruthy();
+ expect(screen.getByText("Open")).toBeTruthy();
+ fireEvent.click(screen.getByRole("button", { name: "Job Details" }));
+ expect(screen.getByRole("heading", { name: "Hiring Settings" })).toBeTruthy();
+ expect(screen.getByRole("region", { name: "Job Details" })).toBeTruthy();
 });
