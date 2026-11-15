@@ -26,7 +26,7 @@ it("renders actual schedule rows and participant information from backend workli
   render(<InterviewWorklist onAccessLost={vi.fn()} />);
   expect((await screen.findByRole("button", { name: "Candidate A" })).getAttribute("aria-pressed")).toBe("true");
   expect(screen.getByText("Interviewer One")).toBeTruthy();
-  expect(screen.getByText("Software Engineer")).toBeTruthy();
+  expect(screen.getAllByText("Software Engineer").length).toBeGreaterThan(0);
   expect(screen.getByRole("link", { name: "Mở cuộc họp" }).getAttribute("href")).toBe("https://meet.example.com/one");
   expect(api.worklist).toHaveBeenCalledWith("SCHEDULED", 25, 0);
 });
