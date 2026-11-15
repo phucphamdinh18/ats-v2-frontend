@@ -149,3 +149,8 @@
 .table td{font-weight:600}
 .muted,.heading p,.table small,.profileHeader p,.facts dt{font-weight:600;color:#526174}
 .facts dd{font-weight:750}
+
+
+/* Laptop overflow fix: allow long candidate names to wrap inside their fixed table cell. */
+.candidateLink{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.35;vertical-align:top}
+.table td{min-width:0}
