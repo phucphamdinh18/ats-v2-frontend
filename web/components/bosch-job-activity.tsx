@@ -31,7 +31,7 @@ export default function BoschJobActivity({ jobId, onAccessLost }: { jobId: strin
       setRecords(result.applications);
     }).catch((reason: unknown) => {
       if (id !== revision.current) return;
-      setError(reason instanceof Error ? reason.message : "Không tải được lịch sử hồ sơ.");
+      setError(reason instanceof Error ? reason.message : (en ? "Could not load application history." : "Không tải được lịch sử hồ sơ."));
       if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) onAccessLost();
     }).finally(() => { if (id === revision.current) setLoading(false); });
     return () => { revision.current += 1; detailRevision.current += 1; };
@@ -45,7 +45,7 @@ export default function BoschJobActivity({ jobId, onAccessLost }: { jobId: strin
       if (id === detailRevision.current) setDetail(result);
     } catch (reason) {
       if (id !== detailRevision.current) return;
-      setDetailError(reason instanceof Error ? reason.message : "Không tải được lịch sử.");
+      setDetailError(reason instanceof Error ? reason.message : (en ? "Could not load timeline." : "Không tải được lịch sử."));
       if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) onAccessLost();
     } finally { if (id === detailRevision.current) setDetailLoading(false); }
   }
@@ -56,9 +56,9 @@ export default function BoschJobActivity({ jobId, onAccessLost }: { jobId: strin
     {error && <p className={styles.error} role="alert">{error}</p>}
     {loading ? <p role="status">{en ? "Loading applications…" : "Đang tải hồ sơ…"}</p> :
       <div className={styles.twoColumn}>
-        <div className={styles.tableScroll}><table className={styles.nativeTable}><thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>Stage</th><th>Status</th></tr></thead><tbody>
+        <div className={styles.tableScroll}><table className={styles.nativeTable}><thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>{en ? "Stage" : "Giai đoạn"}</th><th>{en ? "Status" : "Trạng thái"}</th></tr></thead><tbody>
           {records.map((item) => <tr key={item.application_id}><td><button type="button" className={styles.linkButton} aria-pressed={selectedId === item.application_id} onClick={() => void select(item)}>{item.candidate_name}</button></td><td>{item.stage}</td><td>{item.status}</td></tr>)}
-        </tbody></table>{!records.length && !error && <p className={styles.empty}>No applications in this page.</p>}</div>
+        </tbody></table>{!records.length && !error && <p className={styles.empty}>{en ? "No applications on this page." : "Không có hồ sơ trên trang này."}</p>}</div>
         <aside className={styles.detailPane} aria-label={en ? "Application timeline" : "Lịch sử hồ sơ"}>
           <h3>{records.find((item) => item.application_id === selectedId)?.candidate_name || (en ? "Activity Timeline" : "Lịch sử hoạt động")}</h3>
           {detailLoading && <p role="status">{en ? "Loading timeline…" : "Đang tải lịch sử…"}</p>}
