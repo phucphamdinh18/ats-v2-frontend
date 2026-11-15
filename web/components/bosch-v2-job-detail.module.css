@@ -81,3 +81,44 @@
 .embedded>.sectionHead{border:1px solid #d9dfe6;border-radius:6px;padding:14px;margin-bottom:14px}
 @media(max-width:950px){.detailsGrid,.twoColumn{grid-template-columns:1fr}.facts{grid-template-columns:minmax(110px,160px) minmax(0,1fr)}}
 @media(max-width:580px){.summaryGrid strong{font-size:19px}.summaryGrid span{font-size:10px}.aux{padding:12px}.facts{grid-template-columns:minmax(100px,40%) minmax(0,1fr)}}
+
+
+/* Job Detail: contain long requisition metadata, application tables and tab navigation. */
+.root,.content,.aux,.embedded,.twoColumn,.detailsGrid,.detailPane,.tableScroll{min-width:0;max-width:100%}
+.root{overflow-x:clip}
+.titleRow h1{min-width:0;flex:1 1 320px;overflow-wrap:anywhere}
+.metadata span{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.tabs{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+.tabs button{flex:0 0 auto}
+.tableScroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}
+.nativeTable{width:100%;min-width:0;table-layout:fixed}
+.nativeTable th,.nativeTable td{overflow-wrap:anywhere;word-break:normal;vertical-align:top}
+.facts dd{min-width:0;overflow-wrap:anywhere}
+.jobSwitch{min-width:0;max-width:100%;flex-wrap:wrap}
+.jobSwitch select{max-width:min(100%,330px);min-width:0}
+.embedded>*{min-width:0;max-width:100%}
+@media(max-width:1250px){
+  .detailsGrid,.twoColumn{grid-template-columns:minmax(0,1fr);gap:12px}
+  .metadata{gap:7px 0}
+  .metadata span{max-width:50%}
+}
+@media(max-width:650px){
+  .titleRow{align-items:flex-start;gap:9px}
+  .titleRow h1{font-size:21px;flex-basis:100%}
+  .actions{margin-left:0}
+  .metadata{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;font-size:11px;margin-bottom:15px}
+  .metadata span{max-width:100%;padding:0!important;border-right:0;min-width:0}
+  .tabs{gap:4px;margin-bottom:12px}
+  .tabs button{font-size:11px;padding:9px 7px 12px}
+  .aux{padding:12px}
+  .facts,.detailPane .facts{grid-template-columns:minmax(85px,38%) minmax(0,1fr)}
+  .facts dt,.facts dd{padding:9px 7px}
+  .nativeTable th,.nativeTable td{padding:9px 5px;font-size:11px}
+  .summaryGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .summaryGrid>div{padding:7px 4px}
+  .summaryGrid strong{font-size:18px}
+  .summaryGrid span{font-size:10px;overflow-wrap:anywhere}
+  .pager{justify-content:flex-start}
+  .jobSwitch{justify-content:flex-start;align-items:stretch}
+  .jobSwitch select{flex:1 1 100%;max-width:100%}
+}
