@@ -363,6 +363,6 @@ it("Home only shows actual authorized metrics, without fabricating Offer/SLA or 
   expect(home.textContent).toContain("—");
   expect(home.textContent).not.toContain("Nguồn chính");
   expect(home.textContent).toContain("Authorized A");
-  fireEvent.click(screen.getByRole("button", { name: /Authorized A/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Authorized A" }));
   expect(await screen.findByRole("region", { name: "Tiến độ tuyển dụng Authorized A" })).toBeTruthy();
 });
