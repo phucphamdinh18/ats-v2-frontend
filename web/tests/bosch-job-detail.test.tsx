@@ -17,7 +17,7 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  expect(onBack).toHaveBeenCalledTimes(1);
  fireEvent.change(screen.getByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"}),{target:{value:"job-2"}});
  expect(onSelectJob).toHaveBeenCalledWith(next);
- fireEvent.click(screen.getByRole("button",{name:"Interviews"}));
+ fireEvent.click(screen.getByRole("button",{name:"Phỏng vấn"}));
  fireEvent.click(screen.getByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/}));
  expect(onModule).toHaveBeenCalledWith("interviews");
 });
@@ -42,7 +42,7 @@ it("Job Details shows real requisition metadata and configured SLA without inven
 it("Sourcing only shows existing authorized metrics and handles missing metrics", () => {
  const withMetrics: Job={...job, metrics:{total_candidates:8,new_count:3,screening_count:2,interview_count:2,hired_count:1,rejected_count:0,source_summary:[{source:"Referral",sub_source:"Employee",source_ownership:"Company",count:8}]}};
  const view=render(<BoschJobDetail job={withMetrics} allJobs={[withMetrics]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
- fireEvent.click(screen.getByRole("button",{name:"Sourcing"}));
+ fireEvent.click(screen.getByRole("button",{name:"Nguồn tuyển"}));
  expect(screen.getByText("Referral")).toBeTruthy();
  expect(screen.getByText("Employee")).toBeTruthy();
  expect(screen.getByRole("table")).toBeTruthy();
