@@ -7,6 +7,7 @@ import { candidateProfile, listCandidates, type Candidate, type CandidateProfile
 import { createApplication } from "@/lib/applications";
 import { driveLink } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
+import styles from "./bosch-v2-candidates.module.css";
 
 const PAGE_SIZE = 25;
 type SourceOption = { sub_source: string; source: string; source_ownership: string };
@@ -127,42 +128,42 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
     }
   }
 
-  if (view === "cv-review") return <section className="panel talent-page">
-    <div className="talent-heading"><div><span className="eyebrow">Talent Pool</span><h2>CV cần duyệt</h2><p>Duyệt CV trước; CV được chấp thuận sẽ trở thành hồ sơ trong Talent Pool.</p></div><button className="secondary" onClick={() => setView("pool")}>Quay lại Talent Pool</button></div>
+  if (view === "cv-review") return <section className={styles.root}>
+    <div className={styles.heading}><div><span className={styles.eyebrow}>Talent Pool</span><h2>CV cần duyệt</h2><p>Duyệt CV trước; CV được chấp thuận sẽ trở thành hồ sơ trong Talent Pool.</p></div><button className={styles.secondary} onClick={() => setView("pool")}>Quay lại Talent Pool</button></div>
     <ReviewQueue fixedKind="cv" onAccessLost={onAccessLost} />
   </section>;
 
-  return <section className="panel talent-page" aria-label="Talent Pool">
-    <div className="talent-heading"><div><span className="eyebrow">CANDIDATE DATABASE</span><h2>Candidates</h2><p>CV được duyệt sẽ xuất hiện ở đây. Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.</p></div><button className="primary" onClick={() => setView("cv-review")}>CV chờ duyệt</button></div>
-    <div className="talent-toolbar">
-      <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Tìm trong Talent Pool" placeholder="Tìm tên, kỹ năng, công ty…" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
-      <span className="muted">{loading ? "Đang tải hồ sơ…" : `${candidates.length} hồ sơ trên trang`}</span>
+  return <section className={styles.root} aria-label="Talent Pool">
+    <div className={styles.heading}><div><span className={styles.eyebrow}>CANDIDATE DATABASE</span><h2>Candidates</h2><p>CV được duyệt sẽ xuất hiện ở đây. Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.</p></div><button className={styles.primary} onClick={() => setView("cv-review")}>CV chờ duyệt</button></div>
+    <div className={styles.toolbar}>
+      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label="Tìm trong Talent Pool" placeholder="Tìm tên, kỹ năng, công ty…" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+      <span className={styles.muted}>{loading ? "Đang tải hồ sơ…" : `${candidates.length} hồ sơ trên trang`}</span>
     </div>
-    {error && <div className="notice error" role="alert">{error}<button className="quiet" onClick={() => void load()}>Thử lại</button></div>}
-    <div className="talent-grid">
-      <div className="talent-list" aria-busy={loading}>
-        {loading ? <p className="talent-empty">Đang tải ứng viên…</p> : candidates.length ? <div className="candidate-database-scroll"><table className="candidate-database-table"><thead><tr><th aria-label="Selection"></th><th>Candidate</th><th>Current Job / Company</th><th>Stage</th><th>Interview Round</th><th>Matching</th><th>Experience</th><th>Source</th><th>Last Activity</th></tr></thead><tbody>{candidates.map((candidate) => <tr key={candidate.id} className={selectedId === candidate.id ? "selected" : ""}><td><input type="checkbox" aria-label={`Chọn ${candidate.full_name}`} checked={selectedId === candidate.id} onChange={()=>setSelectedId(candidate.id)}/></td><td><button type="button" aria-pressed={selectedId === candidate.id} onClick={() => setSelectedId(candidate.id)}>{candidate.full_name}</button></td><td><strong>{candidate.current_title || candidate.primary_role || "—"}</strong><small>{candidate.current_company || "—"}</small></td><td title="Stage is Job-specific and not returned by Candidate list API">—</td><td title="Interview rounds are Job-specific">—</td><td title="No matching score in Candidate list API">—</td><td>{candidate.total_experience_years == null ? "—" : `${candidate.total_experience_years} yrs`}</td><td>—</td><td>—</td></tr>)}</tbody></table></div> : !error ? <div className="talent-empty"><h3>Talent Pool chưa có hồ sơ</h3><p>Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.</p><button className="secondary" onClick={() => setView("cv-review")}>Mở CV chờ duyệt</button></div> : null}
-        <div className="pagination"><button className="secondary" disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className="secondary" disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>Trang sau</button></div>
+    {error && <div className={`${styles.notice} ${styles.error}`} role="alert">{error}<button className={styles.retry} onClick={() => void load()}>Thử lại</button></div>}
+    <div className={styles.layout}>
+      <div className={styles.listCard} aria-busy={loading}>
+        {loading ? <p className={styles.empty}>Đang tải ứng viên…</p> : candidates.length ? <div className={styles.scroll}><table className={styles.table}><thead><tr><th aria-label="Selection"></th><th>Candidate</th><th>Current Job / Company</th><th>Stage</th><th>Interview Round</th><th>Matching</th><th>Experience</th><th>Source</th><th>Last Activity</th></tr></thead><tbody>{candidates.map((candidate) => <tr key={candidate.id} className={selectedId === candidate.id ? styles.selected : ""}><td><input type="checkbox" aria-label={`Chọn ${candidate.full_name}`} checked={selectedId === candidate.id} onChange={()=>setSelectedId(candidate.id)}/></td><td><button type="button" className={styles.candidateLink} aria-pressed={selectedId === candidate.id} onClick={() => setSelectedId(candidate.id)}>{candidate.full_name}</button></td><td><strong className={styles.jobTitle}>{candidate.current_title || candidate.primary_role || "—"}</strong><small>{candidate.current_company || "—"}</small></td><td title="Stage is Job-specific and not returned by Candidate list API">—</td><td title="Interview rounds are Job-specific">—</td><td title="No matching score in Candidate list API">—</td><td>{candidate.total_experience_years == null ? "—" : `${candidate.total_experience_years} yrs`}</td><td>—</td><td>—</td></tr>)}</tbody></table></div> : !error ? <div className={styles.empty}><h3>Talent Pool chưa có hồ sơ</h3><p>Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.</p><button className={styles.secondary} onClick={() => setView("cv-review")}>Mở CV chờ duyệt</button></div> : null}
+        <div className={styles.pagination}><button className={styles.secondary} disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>Trang trước</button><span>Trang {offset / PAGE_SIZE + 1}</span><button className={styles.secondary} disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>Trang sau</button></div>
       </div>
-      <div className="talent-profile" aria-busy={detailLoading}>
-        {detailLoading ? <p className="talent-empty">Đang mở hồ sơ…</p> : profile ? <>
-          <div className="talent-profile-heading"><span className="talent-avatar large" aria-hidden="true">{profile.candidate.full_name.trim().charAt(0).toUpperCase()}</span><div><h3>{profile.candidate.full_name}</h3><p>{profile.candidate.current_title || profile.candidate.primary_role || "Chưa có chức danh"}</p></div></div>
-          {profileError && <div className="notice error" role="alert">{profileError}</div>}
-          {message && <div className="notice success" role="status">{message}</div>}
-          <dl className="talent-facts">
+      <div className={styles.profileCard} aria-busy={detailLoading}>
+        {detailLoading ? <p className={styles.empty}>Đang mở hồ sơ…</p> : profile ? <>
+          <div className={styles.profileHeader}><span className={styles.avatar} aria-hidden="true">{profile.candidate.full_name.trim().charAt(0).toUpperCase()}</span><div><h3>{profile.candidate.full_name}</h3><p>{profile.candidate.current_title || profile.candidate.primary_role || "Chưa có chức danh"}</p></div></div>
+          {profileError && <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div>}
+          {message && <div className={`${styles.notice} ${styles.success}`} role="status">{message}</div>}
+          <div className={styles.section}><h3 className={styles.subheading}>Thông tin ứng viên</h3><dl className={styles.facts}>
             <dt>Email</dt><dd>{profile.candidate.email || "—"}</dd>
             <dt>Điện thoại</dt><dd>{profile.candidate.phone || "—"}</dd>
             <dt>Công ty hiện tại</dt><dd>{profile.candidate.current_company || "—"}</dd>
             <dt>Kinh nghiệm</dt><dd>{profile.candidate.total_experience_years == null ? "—" : `${profile.candidate.total_experience_years} năm`}</dd>
             <dt>Cấp bậc</dt><dd>{profile.candidate.seniority || "—"}</dd>
             <dt>Địa điểm</dt><dd>{profile.candidate.location || "—"}</dd>
-          </dl>
-          <h3 className="talent-subheading">CV / tài liệu</h3>
-          {profile.documents.length ? <ul className="talent-documents">{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">Mở CV ↗</a> : <small>Link không hợp lệ</small>}</li>)}</ul> : <p className="muted">Chưa có CV được lưu trong hồ sơ.</p>}
-          <h3 className="talent-subheading">Đang tham gia Job</h3>
-          {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className="talent-applications">{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => <li key={application.id}><strong>{jobs.find((job) => job.id === application.job_id)?.title}</strong><span>{application.stage} · {application.status}</span></li>)}</ul> : <p className="muted">Chưa được thêm vào Job nào trong phạm vi bạn được xem.</p>}
-          <div className="add-to-job"><h3>Thêm vào Job</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className="add-to-job-control"><select aria-label="Chọn Job để thêm ứng viên" value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">Chọn Job đang mở</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><select aria-label="Chọn nguồn ứng viên" value={subSource} onChange={(event) => { setSubSource(event.target.value); requestId.current = null; }} disabled={!!sourceLoadError}><option value="">Chọn nguồn ứng viên</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select><button className="primary" disabled={!jobId || !subSource || busy || !sourceOptions.length} onClick={() => void addToJob()}>{busy ? "Đang thêm…" : requestId.current ? "Thử lại" : "Thêm vào Job"}</button></div> : <p className="muted">Không có Job đang mở mà bạn có quyền thêm hồ sơ này.</p>}{sourceLoadError && <p className="notice error" role="alert">{sourceLoadError}</p>}</div>
-        </> : profileError ? <div className="notice error" role="alert">{profileError}</div> : <div className="talent-empty"><h3>Chọn một hồ sơ</h3><p>Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.</p></div>}
+          </dl></div>
+          <div className={styles.section}><h3 className={styles.subheading}>CV / tài liệu</h3>
+          {profile.documents.length ? <ul className={styles.documents}>{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">Mở CV ↗</a> : <small>Link không hợp lệ</small>}</li>)}</ul> : <p className={styles.muted}>Chưa có CV được lưu trong hồ sơ.</p>}
+          </div><div className={styles.section}><h3 className={styles.subheading}>Đang tham gia Job</h3>
+          {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className={styles.applications}>{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => <li key={application.id}><strong>{jobs.find((job) => job.id === application.job_id)?.title}</strong><span>{application.stage} · {application.status}</span></li>)}</ul> : <p className={styles.muted}>Chưa được thêm vào Job nào trong phạm vi bạn được xem.</p>}
+          </div><div className={styles.section}><h3 className={styles.subheading}>Thêm vào Job</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className={styles.addControls}><select aria-label="Chọn Job để thêm ứng viên" value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">Chọn Job đang mở</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><select aria-label="Chọn nguồn ứng viên" value={subSource} onChange={(event) => { setSubSource(event.target.value); requestId.current = null; }} disabled={!!sourceLoadError}><option value="">Chọn nguồn ứng viên</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select><button className={styles.primary} disabled={!jobId || !subSource || busy || !sourceOptions.length} onClick={() => void addToJob()}>{busy ? "Đang thêm…" : requestId.current ? "Thử lại" : "Thêm vào Job"}</button></div> : <p className={styles.muted}>Không có Job đang mở mà bạn có quyền thêm hồ sơ này.</p>}{sourceLoadError && <p className={`${styles.notice} ${styles.error}`} role="alert">{sourceLoadError}</p>}</div>
+        </> : profileError ? <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div> : <div className={styles.empty}><h3>Chọn một hồ sơ</h3><p>Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.</p></div>}
       </div>
     </div>
   </section>;
