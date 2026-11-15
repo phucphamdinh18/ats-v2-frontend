@@ -444,3 +444,19 @@ Changes are component-scoped: primary table data weight 600 where applicable; se
 ### Rollback
 - Revert only the scoped follow-up UI commits on `redesign/bosch-enterprise-v2`, or restore the affected CSS modules from `backup/bosch-pr44-before-clean-rebuild-20261114` (`938dc56382d5d48b6203786a437b20c496409873`) via a reviewed commit. Keep shared history and backup intact.
 - To restore the prior preview, run the existing `path-preview` workflow using a verified current production_ref and the chosen prior preview_ref. Production was not touched.
+
+## Follow-up — All active Bosch screens: larger, clearer readable text (2026-11-15)
+
+**Owner instruction:** increase readability of frontend text throughout, not only boldness. Keep previously agreed responsive behavior and Source/Sub-source intact. Continue PR #44 Draft only.
+
+Changes made to the ten scoped frontend CSS files: `bosch-v2-shell.module.css`, `bosch-home-dashboard.module.css`, `bosch-v2-jobs.module.css`, `bosch-v2-job-detail.module.css`, `bosch-v2-pipeline.module.css`, `bosch-v2-candidates.module.css`, `bosch-v2-interviews.module.css`, `bosch-v2-offers.module.css`, `bosch-v2-candidate-intake.module.css`, and `bosch-v2-candidate-frame.module.css`. Shell received an additional dedicated 14px sidebar navigation/section-title adjustment (commit `e5cde53`).
+
+- Base component text 13px -> 14px where defined by the root font shorthand.
+- Explicit font sizes 9–10px -> 12px; 11px -> 12px; 12px -> 13px, retaining larger existing page titles and KPI values.
+- Darkened selected muted grays to #526174; retained semantic badge colors and existing font weights.
+- No changes to columns, Source/Sub-source mapping, container queries/media breakpoints, React/TypeScript components, API contracts, Auth/RLS, Offer features, or production.
+- Offer's existing presentational CSS was adjusted for legibility only; Offer workflows remain deferred.
+
+**QA gates:** Source edits committed, but no full CI results, authenticated browser screenshots, role E2E, or final preview revision verification is claimed. Increasing text may change wrapping in Jobs, Candidates and Interviews; test at 1920x1080, 1440x900, 768x1024 and 390x844 in both languages. Do not mark PASS from CSS inspection or Pages artifact build alone. Check final HEAD and live release.json before any preview-only deploy. Keep original backup and do not merge or delete legacy frontend until owner acceptance.
+
+**Rollback:** revert this pass's CSS commits from current branch by reviewed revert commits (avoid force-push); preserve pre-existing responsive and source attribution fixes.
