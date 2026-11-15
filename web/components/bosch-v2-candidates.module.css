@@ -1,161 +1,109 @@
-/* Bosch Enterprise Candidates / Talent Pool — scoped, isolated from legacy .shell rules */
-.root{--ink:#182638;--muted:#526174;--line:#dce3eb;--red:#e20015;width:100%;min-width:0;color:var(--ink);font:14px/1.45 Arial,"Helvetica Neue",sans-serif;background:#fff}
+/* ATS V2 Candidates / Candidate Database — Bosch Enterprise scoped layout.
+   Presentation-only. Shared shell, data and actions unchanged. */
+.root{--red:#e20015;--ink:#172236;--muted:#657286;--line:#dce2ea;--blue:#0757b8;width:100%;max-width:100%;min-width:0;overflow-x:clip;color:var(--ink);font:14px/1.45 Arial,Helvetica,sans-serif;background:#fff}
 .root *,.root *::before,.root *::after{box-sizing:border-box}
-.root h1,.root h2,.root h3,.root p{margin:0}.root button,.root input,.root select{font:inherit}.root button{cursor:pointer}
+.root h1,.root h2,.root h3,.root p{margin:0}
+.root button,.root input,.root select{font:inherit}
+.root button{cursor:pointer}
 .root :is(button,input,select,a):focus-visible{outline:2px solid #3481ba;outline-offset:2px}
-.heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:0 0 18px}
-.heading h2{font-size:22px;line-height:1.25;letter-spacing:-.45px;font-weight:850}
-.heading p{color:var(--muted);font-size:13px;margin-top:5px;max-width:700px}
+.breadcrumb{display:flex;align-items:center;gap:10px;color:#647489;font-size:13px;margin-bottom:11px;min-width:0}
+.pageGrid{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,34%,460px);gap:20px;align-items:stretch;min-width:0}
+.pageLeft{display:flex;flex-direction:column;gap:16px;min-width:0}
+.heading{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;min-width:0}
+.heading>div{min-width:0;flex:1}
+.heading h1{font-size:30px;letter-spacing:-.7px;margin:0 0 6px;color:#101924;font-weight:800;line-height:1.2}
+.heading p{font-size:13px;color:#6a788b;margin:0;line-height:1.45}
 .eyebrow{display:block;color:#596e87;font-size:12px;font-weight:800;letter-spacing:.06em;margin-bottom:7px}
-.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:8px 12px;border-radius:5px;font-size:13px;font-weight:750;white-space:nowrap}
-.primary{background:#d61529;border:1px solid #d61529;color:#fff}
+.primary,.secondary{display:inline-flex;justify-content:center;align-items:center;white-space:nowrap;border-radius:4px;font-size:12px;font-weight:800}
+.primary{padding:10px 16px;border:0;background:#d7192d;color:#fff}
 .primary:hover:not(:disabled){background:#b20d20}
-.secondary{background:#fff;border:1px solid #c8d3df;color:#1c426d}
-.secondary:hover:not(:disabled){background:#f3f7fa}
-.primary:disabled,.secondary:disabled{opacity:.5;cursor:not-allowed}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(285px,30%);gap:15px;align-items:start;width:100%;min-width:0}
-.listCard,.profileCard{border:1px solid var(--line);border-radius:7px;background:#fff;min-width:0;overflow:hidden}
-.listCard{grid-column:1}
-.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:13px 14px}
-.search{display:flex;align-items:center;gap:8px;border:1px solid #c6d2de;border-radius:5px;padding:0 10px;min-height:36px;background:#fff;flex:1;max-width:340px}
-.search input{width:100%;min-width:0;background:transparent;border:0;outline:0;color:#1c3046;font-size:13px}
-.muted{font-size:13px;color:#526174}
-.scroll{width:100%;min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
-.table{width:100%;min-width:850px;table-layout:auto;border-collapse:collapse;font-size:13px}
-.table th{position:static;top:auto;z-index:auto;background:#f3f5f8;text-align:left;color:#2e4057;font-weight:850;font-size:12px;white-space:nowrap;padding:11px 10px;border-bottom:1px solid var(--line)}
-.table td{padding:11px 10px;vertical-align:middle;border-bottom:1px solid #e7ecf0;color:#344961;max-width:220px;overflow-wrap:anywhere}
+.primary:disabled{background:#f3b3ba;color:#fff;cursor:not-allowed}
+.secondary{padding:8px 12px;background:#fff;color:#1c426d;border:1px solid #ced8e2}
+.secondary:disabled{opacity:.4;cursor:not-allowed}
+.tabs{display:flex;align-items:stretch;gap:29px;border-bottom:1px solid #dce1e7;max-width:100%;overflow-x:auto;white-space:nowrap;min-width:0}
+.tabs span{border:0;background:none;padding:0 3px 14px;font-weight:700;font-size:14px;color:#202d3d}
+.tabs .active{border-bottom:3px solid #e20015;color:#e20015}
+.listCard,.profileCard{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;min-width:0}
+.listCard{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:13px 15px;border-bottom:1px solid var(--line)}
+.tableHeading{font-size:17px;font-weight:700;margin:0 auto 0 0}
+.search{display:flex;align-items:center;gap:7px;border:1px solid #cbd4df;border-radius:5px;background:#fff;padding:0 11px;min-height:37px;min-width:225px;max-width:340px;flex:1 1 225px;color:#526174}
+.search input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:#283a54;font-size:12px;padding:9px 0}
+.muted{font-size:12px;color:#788698}
+.scroll{flex:1 1 auto;min-height:0;min-width:0;width:100%;max-width:100%;overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.table{width:100%;min-width:640px;table-layout:fixed;border-collapse:collapse;text-align:left;font-size:12px}
+.table col.checkCol{width:44px}
+.table col.nameCol{width:calc((100% - 44px) * .30)}
+.table col.jobCol{width:calc((100% - 44px) * .26)}
+.table col.expCol{width:calc((100% - 44px) * .12)}
+.table col.sourceCol{width:calc((100% - 44px) * .32)}
+.table th{background:#f4f6f8;color:#2e3e56;font-size:12px;font-weight:700;padding:0 8px;height:44px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:normal;word-break:keep-all;overflow-wrap:normal;hyphens:none;text-transform:none;letter-spacing:0;line-height:1.25}
+.table td{padding:8px 8px;border-bottom:1px solid #e9ecf0;vertical-align:middle;color:#34465f;font-size:12px;line-height:1.35;min-width:0;overflow-wrap:normal;word-break:normal}
+.table tbody tr{height:52px}
+.table tbody tr:hover{background:#f8fafc}
+.table tbody tr.selected,.table tbody tr.selected:hover{background:#fff1f2}
 .table tbody tr:last-child td{border-bottom:0}
-.table tbody tr:hover,.table tbody tr.selected{background:#fff0f2}
-.table input[type=checkbox]{accent-color:#d61529;cursor:pointer;width:15px;height:15px}
-.candidateLink{background:none;border:0;color:#0b56aa;font-weight:800;font-size:13px;text-align:left;padding:0}
+.table th:first-child,.table td:first-child{text-align:center;padding-left:8px;padding-right:8px}
+.table input[type=checkbox]{width:16px;height:16px;accent-color:#d7192d;cursor:pointer;vertical-align:middle}
+.candidateLink{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;max-width:100%;overflow:hidden;overflow-wrap:anywhere;white-space:normal;border:0;background:none;color:#0757b8;font-size:13px;font-weight:600;text-align:left;padding:0;line-height:1.35}
 .candidateLink:hover{text-decoration:underline}
-.jobTitle{font-weight:750}
-.table small{display:block;color:#526174;font-size:12px;margin-top:4px}
-.placeholder{color:#526174;font-size:13px}
-.pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line);font-size:13px;color:#63768b}
-.pagination button{border:1px solid #cbd5df;border-radius:4px;padding:6px 11px;font-weight:750;color:#324964;background:#fff;font-size:13px}
+.jobCompany,.sourceCell{min-width:0;display:flex;flex-direction:column;gap:0;justify-content:center}
+.jobTitle,.jobCompany small{display:block;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jobTitle{font-size:12px;font-weight:600;color:#172236;line-height:1.35}
+.jobCompany small{margin:0;font-size:11px;color:#657286;line-height:1.35}
+.sourceMain{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:12px;font-weight:400;color:#34465f;line-height:1.35}
+.sourceCell:has(.sourceSub) .sourceMain{-webkit-line-clamp:1;line-clamp:1}
+.sourceSub{display:block;color:#7a8899;font-size:11px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.placeholder{color:#9ca3af;font-size:12px;font-weight:400}
+.pagination{padding:13px 16px;border-top:1px solid var(--line);color:#6b798c;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}
+.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:4px;background:#fde5e7;color:#b21c2c;font-size:12px;font-weight:700}
+.pagination button{min-width:32px;min-height:32px;border:1px solid #ced8e2;border-radius:4px;background:#fff;padding:4px 10px;color:#34465f;font-size:12px}
 .pagination button:disabled{opacity:.4;cursor:not-allowed}
-.profileCard{grid-column:2;position:sticky;top:84px;max-height:calc(100vh - 110px);overflow-y:auto;overflow-x:hidden;min-width:0;padding:0}
-.profileHeader{display:flex;align-items:flex-start;gap:11px;padding:17px 15px;border-bottom:1px solid var(--line);min-width:0}
-.avatar{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:#fce5e8;color:#bf1d32;font-weight:850;font-size:17px}
-.profileHeader h3{font-size:18px;font-weight:850;overflow-wrap:anywhere;line-height:1.25}
-.profileHeader p{font-size:13px;color:#6a7b92;margin-top:5px;overflow-wrap:anywhere}
-.section{padding:14px 15px;border-bottom:1px solid #e6ebf0;min-width:0;overflow-wrap:anywhere}
-.section:last-child{border-bottom:0}
-.subheading{font-size:13px;font-weight:850;margin:0 0 12px!important;color:#233650}
-.facts{display:grid;grid-template-columns:minmax(82px,105px) minmax(0,1fr);gap:9px 8px;margin:0;font-size:13px}
-.facts dt{color:#526174}
-.facts dd{margin:0;min-width:0;overflow-wrap:anywhere;font-weight:700}
-.documents,.applications{padding-left:17px;margin:0;font-size:13px;min-width:0}
+.profileCard{display:flex;flex-direction:column;min-height:0;align-self:stretch}
+.profileScroll{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;min-width:0}
+.profileHeader{display:flex;align-items:flex-start;gap:11px;padding:18px;border-bottom:1px solid var(--line);min-width:0}
+.profileHeader>div{min-width:0}
+.profileHeader h3{font-size:19px;line-height:1.3;font-weight:700;margin:0 0 6px;overflow-wrap:anywhere}
+.profileHeader p{font-size:12px;color:#718096;overflow-wrap:anywhere}
+.section{margin:12px 16px 0;padding:14px;border:1px solid #dfe4ea;border-radius:6px;min-width:0;overflow-wrap:anywhere}
+.section:last-child{margin-bottom:16px}
+.subheading{font-size:14px;font-weight:700;margin:0 0 12px!important;color:#172236}
+.facts{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px 8px;font-size:12px;margin:0}
+.facts dt{color:#718096}
+.facts dd{font-weight:700;margin:0;min-width:0;overflow-wrap:anywhere}
+.documents,.applications{padding-left:17px;margin:0;font-size:12px;min-width:0}
 .documents li,.applications li{margin-bottom:9px;overflow-wrap:anywhere}
 .documents li:last-child,.applications li:last-child{margin-bottom:0}
 .documents li span,.applications li strong,.applications li span{display:block;margin-bottom:4px}
-.documents a{font-weight:800;color:#1157a8;text-decoration:none}
+.documents a{font-weight:700;color:#0757b8;font-size:12px;text-decoration:none}
 .documents a:hover{text-decoration:underline}
+.applications li strong{color:#0757b8;font-size:14px;font-weight:700}
+.applications li span{font-size:12px;color:#657286}
 .addControls{display:flex;flex-direction:column;gap:9px}
-.addControls select{width:100%;min-width:0;border:1px solid #c6d1df;background:#fff;color:#2d415b;border-radius:5px;padding:9px;font-size:13px}
-.addControls button{align-self:flex-start}
-.notice{padding:10px 12px;margin:10px 0;border:1px solid #dce2ea;border-radius:5px;font-size:13px;line-height:1.5}
+.addControls select{width:100%;max-width:100%;min-width:0;height:36px;border:1px solid #cbd4df;border-radius:5px;background:#fff;color:#283a54;font-size:12px;padding:0 10px}
+.addControls button{align-self:flex-start;padding:11px 15px}
+.notice{padding:10px 12px;margin:10px 0;border:1px solid #dce2ea;border-radius:5px;font-size:12px;line-height:1.5}
 .error{background:#fff1f2;color:#8e2d3b;border-color:#ecc6ca}
 .success{background:#eaf8ed;color:#22633b;border-color:#c7e6cc}
-.retry{border:0;background:none;color:#1259ac;text-decoration:underline;font-weight:750;margin-left:8px;font-size:13px}
-.empty{padding:21px 16px;color:#637489;font-size:13px}
+.retry{border:0;background:none;color:#1259ac;text-decoration:underline;font-weight:750;margin-left:8px;font-size:12px}
+.empty{padding:21px 16px;color:#637489;font-size:12px}
 .empty h3{font-size:14px;font-weight:800;margin-bottom:6px}
 .empty p{line-height:1.5;margin-bottom:10px}
 .review{border:1px solid var(--line);border-radius:7px;padding:16px;min-width:0}
-@media(max-width:1350px){.layout{grid-template-columns:minmax(0,1fr) minmax(265px,34%)}.table{min-width:840px}}
-@media(max-width:1080px){.layout{grid-template-columns:minmax(0,1fr)}.listCard,.profileCard{grid-column:1}.profileCard{position:static;max-height:none}.table{min-width:860px}}
-@media(max-width:650px){.heading h2{font-size:20px}.toolbar{padding:10px}.search{max-width:none;width:100%;flex:auto}.pagination{gap:7px}.profileHeader{padding:13px}.section{padding:13px}}
-
-
-/* Responsive contract: retain useful fields; placeholder-only columns must not force laptop scroll.
-   Hidden fields carry no list API values; profile keeps CV, job assignments and experience. */
-.root{max-width:100%;overflow-x:clip}
-.layout,.listCard,.profileCard,.scroll{min-width:0;max-width:100%}
-.scroll{overflow-x:auto;overflow-y:hidden;scrollbar-gutter:stable}
-.table{min-width:0;width:100%;table-layout:fixed}
-.table th,.table td{overflow-wrap:anywhere;word-break:normal}
-/* Keep long headers inside their fixed table cells at laptop widths. */
-.table th{white-space:normal;line-height:1.2;overflow-wrap:anywhere}
-.table th:nth-child(1),.table td:nth-child(1){width:38px;text-align:center;padding-inline:6px}
-.table th:nth-child(2),.table td:nth-child(2){width:27%}
-.table th:nth-child(3),.table td:nth-child(3){width:30%}
-.table th:nth-child(7),.table td:nth-child(7){width:90px}
-.profileCard{overflow-wrap:anywhere}
-.profileHeader>div{min-width:0}
-.addControls select{max-width:100%}
-@media(max-width:1700px){
-  /* Stage, interview round, matching, source and last activity are always — in list contract. */
-  .table th:nth-child(4),.table td:nth-child(4),
-  .table th:nth-child(5),.table td:nth-child(5),
-  .table th:nth-child(6),.table td:nth-child(6),
-  .table th:nth-child(10),.table td:nth-child(10){display:none}
-  .table th:nth-child(2),.table td:nth-child(2){width:33%}
-  .table th:nth-child(3),.table td:nth-child(3){width:auto}
-  .table th:nth-child(7),.table td:nth-child(7){width:90px}
-  .table th:nth-child(8),.table td:nth-child(8){width:16%}
-  .table th:nth-child(9),.table td:nth-child(9){width:20%}
+@media(max-width:1200px){
+  .pageGrid{grid-template-columns:minmax(0,1fr)}
+  .profileCard{min-height:0}
+  .profileScroll{position:static;max-height:none;overflow:visible}
 }
-@media(max-width:1150px){
-  /* Switch before the remaining table loses room in the left column. */
-  .layout{grid-template-columns:minmax(0,1fr);gap:12px}
-  .listCard,.profileCard{grid-column:1}
-  .profileCard{position:static;top:auto;max-height:none;overflow-y:visible}
+@media(max-width:650px){
+  .heading{flex-wrap:wrap;gap:12px}
+  .heading h1{font-size:25px}
+  .heading .primary{max-width:100%}
+  .toolbar{padding:12px}
+  .search{max-width:none;width:100%;flex:1 1 100%}
+  .pagination{gap:7px}
+  .profileHeader{padding:14px}
+  .section{margin:10px 12px 0;padding:12px}
+  .section:last-child{margin-bottom:12px}
+  .facts{grid-template-columns:minmax(85px,34%) minmax(0,1fr)}
 }
-@media(max-width:520px){
-  .root{font-size:13px}
-  .heading{gap:10px;padding-bottom:12px}
-  .heading>div{min-width:0;flex:1 1 100%}
-  .heading .primary{width:100%;white-space:normal}
-  .table{table-layout:fixed}
-  .table th,.table td{padding:9px 6px}
-  .table th:nth-child(7),.table td:nth-child(7){display:none}
-  .table th:nth-child(10),.table td:nth-child(10){display:none}
-  .table th:nth-child(8),.table td:nth-child(8),.table th:nth-child(9),.table td:nth-child(9){font-size:12px;padding-inline:4px}
-  .table th:nth-child(2),.table td:nth-child(2){width:38%}
-  .table th:nth-child(3),.table td:nth-child(3){width:auto}
-  .toolbar .muted{width:100%}
-  .pagination{flex-wrap:wrap;justify-content:space-between}
-  .pagination span{order:-1;width:100%;text-align:center}
-  .pagination button{min-width:0}
-  .facts{grid-template-columns:minmax(76px,35%) minmax(0,1fr)}
-}
-
-
-/* Panel-size contract: viewport width alone cannot indicate the table's usable space.
-   At 1920px the sidebar and profile still leave a narrow table pane. */
-.listCard{container-type:inline-size}
-@container (max-width:1250px){
-  /* Hide only fields without current list data; Source and Sub-source have RLS-scoped values. */
-  .table th:nth-child(4),.table td:nth-child(4),
-  .table th:nth-child(5),.table td:nth-child(5),
-  .table th:nth-child(6),.table td:nth-child(6),
-  .table th:nth-child(10),.table td:nth-child(10){display:none}
-  .table th:nth-child(2),.table td:nth-child(2){width:27%}
-  .table th:nth-child(3),.table td:nth-child(3){width:auto}
-}
-@container (max-width:480px){
-  .table th:nth-child(7),.table td:nth-child(7){display:none}
-  .table th:nth-child(2),.table td:nth-child(2){width:40%}
-}
-/* The table remains accessible to horizontal pan on exceptionally long candidate names. */
-.scroll{touch-action:pan-x pan-y}
-
-/* Source attribution is per application. Keep category and detailed channel visible. */
-.table th:nth-child(8) small,.table th:nth-child(9) small{font-size:12px;font-weight:500}
-
-/* Readability weight pass: scoped, no layout or workflow changes. */
-.root :is(input,select){font-weight:500}
-.table td{font-weight:600}
-.muted,.heading p,.table small,.profileHeader p,.facts dt{font-weight:600;color:#526174}
-.facts dd{font-weight:750}
-
-
-/* Laptop overflow fix: allow long candidate names to wrap inside their fixed table cell. */
-.candidateLink{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.35;vertical-align:top}
-.table td{min-width:0}
-
-/* Keep long application source labels inside their own cells at constrained panel widths. */
-.table td:nth-child(8),.table td:nth-child(9){white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important;min-width:0;max-width:0;line-height:1.35}
-
-/* Bosch readability pass: component-local typography only; preserve responsive and data contracts. */
