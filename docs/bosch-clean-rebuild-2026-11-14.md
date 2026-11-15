@@ -474,3 +474,41 @@ Owner compared signed-in Job Detail/Pipeline preview against the Bosch reference
 **QA:** Commit and static structural checks added; full CI and authenticated viewport screenshots are NOT yet independently verified. Review 1920x1080, 1440x900, 768x1024 and 390x844. Ensure a long candidate name does not overlap Stage and its full text is accessible. Supabase E2E statuses must be reported accurately. Keep PR #44 Draft and do not merge.
 
 **Rollback:** revert the three scoped code/test commits above in reverse order using reviewed revert commits, retaining prior text readability changes; never force-push shared history.
+
+
+## Step 20 — Jobs Overview 5-column layout and live Preview QA (2026-11-15)
+
+### Revision and release safeguards
+- The owner-supplied PR head at the start of this pass was `fdc98336838791f1811fc0c98c7d892ecadcb712`. Existing typography commits were present in the branch.
+- Implemented the previously approved Jobs Overview table shape in `web/components/bosch-jobs-master.tsx`: exactly five headers — Job Opening, Department/BU, Status, Applications, Action. Application source stays visible beneath the count. Requisition details, level/priority, SLA and Job metrics remain in Job Snapshot. No API/business logic changes.
+- Added regression coverage in `web/tests/workspace.test.tsx`. The code commit was `56b85d6a12aa9989c17b91f453e67d4d07ee9a2b`.
+- Live screenshot review at the available 1363×936 browser showed the table had five visible columns, but the Job Snapshot stacked below because the CSS breakpoint was 1370px. Changed only `web/components/bosch-v2-jobs.module.css` to move that stack breakpoint to 1180px. Commit: `0c9f38bd0e6edfe36488b6befbb58e9ebf258e08`. The table, Source/Sub-source, data and other responsive fixes remain intact.
+- PR #44 remains Draft/open/unmerged. Backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873` remains intact.
+
+### CI and deployment evidence
+- On code commit `0c9f38b`: QA checks #385 **success**; Next web checks #358 **success** (unit tests, build and typecheck); Publish ATS Pages PR build #396 **success**; Supabase local browser E2E #276 **skipped**.
+- Rechecked live root `release.json` immediately before publishing. Production SHA: `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; existing preview before publish: `56b85d6a12aa9989c17b91f453e67d4d07ee9a2b`.
+- Manually ran Publish ATS Pages #397 from `main`, mode `path-preview`, production_ref `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, preview_ref `0c9f38bd0e6edfe36488b6befbb58e9ebf258e08`. Build and deploy jobs succeeded. No production root deployment occurred.
+- Live `release.json` after publish: production revision is still `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; `preview.revision` is `0c9f38bd0e6edfe36488b6befbb58e9ebf258e08`.
+- Preview link: https://phucphamdinh18.github.io/ats-v2-frontend/preview/ . CI links: https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43696292401 , https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43696292403 , https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43696292410 , manual deployment https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43696500274 .
+
+### Authenticated live browser QA evidence
+- Signed-in Admin session: `phucphamdinh18@gmail.com`. Browser screenshots were captured in the 2026-11-15 QA conversation for Home, Jobs, Candidates, Interviews, Job Detail/Pipeline and the Bosch App Shell. Screens used authorized API-backed test records; no mutation was submitted.
+- Available browser content viewport was **1363×936**. App shell shows the complete Bosch/ATS V2 identity, navy top bar, light sidebar and red active state. Text is visibly darker/bolder; computed body font is 14px. This confirms the tested rendered screens at this viewport only, not all CSS elements or exact pixel match to the references.
+- **Jobs Overview — visual PASS at 1363×936:** live DOM contains exactly five table headers. Job Snapshot measured 299px wide at x=1026, beside the table; document width 1348px remained below viewport width 1363px. Snapshot contains requisition facts, status/SLA and actual Job metrics. Some long Job names and column headings wrap; no overlap was seen in the captured screen.
+- **Home — visual PASS at 1363×936 (English):** recruitment summary, pipeline counts, action-required jobs, upcoming interview and insights rendered. API-unavailable values displayed `—`; no invented figures were added.
+- **Job Detail/Pipeline — visual PASS at 1363×936 (English and Vietnamese):** Job header, seven tabs, five-stage summary, six application rows, Source and Candidate Overview rendered. The Kanban/drag-and-drop board is absent. This was read-only; no stage change or candidate add was submitted.
+- **Candidates — visual PASS at 1363×936 (English):** table and candidate detail pane rendered; Source and Sub-source columns remained visible, with existing source values and placeholders. No overlap was visible in the screenshot.
+- **Interviews — visual PASS at 1363×936 (English):** schedule row and detail pane rendered after loading; interviewer and feedback fields were visible. A transient loading state was observed first; the final captured state was populated.
+- **App Shell — visual PASS at 1363×936 (English and Vietnamese):** main navigation labels and language selector changed. Jobs and Pipeline also rendered Vietnamese labels after switching language. The source catalog names and some API enum values remain canonical English; a full bilingual sweep of every route was not completed.
+
+### Remaining gaps and honest verdict
+- Exact target viewport QA at 1920×1080, 1440×900, 768×1024 and 390×844 is **BLOCKED**: this browser session is 1363×936 and organization policy blocks DevTools; no supported viewport setter was available. No exact-size screenshots or PASS are claimed for those four sizes.
+- Full VI/EN testing on every module is **PARTIAL**. Offers typography/workflow, Job Reviews and Admin module are not fully visually audited in this pass. Offers workflow remains deferred.
+- Admin-only read-only inspection was performed. TA, HM and Interviewer role-specific sessions, API 401/403 and mutation/retry flows are **SKIPPED**; Supabase browser E2E is **SKIPPED**. No real candidate or Job data was changed.
+- Screenshots are visual evidence in the QA conversation; they were not added as binary files to this Markdown log. The corresponding authenticated Preview remains available at the link above.
+- Overall ATS frontend acceptance remains **BLOCKED**, despite the scoped Jobs Overview and inspected desktop screens looking correct. Do not merge PR #44, deploy production or remove legacy frontend until target viewport and role checks are completed.
+
+### Rollback
+- Revert only CSS commit `0c9f38bd0e6edfe36488b6befbb58e9ebf258e08` to restore the prior Jobs Snapshot stacking breakpoint; this leaves the five-column component intact. To undo the five-column markup separately, restore `web/components/bosch-jobs-master.tsx` and its matching test from the parent state before `56b85d6` using a reviewed revert commit.
+- The independent backup remains `938dc56382d5d48b6203786a437b20c496409873`. To restore a prior Preview, verify the current production SHA in live `release.json`, then run the existing workflow in `path-preview` mode with the verified production_ref and chosen earlier preview_ref. Never change the production root for rollback.
