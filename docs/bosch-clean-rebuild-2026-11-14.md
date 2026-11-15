@@ -786,3 +786,44 @@ Revert the scoped CSS fix commit `d37e5f940ef9504cfc2bf51950daacbf0256d5c6` on t
 - Exact 1920×1080, 1440×900, 768×1024 and 390×844 checks remain **BLOCKED** because this Cloud Browser session does not expose viewport emulation. Snapshot side-by-side bottom alignment also remains unverified because current viewport triggers stacked layout. Screenshot evidence was captured in the browser session; no image file is committed.
 - **Result:** Jobs Overview measured/smoke-tested at 1363×936 is **PARTIAL PASS**; responsive acceptance is **BLOCKED**. Current Preview SHA is verified as `d37e5f9`; it is not the current PR HEAD.
 - Rollback: Preview can be pointed back to a verified path-preview revision using the existing Publish ATS Pages workflow after rechecking `release.json`. Production remains at `71ff88e`; no backend or recruitment data was changed. Preserve backup branch `backup/bosch-pr44-before-clean-rebuild-20261114`.
+
+
+## Step 21 — Candidate Database visual QA and scoped table header fix (2026-11-15)
+
+### Version, CI and preview
+- PR #44 remains **open, Draft, unmerged**. PR HEAD reviewed for this pass: `84b5d3e19516cd0123d35cac94cdd979fbb601b2`.
+- QA checks #441, Next web checks #414 and PR Pages build #465: **success** on that HEAD. Supabase local browser E2E #332: **skipped**.
+- Before preview publish, `release.json` showed production root `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; the existing preview was `97f4950f2752ec5ae04aa381f2df48d7c9a39b3e`.
+- Manual Publish ATS Pages run #466 succeeded with `mode=path-preview`, production ref `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, preview ref `84b5d3e19516cd0123d35cac94cdd979fbb601b2`. After publish, `release.json` confirmed production remained unchanged and preview revision matched `84b5d3e...`.
+- No production deploy, PR merge, backend/API/Auth/RLS/schema/data-model change, or real recruiting mutation occurred.
+
+### Candidate Database — authenticated Admin browser review
+- Signed-in preview account: `phuc.phamdinh18@gmail.com`; loaded eight profiles, with TEST-only records clearly identifiable.
+- At the available browser viewport (1363×1023 desktop window; content area about 1363×936; browser zoom 100%), the page rendered one H1, breadcrumb above the content, the description, and Review CVs aligned at the right edge of the left content column. No Candidate Summary/pipeline metrics card appeared.
+- Candidate list showed five data columns (selection checkbox plus Candidate, Current Job / Company, Experience and Source); Source/Sub-source remain in the same table cell using the latest accessible application attribution. Candidate Detail starts beside the main content and separates Contact, Current Role, CV/Documents, Assigned Jobs and Add to Job.
+- **Found and fixed P1:** the inherited global `th { position: sticky; top: 68px; z-index: 1 }` made the table header overlap the first Candidate row. Scoped Candidates CSS resets its header to static positioning. Regression assertion was added to `web/tests/bosch-candidates-layout.test.tsx`. Fix is included in `84b5d3e...` (the immediately preceding CSS and test commits are in the same PR history). The post-fix live preview screenshot showed the header above the rows without collision.
+- No page-wide horizontal overflow was visible at the available viewport. Source values that are present are visible in the Source cell; records with no sub-source show the existing empty marker rather than inferred values.
+- Switched language English → Vietnamese in the live page. Headings, search, Review CVs, Source, pagination, candidate detail sections and Add to Job labels changed to Vietnamese; source catalog names remain as supplied by the API.
+- Functional read-only checks: Search returned the matching TEST candidate and clearing search restored the list; selecting another TEST record updated Candidate Detail; Review CVs opened and showed the actual empty state. Pagination controls were disabled because all 8 records fit on one page, so page-turn behavior was **SKIPPED**. Add to Job was inspected but its button was disabled until source selection; no candidate was submitted. Open CV link points to a TEST placeholder URL and was not opened. No real candidate mutation was performed.
+- Screenshot evidence: captured in the authenticated Cloud Browser conversation at the available desktop width, before/after the header correction. These screenshots do not represent any of the four requested exact viewport sizes.
+
+### Regression glance — Jobs Overview and Job Detail/Pipeline
+- Jobs Overview still showed the agreed five columns and four loaded Jobs. At the available width, Job Snapshot was below the fold/stacked by the responsive breakpoint. Detailed filters, Job actions and equal-bottom alignment were not retested in this pass.
+- Job Detail/Pipeline loaded the selected TEST Job, seven Job tabs, the New/Screening/Interview/Offer/Hired summary and the existing six-column candidate table (Candidate, Stage, Interview Round, Match, Experience, Source). API-unavailable facts remained `—`; no mutation was made. This was a regression glance, not full functional or visual acceptance.
+
+### Viewport matrix and disposition
+| Viewport | Candidate Database | Notes |
+|---|---|---|
+| 1920×1080 | **BLOCKED** | Managed browser exposes no viewport setter; DevTools is unavailable. |
+| 1440×900 | **BLOCKED** | Browser window is limited to 1363×1023; exact requested viewport unavailable. |
+| 768×1024 | **BLOCKED** | Could not switch to a tablet viewport in this browser. |
+| 390×844 | **BLOCKED** | Could not switch to a mobile viewport in this browser. |
+| Available 1363×1023 (page content about 1363×936), EN/VI | **PARTIAL** | Authenticated visual review and read-only controls were checked; not a substitute for the requested viewport matrix. |
+
+- No 52px row-height measurement was collected; row sizing is visually consistent in the available screenshot but not certified to the target pixel value.
+- Admin is the only available session. TA/Hiring Manager/Interviewer, multi-page pagination, Add to Job submit, actual CV open, responsive target dimensions and Supabase browser E2E remain **SKIPPED/BLOCKED**.
+- Candidate Database verdict: **PARTIAL**. The observed header collision is fixed and verified on the deployed Preview SHA, but requested viewport and full interaction coverage are incomplete. Jobs Overview and Pipeline regression verdict: **PARTIAL**. Overall acceptance remains **BLOCKED**; no Visual QA PASS is claimed.
+
+### Files and rollback
+- Changed in this visual fix: `web/components/bosch-v2-candidates.module.css` and `web/tests/bosch-candidates-layout.test.tsx`; CI on the resulting HEAD passed for QA/Next/Pages.
+- Rollback only the scoped header override and its regression assertion through a reviewed revert on the Draft PR. Preview can be republished to the prior verified preview SHA `97f4950f2752ec5ae04aa381f2df48d7c9a39b3e` using the existing `path-preview` workflow after re-verifying the current production root. Production stayed at `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; backup branch remains untouched.
