@@ -692,3 +692,10 @@ Overall Visual QA for the requested responsive matrix remains **BLOCKED**, not P
 ### Rollback
 - No production change was made. Preserve backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`.
 - To revert this pass, use reviewed revert commits for `c7d5a79fbba76c03705093f0dd8e12e6e6729089` and `2de4ef1146c9e3016526056e05cc740c1e03bc59` on the Draft branch (reverse order), then publish the chosen preview revision with `path-preview` only after rechecking the live production ref. Do not force-push, merge or delete the backup.
+
+
+### Final publication after this QA note (2026-11-15)
+- Documentation commit `ef7dd31702152a005913e02dd10b186293cbea2d` became the current PR HEAD. QA #420, Next web checks #393 and Pages PR build #439 passed; Supabase browser E2E #311 skipped.
+- Manually ran Publish ATS Pages #440 from `main`, `mode=path-preview`, with verified `production_ref=71ff88ebdb68bea9f6456375c4c9d970e11c0379` and `preview_ref=ef7dd31702152a005913e02dd10b186293cbea2d`. Run succeeded. Live `release.json` confirms root production revision unchanged and preview revision `ef7dd31702152a005913e02dd10b186293cbea2d`.
+- Reopened the final Preview SHA `ef7dd31702152a005913e02dd10b186293cbea2d` in the authenticated Admin session. Jobs Overview displayed all five aligned column headers and four real authorized Job rows. Pipeline opened on the TEST ONLY Job; selecting the TEST ONLY Drag Retry candidate loaded actual details and all three History events, with stage unchanged. This confirms the deployed final preview is the same visual code inspected above. No mutation submitted.
+- The PR remains Draft and unmerged; production, backend and recruitment data remain unchanged.
