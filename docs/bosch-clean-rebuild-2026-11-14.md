@@ -417,3 +417,30 @@ Owner requested **bolder text** on all active frontend modules following the pri
 Changes are component-scoped: primary table data weight 600 where applicable; secondary labels/hints weight 600 with readable gray; selected facts and key labels 750. Form fields use 500. Existing semantic status treatments and primary headings stay prominent. No markup, business logic, Source/Sub-source mapping, responsive breakpoints, API, RLS, database, Auth or Offer workflows changed. Do not add global CSS overrides.
 
 **Verification:** GitHub source edits committed; no signed-in browser screenshots, full viewport matrix, role E2E or final CI acceptance is asserted. Check source commit and successful deployment marker before visual QA. Test at 1440x900, 1920x1080, 768px and 390px, VI/EN; look for clipping/overlap on dense tables. Keep PR Draft, production and backup untouched. Rollback by reverting these eight scoped CSS commits in reverse order, without force-pushing.
+
+
+## Step 19 — Cross-frontend typography and responsive overflow QA (2026-11-15)
+
+### Version, CI and preview
+- Typography pass verified in the PR branch across the eight scoped CSS Modules (see “Follow-up — Stronger type weight across Bosch V2”); original user commit: `4dda96a746b8eea5eee407652624bc79958b974d`.
+- Subsequent frontend-only fixes on PR #44: `a8c43aa` (Candidate name/link wrapping), `1c5be62` (Source/Sub-source wrapping), `3a0a4ac` (hide crowded top navigation at tablet widths), `f2691c8` (responsive Jobs columns), and `b69dbdd` (Pipeline Source wrapping).
+- HEAD verified before publish: `b69dbdd599d0c013594da7113f086e06d084a7d3`. PR #44 remains Draft and unmerged.
+- QA checks #368, Next web checks #341, PR Pages build #377: **success**. Supabase local browser E2E #259: **skipped**.
+- Manual Publish ATS Pages #378: **success**, mode `path-preview`, production_ref `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, preview_ref `b69dbdd599d0c013594da7113f086e06d084a7d3`.
+- Live `release.json` after deploy: production revision still `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; preview revision `b69dbdd599d0c013594da7113f086e06d084a7d3`. Website root was not changed.
+
+### Real browser visual evidence
+- Authenticated preview opened in Chromium at the available CSS viewport **1363×936**. Captured Jobs Master and Job Detail/Pipeline screenshots after hard reload; Jobs table values/API source and Pipeline candidate/source values rendered. Typography is dark/bold and visually consistent across these screens; no candidate/source text overlap is visible in the Pipeline table. Pipeline table measured `scrollWidth=697`, `clientWidth=697`; document width 1348px within viewport 1363px.
+- Jobs Master shows compact columns and Job Snapshot; no table/page overflow visible at this available desktop width. The browser is authenticated as Admin; no write action was taken.
+- Exact requested 1920×1080, 1440×900, 768×1024 and 390×844 screenshots could not be captured because this managed browser blocks DevTools and exposes no viewport setter. Prior browser zoom checks indicated a crowded top navigation at tablet width; the fix hides only horizontal top navigation below 900px while keeping the labeled sidebar. **Do not claim exact viewport-matrix PASS.**
+- Home, Candidates and Interviews had been visually inspected earlier in the same browser session at the available laptop viewport; Candidate Source/Sub-source and long names wrapped without overlap. This pass did not recapture every module at every target size or exercise VI/EN on the final HEAD.
+- Offers and Job Reviews/Admin were not fully audited for typography consistency in this pass. Offer workflow remains deferred.
+
+### Remaining gaps and verdict
+- **Observed and fixed:** candidate hyperlink/source text overflow; crowded tablet top navigation; Jobs table density at narrower panes; Pipeline Source cell overflow.
+- **Not verified:** exact four viewport dimensions, complete bilingual sweep on the final HEAD, all routes’ typography, Admin/TA/HM/Interviewer role matrix, API error/retry flows, Supabase local E2E (skipped). No real recruiting mutations were made.
+- Visual evidence supports the updated preview at the available desktop width; it is **not a full frontend acceptance/PASS** against all required viewports and roles. PR remains Draft. No backend, API, Auth/RLS, recruitment workflow, production or legacy cleanup changes.
+
+### Rollback
+- Revert only the scoped follow-up UI commits on `redesign/bosch-enterprise-v2`, or restore the affected CSS modules from `backup/bosch-pr44-before-clean-rebuild-20261114` (`938dc56382d5d48b6203786a437b20c496409873`) via a reviewed commit. Keep shared history and backup intact.
+- To restore the prior preview, run the existing `path-preview` workflow using a verified current production_ref and the chosen prior preview_ref. Production was not touched.
