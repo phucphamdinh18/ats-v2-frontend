@@ -22,7 +22,7 @@
 .muted{font-size:11px;color:#77859a}
 .scroll{width:100%;min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
 .table{width:100%;min-width:850px;table-layout:auto;border-collapse:collapse;font-size:11px}
-.table th{background:#f3f5f8;text-align:left;color:#2e4057;font-weight:850;font-size:10px;white-space:nowrap;padding:11px 10px;border-bottom:1px solid var(--line)}
+.table th{position:static;top:auto;z-index:auto;background:#f3f5f8;text-align:left;color:#2e4057;font-weight:850;font-size:10px;white-space:nowrap;padding:11px 10px;border-bottom:1px solid var(--line)}
 .table td{padding:11px 10px;vertical-align:middle;border-bottom:1px solid #e7ecf0;color:#344961;max-width:220px;overflow-wrap:anywhere}
 .table tbody tr:last-child td{border-bottom:0}
 .table tbody tr:hover,.table tbody tr.selected{background:#fff0f2}
