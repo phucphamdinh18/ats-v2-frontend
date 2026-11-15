@@ -353,9 +353,9 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - The source lookup reads only `applications` through the existing authenticated Supabase client and existing RLS. The current policy allows Admin to read all applications and TA/Recruiter or Hiring Manager only applications for Jobs where they have the corresponding assignment; no service key, API, schema, policy, or backend changes were made. The Candidate directory itself remains Admin/TA scoped by the existing list API.
 - When source lookup fails, the UI shows a localized notice and does not invent attribution. At small widths, source fields remain available; only unavailable/placeholder fields are hidden.
 - Language labels for Source/Sub-source and the latest attribution hint support Vietnamese and English.
-- Code commits: shell fix `ae02e1539e1db8adb4afa3a1927d10c4b31a2511`; candidate attribution `b287dd2482d702d3a3f8367eacf0d09828b0acb0`; table styling `704f9867ef608feeedcc03d883ac07c559c8b0c9`; narrow-pane visibility correction `bed99ab178b1b21a292955c1489b1ec86e40e1df`.
-- CI at `704f9867...`: QA checks passed; Next web checks and Pages build were still running at the time of this note; Supabase local browser E2E was skipped by workflow. Recheck latest HEAD `bed99ab...` before relying on the CI state.
-- Preview was not redeployed or visually rechecked in this update. Production was not touched; PR #44 remains unmerged. Do not claim responsive/browser acceptance until preview screenshots are checked.
+- Code commits: shell fix `ae02e1539e1db8adb4afa3a1927d10c4b31a2511`; candidate attribution `b287dd2482d702d3a3f8367eacf0d09828b0acb0`; table styling `704f9867ef608feeedcc03d883ac07c559c8b0c9`; narrow-pane visibility correction `bed99ab178b1b21a292955c1489b1ec86e40e1df`; updated the existing responsive contract test at `13ce1aa0e143679f519d9da16aee72c00baed89e` to keep Source and Sub-source visible.
+- CI attempt at `df7a0a3...` failed the existing responsive contract because it expected the old ninth column to be hidden. The current test expectation was updated, and CI is rerunning on `13ce1aa...`. QA checks passed; Supabase local browser E2E was skipped. Confirm rerun results before claiming green.
+- Preview has not yet been redeployed or visually rechecked for these source/branding fixes. Production was not touched; PR #44 remains unmerged. Do not claim responsive/browser acceptance until preview screenshots are checked.
 
 
 ## Step 18 — Jobs Overview typography contrast correction against owner screenshots (2026-11-15)
