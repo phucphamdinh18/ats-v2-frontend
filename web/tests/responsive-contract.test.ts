@@ -85,20 +85,22 @@ test("Candidate professional summary includes four icons and bilingual Education
 });
 
 
-test("Jobs Overview keeps five balanced columns, fixed rows and aligned card footers", () => {
+test("Jobs Overview uses reference five-column grid and reusable shared table primitives", () => {
   const css = file("bosch-v2-jobs.module.css");
+  const shared = file("ats-table.module.css");
   const view = file("bosch-jobs-master.tsx");
-  for (const width of ['"34%"', '"18%"', '"12%"', '"20%"', '"16%"']) {
+  for (const width of ['"36%"', '"20%"', '"12%"', '"18%"', '"14%"']) {
     assert.ok(view.includes(width), `Missing column width ${width}`);
   }
-  assert.ok(view.includes("<colgroup>"), "Column proportions need an explicit colgroup");
-  assert.ok(view.includes("title={job.title}"), "Full Job title remains available on hover");
-  assert.ok(css.includes(".table tbody tr{height:84px}"), "Job rows should have a consistent height");
-  assert.ok(css.includes("-webkit-line-clamp:2"), "Visible Job titles should use at most two lines");
-  assert.ok(css.includes(".workspace{grid-template-columns:minmax(0,1fr) 360px"), "Details panel should have a 360px desktop track");
-  assert.ok(css.includes(".jobsPanel{display:flex;flex-direction:column"), "The table card must stretch");
-  assert.ok(css.includes(".snapshot{position:static;display:flex;flex-direction:column"), "Right details card must participate in row height");
-  assert.ok(css.includes(".snapshotFinal .primary{align-self:flex-start;margin-top:auto}"), "Detail action remains pinned to panel bottom");
-  assert.ok(css.includes(".footer{display:flex;align-items:center;justify-content:space-between"), "Footer should span full table card width");
-  assert.ok(css.includes("@media(max-width:1100px)"), "Narrow viewports should scroll table internally");
+  assert.ok(view.includes("<colgroup>"), "Five-column table still needs colgroup");
+  assert.ok(view.includes("title={job.title}"), "Full title still accessible");
+  assert.ok(css.includes(".table tbody tr{height:70px"), "Reference uses 70px rows");
+  assert.ok(css.includes("-webkit-line-clamp:2"), "Long job names remain at most two visible lines");
+  assert.ok(css.includes(".workspace{display:grid;grid-template-columns:minmax(0,1fr) 315px"), "Job Snapshot uses 315px column");
+  assert.ok(css.includes("@media(max-width:1370px)"), "Narrow pages stack snapshot");
+  assert.ok(css.includes(".snapshot{position:static;align-self:stretch;display:flex;flex-direction:column"), "Snapshot stretches with left stack");
+  assert.ok(css.includes(".footer{composes:foot"), "Footer reuses shared primitive");
+  assert.ok(css.includes(".table{composes:atsTable"), "Table opts in to shared style");
+  assert.ok(css.includes(".state{composes:tag") && css.includes(".dim{composes:dim"), "Tags and secondary text reuse shared primitives");
+  for (const rule of [".atsTable th{", ".atsTable td{", ".tag{", ".dim{", ".foot{"]) assert.ok(shared.includes(rule), rule);
 });
