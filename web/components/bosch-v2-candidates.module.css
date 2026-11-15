@@ -66,3 +66,52 @@
 @media(max-width:1350px){.layout{grid-template-columns:minmax(0,1fr) minmax(265px,34%)}.table{min-width:840px}}
 @media(max-width:1080px){.layout{grid-template-columns:minmax(0,1fr)}.listCard,.profileCard{grid-column:1}.profileCard{position:static;max-height:none}.table{min-width:860px}}
 @media(max-width:650px){.heading h2{font-size:20px}.toolbar{padding:10px}.search{max-width:none;width:100%;flex:auto}.pagination{gap:7px}.profileHeader{padding:13px}.section{padding:13px}}
+
+
+/* Responsive contract: retain useful fields; placeholder-only columns must not force laptop scroll.
+   Hidden fields carry no list API values; profile keeps CV, job assignments and experience. */
+.root{max-width:100%;overflow-x:clip}
+.layout,.listCard,.profileCard,.scroll{min-width:0;max-width:100%}
+.scroll{overflow-x:auto;overflow-y:hidden;scrollbar-gutter:stable}
+.table{min-width:0;width:100%;table-layout:fixed}
+.table th,.table td{overflow-wrap:anywhere;word-break:normal}
+.table th:nth-child(1),.table td:nth-child(1){width:38px;text-align:center;padding-inline:6px}
+.table th:nth-child(2),.table td:nth-child(2){width:27%}
+.table th:nth-child(3),.table td:nth-child(3){width:30%}
+.table th:nth-child(7),.table td:nth-child(7){width:90px}
+.profileCard{overflow-wrap:anywhere}
+.profileHeader>div{min-width:0}
+.addControls select{max-width:100%}
+@media(max-width:1700px){
+  /* Stage, interview round, matching, source and last activity are always — in list contract. */
+  .table th:nth-child(4),.table td:nth-child(4),
+  .table th:nth-child(5),.table td:nth-child(5),
+  .table th:nth-child(6),.table td:nth-child(6),
+  .table th:nth-child(8),.table td:nth-child(8),
+  .table th:nth-child(9),.table td:nth-child(9){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:33%}
+  .table th:nth-child(3),.table td:nth-child(3){width:auto}
+  .table th:nth-child(7),.table td:nth-child(7){width:90px}
+}
+@media(max-width:1150px){
+  /* Switch before the remaining table loses room in the left column. */
+  .layout{grid-template-columns:minmax(0,1fr);gap:12px}
+  .listCard,.profileCard{grid-column:1}
+  .profileCard{position:static;top:auto;max-height:none;overflow-y:visible}
+}
+@media(max-width:520px){
+  .root{font-size:12px}
+  .heading{gap:10px;padding-bottom:12px}
+  .heading>div{min-width:0;flex:1 1 100%}
+  .heading .primary{width:100%;white-space:normal}
+  .table{table-layout:fixed}
+  .table th,.table td{padding:9px 6px}
+  .table th:nth-child(7),.table td:nth-child(7){display:none}
+  .table th:nth-child(2),.table td:nth-child(2){width:38%}
+  .table th:nth-child(3),.table td:nth-child(3){width:auto}
+  .toolbar .muted{width:100%}
+  .pagination{flex-wrap:wrap;justify-content:space-between}
+  .pagination span{order:-1;width:100%;text-align:center}
+  .pagination button{min-width:0}
+  .facts{grid-template-columns:minmax(76px,35%) minmax(0,1fr)}
+}
