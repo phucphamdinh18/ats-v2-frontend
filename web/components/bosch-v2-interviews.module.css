@@ -102,7 +102,7 @@
 
 /* A 1440px laptop may still have a ~750px list pane next to Interview Details. */
 .listCard{container-type:inline-size}
-@container (max-width:780px){
+@container (max-width:850px){
   /* Type + feedback remain readable in the selected Interview Details pane. */
   .table th:nth-child(3),.table td:nth-child(3),
   .table th:nth-child(5),.table td:nth-child(5){display:none}
