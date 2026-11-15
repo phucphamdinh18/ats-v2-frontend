@@ -156,3 +156,8 @@
   .table th:nth-child(2),.table td:nth-child(2){width:55%}
 }
 .scroll{touch-action:pan-x pan-y}
+
+/* Readability weight pass: scoped, no layout or workflow changes. */
+.root :is(input,select){font-weight:500}
+.table td{font-weight:600}
+.muted,.stageCell small,.rejected{font-weight:600;color:#526174}
