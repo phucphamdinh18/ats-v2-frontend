@@ -280,7 +280,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {(state === "ready" || state === "empty") && <div className={styles.scroll}>
       <table className={styles.table}>
         <colgroup><col className={styles.checkCol}/><col className={styles.candidateCol}/><col className={styles.stageCol}/><col className={styles.roundCol}/><col className={styles.matchCol}/><col className={styles.experienceCol}/><col className={styles.sourceCol}/></colgroup>
-        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{en ? "Round" : "Vòng PV"}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
+        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
