@@ -127,7 +127,7 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
   expect(screen.queryByRole("button", { name: /Duyệt CV/ })).toBeNull();
-  expect(screen.getByText("1 / 1 vị trí tuyển dụng")).toBeTruthy();
+  expect(screen.getByText("1–1 / 1")).toBeTruthy();
   fireEvent.change(screen.getByRole("textbox", { name: "Tìm Job" }), {
     target: { value: "Unmatched" },
   });
