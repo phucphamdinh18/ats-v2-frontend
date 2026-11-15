@@ -122,7 +122,7 @@ it("changes Candidate Database labels, actions and profile facts to English with
 
 describe("Candidate Database table isolation", () => {
   it("opts out of inherited sticky headers that overlap the first row", () => {
-    const css = readFileSync(new URL("../components/bosch-v2-candidates.module.css", import.meta.url), "utf8");
+    const css = readFileSync("components/bosch-v2-candidates.module.css", "utf8");
     expect(css).toContain(".table th{position:static;top:auto;z-index:auto}");
   });
 });
