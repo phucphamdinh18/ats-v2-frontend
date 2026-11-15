@@ -50,3 +50,36 @@ it("blocks non-https meeting URLs without hiding the appointment", async () => {
   await screen.findByText("Interviewer One");
   expect(screen.queryByRole("link", { name: "Mở cuộc họp" })).toBeNull();
 });
+
+
+it("renders a separated Bosch schedule table and detail panel without legacy layout classes", async () => {
+  api.worklist.mockResolvedValue([appointment]);
+  const view = render(<InterviewWorklist onAccessLost={vi.fn()} />);
+  await screen.findByRole("button", { name: "Candidate A" });
+  const layout = view.container.querySelector('[class*="layout"]');
+  expect(layout?.children).toHaveLength(2);
+  expect(layout?.children[0].className).toContain("listCard");
+  expect(layout?.children[1].className).toContain("detailCard");
+  expect(screen.getByRole("heading", { name: "Danh sách lịch phỏng vấn" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Thông tin lịch phỏng vấn" })).toBeTruthy();
+  expect(screen.getByRole("complementary", { name: "Chi tiết lịch phỏng vấn" })).toBeTruthy();
+  expect(screen.getByText("Interviewer One")).toBeTruthy();
+  expect(view.container.querySelector(".ops-content")).toBeNull();
+});
+
+it("keeps the interview details inside their own panel on empty response", async () => {
+  api.worklist.mockResolvedValue([]);
+  render(<InterviewWorklist onAccessLost={vi.fn()} />);
+  expect(await screen.findByText("Không có lịch phỏng vấn phù hợp với bộ lọc.")).toBeTruthy();
+  expect(screen.getByRole("complementary", { name: "Chi tiết lịch phỏng vấn" })).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Mở cuộc họp" })).toBeNull();
+});
+
+it("shows failed worklist fetch without leaking old selected interview", async () => {
+  api.worklist.mockResolvedValueOnce([appointment]).mockRejectedValueOnce(new Error("Network blocked"));
+  render(<InterviewWorklist onAccessLost={vi.fn()} />);
+  await screen.findByText("Interviewer One");
+  fireEvent.click(screen.getByRole("button", { name: "Đã hoàn tất" }));
+  expect((await screen.findByRole("alert")).textContent).toContain("Network blocked");
+  expect(screen.queryByText("Interviewer One")).toBeNull();
+});
