@@ -322,9 +322,13 @@ it("Jobs Overview displays the approved five-column table and keeps requisition 
   expect(screen.queryByRole("columnheader", { name: "Loại Req / Ngày" })).toBeNull();
   expect(screen.queryByRole("columnheader", { name: "SLA mục tiêu" })).toBeNull();
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" })).toBeTruthy();
-  expect(screen.getAllByText("Mục tiêu cấu hình").length).toBeGreaterThan(0);
-  expect(screen.getByText("Nguồn chính").nextElementSibling?.textContent).toBe("—");
+  expect(screen.getByText("Loại yêu cầu").nextElementSibling?.textContent).toBe("Tuyển mới");
+  expect(screen.getByText("Ngày Req").nextElementSibling?.textContent).toBe("15/10/2026");
+  expect(screen.getByText("Level").nextElementSibling?.textContent).toBe("L52");
+  expect(screen.getByText("Ưu tiên").nextElementSibling?.textContent).toBe("Cao");
   expect(screen.getAllByText("ATS-101").length).toBeGreaterThan(0);
+  expect(screen.getByText("SLA mục tiêu").nextElementSibling?.textContent).toBe("32 ngày làm việc");
+  expect(screen.getByText("Nguồn chính").nextElementSibling?.textContent).toBe("Referral");
   expect(screen.getByText("SLA thực tế").nextElementSibling?.textContent).toBe("—");
   fireEvent.change(screen.getByRole("combobox", { name: "Ưu tiên Job" }), { target: { value: "HIGH" } });
   expect(screen.queryByRole("button", { name: "Mở pipeline ATS Draft Role" })).toBeNull();
