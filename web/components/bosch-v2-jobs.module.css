@@ -76,3 +76,26 @@
 .table td{font-weight:600}
 .facts dt,.subtitle,.crumb,.count,.note,.footer{font-weight:600;color:#526174}
 .facts dd{font-weight:750}
+
+/* Keep the Jobs Master usable within its actual panel width on laptops and phones. */
+.tableScroll{container-type:inline-size}
+.jobCell{min-width:0}
+.table{table-layout:fixed;min-width:0}
+.table th,.table td{white-space:normal;overflow-wrap:anywhere;word-break:normal;min-width:0}
+.action{max-width:100%;white-space:normal;line-height:1.2}
+@container(max-width:1150px){
+  /* Detailed requisition, priority and SLA remain available in Job Snapshot. */
+  .table th:nth-child(3),.table td:nth-child(3),.table th:nth-child(4),.table td:nth-child(4),.table th:nth-child(6),.table td:nth-child(6){display:none}
+  .table th:nth-child(1),.table td:nth-child(1){width:36%}
+  .table th:nth-child(2),.table td:nth-child(2){width:22%}
+  .table th:nth-child(5),.table td:nth-child(5){width:12%}
+  .table th:nth-child(7),.table td:nth-child(7){width:18%}
+  .table th:nth-child(8),.table td:nth-child(8){width:12%}
+}
+@container(max-width:650px){
+  .table th:nth-child(2),.table td:nth-child(2){display:none}
+  .table th:nth-child(1),.table td:nth-child(1){width:42%}
+  .table th:nth-child(5),.table td:nth-child(5){width:14%}
+  .table th:nth-child(7),.table td:nth-child(7){width:26%}
+  .table th:nth-child(8),.table td:nth-child(8){width:18%}
+}
