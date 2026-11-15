@@ -139,3 +139,8 @@
   .metadata span{overflow-wrap:anywhere}
   .tableScroll{overflow-x:auto}
 }
+
+/* Readability weight pass: scoped, no layout or workflow changes. */
+.root :is(input,select){font-weight:500}
+.metadata,.facts dd{font-weight:600}
+.facts dt{font-weight:750}
