@@ -115,3 +115,8 @@
   .table button{overflow-wrap:anywhere;white-space:normal}
 }
 .tableScroll{touch-action:pan-x pan-y}
+
+
+/* Keep long candidate and job labels inside their table cells on laptop widths. */
+.table td{white-space:normal;overflow-wrap:anywhere}
+.table td button{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
