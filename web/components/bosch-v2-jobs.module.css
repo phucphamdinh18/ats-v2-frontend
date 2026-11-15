@@ -31,22 +31,22 @@
 .search:focus-within{outline:2px solid #9eb8d7;outline-offset:1px}
 .select{border:1px solid #cad4df;border-radius:5px;padding:8px 9px;color:#263c58;background:#fff;min-height:36px;max-width:170px;font-size:12px}
 .tableScroll{overflow-x:auto;width:100%}
-.table{width:100%;min-width:930px;table-layout:auto;border-collapse:collapse;font-size:11px}
-.table th{position:static;top:auto;z-index:auto;padding:12px 10px;background:#f4f6f8;border-bottom:1px solid var(--line);font-size:10px;color:#304359;font-weight:850;text-align:left;white-space:nowrap}
-.table td{padding:11px 10px;border-bottom:1px solid #e9edf1;vertical-align:middle;color:#34465f}
+.table{width:100%;min-width:930px;table-layout:auto;border-collapse:collapse;font-size:12px;line-height:1.5}
+.table th{position:static;top:auto;z-index:auto;padding:12px 10px;background:#f4f6f8;border-bottom:1px solid var(--line);font-size:11px;color:#26394f;font-weight:800;text-align:left;white-space:nowrap}
+.table td{padding:11px 10px;border-bottom:1px solid #e9edf1;vertical-align:middle;color:#273b54;font-weight:500}
 .table tbody tr:last-child td{border-bottom:0}
 .table tbody tr:hover,.table tbody tr.selected{background:#fff1f2}
 .jobCell{display:flex;flex-direction:column;gap:4px;min-width:180px}
-.jobName{text-align:left;color:#0757b8;font-weight:800;border:0;background:transparent;padding:0;font-size:11px;white-space:normal;line-height:1.3}
+.jobName{text-align:left;color:#0757b8;font-weight:750;border:0;background:transparent;padding:0;font-size:12px;white-space:normal;line-height:1.45}
 .jobName:hover{text-decoration:underline}
-.jobCode,.dim{font-size:10px;color:#768598}
+.jobCode,.dim{font-size:11px;color:#5c6f87;line-height:1.45}
 .dim{display:block;margin-top:4px}
-.state{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:4px 9px;border-radius:20px;background:#edf0f4;color:#536477;font-size:10px;font-weight:800}
+.state{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:4px 9px;border-radius:20px;background:#edf0f4;color:#41546b;font-size:11px;font-weight:750}
 .open{background:#e2f5e4;color:#21703c}
 .draft,.medium{background:#fff0d6;color:#92610f}
 .high{background:#fde5e7;color:#b21c2c}
 .pillWrap{margin-top:5px}
-.action{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:7px 9px;border:1px solid #cbd5df;background:white;color:#1054a7;border-radius:4px;font-size:11px;font-weight:800}
+.action{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:7px 9px;border:1px solid #cbd5df;background:white;color:#1054a7;border-radius:4px;font-size:12px;font-weight:750}
 .action:hover{background:#f4f7fb;border-color:#9cafc5}
 .empty{padding:20px;text-align:center;color:#68798e;font-size:12px}
 .clear{padding:6px 8px;border:0;background:none;color:#0754af;font-weight:750}
@@ -57,13 +57,13 @@
 .snapshot{position:sticky;top:82px}
 .snapshotHead{padding:17px 16px;border-bottom:1px solid var(--line)}
 .snapshotHead h2{font-size:18px;line-height:1.3;font-weight:850;overflow-wrap:anywhere}
-.snapshotHead p{font-size:12px;color:#687e94;margin-top:6px}
+.snapshotHead p{font-size:12px;color:#5a718c;margin-top:6px}
 .snapshotSection{padding:15px;border-bottom:1px solid #e9edf1}
 .snapshotSection:last-child{border:0}
 .snapshotSection h3{font-size:13px;font-weight:850;margin-bottom:11px}
-.facts{display:grid;grid-template-columns:minmax(76px,104px) minmax(0,1fr);gap:9px 8px;margin:0;font-size:11px}
-.facts dt{color:#718196}
-.facts dd{margin:0;font-weight:700;overflow-wrap:anywhere}
+.facts{display:grid;grid-template-columns:minmax(92px,112px) minmax(0,1fr);gap:10px 8px;margin:0;font-size:12px}
+.facts dt{color:#61748c;font-weight:500}
+.facts dd{margin:0;font-weight:700;color:#23354b;overflow-wrap:anywhere}
 .primary{display:inline-flex;align-items:center;gap:7px;padding:9px 11px;background:#d7192d;color:#fff;border:0;border-radius:4px;font-size:11px;font-weight:800;margin-top:15px}
 .primary:hover{background:#b80f24}
 .note{font-size:11px;line-height:1.5;color:#66778c;margin-top:14px!important}
