@@ -87,11 +87,12 @@
   .table th:nth-child(4),.table td:nth-child(4),
   .table th:nth-child(5),.table td:nth-child(5),
   .table th:nth-child(6),.table td:nth-child(6),
-  .table th:nth-child(8),.table td:nth-child(8),
-  .table th:nth-child(9),.table td:nth-child(9){display:none}
+  .table th:nth-child(10),.table td:nth-child(10){display:none}
   .table th:nth-child(2),.table td:nth-child(2){width:33%}
   .table th:nth-child(3),.table td:nth-child(3){width:auto}
   .table th:nth-child(7),.table td:nth-child(7){width:90px}
+  .table th:nth-child(8),.table td:nth-child(8){width:16%}
+  .table th:nth-child(9),.table td:nth-child(9){width:20%}
 }
 @media(max-width:1150px){
   /* Switch before the remaining table loses room in the left column. */
@@ -107,6 +108,8 @@
   .table{table-layout:fixed}
   .table th,.table td{padding:9px 6px}
   .table th:nth-child(7),.table td:nth-child(7){display:none}
+  .table th:nth-child(10),.table td:nth-child(10){display:none}
+  .table th:nth-child(8),.table td:nth-child(8),.table th:nth-child(9),.table td:nth-child(9){font-size:10px;padding-inline:4px}
   .table th:nth-child(2),.table td:nth-child(2){width:38%}
   .table th:nth-child(3),.table td:nth-child(3){width:auto}
   .toolbar .muted{width:100%}
@@ -127,7 +130,7 @@
   .table th:nth-child(6),.table td:nth-child(6),
   .table th:nth-child(8),.table td:nth-child(8),
   .table th:nth-child(9),.table td:nth-child(9){display:none}
-  .table th:nth-child(2),.table td:nth-child(2){width:34%}
+  .table th:nth-child(2),.table td:nth-child(2){width:27%}
   .table th:nth-child(3),.table td:nth-child(3){width:auto}
 }
 @container (max-width:480px){
@@ -136,3 +139,6 @@
 }
 /* The table remains accessible to horizontal pan on exceptionally long candidate names. */
 .scroll{touch-action:pan-x pan-y}
+
+/* Source attribution is per application. Keep category and detailed channel visible. */
+.table th:nth-child(8) small,.table th:nth-child(9) small{font-size:9px;font-weight:500}
