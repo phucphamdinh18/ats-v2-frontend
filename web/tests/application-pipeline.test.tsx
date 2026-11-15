@@ -66,6 +66,12 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.queryByRole("region", { name: "Giai đoạn NEW" })).toBeNull();
     const candidate = screen.getByRole("button", { name: "Ada" });
     expect(candidate.getAttribute("draggable")).toBeNull();
+    const table = screen.getByRole("table");
+    const headers = Array.from(table.querySelectorAll("th"), (header) => header.textContent?.trim());
+    expect(headers).toEqual(["", "Ứng viên", "Vòng tuyển dụng", "Vòng phỏng vấn", "Độ phù hợp", "Kinh nghiệm", "Nguồn"]);
+    expect(headers).not.toContain("Hoạt động gần nhất");
+    const overview = screen.getByLabelText("Tổng quan ứng viên");
+    expect(overview.previousElementSibling?.contains(table)).toBe(true);
     fireEvent.click(candidate);
     expect((await screen.findByLabelText("Chi tiết ứng viên")).textContent).toContain("Ada");
   });
