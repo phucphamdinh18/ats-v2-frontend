@@ -373,3 +373,30 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - The laptop screenshot showed `Current Job / Company` and `Experience` headings running together because table headers were forced to one line in a fixed-width table. Updated the Candidates module CSS to wrap headings within their cells (`white-space: normal`, compact line-height, safe wrapping).
 - Source/Sub-source are application-level attribution fields read through the existing authenticated Supabase client and current RLS. Existing applications with no `sub_source` continue to show an empty marker; no inferred values or backend changes were added. The shared source catalog remains the source for selectable source/sub-source options.
 - Fix commit: `6dc1409252a3ea6d8ac8e486c7c6834d4d679bae`. Preview deployment and post-fix browser verification are pending.
+
+## Follow-up — Cross-module typography and contrast pass (2026-11-15)
+
+**Scope:** Owner instructed fixing readability across the entire active ATS V2 frontend, not only Home. Continued on Draft PR #44; no production merge/deploy. Offer feature implementation remains explicitly deferred per Step 15.
+
+### CSS changes committed
+- Shell: `web/components/bosch-v2-shell.module.css` — `bc0ba2f`
+- Home: `web/components/bosch-home-dashboard.module.css` — `5ae0183`
+- Jobs Overview: `web/components/bosch-v2-jobs.module.css` — `7fc93a6`
+- Job Detail: `web/components/bosch-v2-job-detail.module.css` — `3c4b229`
+- Pipeline: `web/components/bosch-v2-pipeline.module.css` — `4d31b9c`
+- Candidates: `web/components/bosch-v2-candidates.module.css` — `a4677e5`
+- Interviews: `web/components/bosch-v2-interviews.module.css` — `e086cb0`
+- Candidate Intake: `web/components/bosch-v2-candidate-intake.module.css` — `53cb5e1`
+
+Adjusted only scoped small text rules: 9px to 11px, 10px to 11px, 11px to 12px. Darkened selected pale-gray metadata labels to #526174. Existing component markup, responsive breakpoints/container queries, table columns, Source/Sub-source, roles, API calls, data mapping, Auth, RLS, backend and Offer workflow were not changed. No new global CSS overrides were introduced.
+
+### Verification / acceptance
+- CSS changes committed on PR branch. Static source inspection before write verified these are component-scoped CSS files; no runtime browser or role E2E verification performed in this pass.
+- CI status on final documentation HEAD: NOT YET CONFIRMED. Check QA checks, Next web checks and PR Pages build; Supabase local E2E must be reported SKIPPED if it does not run.
+- Preview revision: NOT VERIFIED/NOT PUBLISHED by this pass. Never infer that public /preview/ contains the new styles from PR commits alone.
+- Browser visual QA at 1440x900, 1920x1080, 768px and 390px, both VI/EN: PENDING. Specifically verify table/header wrapping, Jobs Snapshot, Candidate Source/Sub-source columns and mobile panes after the typography increase.
+- Admin/assigned TA/HM/Interviewer functional E2E: PENDING. Do not mark PASS without recorded evidence.
+- **No production acceptance or cleanup.** Keep PR #44 Draft and preserve backup branch `backup/bosch-pr44-before-clean-rebuild-20261114`.
+
+### Rollback
+For a scoped rollback, revert only the eight CSS commits above in reverse order, or restore their prior blob versions by reviewed changes on PR #44. Do not force-push or change production. Verify the exact preview and root SHAs using live `release.json` before any later deployment.
