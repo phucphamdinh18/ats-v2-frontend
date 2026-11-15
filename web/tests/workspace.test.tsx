@@ -300,3 +300,30 @@ it("renders a single Bosch Jobs heading without hidden legacy tabs or duplicate 
   expect(screen.queryByRole("tab", { name: /1\.1 Bảng Master/ })).toBeNull();
   expect(screen.queryByRole("tab", { name: /1\.2 Hiring Pipeline/ })).toBeNull();
 });
+
+
+it("Jobs Overview displays approved seven-column contract and authorized Job Snapshot without invented values", async () => {
+  scope(true, ["HIRING_MANAGER"], [
+    { id: "overview-1", title: "ATS Test Embedded", status: "OPEN", job_code: "ATS-101",
+      business_unit: "EPC", function_group: "Tech/Product", request_type: "NEW", req_date: "2026-10-15",
+      level: 52, priority: "HIGH", sla_target_workdays: 32,
+      metrics: { total_candidates: 7, new_count: 4, screening_count: 2, interview_count: 1, hired_count: 0, rejected_count: 0,
+        source_summary: [{ source: "Referral", sub_source: "Internal", source_ownership: "Company", count: 7 }] } },
+    { id: "overview-2", title: "ATS Draft Role", status: "DRAFT", job_code: "ATS-102", priority: "LOW" },
+  ]);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Mở pipeline ATS Test Embedded" });
+  expect(screen.getByRole("columnheader", { name: "Đơn vị / Chức năng" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Loại Req / Ngày" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "SLA mục tiêu" })).toBeTruthy();
+  expect(screen.getByRole("complementary", { name: "Tóm tắt Job" })).toBeTruthy();
+  expect(screen.getAllByText("32 ngày làm việc").length).toBeGreaterThan(0);
+  expect(screen.getByText("Referral")).toBeTruthy();
+  expect(screen.getByText("ATS-101")).toBeTruthy();
+  expect(screen.getByText("SLA thực tế").nextElementSibling?.textContent).toBe("—");
+  fireEvent.change(screen.getByRole("combobox", { name: "Ưu tiên Job" }), { target: { value: "HIGH" } });
+  expect(screen.queryByRole("button", { name: "Mở pipeline ATS Draft Role" })).toBeNull();
+  fireEvent.change(screen.getByRole("combobox", { name: "Ưu tiên Job" }), { target: { value: "ALL" } });
+  fireEvent.click(screen.getByRole("button", { name: "Chọn Job ATS Draft Role" }));
+  expect(screen.getByRole("complementary", { name: "Tóm tắt Job" }).textContent).toContain("ATS-102");
+});
