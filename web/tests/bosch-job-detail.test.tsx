@@ -32,10 +32,10 @@ it("Job Details shows real requisition metadata and configured SLA without inven
  fireEvent.click(screen.getByRole("button",{name:"Job Details"}));
  const detail=screen.getByRole("region",{name:"Job Details"});
  expect(detail.textContent).toContain("Previous engineer");
- expect(detail.textContent).toContain("35 workdays");
+ expect(detail.textContent).toContain("35 ngày làm việc");
  expect(detail.textContent).toContain("Normal Time");
  expect(detail.textContent).toContain("L52");
- expect(detail.textContent).toContain("SLA actual");
+ expect(detail.textContent).toContain("SLA thực tế");
  expect(detail.textContent).not.toContain("On time");
 });
 it("Sourcing only shows existing authorized metrics and handles missing metrics", () => {
