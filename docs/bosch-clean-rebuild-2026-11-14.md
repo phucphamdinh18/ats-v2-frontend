@@ -356,3 +356,12 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Code commits: shell fix `ae02e1539e1db8adb4afa3a1927d10c4b31a2511`; candidate attribution `b287dd2482d702d3a3f8367eacf0d09828b0acb0`; table styling `704f9867ef608feeedcc03d883ac07c559c8b0c9`; narrow-pane visibility correction `bed99ab178b1b21a292955c1489b1ec86e40e1df`.
 - CI at `704f9867...`: QA checks passed; Next web checks and Pages build were still running at the time of this note; Supabase local browser E2E was skipped by workflow. Recheck latest HEAD `bed99ab...` before relying on the CI state.
 - Preview was not redeployed or visually rechecked in this update. Production was not touched; PR #44 remains unmerged. Do not claim responsive/browser acceptance until preview screenshots are checked.
+
+
+## Step 18 — Jobs Overview typography contrast correction against owner screenshots (2026-11-15)
+
+- Owner compared **actual Jobs Preview (image 1)** against **approved Bosch visual reference (image 2)** and reported overly small/light text in the actual Jobs table and right-side Job Snapshot.
+- Verified cause in `web/components/bosch-v2-jobs.module.css`: actual table used 11px text with 10px header and metadata; Job Snapshot fact grid used 11px; secondary text was light gray `#768598`. Display zoom/screenshot scaling may additionally affect apparent text size but was not independently measured.
+- Made **Jobs-only** typography changes: table body 12px, header 11px, Job link 12px, secondary metadata 11px with stronger contrast, status/action labels 11–12px, Job Snapshot fact grid 12px with clearer primary/secondary hierarchy. Preserved the approved light theme, functional tables/columns, data, priority/source values and existing responsive breakpoints.
+- Scope: CSS-only; **no Supabase, API, RLS, backend, Candidates, Interviews, Job Detail or Offers workflow changes**.
+- Not yet browser-accepted: verify actual signed-in preview at the same browser zoom (100%) and identical viewport against the Bosch reference. In particular, confirm Jobs table headers do not wrap or overflow and the snapshot labels remain legible. Keep PR #44 Draft and production unchanged.
