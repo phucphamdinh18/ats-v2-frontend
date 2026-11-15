@@ -512,3 +512,15 @@ Owner compared signed-in Job Detail/Pipeline preview against the Bosch reference
 ### Rollback
 - Revert only CSS commit `0c9f38bd0e6edfe36488b6befbb58e9ebf258e08` to restore the prior Jobs Snapshot stacking breakpoint; this leaves the five-column component intact. To undo the five-column markup separately, restore `web/components/bosch-jobs-master.tsx` and its matching test from the parent state before `56b85d6` using a reviewed revert commit.
 - The independent backup remains `938dc56382d5d48b6203786a437b20c496409873`. To restore a prior Preview, verify the current production SHA in live `release.json`, then run the existing workflow in `path-preview` mode with the verified production_ref and chosen earlier preview_ref. Never change the production root for rollback.
+
+## Follow-up — Full multiline candidate names in six-column Pipeline (2026-11-15)
+
+Owner rejected the earlier Pipeline visual outcome: test candidate names are long, and truncating at two lines does not match the desired behavior. Approved direction is to allow names to wrap fully and retain exactly six data columns (Candidate, Stage, Interview Round, Match, Experience, Source), excluding Last Activity. The selection checkbox is separate.
+
+- `web/components/bosch-v2-pipeline.module.css` commit `96afc61`: removed two-line clamp, renders the whole name across as many lines as needed, wraps at word boundaries with break-word fallback, and gives Candidate column 34% (formerly 30%) by redistributing width from placeholder columns. All other responsive container-width rules retained.
+- `web/tests/responsive-contract.test.ts` commit `9f478e7`: asserts no truncation and no content overflow; maintains the six-column contract.
+- No changes to API data, Supabase, Auth/RLS, stage transition controls, Source, Offer or production. The right detail panel was not rebuilt in this specific correction.
+- **Visual discrepancy remains:** Reference includes example Round/Match/Experience values that are not in the current Application list API, so the real table correctly renders `—`. Do not invent these values.
+- Verify CI on final HEAD and authenticated preview at matching viewport in VI/EN. In particular, confirm long fixture names wrap without overlapping Stage and the row height grows naturally. PR #44 remains Draft. Browser QA, role E2E and preview deployment should be recorded as PENDING until independently confirmed.
+
+Rollback: revert the two scoped CSS/test commits, preserving prior six-column structure; do not force push.
