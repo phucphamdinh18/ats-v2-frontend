@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import InterviewWorklist from "../components/interview-worklist";
+import { LanguageProvider, useLanguage } from "../components/language";
 import { ApiError } from "../lib/supabase";
 
 const api = vi.hoisted(() => ({ worklist: vi.fn() }));
@@ -82,4 +83,22 @@ it("shows failed worklist fetch without leaking old selected interview", async (
   fireEvent.click(screen.getByRole("button", { name: "Đã hoàn tất" }));
   expect((await screen.findByRole("alert")).textContent).toContain("Network blocked");
   expect(screen.queryByText("Interviewer One")).toBeNull();
+});
+
+
+function SwitchEnglish() {
+  const { setLocale } = useLanguage();
+  return <button type="button" onClick={() => setLocale("en")}>Switch to English</button>;
+}
+it("switches Interview schedule and detail to English without changing selected meeting", async () => {
+  api.worklist.mockResolvedValue([appointment]);
+  render(<LanguageProvider><SwitchEnglish/><InterviewWorklist onAccessLost={vi.fn()}/></LanguageProvider>);
+  await screen.findByText("Interviewer One");
+  fireEvent.click(screen.getByRole("button", { name: "Switch to English" }));
+  expect(screen.getByRole("button", { name: "Scheduled" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Interview Schedule" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Schedule Details" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Open meeting" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Starts (local time)" })).toBeTruthy();
+  expect(screen.queryByText("Đang tải lịch phỏng vấn…")).toBeNull();
 });
