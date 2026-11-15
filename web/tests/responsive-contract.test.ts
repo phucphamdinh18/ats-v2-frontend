@@ -65,3 +65,13 @@ test("Bosch identity grows on desktop while sidebar remains compact on mobile", 
   assert.ok(shell.includes("@media(max-width:760px)"), "Mobile sidebar still collapses to icons");
   assert.ok(workspace.includes('alt="Bosch" width="188" height="52"'), "Logo intrinsic dimensions should match the design");
 });
+
+
+test("Candidate professional summary includes four icons and bilingual Education label", () => {
+  const source = readFileSync(join(process.cwd(), "components", "application-pipeline.tsx"), "utf8");
+  for (const icon of ["UserRound", "BriefcaseBusiness", "Building2", "GraduationCap"])
+    assert.ok(source.includes(`<${icon} aria-hidden="true" size={17}/>`), `Missing icon ${icon}`);
+  assert.ok(source.includes('en ? "Education" : "Học vấn"'));
+  assert.ok(pipeline.includes(".professionalFacts{display:grid"));
+  assert.ok(pipeline.includes(".professionalFacts dt svg{"));
+});
