@@ -8,6 +8,7 @@ const file = (name: string) => readFileSync(join(process.cwd(), "components", na
 const candidate = file("bosch-v2-candidates.module.css");
 const interview = file("bosch-v2-interviews.module.css");
 const pipeline = file("bosch-v2-pipeline.module.css");
+const applicationPipeline = file("application-pipeline.tsx");
 const detail = file("bosch-v2-job-detail.module.css");
 
 test("Candidates confines its table, keeps Source/Sub-source, and stacks the profile on small viewports", () => {
@@ -48,10 +49,11 @@ test("Job Pipeline uses six data columns, no Last Activity, and wraps full candi
 });
 
 
-test("Pipeline sidebar has natural page scroll without stretching the left grid rows", () => {
-  assert.ok(pipeline.includes("grid-template-rows:max-content max-content"), "Summary and candidate table must stack without artificial row stretching");
-  assert.ok(pipeline.includes(".side{grid-column:2;grid-row:1 / span 2;position:static"), "Right detail rail stays in page flow");
-  assert.ok(pipeline.includes("max-height:none;overflow:visible"), "History must not be clipped behind an independently scrolling sidebar");
+test("Pipeline keeps the candidate table beside a scrollable detail panel", () => {
+  assert.ok(applicationPipeline.includes("<div className={styles.mainColumn}>") && applicationPipeline.includes("</div>\n    {!selected && <aside"), "Summary and candidate table stay together in the left column");
+  assert.ok(pipeline.includes(".mainColumn{grid-column:1;display:flex;flex-direction:column;gap:12px;min-width:0}"), "Left column stacks the summary and candidate table with consistent spacing");
+  assert.ok(pipeline.includes(".side{grid-column:2;grid-row:1;position:sticky"), "Candidate detail stays aligned beside the left column");
+  assert.ok(pipeline.includes("max-height:calc(100vh - 24px);overflow-y:auto"), "Long history remains reachable in the detail panel scroll area");
   assert.ok(pipeline.includes("@media(max-width:1250px)"), "Small displays stack the panel");
 });
 
