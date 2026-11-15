@@ -45,7 +45,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
   const en = locale === "en";
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
-  return <section className={styles.root} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
+  return <section className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
     <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
     <div className={styles.titleRow}>
       <h1>{job.title}</h1>
