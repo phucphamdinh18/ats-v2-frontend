@@ -524,3 +524,23 @@ Owner rejected the earlier Pipeline visual outcome: test candidate names are lon
 - Verify CI on final HEAD and authenticated preview at matching viewport in VI/EN. In particular, confirm long fixture names wrap without overlapping Stage and the row height grows naturally. PR #44 remains Draft. Browser QA, role E2E and preview deployment should be recorded as PENDING until independently confirmed.
 
 Rollback: revert the two scoped CSS/test commits, preserving prior six-column structure; do not force push.
+
+## Follow-up — Pipeline lower alignment and Bosch Sidebar identity (2026-11-15)
+
+Owner supplied screenshots showing the Pipeline Candidates table ending while the right History panel had a separate scrollbar and visually clipped content, and requested that the Bosch logo/sidebar closely match the owner-approved Bosch Enterprise reference.
+
+### Changes committed on Draft PR #44
+- `web/components/bosch-v2-pipeline.module.css` `f61cf37`: remove sticky, max-height and independent scroll from the right Candidate Detail rail; use max-content grid rows. The left Candidates table retains its own natural height/pagination, while longer right-side History flows down the document. This does **not** guarantee both unequal-height columns end at the same Y coordinate; stretching the shorter panel merely to align bottoms would introduce blank content.
+- `web/tests/responsive-contract.test.ts` `97d249c`: check natural Pipeline page flow and absence of panel clipping.
+- `web/components/bosch-v2-shell.module.css` `c90f5f5`, `66de528`: increase desktop identity/sidebar width to 310px, Bosch wordmark display width to 188px, sidebar nav height/icons/spacing and label contrast. Use a compact 245px sidebar on <=1280px and retain the existing 60px icon-only navigation <=760px; fix mobile selector specificity so the logo does not overflow.
+- `web/components/workspace.tsx` `1e24ffb`: update logo element's intrinsic dimensions to 188x52 while retaining the same bundled `bosch-inspired-wordmark.svg`. Navigation items and their role gates are unchanged; **do not invent reference-image menu items that lack product routes or permission contracts**.
+- `web/tests/responsive-contract.test.ts` `367bf8f`: assert desktop logo/sidebar proportions and responsive width fallbacks.
+- No Supabase schema, Auth/RLS, API, Offer workflow, stage transition, data, root production or backup changes.
+
+### QA and caveats
+- Code/structural checks committed, but actual signed-in browser rendering at 1920x1080, 1440x900, 768x1024 and 390x844 in both locales remains PENDING until verified on an explicitly deployed PR HEAD. Do not mark visual PASS based solely on source tests.
+- **Pipeline height:** The panels remain content-driven: History may extend below the left table; this is intentional, not evidence that the shorter side should be filled with blank whitespace. Check that there is no second scrollbar and action buttons remain reachable on long History records.
+- **Sidebar:** Logo is larger on desktop, but 1:1 reference fidelity is not claimed without side-by-side screenshot at the same viewport. Confirm Bosch SVG itself is not clipped, navigation labels fit and topbar controls do not collide.
+- Keep PR #44 Draft; do not publish production or clean up legacy code.
+
+Rollback: reviewed revert commits for `f61cf37`, `c90f5f5`, `1e24ffb`, `66de528` and scoped test edits; retain backup branch. Verify live `release.json` before any preview-only deployment.
