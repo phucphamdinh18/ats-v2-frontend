@@ -5,7 +5,6 @@ import type { Job } from "@/lib/policy";
 import { ApiError, getClient } from "@/lib/supabase";
 import { candidateProfile, listCandidates, type Candidate, type CandidateProfile } from "@/lib/candidates";
 import { createApplication } from "@/lib/applications";
-import { driveLink } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 import BoschCandidateDetail from "./bosch-candidate-detail";
 import styles from "./bosch-v2-candidates.module.css";
