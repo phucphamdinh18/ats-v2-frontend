@@ -53,8 +53,8 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(panels?.[0].className).toContain("listCard");
     expect(panels?.[1].className).toContain("profileCard");
     expect(screen.getByRole("columnheader", { name: "Giai đoạn" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Nguồn Gần nhất" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Nguồn chi tiết Gần nhất" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Nguồn gần nhất" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Nguồn chi tiết gần nhất" })).toBeTruthy();
     expect(screen.getByText("Referral")).toBeTruthy();
     expect(screen.getByText("Internal employee")).toBeTruthy();
     expect(screen.getByTitle("API danh sách ứng viên không có điểm phù hợp").textContent).toBe("—");
