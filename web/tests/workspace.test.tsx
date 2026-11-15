@@ -127,7 +127,7 @@ it("HM sees scoped jobs and accurate loaded counts, without review entry", async
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Synthetic Engineer" });
   expect(screen.queryByRole("button", { name: /Duyệt CV/ })).toBeNull();
-  expect(screen.getByText("1–1 / 1")).toBeTruthy();
+  expect(screen.getByText(/1–1 \/ 1/)).toBeTruthy();
   fireEvent.change(screen.getByRole("textbox", { name: "Tìm Job" }), {
     target: { value: "Unmatched" },
   });
@@ -318,7 +318,7 @@ it("Jobs Overview displays approved seven-column contract and authorized Job Sna
   expect(screen.getByRole("columnheader", { name: "SLA mục tiêu" })).toBeTruthy();
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" })).toBeTruthy();
   expect(screen.getAllByText("Mục tiêu cấu hình").length).toBeGreaterThan(0);
-  expect(screen.getAllByText("Referral").length).toBeGreaterThan(0);
+  expect(screen.getByText("Nguồn chính").nextElementSibling?.textContent).toBe("—");
   expect(screen.getAllByText("ATS-101").length).toBeGreaterThan(0);
   expect(screen.getByText("SLA thực tế").nextElementSibling?.textContent).toBe("—");
   fireEvent.change(screen.getByRole("combobox", { name: "Ưu tiên Job" }), { target: { value: "HIGH" } });
