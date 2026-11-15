@@ -140,7 +140,7 @@
 
 /* Job Detail's right rail can shrink the Application list even on large monitors. */
 .listSection{container-type:inline-size}
-@container (max-width:960px){
+@container (max-width:1250px){
   /* These columns return placeholders; preserve Candidate/Stage/Source. */
   .table th:nth-child(4),.table td:nth-child(4),
   .table th:nth-child(5),.table td:nth-child(5),
