@@ -115,3 +115,21 @@ test("Jobs Overview uses reference five-column grid and reusable shared table pr
   assert.ok(css.includes(".state{composes:tag") && css.includes(".dim{composes:dim"), "Tags and secondary text reuse shared primitives");
   for (const rule of [".atsTable th{", ".atsTable td{", ".tag{", ".dim{", ".foot{"]) assert.ok(shared.includes(rule), rule);
 });
+
+
+test("Candidate Detail keeps real-data icon rows, assignments and one Add to Job action", () => {
+  const view = file("talent-pool.tsx");
+  for (const icon of ["Mail", "Phone", "MapPin", "BriefcaseBusiness", "Building2", "CalendarDays", "Layers3"]) {
+    assert.ok(view.includes(`<${icon} `) || view.includes(`<${icon} aria-hidden`), `Missing semantic profile icon ${icon}`);
+  }
+  for (const rule of [".iconFacts{display:grid;", ".jobAssignments{padding:0;", ".assignedJobTitle{display:block;", ".jobMeta{display:flex;", ".addControls>.primary{display:inline-flex;"]) {
+    assert.ok(candidate.includes(rule), `Missing Candidate Detail styling ${rule}`);
+  }
+  assert.ok(view.includes("profile.candidate.current_title || profile.candidate.primary_role"), "Current Role comes from existing candidate API");
+  assert.ok(view.includes("assignedJob?.business_unit"), "Job BU comes from authorized jobs");
+  assert.ok(view.includes("application.stage") && view.includes("application.status"), "Assignment metadata remains real");
+  assert.ok(!view.includes("profile.candidate.skills"), "No unsupported Skills field is fabricated");
+  assert.ok(!view.includes("matching_score"), "No fictitious matching pill");
+  assert.ok(view.includes("onClick={() => void addToJob()}"), "Existing submit callback retained");
+  assert.ok(view.includes("onClick={() => setView(\"cv-review\")}"), "Existing CV review navigation retained");
+});
