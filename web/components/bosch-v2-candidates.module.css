@@ -120,7 +120,7 @@
 /* Panel-size contract: viewport width alone cannot indicate the table's usable space.
    At 1920px the sidebar and profile still leave a narrow table pane. */
 .listCard{container-type:inline-size}
-@container (max-width:1100px){
+@container (max-width:1250px){
   /* These five fields have no Candidate-list values in the current API. */
   .table th:nth-child(4),.table td:nth-child(4),
   .table th:nth-child(5),.table td:nth-child(5),
