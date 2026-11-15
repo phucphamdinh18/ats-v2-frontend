@@ -827,3 +827,36 @@ Revert the scoped CSS fix commit `d37e5f940ef9504cfc2bf51950daacbf0256d5c6` on t
 ### Files and rollback
 - Changed in this visual fix: `web/components/bosch-v2-candidates.module.css` and `web/tests/bosch-candidates-layout.test.tsx`; CI on the resulting HEAD passed for QA/Next/Pages.
 - Rollback only the scoped header override and its regression assertion through a reviewed revert on the Draft PR. Preview can be republished to the prior verified preview SHA `97f4950f2752ec5ae04aa381f2df48d7c9a39b3e` using the existing `path-preview` workflow after re-verifying the current production root. Production stayed at `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; backup branch remains untouched.
+
+
+## Step 22 — Independent recheck of deployed HEAD (2026-11-15)
+
+- Starting/visually inspected HEAD and live Preview SHA: `818cfbba453e317916c6cadcc9a505e11c09a69c`, newer than the supplied `125aa4f`. Live root release.json verified production `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, mode path-preview, Preview `818cfbba...`.
+- GitHub CI at that SHA: QA checks #442 PASS (43718811904), Next web checks #415 PASS (43718811740), PR Pages build #467 PASS (43718811736); Supabase local browser E2E #333 SKIPPED (43718811787). Manual path-preview run #468 (43718923995) build and deploy both SUCCESS. These are inspected existing runs, not newly initiated by this recheck.
+- Only this DOC is changed by this pass. No CSS/markup defect requiring a new fix was established at the available viewport. The earlier sticky-header fix is already present (65dde61; regression/test follow-ups db84f87 and 84b5d3e).
+
+### New live measurements and functional evidence
+Authenticated Cloud Browser, zoom reset to 100%, devicePixelRatio 1; actual CSS viewport 1363×936:
+- One H1; no Candidate Summary. Five table columns including checkbox. Eight data rows measured **52px each**. Header remains above the first row.
+- Candidate Detail and H1 both started at y=118.84375 in the measured scrolled page; right panel width 340px. Left list card and right panel bottoms both y=1024.84375; pagination bottom y=1023.84375 (inside card border).
+- Document scrollWidth/clientWidth both 1348px: no page-level horizontal overflow. The 640px table inside a 624px inner card uses its own horizontal scroller; source text near the right edge requires local scrolling at this available width. Full Source/Sub-source display at target sizes is not certified; not all test records contain sub-source.
+- Search “Codex Admin” returned one TEST profile; clearing restored eight. Selecting TEST TA Create Verification updated Contact/CV/Assigned Jobs. VI/EN labels were observed in both modes.
+- Add to Job: existing TEST Job selected; selecting Freelancer source enabled the button. Source reset afterward. **Submit SKIPPED**, no write.
+- Review CVs opened the actual “No CV waiting for review” empty state. Previous/Next disabled with eight profiles on one page; **page-turn SKIPPED** (no extra data created).
+- Open CV link inspected on TEST profile; destination is a Drive TEST placeholder. **Actual document open SKIPPED**; cannot certify document rendering.
+- Jobs Overview screenshot/DOM rechecked: five columns, four 70px rows, no page horizontal overflow. TEST Codex Job Detail/Pipeline opened with one Interview application, five-stage summary, six-column table and local table scroller; no header overlap observed. This is a read-only regression smoke check.
+- Screenshots of Candidates, Jobs Overview and Pipeline were captured in the live browser tool output. No durable screenshot files were exported or committed; screenshot artifact delivery remains incomplete. Same-size pixel comparison with the original reference remains SKIPPED.
+
+| Exact requested viewport | VI | EN | Reason |
+|---|---|---|---|
+| 1440×900 | SKIPPED | SKIPPED | No supported viewport setter; desktop maximum 1364×1024 |
+| 1920×1080 | SKIPPED | SKIPPED | Same environment limit |
+| 768×1024 | SKIPPED | SKIPPED | No supported tablet viewport setter |
+| 390×844 | SKIPPED | SKIPPED | No supported mobile viewport setter |
+| Actual 1363×936 | PARTIAL | PARTIAL | Measurements/read-only controls above |
+
+Native display settings offered only resolutions at or below 1364×1024. Opening DevTools produced the explicit organization-policy message “DevTools not allowed on this page”; no bypass was attempted. No exact-viewport Visual QA PASS is asserted.
+
+**Verdict: PARTIAL.** Responsive/reference acceptance, multi-page pagination, actual CV rendering, Add to Job submission and Supabase E2E remain incomplete. PR #44 must remain Draft/unmerged. No production or real recruitment data change.
+
+**Rollback:** this documentation-only commit can be reverted independently. For UI rollback retain the prior documented commits and backup branch; if necessary republish verified Preview `84b5d3e19516cd0123d35cac94cdd979fbb601b2` using path-preview with freshly verified production root `71ff88ebdb68bea9f6456375c4c9d970e11c0379`. No database rollback is required.
