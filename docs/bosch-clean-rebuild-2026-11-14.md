@@ -460,3 +460,17 @@ Changes made to the ten scoped frontend CSS files: `bosch-v2-shell.module.css`, 
 **QA gates:** Source edits committed, but no full CI results, authenticated browser screenshots, role E2E, or final preview revision verification is claimed. Increasing text may change wrapping in Jobs, Candidates and Interviews; test at 1920x1080, 1440x900, 768x1024 and 390x844 in both languages. Do not mark PASS from CSS inspection or Pages artifact build alone. Check final HEAD and live release.json before any preview-only deploy. Keep original backup and do not merge or delete legacy frontend until owner acceptance.
 
 **Rollback:** revert this pass's CSS commits from current branch by reviewed revert commits (avoid force-push); preserve pre-existing responsive and source attribution fixes.
+
+## Follow-up — Job Pipeline six-column table and long candidate names (2026-11-15)
+
+Owner compared signed-in Job Detail/Pipeline preview against the Bosch reference and requested six information columns, **excluding Last Activity** because the right-side candidate panel already includes activity/history. Long test candidate names must not distort the table.
+
+- `web/components/application-pipeline.tsx` commit `813a5a3`: kept Candidate, Stage, Interview Round, Match, Experience and Source; removed Last Activity header/cell; added full candidate name as title tooltip. This is a presentational change only. The checkbox remains an independent selection control, not one of the six data columns.
+- `web/components/bosch-v2-pipeline.module.css` commit `24f80d4`: assigned balanced column proportions, wrapped table headers and Source, clamped displayed candidate names to two lines with a full-name tooltip, and retained a compact responsive table. At narrow actual list-pane widths (<=650px), placeholder-only Round/Match/Experience are hidden; at <=440px, Source is available in the selected candidate side panel instead. No page-level horizontal overflow intended.
+- `web/tests/responsive-contract.test.ts` commit `add4d0d`: added structure checks for six columns, removed Last Activity and long-name clamping.
+- **Data contract limitation:** Application list API still does NOT return Round, Match score or Experience. These three columns display `—`; do not fabricate reference values. Rendering all six fields may look sparse until verified backend aggregation is independently planned. Side panel remains contextual to the selected application.
+- **No** schema, backend, Auth/RLS, API, stage transitions, request_id, Offer workflow or production changes. Preserve Source/Sub-source work in Candidate Database, other responsive corrections and backup branch.
+
+**QA:** Commit and static structural checks added; full CI and authenticated viewport screenshots are NOT yet independently verified. Review 1920x1080, 1440x900, 768x1024 and 390x844. Ensure a long candidate name does not overlap Stage and its full text is accessible. Supabase E2E statuses must be reported accurately. Keep PR #44 Draft and do not merge.
+
+**Rollback:** revert the three scoped code/test commits above in reverse order using reviewed revert commits, retaining prior text readability changes; never force-push shared history.
