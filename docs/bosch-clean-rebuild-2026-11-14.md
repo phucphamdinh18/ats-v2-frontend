@@ -876,3 +876,23 @@ Owner requested direct implementation on PR #44, not a prompt. Scope limited to 
 **QA pending:** Run CI for final HEAD, verify authenticated Preview at 1440×900/100% and VI/EN. Check long names/emails/BU wrapping, scrolling, mobile stacking, two selectors and single submit action. No real-data mutations in visual QA. PR #44 remains Draft, production unchanged.
 
 **Rollback:** on the Draft branch, revert scoped commits `72db01e`, `f9a2643`, `3948ebc` and this documentation entry in reverse chronological order. Preserve live production and backup.
+
+## Follow-up — Isolated Candidate Detail presentation replacing legacy inner panel (2026-11-15)
+
+**Binding decision:** Owner reiterated that ATS V2 must replace the old Candidate Detail presentation, not add another CSS skin to the old table/card structure. Scope: Candidate Database right panel and existing Jobs navigation integration only. Source/API/Auth/RLS/DB and lifecycle handlers unchanged. PR #44 Draft only.
+
+- `web/components/bosch-candidate-detail.tsx` `dbc3f04`: new isolated candidate-profile presentation component using the existing authorized `CandidateProfile` and `Job[]` props. Renders Bosch Enterprise name, role, email/phone/location header; existing-page Previous/Next via parent selection callbacks; **functional Overview/Resume tabs** only (Resume lists actual `profile.documents` and preserves Drive allowlist); card-based Contact/Current Role with Lucide icons, CV/Documents, assigned Job title/BU/stage/status and two-source-select/one-button Add to Job. Uses only known API fields. No placeholder tabs or fake scores. Skills is intentionally omitted because `web/lib/candidates.ts` has no skills field.
+- `web/components/talent-pool.tsx` `49ecd2d`, `7fe1ce7`: replaces inline old Candidate Detail JSX with `BoschCandidateDetail`; keeps all Supabase queries, search/list paging, candidateProfile fetching, guarded `addToJob()` with idempotent request ID, and exactly the same source/job selection handlers. Parent passes callbacks/authorized props; no backend calls were moved to view. Review CVs/selection and Candidate Database 5-column table unchanged.
+- `web/components/workspace.tsx` `35cd0ad`: passes an existing authorized Job Detail/Pipeline opening handler as optional `onOpenJob` to the candidate module so the Jobs card's **View Job and title buttons now work**. Does not invent URL or authorization.
+- `web/components/bosch-v2-candidates.module.css` `d35b8ad`: new isolated `detailHead`, `detailTabs`, `detailBody`, `detailSection`, `detailFactLines`, `assignmentList` etc. rules; old header/sections are no longer mounted. Retains approved 340–460px right track, existing page alignment and <=1200px stacking. Top bar/sidebar untouched.
+- `web/tests/responsive-contract.test.ts` `5588a58`, `web/tests/bosch-candidates-layout.test.tsx` `a6abbd7`: new structure and working View Job/Overview/Resume smoke; old duplicated email assertion updated to reflect the fact present in both header and Contact.
+
+**Data and UX gates:**
+- Current API has no skills field; **Skills card is NOT rendered** (no fake chips). Future Skills requires an approved authorized backend/data contract change.
+- Current applications expose stage/status but not Interview Round or matching; omit those chips and dates rather than fabricate. Resume tab is functional based on stored documents; unsupported Interviews/Notes/Activity tabs are omitted, not shown as inert placeholders.
+- Job Title and View Job reuse existing workspace job navigation; no fake links. Previous/Next are per current candidate list page only, not beyond pagination. Add to Job guard and single CTA remain unchanged.
+- The parent Candidate Database table still has five columns and no Candidate Summary.
+
+**QA/status:** Structural checks and component smoke were added; authenticated screenshot QA on exact 1440px/100% and Preview SHA **PENDING**. CI on final HEAD must be checked independently; automated green cannot certify pixel fidelity or full E2E. No production merge/deploy, no backend/schema/query changes, no test mutation.
+
+**Rollback:** revert the scoped commits for this pass (including the new presentation file, import/props, style rules, tests, DOC update) by reviewed reverse-order reverts. Preserve current backup branch and verified production. Preview republish needs freshly verified live `release.json`.
