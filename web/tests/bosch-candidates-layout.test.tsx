@@ -47,7 +47,7 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     await screen.findByRole("button", { name: "Ada" });
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.getByRole("region", { name: "Talent Pool" })).toBeTruthy();
-    expect(await screen.findByText("qa@example.invalid")).toBeTruthy();
+    expect((await screen.findAllByText("qa@example.invalid")).length).toBeGreaterThan(0);
     const layout = view.container.querySelector('[class*="pageGrid"]');
     const panels = layout?.children;
     expect(panels?.length).toBe(2);
@@ -62,6 +62,21 @@ describe("Bosch Candidates isolated list/detail layout", () => {
     expect(screen.queryByText("Candidate Summary")).toBeNull();
     expect(await screen.findByText("Referral")).toBeTruthy();
     expect(screen.getByText("Internal employee")).toBeTruthy();
+  });
+
+  it("offers working Overview/Resume tabs and authorized View Job navigation", async () => {
+    const onOpenJob = vi.fn();
+    api.detail.mockResolvedValue(profile("Ada", [{ id: "app1", job_id: job.id, stage: "INTERVIEW", status: "ACTIVE", source: null, created_at: "2026-10-10" }]));
+    render(<TalentPool jobs={[job]} onAccessLost={vi.fn()} onOpenJob={onOpenJob} />);
+    await screen.findByRole("heading", { name: "Ada" });
+    const viewJob = await screen.findByRole("button", { name: /Xem Job/ });
+    fireEvent.click(viewJob);
+    expect(onOpenJob).toHaveBeenCalledWith(job);
+    expect(screen.getByText("INTERVIEW")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Hồ sơ CV" }));
+    expect(screen.getByText("Chưa có CV trong hồ sơ.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Tổng quan" }));
+    expect(screen.getByRole("heading", { name: "Liên hệ" })).toBeTruthy();
   });
 
   it("selects a new candidate and opens the matching profile without changing Job data", async () => {
