@@ -400,3 +400,20 @@ Adjusted only scoped small text rules: 9px to 11px, 10px to 11px, 11px to 12px. 
 
 ### Rollback
 For a scoped rollback, revert only the eight CSS commits above in reverse order, or restore their prior blob versions by reviewed changes on PR #44. Do not force-push or change production. Verify the exact preview and root SHAs using live `release.json` before any later deployment.
+
+## Follow-up — Stronger type weight across Bosch V2 (2026-11-15)
+
+Owner requested **bolder text** on all active frontend modules following the prior cross-module font-size/contrast pass. Scope is presentational only, on Draft PR #44; production unchanged and Offers feature workflow remains deferred.
+
+- App Shell `9c211f7`
+- Home Dashboard `836eb04`
+- Jobs Overview `c12f018`
+- Job Detail `7d3c9b6`
+- Hiring Pipeline `3da6dda`
+- Candidates `c3151d2`
+- Interviews `3db80a1`
+- Candidate Intake `31c50f3`
+
+Changes are component-scoped: primary table data weight 600 where applicable; secondary labels/hints weight 600 with readable gray; selected facts and key labels 750. Form fields use 500. Existing semantic status treatments and primary headings stay prominent. No markup, business logic, Source/Sub-source mapping, responsive breakpoints, API, RLS, database, Auth or Offer workflows changed. Do not add global CSS overrides.
+
+**Verification:** GitHub source edits committed; no signed-in browser screenshots, full viewport matrix, role E2E or final CI acceptance is asserted. Check source commit and successful deployment marker before visual QA. Test at 1440x900, 1920x1080, 768px and 390px, VI/EN; look for clipping/overlap on dense tables. Keep PR Draft, production and backup untouched. Rollback by reverting these eight scoped CSS commits in reverse order, without force-pushing.
