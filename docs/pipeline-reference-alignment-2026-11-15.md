@@ -18,3 +18,8 @@ Owner reference: image(20261115-153023).png (approved/right screenshot); current
 
 ## Rollback
 Revert this scoped presentation commit on Draft PR #44 and republish the previous verified Preview f94e9b4ef66af69f5840afa65f443302a00fdf4c. Preserve production_ref after independently rechecking live release.json. No database rollback or backend changes. Do not merge or delete backups.
+
+## Live QA follow-up
+- Preview b2b058a595aadf0dc2fb93f9bb179cdd816da6b2 was deployed by Publish #487 (43730790309); production root remained 71ff88ebdb68bea9f6456375c4c9d970e11c0379. QA/Next/Pages passed; Supabase E2E skipped.
+- Authenticated TEST Job at 1363×936: rail width 360px; rail top and Job title-row top both -129.15625 (page was scrolled); rail and Candidate list bottom both 836.3125. All seven table cells including checkbox measured text-align:center and vertical-align:middle. No document horizontal overflow.
+- Browser found unsupported multiplied percentage calc column widths resolving to equal-width columns, and a long Vietnamese stage badge overflowing its cell. Follow-up replaces the widths with compatible percentage-minus-pixel expressions, permits badge text wrapping, resets checkbox margins and makes source text 13px. Recheck the deployed follow-up before claiming the overflow fix passed.
