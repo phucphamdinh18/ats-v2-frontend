@@ -19,6 +19,7 @@ type Props = {
 };
 const PAGE_SIZE = 10;
 const dash = "—";
+const factValue = (value: string | number) => <span className={value === dash ? styles.placeholder : undefined}>{value}</span>;
 function sourceOf(job: Job) {
   const sources = job.metrics?.source_summary || [];
   const total = sources.reduce((sum, item) => sum + Math.max(0, item.count || 0), 0);
@@ -175,33 +176,35 @@ export default function BoschJobsMaster({
         </section>
       </div>
       <aside className={`${styles.panel} ${styles.snapshot}`} aria-label={labels.snapshot}>
+        <div className={styles.snapshotInner}>
         {selected ? <>
           <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p></div>
           <div className={styles.snapshotSection}><h3>{labels.requisition}</h3>
             <dl className={styles.facts}>
-              <dt>{labels.department}</dt><dd>{selected.business_unit || dash}</dd>
-              <dt>{labels.function}</dt><dd>{selected.function_group || dash}</dd>
-              <dt>{labels.requestType}</dt><dd>{requestLabel(selected.request_type, en)}</dd>
-              <dt>{labels.reqDate}</dt><dd>{reqDate(selected.req_date, en)}</dd>
-              <dt>{labels.levelLabel}</dt><dd>{selected.level == null ? dash : `L${selected.level}`}</dd>
-              <dt>{labels.priority}</dt><dd>{priorityLabel(selected.priority, en)}</dd>
+              <dt>{labels.department}</dt><dd>{factValue(selected.business_unit || dash)}</dd>
+              <dt>{labels.function}</dt><dd>{factValue(selected.function_group || dash)}</dd>
+              <dt>{labels.requestType}</dt><dd>{factValue(requestLabel(selected.request_type, en))}</dd>
+              <dt>{labels.reqDate}</dt><dd>{factValue(reqDate(selected.req_date, en))}</dd>
+              <dt>{labels.levelLabel}</dt><dd>{factValue(selected.level == null ? dash : `L${selected.level}`)}</dd>
+              <dt>{labels.priority}</dt><dd>{factValue(priorityLabel(selected.priority, en))}</dd>
             </dl>
           </div>
           <div className={styles.snapshotSection}><h3>{labels.progress}</h3>
             <dl className={styles.facts}>
-              <dt>{labels.status}</dt><dd>{selected.status}</dd>
-              <dt>{labels.sla}</dt><dd>{selected.sla_target_workdays == null ? dash : `${selected.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</dd>
-              <dt>{labels.actual}</dt><dd>{dash}</dd>
+              <dt>{labels.status}</dt><dd>{factValue(selected.status)}</dd>
+              <dt>{labels.sla}</dt><dd>{factValue(selected.sla_target_workdays == null ? dash : `${selected.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`)}</dd>
+              <dt>{labels.actual}</dt><dd>{factValue(dash)}</dd>
             </dl>
           </div>
-          <div className={`${styles.snapshotSection} ${styles.snapshotFinal}`}><h3>{labels.metrics}</h3>
+          <div className={styles.snapshotSection}><h3>{labels.metrics}</h3>
             <dl className={styles.facts}>
-              <dt>{labels.applications}</dt><dd>{selected.metrics?.total_candidates ?? dash}</dd>
-              <dt>{labels.topSource}</dt><dd>{sourceOf(selected)}</dd>
+              <dt>{labels.applications}</dt><dd>{factValue(selected.metrics?.total_candidates ?? dash)}</dd>
+              <dt>{labels.topSource}</dt><dd>{factValue(sourceOf(selected))}</dd>
             </dl>
             <button className={styles.primary} type="button" onClick={() => onOpen(selected)}>{labels.openDetail} <ChevronRight size={14}/></button>
           </div>
         </> : <div className={styles.empty}>{en ? "No Job selected" : "Chưa chọn Job"}</div>}
+        </div>
       </aside>
     </div>
     <p className={styles.note}>{en

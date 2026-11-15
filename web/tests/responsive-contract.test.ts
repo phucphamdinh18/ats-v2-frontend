@@ -105,11 +105,11 @@ test("Jobs Overview uses reference five-column grid and reusable shared table pr
   }
   assert.ok(view.includes("<colgroup>"), "Five-column table still needs colgroup");
   assert.ok(view.includes("title={job.title}"), "Full title still accessible");
-  assert.ok(css.includes(".table tbody tr{height:70px"), "Reference uses 70px rows");
+  assert.ok(css.includes(".table tbody tr{height:64px"), "Updated reference uses 64px rows");
   assert.ok(css.includes("-webkit-line-clamp:2"), "Long job names remain at most two visible lines");
-  assert.ok(css.includes(".workspace{display:grid;grid-template-columns:minmax(0,1fr) 315px"), "Job Snapshot uses 315px column");
+  assert.ok(css.includes(".workspace{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,26%,400px)"), "Job Snapshot uses a 340–400px column");
   assert.ok(css.includes("@media(max-width:1370px)"), "Narrow pages stack snapshot");
-  assert.ok(css.includes(".snapshot{position:static;align-self:stretch;display:flex;flex-direction:column"), "Snapshot stretches with left stack");
+  assert.ok(css.includes(".snapshotInner{position:absolute;inset:0;display:flex;flex-direction:column;overflow-y:auto"), "Snapshot content cannot increase the left stack height");
   assert.ok(css.includes(".footer{composes:foot"), "Footer reuses shared primitive");
   assert.ok(css.includes(".table{composes:atsTable"), "Table opts in to shared style");
   assert.ok(css.includes(".state{composes:tag") && css.includes(".dim{composes:dim"), "Tags and secondary text reuse shared primitives");
