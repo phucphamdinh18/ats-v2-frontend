@@ -244,6 +244,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   }, [load]);
 
   return <section className={styles.root} aria-label={`${copy.pipeline} ${job.title}`}>
+    <div className={styles.mainColumn}>
     <div className={styles.summary}>
       <div className={styles.summaryHeader}>
         <h2>{copy.pipeline} <span aria-hidden="true" title={en ? "Counts from Job overview when available; otherwise loaded records only." : "Số liệu từ tổng quan vị trí; nếu chưa có thì tính từ hồ sơ đã tải."}>ⓘ</span></h2>
@@ -296,6 +297,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       {!items.length && !offerItems.length && <p className={styles.empty}>{copy.emptyPage}</p>}
     </div>}
     {state === "ready" && <div className={styles.pagination}><button className={styles.actionSecondary} disabled={offset === 0} title={offset === 0 ? copy.firstPage : copy.prevPage} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>{copy.prevPage}</button><span>{copy.page(offset / PAGE_SIZE + 1)}</span><button className={styles.actionSecondary} disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? copy.lastPage : copy.nextPage} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>{copy.nextPage}</button></div>}
+    </div>
     </div>
     {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label={copy.overview}><h2>{copy.overview}</h2><p>{copy.selectCandidate}</p></aside>}
     {selected && <aside className={styles.side} aria-label="Chi tiết ứng viên">
