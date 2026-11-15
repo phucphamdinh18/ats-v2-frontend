@@ -715,6 +715,9 @@ export default function Workspace() {
                     onModule={setTab}
                     canAdmin={adminAllowed}
                     canViewOffers={reviewAllowed}
+                    canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)}
+                    roles={access.roles}
+                    onAccessLost={invalidate}
                   >
                     <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
                   </BoschJobDetail> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
