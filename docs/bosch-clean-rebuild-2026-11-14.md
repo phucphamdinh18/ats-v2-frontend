@@ -260,3 +260,26 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - No table data, API calls, authorization, workflow, backend, Supabase or production code changed.
 - This is a targeted frontend fix for the observed P1 table header artifact. **The fix is not accepted until CI passes and the updated preview is checked visually.** Remaining issues from Step 13 (Candidates/Interviews table width, missing VN/EN strings, Offers API error, role E2E, viewport matrix) remain open pending re-test.
 - Branch backup retained; PR #44 remains Draft.
+
+## Step 15 — Product-owner priority decision: frontend first; Offer workflow deferred (2026-11-15)
+
+**Decision owner:** ATS V2 product owner. **Status:** agreed prioritization; this note supersedes the *execution priority* of Offers in Steps 13–14, but does not invalidate the recorded QA findings.
+
+### Scope NOW — frontend stabilization before acceptance
+1. Complete bilingual VN/EN coverage in Home, Jobs Overview, Job Detail / Hiring Pipeline, Candidates, Interviews and common App Shell (including labels, validation/errors and empty states). Offers is excluded from the current feature-completion scope.
+2. Fix responsive behavior, visual alignment and safe table scrolling for the above modules. Check 1440×900, 1920×1080, 768px and 390px and compare with the approved Bosch references.
+3. Verify navigation, search, pagination, Candidate Detail, Add to Job, Job stage transitions, invalid-session/403 clearing and idempotent retry using **authorized test accounts and synthetic data**. Record PASS/FAIL/SKIPPED separately for Admin, assigned TA, HM and Interviewer; do not infer a PASS from CI alone.
+4. Use the existing Draft PR #44 and isolated preview. Keep production, backend migrations, RLS and permission model unchanged. Avoid repeated unnecessary CI runs and paid infrastructure.
+5. Record screenshots, defects, CI results, outstanding gaps and rollback at every accepted milestone.
+
+### Scope LATER — Offers (explicitly DEFERRED)
+- Do **not** spend current frontend iteration time designing/implementing new Offer creation, approval, sending, response, withdrawal, expiry, compensation editor, templates, approver management or unrelated analytics. Do not fabricate Offer records or status counts.
+- Keep the existing Offers code and tabs intact for later integration; no deletion, forced mock success, hardcoded empty fallback or disabling security checks to hide the current error.
+- The current Offers list error (`Không xử lý được yêu cầu.`) remains **OPEN / NOT ACCEPTED**, not automatically classified as a frontend defect.
+- Backend contains Offer SQL/Edge Function logic, but the backend `docs/test-deployment-drift-2026-11-12.md` records that `list_offer_proposals`, `get_offer_proposal_detail`, `send_offer`, `record_offer_response`, `withdraw_offer` and `expire_due_offers` were absent from the checked TEST environment on 2026-11-12. This is historical deployment evidence, **not confirmation of the current live database state**. Check migration history, actual RPC presence and safe request/response before attributing any subsequent Offers error or deploying a selective migration.
+- Reopen Offers **after** the other frontend modules satisfy their agreed visual/functional QA gates and the product owner resumes the Offer workflow. Then verify backend deployment, RLS/role E2E, idempotency and Offer state transitions before building Offer action UI.
+
+### Release / acceptance implications
+- **No global ATS V2 acceptance or production merge while critical functionality/security checks remain incomplete.** Modules other than Offers may be marked independently PASS after the evidence-based test matrix, but Offers remains DEFERRED / FAIL (unresolved API) and must be explicitly excluded from any limited-scope milestone.
+- PR #44 remains Draft. No production deploy; retain the rollback/backup branch.
+- **Next task:** audit and fix VN/EN strings across non-Offer modules, then responsive layout, then visual and role-based functional QA.
