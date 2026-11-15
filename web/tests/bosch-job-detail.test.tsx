@@ -30,7 +30,7 @@ it("hides unauthorized Offer navigation on Job Detail",()=>{
 it("Job Details shows real requisition metadata and configured SLA without inventing actual SLA", () => {
  const rich: Job = {...job, level:52, function_group:"Tech/Product", request_type:"REPLACEMENT", replacement_for:"Previous engineer", hiring_season:"Normal Time", priority:"HIGH", sla_target_workdays:35};
  render(<BoschJobDetail job={rich} allJobs={[rich]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
- fireEvent.click(screen.getByRole("button",{name:"Job Details"}));
+ fireEvent.click(screen.getByRole("button",{name:"Chi tiết Job"}));
  const detail=screen.getByRole("region",{name:"Job Details"});
  expect(detail.textContent).toContain("Previous engineer");
  expect(detail.textContent).toContain("35 ngày làm việc");
@@ -52,7 +52,7 @@ it("Sourcing only shows existing authorized metrics and handles missing metrics"
 it("Team and Access only exposes the current role's verified permissions, not a fabricated team list", () => {
  render(<BoschJobDetail job={job} allJobs={[job]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()}
    canViewOffers={false} canManageApplications={false} roles={["HIRING_MANAGER"]} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
- fireEvent.click(screen.getByRole("button",{name:"Team & Access"}));
+ fireEvent.click(screen.getByRole("button",{name:"Nhóm & Quyền"}));
  expect(screen.getByText("HIRING_MANAGER")).toBeTruthy();
  expect(screen.getByText("Chỉ xem")).toBeTruthy();
  expect(screen.queryByRole("button",{name:"Quản lý phân quyền"})).toBeNull();
