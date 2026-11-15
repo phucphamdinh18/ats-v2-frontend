@@ -46,3 +46,11 @@ test("Job Pipeline uses six data columns, no Last Activity, and wraps full candi
   assert.ok(!pipeline.includes("-webkit-line-clamp:2"), "Long names must not be cut off");
   assert.ok(pipeline.includes("@container (max-width:650px)"), "Narrow panels must reflow safely");
 });
+
+
+test("Pipeline sidebar has natural page scroll without stretching the left grid rows", () => {
+  assert.ok(pipeline.includes("grid-template-rows:max-content max-content"), "Summary and candidate table must stack without artificial row stretching");
+  assert.ok(pipeline.includes(".side{grid-column:2;grid-row:1 / span 2;position:static"), "Right detail rail stays in page flow");
+  assert.ok(pipeline.includes("max-height:none;overflow:visible"), "History must not be clipped behind an independently scrolling sidebar");
+  assert.ok(pipeline.includes("@media(max-width:1250px)"), "Small displays stack the panel");
+});
