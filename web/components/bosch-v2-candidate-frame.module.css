@@ -1,0 +1,12 @@
+/* Independent Candidates module frame. Other ATS modules retain existing framing. */
+.root{min-width:0;width:100%;background:#fff;color:#19283c;font:13px/1.45 Arial,"Helvetica Neue",sans-serif}
+.root *,.root *:before,.root *:after{box-sizing:border-box}
+.crumb{display:flex;align-items:center;gap:8px;color:#708093;font-size:12px;font-weight:600;margin-bottom:16px}
+.crumb strong{color:#243951}
+.heading{font-size:27px;letter-spacing:-.55px;font-weight:850;margin:0 0 6px}
+.subtitle{font-size:12px;color:#64758b;margin:0 0 18px}
+.tabs{display:flex;gap:23px;white-space:nowrap;overflow-x:auto;border-bottom:1px solid #d9e1e8;margin-bottom:17px}
+.tabs span{position:relative;padding:11px 3px 13px;color:#67778e;font-size:12px;font-weight:700;white-space:nowrap}
+.tabs span.active{color:#e20015;font-weight:850}
+.tabs span.active:after{content:"";height:3px;position:absolute;left:0;right:0;bottom:0;background:#e20015}
+@media(max-width:750px){.heading{font-size:23px}.tabs{gap:13px}.tabs span{font-size:11px}}
