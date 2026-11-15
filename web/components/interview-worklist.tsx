@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/supabase";
 import { listInterviewWorklist, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
 import { useLanguage } from "./language";
+import styles from "./bosch-v2-interviews.module.css";
 
 const LIMIT = 25;
 function dateLabel(iso: string, locale: "vi" | "en"): string {
@@ -61,47 +62,48 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
     setStatus(next);
     setOffset(0);
   }
-  return <section className="ops-workspace interview-worklist" aria-label={en ? "Interview schedule workspace" : "Lịch phỏng vấn"}>
-    <div className="ops-controls">
+  return <section className={styles.root} aria-label={en ? "Interview schedule workspace" : "Lịch phỏng vấn"}>
+    <div className={styles.heading}>
       <div>
         <h2>{en ? "Interview schedule" : "Lịch phỏng vấn"}</h2>
         <p>{en ? "Appointments available to you based on your ATS access." : "Các lịch hẹn bạn được xem theo quyền truy cập ATS."}</p>
       </div>
-      <div className="interview-status-tabs" role="group" aria-label={en ? "Filter interview status" : "Lọc trạng thái lịch phỏng vấn"}>
-        {statuses.map((item) => <button key={item.id} type="button" className={status === item.id ? "active" : ""} aria-pressed={status === item.id} onClick={() => changeStatus(item.id)}>{item.label}</button>)}
+      <div className={styles.filters} role="group" aria-label={en ? "Filter interview status" : "Lọc trạng thái lịch phỏng vấn"}>
+        {statuses.map((item) => <button key={item.id} type="button" className={status === item.id ? styles.active : ""} aria-pressed={status === item.id} onClick={() => changeStatus(item.id)}>{item.label}</button>)}
       </div>
     </div>
-    <div className="ops-content">
-      <div className="ops-primary">
-        <div className="ops-summary" aria-label={en ? "Schedule summary" : "Tổng quan lịch trong trang"}>
+    <div className={styles.layout}>
+      <div className={styles.listCard}>
+        <div className={styles.summary} aria-label={en ? "Schedule summary" : "Tổng quan lịch trong trang"}>
           <div><span>{en ? "Status" : "Trạng thái"}</span><strong>{statuses.find((item) => item.id === status)?.label || status}</strong></div>
           <div><span>{en ? "Appointments on this page" : "Lịch trong trang"}</span><strong>{rows.length}</strong></div>
           <div><span>{en ? "Displayed time zone" : "Múi giờ hiển thị"}</span><strong>{Intl.DateTimeFormat().resolvedOptions().timeZone || "Local"}</strong></div>
         </div>
-        {error && <div className="notice error" role="alert">{error}</div>}
-        {loading ? <p className="ops-empty" role="status">Đang tải lịch phỏng vấn…</p> : <div className="ops-table-wrap">
-          <table className="ops-table">
+        <div className={styles.sectionTitle}><h3>{en ? "Interview Schedule" : "Danh sách lịch phỏng vấn"}</h3><small>{en ? "Authorized appointments" : "Lịch theo quyền truy cập"}</small></div>
+        {error && <div className={styles.notice} role="alert">{error}</div>}
+        {loading ? <p className={styles.empty} role="status">Đang tải lịch phỏng vấn…</p> : <div className={styles.tableScroll}>
+          <table className={styles.table}>
             <thead><tr><th>{en ? "Candidate" : "Ứng viên"}</th><th>{en ? "Job opening" : "Vị trí tuyển dụng"}</th><th>{en ? "Type" : "Loại lịch"}</th><th>{en ? "Starts (local time)" : "Bắt đầu (giờ địa phương)"}</th><th>{en ? "Feedback" : "Đánh giá"}</th></tr></thead>
-            <tbody>{rows.map((item) => <tr key={item.id} className={selectedId === item.id ? "selected" : ""}>
+            <tbody>{rows.map((item) => <tr key={item.id} className={selectedId === item.id ? styles.selected : ""}>
               <td><button type="button" aria-pressed={selectedId === item.id} onClick={() => setSelectedId(item.id)}>{item.candidate_name}</button></td>
-              <td>{item.job_code || item.job_title || "—"}</td>
+              <td><strong>{item.job_code || item.job_title || "—"}</strong>{item.job_code && item.job_title && <small>{item.job_title}</small>}</td>
               <td>{item.interview_type}</td>
               <td>{dateLabel(item.starts_at, locale)}</td>
-              <td>{item.feedback_count || 0}</td>
+              <td>{item.feedback_submitted ? (en ? "Submitted" : "Đã gửi") : (en ? "Pending / N/A" : "Chưa gửi / Không áp dụng")}<small>{item.feedback_count || 0} {en ? "record(s)" : "đánh giá"}</small></td>
             </tr>)}</tbody>
           </table>
-          {!rows.length && !error && <p className="ops-empty">{en ? "No interviews match this filter." : "Không có lịch phỏng vấn phù hợp với bộ lọc."}</p>}
+          {!rows.length && !error && <p className={styles.empty}>{en ? "No interviews match this filter." : "Không có lịch phỏng vấn phù hợp với bộ lọc."}</p>}
         </div>}
-        <div className="ops-pagination">
-          <button type="button" className="secondary" disabled={loading || offset === 0} onClick={() => setOffset((current) => Math.max(0, current - LIMIT))}>{en ? "Previous" : "Trang trước"}</button>
+        <div className={styles.pagination}>
+          <button type="button" className={styles.retry} disabled={loading || offset === 0} onClick={() => setOffset((current) => Math.max(0, current - LIMIT))}>{en ? "Previous" : "Trang trước"}</button>
           <span>{en ? `Page ${offset / LIMIT + 1} · up to ${LIMIT} appointments per page` : `Trang ${offset / LIMIT + 1} · tối đa ${LIMIT} lịch / trang`}</span>
-          <button type="button" className="secondary" disabled={loading || rows.length < LIMIT} onClick={() => setOffset((current) => current + LIMIT)}>{en ? "Next" : "Trang sau"}</button>
+          <button type="button" className={styles.retry} disabled={loading || rows.length < LIMIT} onClick={() => setOffset((current) => current + LIMIT)}>{en ? "Next" : "Trang sau"}</button>
         </div>
       </div>
-      <aside className="ops-detail" aria-label={en ? "Interview details" : "Chi tiết lịch phỏng vấn"}>
-        <h3>{active?.candidate_name || (en ? "Interview details" : "Chi tiết lịch phỏng vấn")}</h3>
+      <aside className={styles.detailCard} aria-label={en ? "Interview details" : "Chi tiết lịch phỏng vấn"}>
+        <div className={styles.detailHeader}><h3>{active?.candidate_name || (en ? "Interview details" : "Chi tiết lịch phỏng vấn")}</h3><p>{active?.job_title || (en ? "Select an interview to view its schedule" : "Chọn lịch để xem chi tiết")}</p></div>
         {active ? <>
-          <dl className="ops-fields">
+          <div className={styles.detailsBlock}><h4>{en ? "Schedule Details" : "Thông tin lịch phỏng vấn"}</h4><dl className={styles.fields}>
             <dt>{en ? "Job" : "Vị trí"}</dt><dd>{active.job_title}</dd>
             <dt>{en ? "Type" : "Loại lịch"}</dt><dd>{active.interview_type}</dd>
             <dt>{en ? "Status" : "Trạng thái"}</dt><dd>{statuses.find((item) => item.id === active.status)?.label || active.status}</dd>
@@ -111,11 +113,11 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
             <dt>{en ? "Location" : "Địa điểm"}</dt><dd>{active.location || "—"}</dd>
             <dt>Feedback</dt><dd>{active.feedback_count || 0}</dd>
           </dl>
-          {safeMeetingUrl(active.meeting_url) && <p><a href={safeMeetingUrl(active.meeting_url)!} target="_blank" rel="noopener noreferrer">{en ? "Open meeting" : "Mở cuộc họp"}</a></p>}
-          <h4>{en ? "Interviewers" : "Người phỏng vấn"}</h4>
-          {active.participants?.length ? <ul className="interview-participants">{active.participants.map((participant) => <li key={participant.id}><strong>{participant.display_name}</strong><small>{participant.role}</small></li>)}</ul> : <p className="ops-muted">Chưa có thông tin người tham gia.</p>}
-          <p className="ops-disclaimer">{en ? "This screen is for tracking only. Scheduling, decisions, and feedback must follow the existing ATS permissions and verified workflows." : "Màn hình này dùng để theo dõi. Việc đặt lịch, ra quyết định và gửi feedback vẫn cần theo quyền và quy trình ATS hiện có."}</p>
-        </> : <p className="ops-muted">{en ? "Choose an interview from the list to view its details." : "Chọn một lịch phỏng vấn trong danh sách để xem chi tiết."}</p>}
+          {safeMeetingUrl(active.meeting_url) && <a className={styles.meeting} href={safeMeetingUrl(active.meeting_url)!} target="_blank" rel="noopener noreferrer">{en ? "Open meeting" : "Mở cuộc họp"}</a>}</div>
+          <div className={styles.detailsBlock}><h4>{en ? "Interviewers" : "Người phỏng vấn"}</h4>
+          {active.participants?.length ? <ul className={styles.participants}>{active.participants.map((participant) => <li key={participant.id}><strong>{participant.display_name}</strong><small>{participant.role}</small></li>)}</ul> : <p className={styles.muted}>{en ? "No participant information available." : "Chưa có thông tin người tham gia."}</p>}
+          </div><p className={styles.disclaimer}>{en ? "This screen is for tracking only. Scheduling, decisions, and feedback must follow the existing ATS permissions and verified workflows." : "Màn hình này dùng để theo dõi. Việc đặt lịch, ra quyết định và gửi feedback vẫn cần theo quyền và quy trình ATS hiện có."}</p>
+        </> : <p className={styles.muted}>{en ? "Choose an interview from the list to view its details." : "Chọn một lịch phỏng vấn trong danh sách để xem chi tiết."}</p>}
       </aside>
     </div>
   </section>;
