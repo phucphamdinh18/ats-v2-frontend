@@ -158,3 +158,12 @@
 
 
 /* Bosch readability pass: component-local typography only; preserve responsive and data contracts. */
+
+
+/* Candidate professional facts — Bosch reference icon + label + value layout. */
+.professionalFacts{display:grid;grid-template-columns:minmax(135px,43%) minmax(0,1fr);gap:10px 12px;margin:14px 0 0;font-size:13px;line-height:1.4}
+.professionalFacts dt{display:flex;align-items:flex-start;gap:10px;min-width:0;color:#27394e;font-weight:600}
+.professionalFacts dt svg{flex:0 0 17px;color:#172236;stroke-width:1.8;margin-top:1px}
+.professionalFacts dt span{min-width:0;overflow-wrap:anywhere}
+.professionalFacts dd{margin:0;min-width:0;color:#172236;font-weight:600;overflow-wrap:anywhere}
+@media(max-width:560px){.professionalFacts{grid-template-columns:minmax(115px,42%) minmax(0,1fr);gap:9px 8px;font-size:12px}.professionalFacts dt{gap:7px}}
