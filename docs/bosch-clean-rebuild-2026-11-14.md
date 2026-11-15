@@ -712,3 +712,50 @@ Overall Visual QA for the requested responsive matrix remains **BLOCKED**, not P
 **Important acceptance caveats:** A CSS table row `height:70px` is a **minimum** in the table layout algorithm, not a hard cap, particularly with larger font/zoom; rendered dimensions require browser checks. At desktop widths the whole left stack (Summary + Jobs card) aligns to the height of the right Snapshot; only the **bottom** of Jobs card should match the Snapshot. At <=1370px the cards stack, so side-by-side bottom alignment is not applicable. Source code and CI do not prove pixel-for-pixel similarity.
 
 **Status:** Draft PR #44 only, not production; preview revision and signed-in visual QA pending. Recheck 1920x1080, 1440x900, 768x1024, 390x844, both VI/EN; verify footer baseline, all four rows, two-line titles, hover tooltip and functionality of search/status/priority/pagination/row selection/View detail/Open Job Detail. No changes to backend/Offer workflow or shared Candidate table. Rollback via reviewed revert of these four scoped commits; preserve backup.
+
+
+## 2026-11-15 — Jobs Overview Preview QA (PR #44)
+
+**Scope:** Jobs Overview only. No changes to APIs, Supabase/Auth/RLS, business logic, Candidates, Interviews, Offers, or production.
+
+### Commit and CI
+- PR #44 remained Draft / open / unmerged.
+- Requested Jobs CSS was present in source commit `fc84d35c1205d0395ba056da25069cd94ebf535e`.
+- Browser QA exposed a table header collision: the global `th { position: sticky; top: 68px; }` rule shifted the Jobs header over the first row inside its table scroller.
+- Fixed only `web/components/bosch-v2-jobs.module.css` in `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`: scoped Jobs headers now use `position: static; top: auto`.
+- Latest CI for `d37e5f9`: QA checks #428 **PASS**; Next web checks #401 **PASS**; Pages build in Publish ATS Pages #450 **PASS**; Supabase local browser E2E #319 **SKIPPED**.
+- Manual Preview deployment: Publish ATS Pages run #451 **SUCCESS**, mode `path-preview`, production_ref `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, preview_ref `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`.
+- Live `release.json` after deployment reported root `71ff88ebdb68bea9f6456375c4c9d970e11c0379` and Preview `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`. Production was not changed.
+- Links: [Preview](https://phucphamdinh18.github.io/ats-v2-frontend/preview/) · [Publish run #451](https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43714316767) · [PR #44](https://github.com/phucphamdinh18/ats-v2-frontend/pull/44)
+
+### Browser QA evidence
+Signed-in Admin preview was opened in Cloud Browser. The actual available CSS viewport was **1363×936**; exact 1920×1080, 1440×900, 768×1024, and 390×844 emulation was unavailable in this browser session. Those requested viewport checks are **BLOCKED**, not inferred from CSS.
+
+At 1363×936, observed:
+- Exactly 5 headers in order: Job Opening, Department / BU, Status, Applications, Action. DOM column widths measured **36% / 20% / 12% / 18% / 14%**; all headers had `white-space: nowrap`.
+- Four data rows each measured **70px**. Header and first row no longer overlap. Long title exposes its full text through the title tooltip.
+- Page document width equaled client width (1348px); no document-level horizontal overflow.
+- Since this viewport is below the 1370px breakpoint, Job Snapshot correctly stacks below the Jobs card. Side-by-side bottom alignment is therefore **not verifiable** in this session.
+- Direct screenshot was captured in the Cloud Browser for the live Preview; no screenshot file was committed to the repository. Open the Preview link above to review the same screen.
+
+### Functional smoke checks
+| Check | Result | Evidence / limitation |
+|---|---|---|
+| Search Job | PASS | “Codex Admin” narrowed list to one row |
+| Status filter | PASS | Open narrowed list to two Jobs |
+| Priority filter | PASS | HIGH returned the empty state; resetting restored four Jobs |
+| Job selection / Snapshot | PASS | Selecting Codex Admin changed the right Snapshot |
+| View detail / Open Job Detail | PASS | Both opened the selected Job's detail/pipeline |
+| Pagination | SKIPPED | Four Jobs fit one page; Previous/Next were disabled |
+| VN / EN | PASS with localization gaps | Main Jobs labels, filters, table, summary and snapshot changed; some shell labels/data such as Dashboard, Home/Jobs, OPEN and source names remain English |
+| Snapshot bottom alignment | BLOCKED | Actual viewport triggered stacked layout |
+| Search, filter, footer and row geometry at the four requested sizes | BLOCKED | Viewport override unavailable |
+
+### Result and remaining issues
+- **Jobs Overview at 1363×936: PASS for measured layout and smoke-tested controls.**
+- **Full responsive Visual QA: BLOCKED** until the four target viewports can be opened.
+- Residual observations: top navigation clips the “Job Reviews” label at the available width; some English shell/status/data strings remain in Vietnamese mode. These were not changed because this pass was limited to Jobs Overview CSS/markup and must not alter translation/business logic.
+- No candidate data was created or modified. No changes were made to other modules.
+
+### Rollback
+Revert the scoped CSS fix commit `d37e5f940ef9504cfc2bf51950daacbf0256d5c6` on the PR branch if needed. This restores the prior Jobs styling; it also restores the header overlap, so rollback should only be used if this fix causes a regression. Production remains at `71ff88ebdb68bea9f6456375c4c9d970e11c0379`.
