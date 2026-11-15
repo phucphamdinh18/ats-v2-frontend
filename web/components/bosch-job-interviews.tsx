@@ -12,6 +12,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
 }) {
   const { locale } = useLanguage();
   const en = locale === "en";
+  const statusText = (value: InterviewStatus) => en ? ({ SCHEDULED: "Scheduled", COMPLETED: "Completed", CANCELLED: "Cancelled" } as const)[value] : ({ SCHEDULED: "Đã lên lịch", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy" } as const)[value];
   const [status, setStatus] = useState<InterviewStatus>("SCHEDULED");
   const [items, setItems] = useState<InterviewWorklistItem[]>([]);
   const [hasNext, setHasNext] = useState(false);
@@ -29,7 +30,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       setItems(rows.filter((row) => row.job_id === jobId));
     }).catch((cause) => {
       if (ticket !== version.current) return;
-      setError(cause instanceof Error ? cause.message : "Không tải được lịch phỏng vấn.");
+      setError(cause instanceof Error ? cause.message : (en ? "Could not load interviews." : "Không tải được lịch phỏng vấn."));
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     }).finally(() => { if (ticket === version.current) setBusy(false); });
     return () => { version.current += 1; };
@@ -44,7 +45,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
     <div className={styles.subTabs} role="group" aria-label={en ? "Interview status" : "Trạng thái phỏng vấn"}>
       {statuses.map((value) => <button key={value} type="button" aria-pressed={status === value} className={status === value ? styles.currentSubTab : ""}
-        onClick={() => { setStatus(value); setOffset(0); }}>{value}</button>)}
+        onClick={() => { setStatus(value); setOffset(0); }}>{statusText(value)}</button>)}
     </div>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {busy ? <p role="status">{en ? "Loading schedule…" : "Đang tải lịch…"}</p> :
@@ -57,7 +58,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
         <aside className={styles.detailPane} aria-label={en ? "Schedule details" : "Chi tiết lịch"}>
           <h3>{active?.candidate_name || (en ? "Interview Details" : "Thông tin lịch phỏng vấn")}</h3>
           {active ? <dl className={styles.facts}>
-            <dt>{en ? "Status" : "Trạng thái"}</dt><dd>{active.status}</dd>
+            <dt>{en ? "Status" : "Trạng thái"}</dt><dd>{statusText(active.status)}</dd>
             <dt>{en ? "Start" : "Bắt đầu"}</dt><dd>{date(active.starts_at)}</dd>
             <dt>{en ? "End" : "Kết thúc"}</dt><dd>{date(active.ends_at)}</dd>
             <dt>{en ? "Location" : "Địa điểm"}</dt><dd>{active.location || "—"}</dd>
