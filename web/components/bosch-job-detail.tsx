@@ -45,11 +45,11 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
   const en = locale === "en";
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
-  return <section className={styles.root} aria-label={`Job detail: ${job.title}`}>
-    <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>Jobs</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
+  return <section className={styles.root} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
+    <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
     <div className={styles.titleRow}>
       <h1>{job.title}</h1>
-      <span className={[styles.status, job.status === "OPEN" ? styles.statusOpen : ""].filter(Boolean).join(" ")}>{job.status === "OPEN" ? "Open" : job.status === "DRAFT" ? "Draft" : job.status}</span>
+      <span className={[styles.status, job.status === "OPEN" ? styles.statusOpen : ""].filter(Boolean).join(" ")}>{job.status === "OPEN" ? (en ? "Open" : "Đang tuyển") : job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : job.status}</span>
       <div className={styles.actions}>
         <button type="button" className={styles.outline} aria-expanded={actionsOpen} onClick={() => setActionsOpen(x=>!x)}>{en ? "Actions" : "Thao tác"} <ChevronDown size={15}/></button>
         {actionsOpen && <div className={styles.actionMenu}>
@@ -64,11 +64,11 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
       <span><CalendarDays size={16}/>{en ? "Req" : "Ngày Req"}: {readableDate(job.req_date)}</span>
       <span><Target size={16}/>{en ? "SLA target" : "Mục tiêu SLA"}: {job.sla_target_workdays == null ? "—" : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</span>
     </div>
-    <nav className={styles.tabs} aria-label="Job sections">
+    <nav className={styles.tabs} aria-label={en ? "Job sections" : "Các tab của Job"}>
       {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? x.label : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Phỏng vấn", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
     </nav>
     {tab === "pipeline" && <div className={styles.content}>{children}</div>}
-    {tab === "details" && <section className={styles.aux} aria-label="Job Details">
+    {tab === "details" && <section className={styles.aux} aria-label={en ? "Job Details" : "Chi tiết Job"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Job Details" : "Chi tiết Job"}</h2><p>{en ? "Verified requisition fields from the authorized Job record." : "Thông tin yêu cầu tuyển từ Job đang được phân quyền."}</p></div></div>
       <div className={styles.detailsGrid}>
         <section className={styles.detailPane}><h3>{en ? "Requisition Information" : "Thông tin yêu cầu tuyển"}</h3><dl className={styles.facts}>
@@ -89,7 +89,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
         </dl></section>
       </div><p className={styles.footnote}>{en ? "SLA target is configured by Level/Function/Season. The Job API does not provide actual SLA, Hiring Manager or TA PIC." : "SLA mục tiêu lấy từ ma trận Level/Function/Season. API Job chưa cung cấp SLA thực tế, tên HM hoặc TA PIC."}</p>
     </section>}
-    {tab === "sourcing" && <section className={styles.aux} aria-label="Job sourcing">
+    {tab === "sourcing" && <section className={styles.aux} aria-label={en ? "Job sourcing" : "Nguồn tuyển theo Job"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Sourcing" : "Nguồn tuyển"}</h2><p>{en ? "Authorized sourcing breakdown for this Job." : "Phân bổ nguồn hồ sơ của Job theo dữ liệu được cấp quyền."}</p></div></div>
       <div className={styles.summaryGrid}>
         <div><span>{en ? "Applications" : "Hồ sơ"}</span><strong>{job.metrics?.total_candidates ?? "—"}</strong></div>
@@ -107,7 +107,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
         <button type="button" className={styles.outline} onClick={() => onModule("offers")}>{en ? "Open Offers module" : "Mở quản lý Offers"} <ChevronRight size={15}/></button></div>
       <BoschOffersWorkspace key={job.id} jobs={[job]} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
-    {tab === "team" && <section className={styles.aux} aria-label="Team & Access">
+    {tab === "team" && <section className={styles.aux} aria-label={en ? "Team & Access" : "Nhóm & Phân quyền"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Team & Access" : "Nhóm & Phân quyền"}</h2><p>{en ? "Your current permissions for this Job." : "Quyền truy cập của tài khoản hiện tại đối với Job này."}</p></div></div>
       <div className={styles.detailsGrid}>
         <section className={styles.detailPane}><h3>{en ? "Your roles" : "Vai trò tài khoản"}</h3>
