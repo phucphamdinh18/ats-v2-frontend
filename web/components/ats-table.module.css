@@ -1,0 +1,10 @@
+/* Shared Bosch ATS table primitives. Opt-in via CSS Module composition only.
+   No global selectors and no changes to other pages until explicitly adopted. */
+.atsTable{width:100%;border-collapse:collapse;table-layout:fixed;text-align:left;font-size:12px}
+.atsTable th{background:#f4f6f8;color:#2e3e56;font-size:11px;font-weight:700;white-space:nowrap;padding:13px 12px;border-bottom:1px solid #dce2ea;letter-spacing:.04em;text-transform:uppercase;text-align:left}
+.atsTable td{padding:13px 12px;border-bottom:1px solid #e9ecf0;vertical-align:middle;color:#34465f;font-size:12px}
+.tag{padding:4px 9px;display:inline-block;border-radius:20px;background:#edf0f4;color:#526174;font-size:11px;font-weight:800;white-space:nowrap}
+.dim{color:#7a8899;font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.foot{padding:13px 16px;color:#6b798c;font-size:12px;border-top:1px solid #dce2ea;display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+.foot button{border:1px solid #ced8e2;border-radius:4px;background:#fff;padding:5px 10px;margin-left:8px}
+.foot button:disabled{opacity:.4;cursor:not-allowed}
