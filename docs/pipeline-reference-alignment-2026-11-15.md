@@ -32,3 +32,9 @@ Revert this scoped presentation commit on Draft PR #44 and republish the previou
 - Profile tabs may wrap within four equal columns so translated labels do not collide. Existing row target, column percentages, panel grid and internal scrolling are retained; growing text can increase row height when needed.
 - CSS only, plus correction of obsolete structural test descriptions. No shell, API, selection, filtering, pagination or stage handler changes.
 - Validation: CI and deployed SHA must be checked before reporting success. Rollback: revert this typography commit and republish 54b2aa381fbf64d92512ef04b0e16eaf2dcebc7c with the independently verified production SHA unchanged.
+
+### Deployed typography QA and narrow-table correction
+- Preview bacac91842272b013422803c91720834a9afd032: Publish #493 / 43735736012 succeeded, production root remained 71ff88ebdb68bea9f6456375c4c9d970e11c0379. QA/Next/PR Pages succeeded; Supabase E2E skipped. Local 33 Node + 81 Vitest tests and TypeScript passed.
+- Authenticated TEST-only VI/EN at 1363×936: headers 15px, body 16px, name 26px, section title 20px. Candidate and Source left; checkbox and four remaining data columns centered. Rail/header top and rail/list bottom matched; no document horizontal overflow.
+- Visual QA found the English Experience header too close to Source at the previous 620px table minimum. Increase the table minimum to 820px, retaining original percentage tracks and local wrapper scrolling. This correction must be republished and visually rechecked.
+- Root release marker may update before an already-open tab refreshes its old assets. A fresh Preview tab confirmed the new stylesheet; do not claim visual PASS using the release marker alone. Exact 1440/1920/mobile viewport QA remains SKIPPED in this browser.

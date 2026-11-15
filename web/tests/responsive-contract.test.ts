@@ -60,7 +60,7 @@ test("Job Pipeline has seven table columns and clamped accessible candidate/sour
   assert.ok(applicationPipeline.includes('title={application.source || "—"}'), "Full source remains accessible");
   assert.ok(pipeline.includes(".candidateLink{display:-webkit-box;"), "Candidate name is clamped to two lines");
   assert.ok(pipeline.includes(".sourceText{display:-webkit-box;"), "Source is clamped to two lines");
-  assert.ok(pipeline.includes("min-width:620px"), "Table scroll is local to its wrapper");
+  assert.ok(pipeline.includes("min-width:820px"), "Table scroll is local to its wrapper");
 });
 
 test("Pipeline aligns the Candidate rail with Job header and keeps descriptive columns left aligned", () => {
