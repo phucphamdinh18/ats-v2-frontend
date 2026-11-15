@@ -37,10 +37,12 @@ test("four requested viewport widths meet intended panel stacking breakpoint", (
 });
 
 
-test("Job Pipeline uses six data columns, no Last Activity, and clamps long candidate names", () => {
+test("Job Pipeline uses six data columns, no Last Activity, and wraps full candidate names", () => {
   const source = readFileSync(join(process.cwd(), "components", "application-pipeline.tsx"), "utf8");
   assert.ok(source.includes("<th>{copy.source}</th></tr>"), "Source is the last information column");
   assert.ok(!source.includes("<th>{copy.activity}</th>"), "Last Activity must not be duplicated in the table");
-  assert.ok(pipeline.includes("-webkit-line-clamp:2"), "Long names must be clamped to two visible lines");
+  assert.ok(pipeline.includes(".candidateLink{display:block;width:100%"), "Long candidate names should wrap naturally");
+  assert.ok(pipeline.includes("overflow-wrap:break-word;word-break:normal"), "Long names must not overflow the candidate column");
+  assert.ok(!pipeline.includes("-webkit-line-clamp:2"), "Long names must not be cut off");
   assert.ok(pipeline.includes("@container (max-width:650px)"), "Narrow panels must reflow safely");
 });
