@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ChevronRight, Layers3, MapPin } from "lucide-react";
 import candidateStyles from "./bosch-v2-candidate-frame.module.css";
 import interviewStyles from "./bosch-v2-interview-frame.module.css";
+import offerStyles from "./bosch-v2-offer-frame.module.css";
 
 type Module = "candidates" | "interviews" | "offers";
 const specs: Record<Module, { title: string; crumb: string; tabs: string[]; active: string; help: string }> = {
@@ -52,6 +53,20 @@ export default function BoschModuleLayout({ module, children }: { module: Module
         <span className={interviewStyles.active} aria-current="page">Schedule</span>
         <span title="Requires authorized feedback workflow integration">Feedback</span>
         <span title="Not available in existing summary API">Analytics</span>
+      </nav>
+      {children}
+    </section>;
+  }
+  if (module === "offers") {
+    return <section className={offerStyles.root} aria-label="Offers workspace">
+      <div className={offerStyles.crumb}>Offers <ChevronRight size={14}/><strong>Offer Pipeline</strong></div>
+      <h1 className={offerStyles.title}>Offers</h1>
+      <p className={offerStyles.subtitle}>Offer proposals for Jobs within your authorized scope.</p>
+      <nav className={offerStyles.tabs} aria-label="Offers sections">
+        <span className={offerStyles.active} aria-current="page">Pipeline</span>
+        <span title="Not available in the current Offer API">Offer Templates</span>
+        <span title="Existing approvals must remain in their authorized workflow">Approval Setup</span>
+        <span title="Not available in the current Offer API">Offer Settings</span>
       </nav>
       {children}
     </section>;
