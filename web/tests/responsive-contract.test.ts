@@ -54,3 +54,14 @@ test("Pipeline sidebar has natural page scroll without stretching the left grid 
   assert.ok(pipeline.includes("max-height:none;overflow:visible"), "History must not be clipped behind an independently scrolling sidebar");
   assert.ok(pipeline.includes("@media(max-width:1250px)"), "Small displays stack the panel");
 });
+
+
+test("Bosch identity grows on desktop while sidebar remains compact on mobile", () => {
+  const shell = file("bosch-v2-shell.module.css");
+  const workspace = file("workspace.tsx");
+  assert.ok(shell.includes("grid-template-columns:310px minmax(0,1fr)"), "Desktop sidebar should match the approved reference proportions");
+  assert.ok(shell.includes(".identity img{width:188px"), "Bosch wordmark must remain legible");
+  assert.ok(shell.includes("@media(max-width:1280px)"), "Laptop should use the compact sidebar width");
+  assert.ok(shell.includes("@media(max-width:760px)"), "Mobile sidebar still collapses to icons");
+  assert.ok(workspace.includes('alt="Bosch" width="188" height="52"'), "Logo intrinsic dimensions should match the design");
+});
