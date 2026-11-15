@@ -24,7 +24,7 @@ test("Interviews collapses detail-backed columns based on actual table-pane widt
 });
 
 test("Job Pipeline and Job Detail retain usable mobile navigation", () => {
-  for (const rule of [".listSection{container-type:inline-size}", "@container (max-width:1250px)", "@container (max-width:440px)", "@media(max-width:1250px)"])
+  for (const rule of [".listSection{grid-column:1;grid-row:2;", ".scroll{flex:1 1 auto;", "@media(max-width:1200px)", ".table{table-layout:fixed;"])
     assert.ok(pipeline.includes(rule), rule);
   for (const rule of [".tabs{max-width:100%;overflow-x:auto", "@media(max-width:768px)", "@media(max-width:420px)"])
     assert.ok(detail.includes(rule), rule);
