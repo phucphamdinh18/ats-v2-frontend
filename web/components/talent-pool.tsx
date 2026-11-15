@@ -12,6 +12,7 @@ import { useLanguage } from "./language";
 
 const PAGE_SIZE = 25;
 type SourceOption = { sub_source: string; source: string; source_ownership: string };
+type CandidateAttribution = { candidate_id: string; source: string | null; sub_source: string | null; created_at: string };
 
 export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAccessLost: () => void }) {
   const { locale } = useLanguage();
@@ -21,6 +22,8 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
   const [query, setQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [attributionByCandidate, setAttributionByCandidate] = useState<Record<string, CandidateAttribution>>({});
+  const [attributionError, setAttributionError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +82,31 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
       profileRevision.current += 1;
     };
   }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let current = true;
+    setAttributionByCandidate({});
+    setAttributionError(false);
+    const ids = candidates.map((candidate) => candidate.id);
+    if (!ids.length) return () => { current = false; };
+    void getClient().from("applications")
+      .select("candidate_id,source,sub_source,created_at")
+      .in("candidate_id", ids)
+      .order("created_at", { ascending: false })
+      .then(({ data, error: queryError }) => {
+        if (!current) return;
+        if (queryError) {
+          setAttributionError(true);
+          return;
+        }
+        const latest: Record<string, CandidateAttribution> = {};
+        for (const row of (data || []) as CandidateAttribution[]) {
+          if (!latest[row.candidate_id]) latest[row.candidate_id] = row;
+        }
+        setAttributionByCandidate(latest);
+      });
+    return () => { current = false; };
+  }, [candidates]);
 
   useEffect(() => {
     if (!selectedId) { setProfile(null); return; }
@@ -146,7 +174,8 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
     {error && <div className={`${styles.notice} ${styles.error}`} role="alert">{error}<button className={styles.retry} onClick={() => void load()}>{tr("Thử lại", "Retry")}</button></div>}
     <div className={styles.layout}>
       <div className={styles.listCard} aria-busy={loading}>
-        {loading ? <p className={styles.empty}>{tr("Đang tải ứng viên…", "Loading candidates…")}</p> : candidates.length ? <div className={styles.scroll}><table className={styles.table}><thead><tr><th aria-label={tr("Chọn hồ sơ", "Select candidate")}></th><th>{tr("Ứng viên", "Candidate")}</th><th>{tr("Vị trí / Công ty", "Current Job / Company")}</th><th>{tr("Giai đoạn", "Stage")}</th><th>{tr("Vòng phỏng vấn", "Interview Round")}</th><th>{tr("Độ phù hợp", "Matching")}</th><th>{tr("Kinh nghiệm", "Experience")}</th><th>{tr("Nguồn", "Source")}</th><th>{tr("Hoạt động gần nhất", "Last Activity")}</th></tr></thead><tbody>{candidates.map((candidate) => <tr key={candidate.id} className={selectedId === candidate.id ? styles.selected : ""}><td><input type="checkbox" aria-label={`${tr("Chọn", "Select")} ${candidate.full_name}`} checked={selectedId === candidate.id} onChange={()=>setSelectedId(candidate.id)}/></td><td><button type="button" className={styles.candidateLink} aria-pressed={selectedId === candidate.id} onClick={() => setSelectedId(candidate.id)}>{candidate.full_name}</button></td><td><strong className={styles.jobTitle}>{candidate.current_title || candidate.primary_role || "—"}</strong><small>{candidate.current_company || "—"}</small></td><td title={tr("Giai đoạn theo Job không có trong API danh sách ứng viên", "Stage is Job-specific and not returned by Candidate list API")}>—</td><td title={tr("Vòng phỏng vấn chỉ có theo từng Job", "Interview rounds are Job-specific")}>—</td><td title={tr("API danh sách ứng viên không có điểm phù hợp", "No matching score in Candidate list API")}>—</td><td>{candidate.total_experience_years == null ? "—" : `${candidate.total_experience_years} ${en ? "yrs" : "năm"}`}</td><td>—</td><td>—</td></tr>)}</tbody></table></div> : !error ? <div className={styles.empty}><h3>{tr("Talent Pool chưa có hồ sơ", "No candidates yet")}</h3><p>{tr("Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.", "Submit a CV for review. An Admin or Recruiter must approve it before the profile appears here.")}</p><button className={styles.secondary} onClick={() => setView("cv-review")}>{tr("Mở CV chờ duyệt", "Open CV review queue")}</button></div> : null}
+        {loading ? <p className={styles.empty}>{tr("Đang tải ứng viên…", "Loading candidates…")}</p> : candidates.length ? <div className={styles.scroll}><table className={styles.table}><thead><tr><th aria-label={tr("Chọn hồ sơ", "Select candidate")}></th><th>{tr("Ứng viên", "Candidate")}</th><th>{tr("Vị trí / Công ty", "Current Job / Company")}</th><th>{tr("Giai đoạn", "Stage")}</th><th>{tr("Vòng phỏng vấn", "Interview Round")}</th><th>{tr("Độ phù hợp", "Matching")}</th><th>{tr("Kinh nghiệm", "Experience")}</th><th title={tr("Nguồn của lần ứng tuyển gần nhất bạn được phép xem", "Source from the latest application you can access")}>{tr("Nguồn", "Source")}<small>{tr("Gần nhất", "Latest")}</small></th><th title={tr("Nguồn chi tiết của lần ứng tuyển gần nhất bạn được phép xem", "Sub-source from the latest application you can access")}>{tr("Nguồn chi tiết", "Sub-source")}<small>{tr("Gần nhất", "Latest")}</small></th><th>{tr("Hoạt động gần nhất", "Last Activity")}</th></tr></thead><tbody>{candidates.map((candidate) => { const attribution = attributionByCandidate[candidate.id]; return <tr key={candidate.id} className={selectedId === candidate.id ? styles.selected : ""}><td><input type="checkbox" aria-label={`${tr("Chọn", "Select")} ${candidate.full_name}`} checked={selectedId === candidate.id} onChange={()=>setSelectedId(candidate.id)}/></td><td><button type="button" className={styles.candidateLink} aria-pressed={selectedId === candidate.id} onClick={() => setSelectedId(candidate.id)}>{candidate.full_name}</button></td><td><strong className={styles.jobTitle}>{candidate.current_title || candidate.primary_role || "—"}</strong><small>{candidate.current_company || "—"}</small></td><td title={tr("Giai đoạn theo Job không có trong API danh sách ứng viên", "Stage is Job-specific and not returned by Candidate list API")}>—</td><td title={tr("Vòng phỏng vấn chỉ có theo từng Job", "Interview rounds are Job-specific")}>—</td><td title={tr("API danh sách ứng viên không có điểm phù hợp", "No matching score in Candidate list API")}>—</td><td>{candidate.total_experience_years == null ? "—" : `${candidate.total_experience_years} ${en ? "yrs" : "năm"}`}</td><td>{attribution?.source || "—"}</td><td>{attribution?.sub_source || "—"}</td><td>—</td></tr>; })}</tbody></table></div> : !error ? <div className={styles.empty}><h3>{tr("Talent Pool chưa có hồ sơ", "No candidates yet")}</h3><p>{tr("Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.", "Submit a CV for review. An Admin or Recruiter must approve it before the profile appears here.")}</p><button className={styles.secondary} onClick={() => setView("cv-review")}>{tr("Mở CV chờ duyệt", "Open CV review queue")}</button></div> : null}
+        {attributionError && <p className={styles.notice} role="status">{tr("Chưa tải được nguồn ứng tuyển. Hãy thử tải lại trang.", "Could not load application sources. Please refresh the page.")}</p>}
         <div className={styles.pagination}><button className={styles.secondary} disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>{tr("Trang trước", "Previous")}</button><span>{tr("Trang", "Page")} {offset / PAGE_SIZE + 1}</span><button className={styles.secondary} disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>{tr("Trang sau", "Next")}</button></div>
       </div>
       <div className={styles.profileCard} aria-busy={detailLoading}>
