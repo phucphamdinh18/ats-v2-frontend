@@ -62,3 +62,7 @@
 /* Readability weight pass: scoped, no layout or workflow changes. */
 .shell :is(input,select){font-weight:500}
 .footer{font-weight:600;color:#526174}
+
+
+/* Tablet: use the labeled sidebar for navigation so header links cannot collide with search/account controls. */
+@media(max-width:900px){.topnav{display:none}}
