@@ -1,6 +1,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { ChevronRight, Layers3, MapPin } from "lucide-react";
+import candidateStyles from "./bosch-v2-candidate-frame.module.css";
 
 type Module = "candidates" | "interviews" | "offers";
 const specs: Record<Module, { title: string; crumb: string; tabs: string[]; active: string; help: string }> = {
@@ -27,6 +28,19 @@ const specs: Record<Module, { title: string; crumb: string; tabs: string[]; acti
  */
 export default function BoschModuleLayout({ module, children }: { module: Module; children: ReactNode }) {
   const meta = specs[module];
+  if (module === "candidates") {
+    return <section className={candidateStyles.root} aria-label="Candidates workspace">
+      <div className={candidateStyles.crumb}>Candidates <ChevronRight size={14}/><strong>Candidate Database</strong></div>
+      <h1 className={candidateStyles.heading}>Candidates</h1>
+      <p className={candidateStyles.subtitle}>Profiles in your authorized ATS workspace.</p>
+      <nav className={candidateStyles.tabs} aria-label="Candidates sections">
+        <span aria-current="page" className={candidateStyles.active}>Candidate Database</span>
+        <span title="Not available in current API">Talent Pool</span>
+        <span title="Not available in current API">Archived</span>
+      </nav>
+      {children}
+    </section>;
+  }
   return <section className={`bosch-module-page bosch-module-${module}`} aria-label={`${meta.title} workspace`}>
     <div className="bosch-breadcrumb"><span>{meta.title}</span><ChevronRight size={14}/><strong>{meta.crumb}</strong></div>
     <div className="bosch-job-title-row"><h1>{meta.title}</h1></div>
