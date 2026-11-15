@@ -918,3 +918,12 @@ Owner requested six columns in Jobs, Department without `/ BU`, left-aligned det
 - Search `Codex` returns one TEST Job, clearing restores list; View detail opens existing TEST Pipeline. Candidate Database: five headers remain, headers 15px/body 16px, candidate name 26px, section titles 20px; all inner section headings share one left gutter. Interviews detail name 26px and section titles 20px; body paragraphs 16px. Offers empty-state name 26px; no Offer record was fabricated to validate populated details.
 - Pipeline Candidate/Source remain left aligned; other descriptive columns centered; headers 15px. Its two loaded fact lists show 0 padding and left alignment with 16px labels. Existing TEST candidate selection works. No submit, stage move, scheduling, Add to Job or Offer write was performed.
 - All inspected modules showed no page-level horizontal overflow at the actual viewport. Target 1440/1920/tablet/mobile visual acceptance remains unverified; full E2E is not claimed. UI code is deployed; PR #44 remains Draft. This documentation-only follow-up may have a newer branch SHA than the deployed UI SHA.
+
+
+## Follow-up — Match Jobs detail widths and shift Status left (2026-11-15)
+
+Owner requested equal-sized Jobs/Pipeline and Job Openings right panels and a slight left shift of the Jobs Status column. The supplied images show the Job Openings Snapshot as the narrow panel. Apply a shared desktop track `--ats-detail-track:clamp(380px,30%,460px)` to Jobs Overview and Job Detail/Pipeline. Preserve each view's existing stacking breakpoint and height/scroll behavior. This supersedes the separate 340–400px / 360–500px tracks; readable type remains unchanged.
+
+Jobs column widths change from 30/15/15/10/17/13% to 30/15/13/12/17/13%. Status header and all badges move left together by 2% of the table width (22.4px at the 1120px minimum); Applications and Action start positions remain unchanged. No transforms or independent header/cell offsets. Function wraps within its narrower column. Larger panels may require additional local table scrolling.
+
+Scope: CSS tokens, layout tracks, colgroup markup, existing regression expectation and DOC only. No search/filter/paging/selection/navigation/data/API/Auth/RLS changes. Tests/CI/live verification pending. Rollback by reverting this scoped UI commit and republishing prior UI ecafbb8; no DB rollback. PR #44 remains Draft.

@@ -12,7 +12,7 @@
 .subtitle{font-size:var(--ats-font-body);color:#657286}
 .tabs{display:flex;border-bottom:1px solid #dce1e7;margin:0 0 18px;gap:25px}
 .tabActive{font-size:var(--ats-font-body);font-weight:800;color:var(--red);padding:10px 2px 12px;border-bottom:3px solid var(--red)}
-.workspace{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,26%,400px);gap:17px;align-items:stretch;min-width:0;min-height:640px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) var(--ats-detail-track);gap:17px;align-items:stretch;min-width:0;min-height:640px}
 .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
 .panel{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:7px;background:#fff}
 .jobsPanel{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}

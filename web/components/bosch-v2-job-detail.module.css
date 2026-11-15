@@ -149,7 +149,7 @@
 
 /* Pipeline composition: the existing child keeps its state and handlers while its
    presentation shares the Job header grid. No measured offsets or negative margins. */
-.pipelineLayout{display:grid;grid-template-columns:minmax(0,1fr) clamp(360px,34%,500px);column-gap:24px;align-items:start;--job-pipeline-display:contents;--job-pipeline-summary-row:5;--job-pipeline-list-row:6;--job-pipeline-side-row:2 / 7;--job-pipeline-list-margin:16px}
+.pipelineLayout{display:grid;grid-template-columns:minmax(0,1fr) var(--ats-detail-track);column-gap:24px;align-items:start;--job-pipeline-display:contents;--job-pipeline-summary-row:5;--job-pipeline-list-row:6;--job-pipeline-side-row:2 / 7;--job-pipeline-list-margin:16px}
 .pipelineLayout>.crumb{grid-column:1;grid-row:1}
 .pipelineLayout>.titleRow{grid-column:1;grid-row:2;align-items:flex-start}
 .pipelineLayout>.titleRow h1{font-size:25px;line-height:1.25;font-weight:700}

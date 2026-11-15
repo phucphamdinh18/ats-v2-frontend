@@ -3,6 +3,7 @@
   --ats-font-meta: 15px;
   --ats-font-section: 20px;
   --ats-font-panel: 26px;
+  --ats-detail-track: clamp(380px,30%,460px);
   --ink: #17233b;
   --muted: #64748b;
   --line: #e4e9f2;

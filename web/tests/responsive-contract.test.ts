@@ -104,14 +104,14 @@ test("Jobs Overview uses six-column grid and reusable shared table primitives", 
   const css = file("bosch-v2-jobs.module.css");
   const shared = file("ats-table.module.css");
   const view = file("bosch-jobs-master.tsx");
-  for (const width of ['"30%"', '"15%"', '"10%"', '"17%"', '"13%"']) {
+  for (const width of ['"30%"', '"15%"', '"13%"', '"12%"', '"17%"']) {
     assert.ok(view.includes(width), `Missing column width ${width}`);
   }
   assert.ok(view.includes("<colgroup>"), "Six-column table still needs colgroup");
   assert.ok(view.includes("title={job.title}"), "Full title still accessible");
   assert.ok(css.includes(".table tbody tr{height:64px"), "Updated reference uses 64px rows");
   assert.ok(css.includes("-webkit-line-clamp:2"), "Long job names remain at most two visible lines");
-  assert.ok(css.includes(".workspace{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,26%,400px)"), "Job Snapshot uses a 340–400px column");
+  assert.ok(css.includes(".workspace{display:grid;grid-template-columns:minmax(0,1fr) var(--ats-detail-track)"), "Jobs panels share the readable detail track");
   assert.ok(css.includes("@media(max-width:1370px)"), "Narrow pages stack snapshot");
   assert.ok(css.includes(".snapshotInner{position:absolute;inset:0;display:flex;flex-direction:column;overflow-y:auto"), "Snapshot content cannot increase the left stack height");
   assert.ok(css.includes(".footer{composes:foot"), "Footer reuses shared primitive");
