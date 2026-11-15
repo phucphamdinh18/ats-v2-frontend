@@ -75,3 +75,8 @@
 @media(max-width:1050px){.dashboardGrid{grid-template-columns:1fr}.rightColumn{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
 @media(max-width:710px){.rightColumn{display:flex}.metrics{grid-template-columns:repeat(3,1fr)}.metric:nth-child(3){border-right:1px solid #e0e5ea}.metric:nth-child(n+4){border-top:0}.heading h1{font-size:23px}}
 @media(max-width:470px){.metrics{grid-template-columns:repeat(2,1fr)}.metric:nth-child(2n){border-right:1px solid #e0e5ea}.metric:nth-child(3){border-right:0}.stage strong{font-size:19px}.stage span{font-size:11px}.pipeline{padding:9px}.stage{min-height:73px}.search{width:100%}.search input{flex:1;width:100%}}
+
+/* Readability weight pass: scoped, no layout or workflow changes. */
+.root :is(input,select){font-weight:500}
+.crumb,.heading p,.hint,.panelTitle small{font-weight:600;color:#526174}
+.metric span{font-weight:800}
