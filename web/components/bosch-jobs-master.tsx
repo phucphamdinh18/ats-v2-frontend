@@ -58,7 +58,7 @@ export default function BoschJobsMaster({
     title: "Job Openings", subtitle: "Manage requisitions, hiring priorities and job-level performance.",
     overview: "Job Overview", summary: "Job Summary", total: "Total Jobs", open: "Open", draft: "Draft", onHold: "On Hold", closed: "Closed",
     search: "Search Job ID / position", allStatuses: "All Statuses", allPriorities: "All Priorities",
-    job: "Job Opening", unit: "Department / BU", req: "Req Type / Date", level: "Level / Priority",
+    job: "Job Opening", unit: "Department", req: "Req Type / Date", level: "Level / Priority",
     status: "Status", sla: "SLA Target", volume: "Applications", action: "Action",
     noMatch: "No Jobs match these filters.", clear: "Clear filters", select: "Select Job",
     snapshot: "Job Snapshot", requisition: "Requisition Information", progress: "Hiring Status & SLA",
@@ -70,7 +70,7 @@ export default function BoschJobsMaster({
     title: "Vị trí tuyển dụng", subtitle: "Quản lý yêu cầu tuyển, mức ưu tiên và tiến độ theo từng Job.",
     overview: "Tổng quan Job", summary: "Tổng quan Job", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", onHold: "Tạm dừng", closed: "Đã đóng",
     search: "Tìm mã hoặc tên Job", allStatuses: "Tất cả trạng thái", allPriorities: "Tất cả ưu tiên",
-    job: "Vị trí tuyển dụng", unit: "Đơn vị / BU", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
+    job: "Vị trí tuyển dụng", unit: "Đơn vị", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
     status: "Trạng thái", sla: "SLA mục tiêu", volume: "Hồ sơ", action: "Thao tác",
     noMatch: "Không tìm thấy Job phù hợp.", clear: "Xóa bộ lọc", select: "Chọn Job",
     snapshot: "Tóm tắt Job", requisition: "Thông tin yêu cầu tuyển", progress: "Trạng thái & SLA",
@@ -144,9 +144,9 @@ export default function BoschJobsMaster({
           </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
-              <colgroup><col style={{ width: "36%" }}/><col style={{ width: "20%" }}/><col style={{ width: "12%" }}/><col style={{ width: "18%" }}/><col style={{ width: "14%" }}/></colgroup>
+              <colgroup><col style={{ width: "30%" }}/><col style={{ width: "15%" }}/><col style={{ width: "15%" }}/><col style={{ width: "10%" }}/><col style={{ width: "17%" }}/><col style={{ width: "13%" }}/></colgroup>
               <thead><tr>
-                <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th>
+                <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th><th scope="col">{labels.function}</th>
                 <th scope="col">{labels.status}</th><th scope="col">{labels.volume}</th>
                 <th scope="col">{labels.action}</th>
               </tr></thead>
@@ -155,7 +155,8 @@ export default function BoschJobsMaster({
                   <button type="button" className={styles.jobName} title={job.title} aria-label={`Chọn Job ${job.title}`}
                     onClick={() => choose(job)}>{job.title}</button>
                   <span className={styles.jobCode}>{job.job_code || dash}</span></div></td>
-                <td><div className={styles.departmentCell}><b className={job.business_unit ? styles.department : styles.departmentEmpty}>{job.business_unit || dash}</b>{job.function_group && <div className={styles.dim} title={job.function_group}>{job.function_group}</div>}</div></td>
+                <td><div className={styles.departmentCell}><b className={job.business_unit ? styles.department : styles.departmentEmpty}>{job.business_unit || dash}</b></div></td>
+                <td><div className={styles.departmentCell}>{job.function_group || dash}</div></td>
                 <td><span className={`${styles.state} ${job.status === "OPEN" ? styles.open : job.status === "DRAFT" ? styles.draft : ""}`}>{job.status === "OPEN" ? labels.open : job.status === "DRAFT" ? labels.draft : job.status}</span></td>
                 <td><div className={styles.applicationCell}><div><b>{job.metrics?.total_candidates ?? dash}</b> {labels.applications}</div>
                   <div className={styles.dim} title={sourceOf(job)}>{sourceOf(job)}</div></div></td>

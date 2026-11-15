@@ -14,7 +14,7 @@ const detail = file("bosch-v2-job-detail.module.css");
 test("Candidate Database uses a single heading, five-column list and height-matched profile", () => {
   const view = file("talent-pool.tsx");
   const wrapper = file("bosch-module-layout.tsx");
-  for (const rule of [".pageGrid{display:grid;", ".pageLeft{display:flex;flex-direction:column", ".listCard{flex:1 1 auto;", ".scroll{flex:1 1 auto;", ".table{width:100%;min-width:640px;", ".profileScroll{position:sticky;top:16px;", "@media(max-width:1200px)"]) {
+  for (const rule of [".pageGrid{display:grid;", ".pageLeft{display:flex;flex-direction:column", ".listCard{flex:1 1 auto;", ".scroll{flex:1 1 auto;", ".table{width:100%;min-width:960px;", ".profileScroll{position:sticky;top:16px;", "@media(max-width:1200px)"]) {
     assert.ok(candidate.includes(rule), rule);
   }
   assert.ok(wrapper.includes('if (module === "candidates") {') && wrapper.includes("return <>{children}</>"), "Outer duplicate Candidates heading removed");
@@ -100,14 +100,14 @@ test("Candidate professional summary includes four icons and bilingual Education
 });
 
 
-test("Jobs Overview uses reference five-column grid and reusable shared table primitives", () => {
+test("Jobs Overview uses six-column grid and reusable shared table primitives", () => {
   const css = file("bosch-v2-jobs.module.css");
   const shared = file("ats-table.module.css");
   const view = file("bosch-jobs-master.tsx");
-  for (const width of ['"36%"', '"20%"', '"12%"', '"18%"', '"14%"']) {
+  for (const width of ['"30%"', '"15%"', '"10%"', '"17%"', '"13%"']) {
     assert.ok(view.includes(width), `Missing column width ${width}`);
   }
-  assert.ok(view.includes("<colgroup>"), "Five-column table still needs colgroup");
+  assert.ok(view.includes("<colgroup>"), "Six-column table still needs colgroup");
   assert.ok(view.includes("title={job.title}"), "Full title still accessible");
   assert.ok(css.includes(".table tbody tr{height:64px"), "Updated reference uses 64px rows");
   assert.ok(css.includes("-webkit-line-clamp:2"), "Long job names remain at most two visible lines");

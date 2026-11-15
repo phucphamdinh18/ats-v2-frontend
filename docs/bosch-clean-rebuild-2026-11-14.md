@@ -896,3 +896,16 @@ Owner requested direct implementation on PR #44, not a prompt. Scope limited to 
 **QA/status:** Structural checks and component smoke were added; authenticated screenshot QA on exact 1440px/100% and Preview SHA **PENDING**. CI on final HEAD must be checked independently; automated green cannot certify pixel fidelity or full E2E. No production merge/deploy, no backend/schema/query changes, no test mutation.
 
 **Rollback:** revert the scoped commits for this pass (including the new presentation file, import/props, style rules, tests, DOC update) by reviewed reverse-order reverts. Preserve current backup branch and verified production. Preview republish needs freshly verified live `release.json`.
+
+
+## Follow-up — Function column and frontend-wide readable type (2026-11-16 ICT)
+
+Owner requested six columns in Jobs, Department without `/ BU`, left-aligned detail facts everywhere, and the approved Pipeline font scale throughout the active frontend.
+
+- Jobs columns: Job Opening / Department / Function / Status / Applications / Action. Existing `business_unit` and `function_group` fields are displayed independently; missing values remain `—`. No field rename, migration or invented data. The prior five-column width contract is superseded by 30/15/15/10/17/13%; table min-width 1120px, local horizontal scroll. Summary remains five real status counts.
+- Shared CSS tokens: body 16px, table headings 15px, section titles 20px, detail names 26px. All Bosch component styles, shared table primitives, shell navigation and login text use the readable scale; existing larger page headings/counts retained. Existing Pipeline Candidate/Source left alignment and other centered columns preserved.
+- Root cause of indented Snapshot facts: legacy global `dl { padding:20px 28px }`. New shell explicitly resets definition-list padding to zero and aligns dt/dd left. Job fact cell padding is vertical-only; Candidate inner cards lose extra horizontal indentation while retaining a consistent panel gutter. No negative margins or changes to selection/navigation handlers.
+- Scope: CSS + Jobs markup + existing regression expectations + DOC. No queries, schema, Auth, RLS, API, stages, data writes or permissions changes. PR #44 stays Draft. This work does not change publishing routes or resolve the separately recorded legacy-route blocker.
+- Local verification: 33 Node tests and 81 Vitest tests PASS; TypeScript PASS. Build and live Preview verification pending at initial commit; CI is not visual acceptance.
+- Visual QA pending: verify VI/EN, six-column function values, Snapshot heading/fact left edges, Candidate Database, Pipeline, Interviews, Offers and navigation. Target viewports remain unaccepted until actually measured.
+- Rollback: revert this scoped commit and republish previous Preview `9e7adc083600072228284526b1a77ca2fda1cda8` with a freshly verified root release SHA. No database rollback needed.
