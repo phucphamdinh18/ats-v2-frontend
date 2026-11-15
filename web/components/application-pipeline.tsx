@@ -267,7 +267,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     <div className={styles.toolbar}>
       <h2 className={styles.tableHeading}>{copy.candidates} ({job.metrics?.total_candidates ?? items.length})</h2>
       {canManageApplications && (state === "ready" || state === "empty" || state === "error") && <details className={styles.disclosure}><summary><span aria-hidden="true">＋</span> {copy.addCandidate}</summary><ManualCandidateForm job={job} onCreated={refreshAfterCandidateCreated} onSessionLost={onSessionLost} /></details>}
-      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label={copy.candidatesLabel} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.searchCandidates} /></label>
+      <label className={styles.search}><span aria-hidden="true">⌕</span><input aria-label={copy.candidatesLabel} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Search candidates…" : "Tìm ứng viên…"} /></label>
       {state === "ready" && <span className={styles.muted}>{copy.pageCount(items.length)}</span>}
     </div>
     {!canManageApplications && <div className={styles.notice} role="status">{copy.readOnly}</div>}
@@ -279,17 +279,18 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {failedTransition && <div className={`${styles.notice} ${styles.error}`} role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className={styles.retry} aria-label={copy.retryRequest(copy.stageLabel(failedTransition.targetStage))} onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>{copy.retryMove} {copy.stageLabel(failedTransition.targetStage)}</button></div>}
     {(state === "ready" || state === "empty") && <div className={styles.scroll}>
       <table className={styles.table}>
-        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
+        <colgroup><col className={styles.checkCol}/><col className={styles.candidateCol}/><col className={styles.stageCol}/><col className={styles.roundCol}/><col className={styles.matchCol}/><col className={styles.experienceCol}/><col className={styles.sourceCol}/></colgroup>
+        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{en ? "Round" : "Vòng PV"}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
               <td><button className={styles.candidateLink} type="button" title={application.candidate_name} onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
               <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{copy.stageLabel(stage)}</span></td>
-              <td title={en ? "Interview rounds aren’t included in this response" : "Dữ liệu vòng phỏng vấn chưa có trong API hồ sơ"}>—</td>
-              <td title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
-              <td title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>
-              <td>{application.source || "—"}</td>
+              <td className={styles.emptyValue} title={en ? "Interview rounds aren’t included in this response" : "Dữ liệu vòng phỏng vấn chưa có trong API hồ sơ"}>—</td>
+              <td className={styles.emptyValue} title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
+              <td className={styles.emptyValue} title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>
+              <td><span className={styles.sourceText} title={application.source || "—"}>{application.source || "—"}</span></td>
             </tr>
           )))}
         </tbody>
@@ -299,13 +300,16 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {state === "ready" && <div className={styles.pagination}><button className={styles.actionSecondary} disabled={offset === 0} title={offset === 0 ? copy.firstPage : copy.prevPage} onClick={() => { const next = Math.max(0, offset - PAGE_SIZE); setOffset(next); void load(next, query); }}>{copy.prevPage}</button><span>{copy.page(offset / PAGE_SIZE + 1)}</span><button className={styles.actionSecondary} disabled={items.length < PAGE_SIZE} title={items.length < PAGE_SIZE ? copy.lastPage : copy.nextPage} onClick={() => { const next = offset + PAGE_SIZE; setOffset(next); void load(next, query); }}>{copy.nextPage}</button></div>}
     </div>
     </div>
-    {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label={copy.overview}><h2>{copy.overview}</h2><p>{copy.selectCandidate}</p></aside>}
+    {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label={copy.overview}><div className={styles.sideInner}><h2>{copy.overview}</h2><p>{copy.selectCandidate}</p></div></aside>}
     {selected && <aside className={styles.side} aria-label="Chi tiết ứng viên">
+      <div className={styles.sideInner}>
+      <div className={styles.detailSticky}>
       <div className={styles.profileHead}>
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
         <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>×</button>
       </div>
       <nav className={styles.profileTabs} aria-label={copy.tabs}><span className={styles.active}>{copy.overviewTab}</span><span>{copy.profile}</span><span>{copy.notes}</span><span>{copy.activityTab}</span></nav>
+      </div>
       {detailLoading && <p role="status">{en ? "Loading details…" : "Đang tải chi tiết…"}</p>}
       {detailError && <div className={`${styles.notice} ${styles.error}`} role="alert">{detailError}<button className={styles.retry} onClick={() => void openDetail(selected)}>{copy.retry}</button></div>}
       {detail && <>
@@ -328,6 +332,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       {canManageApplications && previousStage && <button className={styles.actionSecondary} aria-label={transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.previous(copy.stageLabel(previousStage))} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))}</button>}
       {canManageApplications && nextStage && <button className={styles.actionPrimary} aria-label={transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.next(copy.stageLabel(nextStage))} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))}</button>}
       {disabledReason && <p className={styles.disabledExplanation}>{disabledReason}</p>}
+      </div>
     </aside>}
   </section>;
 }
