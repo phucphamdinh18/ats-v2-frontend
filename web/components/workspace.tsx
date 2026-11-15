@@ -360,15 +360,15 @@ export default function Workspace() {
             {localLoginVisible && localLoginOpen ? (
               <div className="local-login auth-local-login">
                 <label>
-                  Email thử nghiệm
+                  {locale === "en" ? "Test email" : "Email thử nghiệm"}
                   <input type="email" autoComplete="username" value={localEmail} onChange={(event) => setLocalEmail(event.target.value)} placeholder="admin.test@example.invalid" />
                 </label>
                 <label>
-                  Mật khẩu thử nghiệm
+                  {locale === "en" ? "Test password" : "Mật khẩu thử nghiệm"}
                   <input type="password" autoComplete="current-password" value={localPassword} onChange={(event) => setLocalPassword(event.target.value)} />
                 </label>
                 <button className="primary google-button" disabled={authBusy || !localEmail || !localPassword} onClick={() => void localLogin()}>
-                  {authBusy ? "Đang đăng nhập…" : "Đăng nhập thử"}<Icon name="arrow" size={17} />
+                  {authBusy ? (locale === "en" ? "Signing in…" : "Đang đăng nhập…") : (locale === "en" ? "Test sign in" : "Đăng nhập thử")}<Icon name="arrow" size={17} />
                 </button>
                 <button className="quiet auth-local-toggle" onClick={() => setLocalLoginOpen(false)}>Ẩn đăng nhập thử nghiệm</button>
               </div>
@@ -459,21 +459,21 @@ export default function Workspace() {
           </div>
         </header>
       <aside className={styles.sidebar}>
-        <div className={styles.sidebarTitle}>Recruitment</div>
+        <div className={styles.sidebarTitle}>{locale === "en" ? "Recruitment" : "Tuyển dụng"}</div>
         <nav className={styles.nav} aria-label={t.navigation}>
           <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Dashboard</span></button>
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {allowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "offers" ? styles.active : ""}`} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs"/><span className={styles.navLabel}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</span></button>}
-          <span className={styles.sidebarGroup}>Administration</span>
+          <span className={styles.sidebarGroup}>{locale === "en" ? "Administration" : "Quản trị"}</span>
           {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span></button>}
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "jd" ? styles.active : ""}`} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span></button>}
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
-        {allowed && <button className={styles.collapse} type="button" aria-label={guideOpen ? "Ẩn hướng dẫn" : "Hiện hướng dẫn"} onClick={() => { setTab("jobs"); setGuideOpen(open => !open); }}><Icon name="help" size={16}/><span className={styles.navLabel}>{t.help}</span></button>}
-        <button className={styles.collapse} type="button" aria-label={sidebarCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed(value => !value)}><Icon name={sidebarCollapsed ? "expand" : "collapse"} size={16}/><span className={styles.navLabel}>{sidebarCollapsed ? "Mở rộng" : "Thu gọn menu"}</span></button>
+        {allowed && <button className={styles.collapse} type="button" aria-label={guideOpen ? t.hideGuide : (locale === "en" ? "Show guide" : "Hiện hướng dẫn")} onClick={() => { setTab("jobs"); setGuideOpen(open => !open); }}><Icon name="help" size={16}/><span className={styles.navLabel}>{t.help}</span></button>}
+        <button className={styles.collapse} type="button" aria-label={sidebarCollapsed ? (locale === "en" ? "Expand navigation" : "Mở rộng thanh điều hướng") : (locale === "en" ? "Collapse navigation" : "Thu gọn thanh điều hướng")} aria-expanded={!sidebarCollapsed} onClick={() => setSidebarCollapsed(value => !value)}><Icon name={sidebarCollapsed ? "expand" : "collapse"} size={16}/><span className={styles.navLabel}>{sidebarCollapsed ? (locale === "en" ? "Expand" : "Mở rộng") : (locale === "en" ? "Collapse menu" : "Thu gọn menu")}</span></button>
       </aside>
       <div className={styles.main}>
         <main id="main-content" className={styles.content}>
@@ -555,8 +555,7 @@ export default function Workspace() {
                       <Icon name="arrow" size={17} />
                     </button>
                     <div className="local-login-note">
-                      Chế độ thử trên máy này. Quyền Admin/TA vẫn được
-                      kiểm tra bằng dữ liệu thử.
+                      {locale === "en" ? "Local test mode. Admin/TA access is still checked against test data." : "Chế độ thử trên máy này. Quyền Admin/TA vẫn được kiểm tra bằng dữ liệu thử."}
                     </div>
                   </div>
                 ) : (
