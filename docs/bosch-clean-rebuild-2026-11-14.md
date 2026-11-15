@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 20848)
-Total output lines: 587
-
 # Bosch V2 clean rebuild — implementation log
 
 Date: 2026-11-14
@@ -304,7 +301,26 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Backend error bodies currently provide arbitrary Vietnamese strings without a machine-readable locale-independent message code. The client retains these backend messages rather than guessing translations or concealing errors. Exact EN localization of backend errors requires a separate verified API contract, not a risky frontend-only string replacement.
 - Admin Console and additional older components may contain untranslated text beyond this core module scope. A browser-based bilingual sweep is still required to locate and log every visible remainder.
 - Offers remains deferred and unresolved. No migration, Edge Function, database, RLS or production changes were made.
-- **Not yet accepted:** check both locales with 1440×900, 1920×1080, 768px and 390px viewport screenshots; verify …848 tokens truncated…oval. Browser role-based E2E remains `SKIPPED` until test identities and a suitable test backend are available.
+- **Not yet accepted:** check both locales with 1440×900, 1920×1080, 768px and 390px viewport screenshots; verify visual fit; run local/test role-based E2E for Admin, TA, HM and Interviewer. Unit tests and Next CI do not substitute for browser E2E or visual acceptance.
+- Keep Draft PR #44, branch backup and production root unchanged. Next: responsive table/layout corrections in non-Offer modules, then viewport-based Visual QA and E2E.
+
+
+## Step 17 — Candidates, Interviews and Job Detail responsive stabilization (2026-11-15)
+
+**Owner request:** eliminate laptop table crowding while retaining usable mobile behavior; verify four viewport sizes: `1440×900`, `1920×1080`, `768px`, `390px`. Offers remains **DEFERRED** (Step 15).
+
+### Implemented on Draft PR #44
+- Existing branch commits `c5e0a29`, `1c4c5c9`, `dcf958e` and `eaf592f` already added base responsive behavior to Candidate Database, Interview Schedule, Application Pipeline and Job Detail. This iteration **preserved those changes**, rather than rewriting them.
+- `web/components/bosch-v2-candidates.module.css`: use `container-type: inline-size` on the table panel and collapse the five placeholder-only columns when **actual list-pane width <=1250px**, even at large desktop viewport widths. Preserve Candidate, current position/company and experience; further reduce columns on a narrow phone.
+- `web/components/bosch-v2-interviews.module.css`: use actual pane width <=850px to collapse Type and Feedback columns (the real values remain in Interview Details). Retain Candidate, Job and start date; preserve read-only schedule and status filters.
+- `web/components/bosch-v2-pipeline.module.css`: collapse only unavailable placeholder Application fields by pane width <=1250px. Preserve actual Candidate, Stage and Source values, and show Source in the detail area when the phone table is narrower than 440px.
+- `web/components/bosch-v2-job-detail.module.css`: enforce scroll containment on Job tab bar and audit/requisition tables, keyboard focus visibility, stacked detail cards on tablet and safe Job switching on phone.
+- Added `web/tests/responsive-contract.test.ts` structural assertions for container queries, table overflow boundaries and four target breakpoint widths. No API, Supabase, RLS, migrations, Offers workflow or production files were modified.
+
+### Verification and limits
+- Ran **local Chromium synthetic layout fixture** at `1440×900`, `1920×1080`, `768×900`, and `390×844` for representative Candidates, Interviews and Pipeline split-pane structures with the new responsive rules: document horizontal overflow **false** for all 12 combinations; detail pane stacked beneath table at 768px and 390px, side-by-side at 1440px and 1920px. Visible table columns by viewport were Candidates **4/4/4/3**, Interviews **3/5/3/3**, Pipeline **4/4/4/3** respectively (ordered 1440/1920/768/390). These are **fixture results only**, not screenshots of the live authenticated Next.js ATS.
+- **Browser-backed preview Visual QA is NOT complete.** The browser connector is unavailable outside its originating browser context, and the available container cannot reach the GitHub Pages preview domain. This iteration therefore cannot truthfully certify actual signed-in page rendering, layout screenshots, or pixel comparison at any requested viewport. Record as `SKIPPED / BLOCKED` until an authenticated preview browser with viewport controls is available.
+- Confirm CI status on the final HEAD (QA/Next/Pages) before approval. Browser role-based E2E remains `SKIPPED` until test identities and a suitable test backend are available.
 - **Rollback:** revert only the scoped responsive CSS and structural test commits on `redesign/bosch-enterprise-v2`, retaining the preexisting responsive commits and documented backup. Do not merge or modify production to test.
 
 
@@ -569,3 +585,30 @@ Rollback: revert only the three commits above on the Draft branch with reviewed 
 - The first live capture also showed the panel could extend below the viewport because its `100vh - 24px` maximum ignored the Job header above the Pipeline. A follow-up CSS-only adjustment and regression assertion are now in the branch (`web/components/bosch-v2-pipeline.module.css`, `web/tests/responsive-contract.test.ts`): desktop detail height is bounded by the remaining workspace height, and small screens still use normal stacked flow. Local tests (31 node + 78 Vitest), typecheck and static build passed again after this adjustment.
 - Recheck this final height adjustment on the deployed final HEAD before describing History scrolling as visually passing. The exact four requested viewport sizes and full bilingual matrix remain BLOCKED by the 1363×936 Cloud Browser limit; there are no screenshots at those exact dimensions.
 - Branch update after the main wrapper fix and viewport-height follow-up: responsive CSS/test commit `992336b8cf7c7679145e0223ef0ec6dcbe57e758`. The subsequent documentation commit is the final PR head for this pass; verify the live PR head and CI before preview deployment. Supabase browser E2E remains SKIPPED. Production, backend, Auth/RLS/API and recruitment data remain unchanged.
+
+## Final follow-up — Pipeline panel viewport correction and live verification (2026-11-15)
+
+### Preview and CI
+- PR #44 remains open, Draft, and unmerged. Before the docs-only closeout below, the final UI code revision was `a561e18f1859d10fbb33cb6def4e859f71cfaeb8`.
+- Read live `release.json` before deploy: production `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; currently published preview was `e4da0e949da5ad4e4c3cbf8cfba37af969828fea`.
+- Publish ATS Pages manual run #420 succeeded from `main`, mode `path-preview`, using that verified production ref and UI preview ref `a561e18f1859d10fbb33cb6def4e859f71cfaeb8`. Run: https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43702307371
+- Post-deploy live `release.json` confirmed production remained `71ff88ebdb68bea9f6456375c4c9d970e11c0379` and preview revision became `a561e18f1859d10fbb33cb6def4e859f71cfaeb8`.
+- CI on that UI revision: QA checks #404 **success**; Next web checks #377 **success**; PR Pages build #419 **success**; Supabase local browser E2E #295 **skipped**.
+- Additional local verification after the CSS height fix: 31 Node tests + 78 Vitest tests **passed**, typecheck **passed**, static build **passed**.
+
+### Signed-in Preview inspection (Admin, 1363×936 only)
+- Opened the deployed Preview as `phuc.phamdinh18@gmail.com`, opened the TEST ONLY Job and selected TEST ONLY Drag Retry Fixture. No data mutation was submitted.
+- **Pipeline layout — PASS at this observed viewport:** the Candidates table and selected-candidate rail remain side by side; the detail rail fits the workspace area instead of extending beyond the page. The panel scrolls internally, and scrolling to its end reveals all three existing History entries and the stage action. Four Summary icon rows (Experience, Current role, Company, Education) are present. Missing API values remain `—`; no fake data was added.
+- **Shell spot check — PASS at this viewport:** Bosch/ATS V2 wordmark is fully visible, navy topbar and light sidebar render, active navigation is red, and labels are readable.
+- Switched the same view VI → EN. Navigation, Job Detail labels, Pipeline labels, Candidate Summary and History changed language. A complete bilingual sweep of every module was not performed.
+- On the available narrow left content pane, responsive CSS shows Candidate, Stage and Source; Round, Match and Experience columns are hidden at this pane width, while Last Activity remains removed. This is the current compact layout behavior; exact wider desktop and mobile behavior still needs screenshots at supported target viewports.
+
+### Viewport/role results and verdict
+- Actual available browser viewport: **1363×936**. Exact-size live screenshots for 1920×1080, 1440×900, 768×1024 and 390×844 remain **BLOCKED**; do not infer their visual result from CSS.
+- VI/EN was spot-checked on the Job Detail/Pipeline at 1363×936; full six-module bilingual coverage is **PARTIAL**.
+- Admin authenticated read-only Pipeline inspection: **PASS** for the checks above. TA, HM and Interviewer E2E, API 401/403, mutation/retry, and Supabase local E2E: **SKIPPED/BLOCKED**. No real recruitment records were changed.
+- Overall ATS acceptance remains **BLOCKED**. This pass only certifies the observed Pipeline and Shell behavior at 1363×936; it does not certify pixel-perfect Bosch fidelity or the requested viewport matrix.
+
+### Rollback
+- Revert the scoped Pipeline wrapper/height CSS and responsive test commits on the Draft branch with reviewed revert commits if needed. Keep backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`.
+- To restore an earlier Preview, first read live `release.json`, preserve its current production revision as `production_ref`, then run the existing `path-preview` workflow with the chosen earlier `preview_ref`. Do not change the production root.
