@@ -277,18 +277,17 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     {failedTransition && <div className={`${styles.notice} ${styles.error}`} role="alert"><strong>{failedTransition.application.candidate_name}</strong>: <span>{failedTransition.message}</span><button className={styles.retry} aria-label={copy.retryRequest(copy.stageLabel(failedTransition.targetStage))} onClick={() => void moveApplication(failedTransition.application, failedTransition.targetStage)}>{copy.retryMove} {copy.stageLabel(failedTransition.targetStage)}</button></div>}
     {(state === "ready" || state === "empty") && <div className={styles.scroll}>
       <table className={styles.table}>
-        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th><th>{copy.activity}</th></tr></thead>
+        <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
-              <td><button className={styles.candidateLink} type="button" onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
+              <td><button className={styles.candidateLink} type="button" title={application.candidate_name} onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
               <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{copy.stageLabel(stage)}</span></td>
               <td title={en ? "Interview rounds aren’t included in this response" : "Dữ liệu vòng phỏng vấn chưa có trong API hồ sơ"}>—</td>
               <td title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
               <td title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>
               <td>{application.source || "—"}</td>
-              <td title={en ? "Only the application creation date is available" : "API hiện chỉ có ngày tạo hồ sơ"}>—</td>
             </tr>
           )))}
         </tbody>
