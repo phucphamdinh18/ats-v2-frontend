@@ -10,9 +10,11 @@ const interview = file("bosch-v2-interviews.module.css");
 const pipeline = file("bosch-v2-pipeline.module.css");
 const detail = file("bosch-v2-job-detail.module.css");
 
-test("Candidates confines its table and stacks the profile on small viewports", () => {
-  for (const rule of [".listCard{container-type:inline-size}", "@container (max-width:1250px)", "@container (max-width:480px)", ".scroll{overflow-x:auto", "@media(max-width:1150px)", ".table th:nth-child(9),.table td:nth-child(9){display:none}"])
+test("Candidates confines its table, keeps Source/Sub-source, and stacks the profile on small viewports", () => {
+  for (const rule of [".listCard{container-type:inline-size}", "@container (max-width:1250px)", "@container (max-width:480px)", ".scroll{overflow-x:auto", "@media(max-width:1150px)", ".table th:nth-child(10),.table td:nth-child(10){display:none}"])
     assert.ok(candidate.includes(rule), rule);
+  assert.ok(!candidate.includes(".table th:nth-child(8),.table td:nth-child(8){display:none}"), "Source remains visible");
+  assert.ok(!candidate.includes(".table th:nth-child(9),.table td:nth-child(9){display:none}"), "Sub-source remains visible");
 });
 
 test("Interviews collapses detail-backed columns based on actual table-pane width", () => {
