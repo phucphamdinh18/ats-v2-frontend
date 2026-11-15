@@ -142,7 +142,7 @@
 .pagination button:disabled{opacity:1;color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed}
 .side{grid-column:2;grid-row:2;position:relative;top:auto;align-self:stretch;min-width:0;min-height:0;height:100%;max-height:none;overflow:hidden;padding:0;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
 .sideInner{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:16px;overscroll-behavior:contain;scrollbar-width:thin}
-.detailSticky{position:sticky;top:-16px;background:#fff;z-index:2;padding-top:1px}
+.detailSticky{position:sticky;top:0;background:#fff;z-index:2;padding-top:1px}
 .detailSticky .profileHead{padding-top:0}
 .detailSticky .profileTabs{background:#fff}
 @media(max-width:1200px){
