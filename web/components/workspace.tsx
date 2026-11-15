@@ -395,7 +395,7 @@ export default function Workspace() {
     <div className={`${styles.shell} ${sidebarCollapsed ? styles.collapsed : ""}`}>
       <a className={styles.skip} href="#main-content">{t.navigation}</a>
       <a className={styles.identity} href={`${basePath}/`} aria-label="Bosch ATS V2">
-        <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="124" height="42"/>
+        <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="188" height="52"/>
         <span className={styles.divider} aria-hidden="true"/>
         <strong>ATS V2</strong>
       </a>
