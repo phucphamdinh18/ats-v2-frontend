@@ -138,3 +138,59 @@
 .addControls>.primary{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;min-height:38px;padding:11px 15px;background:#d7192d;color:#fff;font-size:12px;font-weight:800}
 .addControls>.primary:disabled{background:#f3b3ba;color:#fff}
 @media(max-width:650px){.iconFacts{grid-template-columns:minmax(102px,38%) minmax(0,1fr);gap:9px 7px}}
+
+
+/* Isolated Bosch Candidate Detail presentation — no legacy panel selector overrides. */
+.detailHead{padding:18px 16px 0;border-bottom:1px solid var(--line);background:#fff}
+.detailHeadRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0}
+.detailHeadRow h3{min-width:0;font-size:19px;font-weight:800;line-height:1.3;color:#101924;overflow-wrap:anywhere;margin:0}
+.detailNav{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.detailNav button{display:grid;place-items:center;width:34px;height:34px;border:1px solid #cbd4df;border-radius:5px;background:#fff;color:#172236;padding:0}
+.detailNav button:hover:not(:disabled){background:#f4f6f9;border-color:#8a9aac}
+.detailNav button:disabled{opacity:.35;cursor:not-allowed}
+.detailRole{font-size:12px;color:#718096;line-height:1.4;margin:5px 0 10px!important;overflow-wrap:anywhere}
+.detailContactLine{display:flex;align-items:center;flex-wrap:wrap;column-gap:14px;row-gap:7px;margin:0 0 14px}
+.detailContactLine span{display:inline-flex;align-items:center;gap:7px;min-width:0;max-width:100%;font-size:12px;color:#263449;overflow-wrap:anywhere}
+.detailContactLine svg{flex:0 0 15px;stroke-width:1.9}
+.detailTabs{display:flex;align-items:stretch;gap:22px;max-width:100%;overflow-x:auto;scrollbar-width:thin}
+.detailTabs button{border:0;border-bottom:3px solid transparent;background:#fff;color:#25344b;padding:10px 1px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.detailTabs button:hover{color:#e20015}
+.detailTabs button.detailTabActive{border-bottom-color:#e20015;color:#e20015}
+.detailBody{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px}
+.detailSection{min-width:0;padding:14px;border:1px solid #dfe4ea;border-radius:6px;background:#fff}
+.detailSectionTitle{display:flex;align-items:center;gap:7px;margin:0 0 12px;font-size:14px;line-height:1.3;font-weight:800;color:#101924}
+.detailSectionTitle svg{color:#263449;stroke-width:1.8;flex:0 0 16px}
+.detailFactLines{display:flex;flex-direction:column;gap:9px}
+.detailFactLines>div{display:grid;grid-template-columns:16px minmax(0,1fr);align-items:start;gap:11px;font-size:12px;line-height:1.45;color:#172236;font-weight:500}
+.detailFactLines>div>svg{width:16px;height:16px;stroke-width:1.8;color:#263449;margin-top:1px}
+.detailFactLines>div>span{min-width:0;overflow-wrap:anywhere}
+.documentList{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.documentList li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;font-size:12px;min-width:0}
+.documentList li>span{min-width:0;overflow-wrap:anywhere;color:#34465f}
+.documentList li>a{display:inline-flex;gap:4px;align-items:center;color:#0757b8;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}
+.documentList li>a:hover{text-decoration:underline}
+.documentList small{font-size:11px;color:#718096}
+.detailSectionHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.detailSectionHeading .detailSectionTitle{margin:0}
+.viewJob{display:inline-flex;align-items:center;gap:4px;color:#0757b8;font-size:12px;font-weight:700;border:0;background:none;padding:2px;white-space:nowrap}
+.viewJob:hover{text-decoration:underline}
+.assignmentList{list-style:none;margin:0;padding:0;min-width:0}
+.assignmentList>li{min-width:0;padding:0 0 12px;margin:0 0 12px;border-bottom:1px solid #e9edf2}
+.assignmentList>li:last-child{padding:0;margin:0;border:0}
+.assignmentTitle,.assignmentTitleStatic{display:block;width:100%;max-width:100%;padding:0;border:0;background:none;text-align:left;color:#0757b8;font-size:14px;line-height:1.35;font-weight:800;overflow-wrap:anywhere}
+.assignmentTitle:hover{text-decoration:underline}
+.assignmentUnit{display:flex;align-items:flex-start;gap:7px;margin-top:7px;font-size:12px;color:#34465f;overflow-wrap:anywhere}
+.assignmentUnit svg{flex:0 0 14px;margin-top:1px}
+.assignmentMeta{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:10px;color:#657286;font-size:12px}
+.assignmentStage{display:inline-flex;align-items:center;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap}
+.detailBody .addControls{gap:9px}
+.detailBody .addControls select{height:36px;padding:0 10px;font-size:12px}
+.detailBody .addControls>.primary{min-height:37px;padding:10px 15px;font-size:12px;align-self:flex-start;background:#d7192d;color:#fff;font-weight:800}
+.detailBody .addControls>.primary:disabled{background:#f3b3ba;color:#fff;cursor:not-allowed}
+@media(max-width:650px){
+  .detailHead{padding:14px 12px 0}
+  .detailBody{padding:12px;gap:10px}
+  .detailSection{padding:12px}
+  .detailTabs{gap:16px}
+  .detailContactLine{column-gap:10px}
+}
