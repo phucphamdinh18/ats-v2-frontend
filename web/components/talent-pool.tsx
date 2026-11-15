@@ -199,7 +199,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
             <td><button type="button" className={styles.candidateLink} title={candidate.full_name} aria-pressed={selectedId === candidate.id} onClick={() => setSelectedId(candidate.id)}>{candidate.full_name}</button></td>
             <td><div className={styles.jobCompany}>
               {(candidate.current_title || candidate.primary_role) ? <strong className={styles.jobTitle} title={candidate.current_title || candidate.primary_role || ""}>{candidate.current_title || candidate.primary_role}</strong> : candidate.current_company ? null : <span className={styles.placeholder}>—</span>}
-              {candidate.current_company && <small title={candidate.current_company}>{candidate.current_company}</small>}
+              {candidate.current_company && ((candidate.current_title || candidate.primary_role) ? <small title={candidate.current_company}>{candidate.current_company}</small> : <strong className={styles.jobTitle} title={candidate.current_company}>{candidate.current_company}</strong>)}
             </div></td>
             <td className={candidate.total_experience_years == null ? styles.placeholder : undefined}>{candidate.total_experience_years == null ? "—" : `${candidate.total_experience_years} ${en ? "yrs" : "năm"}`}</td>
             <td><div className={styles.sourceCell}>
@@ -208,7 +208,7 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
             </div></td>
           </tr>; })}</tbody></table></div> : !error ? <div className={styles.empty}><h3>{tr("Talent Pool chưa có hồ sơ", "No candidates yet")}</h3><p>{tr("Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.", "Submit a CV for review. An Admin or Recruiter must approve it before the profile appears here.")}</p><button className={styles.secondary} onClick={() => setView("cv-review")}>{tr("Mở CV chờ duyệt", "Open CV review queue")}</button></div> : null}
         {attributionError && <p className={styles.notice} role="status">{tr("Chưa tải được nguồn ứng tuyển. Hãy thử tải lại trang.", "Could not load application sources. Please refresh the page.")}</p>}
-        <div className={styles.pagination}><button className={styles.secondary} disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>{tr("Trang trước", "Previous")}</button><span>{tr("Trang", "Page")} {offset / PAGE_SIZE + 1}</span><button className={styles.secondary} disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>{tr("Trang sau", "Next")}</button></div>
+        <div className={styles.pagination}><span className={styles.pageCount}>{candidates.length} {tr("ứng viên", "candidates")}</span><div className={styles.pagerControls}><button className={styles.secondary} aria-label={tr("Trang trước", "Previous")} title={tr("Trang trước", "Previous")} disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>‹</button><span className={styles.currentPage} aria-label={`${tr("Trang", "Page")} ${offset / PAGE_SIZE + 1}`}>{offset / PAGE_SIZE + 1}</span><button className={styles.secondary} aria-label={tr("Trang sau", "Next")} title={tr("Trang sau", "Next")} disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>›</button></div></div>
         </div>
       </div>
       <aside className={styles.profileCard} aria-busy={detailLoading}>
@@ -217,13 +217,15 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
           <div className={styles.profileHeader}><div><h3>{profile.candidate.full_name}</h3><p>{profile.candidate.current_title || profile.candidate.primary_role || tr("Chưa có chức danh", "Title unavailable")}</p></div></div>
           {profileError && <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div>}
           {message && <div className={`${styles.notice} ${styles.success}`} role="status">{message}</div>}
-          <div className={styles.section}><h3 className={styles.subheading}>{tr("Thông tin ứng viên", "Candidate Information")}</h3><dl className={styles.facts}>
+          <div className={styles.section}><h3 className={styles.subheading}>{tr("Liên hệ", "Contact")}</h3><dl className={styles.facts}>
             <dt>Email</dt><dd>{profile.candidate.email || "—"}</dd>
             <dt>{tr("Điện thoại", "Phone")}</dt><dd>{profile.candidate.phone || "—"}</dd>
+            <dt>{tr("Địa điểm", "Location")}</dt><dd>{profile.candidate.location || "—"}</dd>
+          </dl></div>
+          <div className={styles.section}><h3 className={styles.subheading}>{tr("Công việc hiện tại", "Current Role")}</h3><dl className={styles.facts}>
             <dt>{tr("Công ty", "Company")}</dt><dd>{profile.candidate.current_company || "—"}</dd>
             <dt>{tr("Kinh nghiệm", "Experience")}</dt><dd>{profile.candidate.total_experience_years == null ? "—" : `${profile.candidate.total_experience_years} ${en ? "yrs" : "năm"}`}</dd>
             <dt>{tr("Cấp bậc", "Seniority")}</dt><dd>{profile.candidate.seniority || "—"}</dd>
-            <dt>{tr("Địa điểm", "Location")}</dt><dd>{profile.candidate.location || "—"}</dd>
           </dl></div>
           <div className={styles.section}><h3 className={styles.subheading}>{tr("CV / tài liệu", "CV / Documents")}</h3>
           {profile.documents.length ? <ul className={styles.documents}>{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">{tr("Mở CV ↗", "Open CV ↗")}</a> : <small>{tr("Link không hợp lệ", "Invalid link")}</small>}</li>)}</ul> : <p className={styles.muted}>{tr("Chưa có CV được lưu trong hồ sơ.", "No CV documents are saved on this profile.")}</p>}
