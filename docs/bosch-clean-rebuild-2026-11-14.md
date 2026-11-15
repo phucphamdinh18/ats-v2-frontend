@@ -627,3 +627,24 @@ Scope restricted to Jobs Overview table markup/CSS and footer, plus the neighbor
 **Verification pending:** Check QA checks, Next web checks, Pages artifact and preview-only deployment SHA; verify at 1920x1080, 1440x900, 768x1024, 390x844, VI/EN and browser zoom 100%. Test search, status/priority filters, paging, row selection, View detail and Open Job Detail. If the 860px table needs an internal horizontal scrollbar on a laptop, that is preferable to body overflow. PR remains Draft. Do not infer visual PASS from structural tests.
 
 **Rollback:** Revert only `c8a6289`, `f3990d7`, `4aa5117`, `9007911` in reverse order through reviewed commits; keep the backup branch and production root unchanged.
+
+## Follow-up — Job Detail > Pipeline Candidates table/toolbar/footer/detail alignment (2026-11-15)
+
+**Scope:** visual markup/CSS only. Do not alter Application data logic, API calls, filters, search behavior, selection handlers, pagination state, Supabase or RLS. PR #44 remains Draft, no production rollout.
+
+**Changes:**
+- `web/components/application-pipeline.tsx` commit `ff13906`: adds a seven-column `colgroup` (checkbox + Candidate, Stage, Round, Match, Experience, Source), shortens Round header with the full translated header in `title`, retains full candidate and Source values via `title`, adds source/empty-value styling hooks, shortens the *placeholder* (not search logic), and adds structural inner/detail-header wrappers. The existing `＋` symbol stays; the native browser disclosure triangle is hidden with CSS.
+- `web/components/bosch-v2-pipeline.module.css` commits `10ad92e`, `5a211fc`: desktop tracks `minmax(0,1fr) 380px`, 16px gap; Candidate card and right detail now occupy the same grid row and stretch to the same height. Right detail content scrolls inside `sideInner`, with name/close/tabs sticky and accessible. Under 1200px the layout stacks; detail scrolling capped at 520px. Candidates table uses fixed layout, 44px checkbox + remaining space weighted 27/12/13/9/12/27%, and 820px minimum *inside* horizontal scroll. Headers are nowrap + ellipsis, Round shortened. Names and Source clamp at two lines with complete text exposed through tooltips. Body cells 13px and 16px horizontal padding; source text 12px normal weight. Selected row and current checkbox behavior preserved. Target row height 56px; 8px vertical cell padding is intentionally used instead of the requested 12px to fit two 13px text lines inside 56px. Pager uses three-column CSS grid and a centered page label.
+- `web/tests/responsive-contract.test.ts` commits `243887a`, `e3fd058`: replaces stale long-name/no-scroll assumptions with structural checks for seven columns, accessible full text, fixed table, pager, right panel and responsive stacking. These are *structural*, not browser screenshot tests.
+
+**Constraints and known risks:**
+- The original request's percentages add to 100% *plus* 44px: implemented percentages on the **remaining width** to avoid overflow.
+- A 56px table row can still grow in some browsers if content requires more space, fonts differ, or user zoom increases. Measure rendered heights before declaring visual PASS.
+- At 820px inner table width, a full uppercase EXPERIENCE header may be ellipsized rather than fully spelled out; it will never split across lines. Full header stays in markup.
+- Prior agreement to display *full, untruncated* long candidate names is superseded by owner's new explicit two-line truncation request **for this table only**. Full content is preserved in accessible text and title tooltip. No underlying names are modified.
+- Do not confuse this Job Pipeline table with the separate Candidate Database; its Source/Sub-source behavior was not changed.
+- Main left Summary remains above Candidates; right detail panel is now level with the Candidates table, not the top of the Summary. This is intentional to match their bottom baselines.
+
+**QA gate:** CI on last HEAD, real Preview deploy revision and authenticated 1920x1080/1440x900/768x1024/390x844 VI/EN visual QA **PENDING**. Verify 56px rows, last-cell padding, footer center, full-name/Source tooltip, disclosure indicator, focus/sticky tabs, both selected/unselected detail states, and no body horizontal overflow. Preserve role E2E status accurately; do not mark PASS based on source inspection.
+
+**Rollback:** reviewed revert commits for `5a211fc`, `e3fd058`, `243887a`, `10ad92e`, `ff13906` in reverse order; no force-push, backend/production untouched.
