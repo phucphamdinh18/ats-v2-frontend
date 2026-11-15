@@ -544,3 +544,16 @@ Owner supplied screenshots showing the Pipeline Candidates table ending while th
 - Keep PR #44 Draft; do not publish production or clean up legacy code.
 
 Rollback: reviewed revert commits for `f61cf37`, `c90f5f5`, `1e24ffb`, `66de528` and scoped test edits; retain backup branch. Verify live `release.json` before any preview-only deployment.
+
+## Follow-up — Candidate Summary professional icons (2026-11-15)
+
+Owner requested the four Bosch-reference line icons in the selected Candidate Detail's Summary panel on Job Pipeline. Draft PR #44 only.
+
+- `web/components/application-pipeline.tsx` commit `826d84e`: added Lucide `UserRound`, `BriefcaseBusiness`, `Building2`, `GraduationCap` for Experience, Current Role, Company, Education. Kept the existing authorized Application Detail read contract; Education has no verified value in this response and is explicitly shown as `—`, not invented. Both EN/VN labels are supported.
+- `web/components/bosch-v2-pipeline.module.css` commit `ebf4cf2`: scoped 17px navy line icons, two-column label/value alignment, compact mobile widths and readable font weight. No global CSS overrides.
+- `web/tests/responsive-contract.test.ts` commit `aea4331`: static regression checks for four icons and bilingual Education label.
+- Kept stage actions, RLS, backend/API, Interview Progress, History, 6-column list, Source, Offer workflow, production and rollback backup unchanged.
+
+**QA gates:** CI/typecheck and signed-in browser visual QA require verification on final HEAD. Review long candidate names, 390px mobile panel, both languages, data-unavailable states and icon alignment. No production merge or preview-live certification without release evidence.
+
+Rollback: revert only the three commits above on the Draft branch with reviewed revert commits.
