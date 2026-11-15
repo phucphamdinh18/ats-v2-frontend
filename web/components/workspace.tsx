@@ -9,6 +9,7 @@ import LoadingState from "./loading-state";
 import ApplicationPipeline from "./application-pipeline";
 import BoschJobDetail from "./bosch-job-detail";
 import BoschJobsMaster from "./bosch-jobs-master";
+import BoschHomeDashboard from "./bosch-home-dashboard";
 import styles from "./bosch-v2-shell.module.css";
 import BoschModuleLayout from "./bosch-module-layout";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
@@ -38,7 +39,7 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"jobs" | "talent" | "jd" | "admin" | "interviews" | "offers">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "jd" | "admin" | "interviews" | "offers">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -289,6 +290,7 @@ export default function Workspace() {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
   const globalNavMatches = [
+    { label: "Home", description: locale === "en" ? "Recruitment overview" : "Tổng quan tuyển dụng", destination: "home" as const },
     { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
     ...(reviewAllowed ? [
       { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
@@ -399,7 +401,7 @@ export default function Workspace() {
       </a>
         <header className={styles.topbar}>
           <nav className={styles.topnav} aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
-            <button type="button" onClick={() => { setTab("jobs"); setJobView("master"); }}>Home</button>
+            <button type="button" className={tab === "home" ? styles.active : ""} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}>Home</button>
             <button type="button" className={tab === "jobs" ? styles.active : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>Jobs</button>
             {reviewAllowed && <button type="button" className={tab === "talent" ? styles.active : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
             {allowed && <button type="button" className={tab === "interviews" ? styles.active : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
@@ -459,7 +461,7 @@ export default function Workspace() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTitle}>Recruitment</div>
         <nav className={styles.nav} aria-label={t.navigation}>
-          <button type="button" className={styles.navButton} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="dashboard"/><span className={styles.navLabel}>Dashboard</span></button>
+          <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Dashboard</span></button>
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {allowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
@@ -610,7 +612,13 @@ export default function Workspace() {
                   </span>
                 ))}
               </div>}
-              {tab === "talent" && reviewAllowed ? (
+              {tab === "home" ? (
+                <BoschHomeDashboard key={access.userId} jobs={access.jobs} roles={access.roles}
+                  onAccessLost={invalidate}
+                  onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}
+                  onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}
+                  onOpenInterviews={() => setTab("interviews")}/>
+              ) : tab === "talent" && reviewAllowed ? (
                 <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
