@@ -927,3 +927,10 @@ Owner requested equal-sized Jobs/Pipeline and Job Openings right panels and a sl
 Jobs column widths change from 30/15/15/10/17/13% to 30/15/13/12/17/13%. Status header and all badges move left together by 2% of the table width (22.4px at the 1120px minimum); Applications and Action start positions remain unchanged. No transforms or independent header/cell offsets. Function wraps within its narrower column. Larger panels may require additional local table scrolling.
 
 Scope: CSS tokens, layout tracks, colgroup markup, existing regression expectation and DOC only. No search/filter/paging/selection/navigation/data/API/Auth/RLS changes. Tests/CI/live verification pending. Rollback by reverting this scoped UI commit and republishing prior UI ecafbb8; no DB rollback. PR #44 remains Draft.
+
+
+### Preview verification — 2026-11-16
+
+UI `5c40665495236ae41569c4bb66259399d377bc89` published successfully through run #500 (`43739015416`, 1m46s); live release.json confirms it and the root SHA remains unchanged. QA #464, Next web #437 and PR Pages #499 PASS; Supabase E2E #355 SKIPPED. Local tests: 33 Node + 81 Vitest PASS; TypeScript PASS.
+
+At actual 1363×936, Status column starts at x=983.59375 versus prior x=1006: **22.40625px left shift**. Applications x=1117.984375 versus 1118, Action x=1308.375 versus 1308.390625 (rounding only). No page horizontal overflow. Job Detail/Pipeline computed tracks are 588px / **380px**, and its shared token is `clamp(380px,30%,460px)`. Jobs Overview consumes the same token; at this viewport it stacks under the existing <=1370 breakpoint, so side-by-side width equality there is verified from the shared source contract, not an actual >1370 screenshot. Wider viewport visual acceptance remains pending. No data writes performed. Final tab left on Job Openings. Documentation-only follow-up does not require republishing UI.
