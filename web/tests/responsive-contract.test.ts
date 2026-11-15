@@ -117,19 +117,23 @@ test("Jobs Overview uses reference five-column grid and reusable shared table pr
 });
 
 
-test("Candidate Detail keeps real-data icon rows, assignments and one Add to Job action", () => {
+test("Dedicated Candidate Detail renders authenticated facts and working navigation from existing props", () => {
   const view = file("talent-pool.tsx");
+  const panel = file("bosch-candidate-detail.tsx");
+  const workspace = file("workspace.tsx");
   for (const icon of ["Mail", "Phone", "MapPin", "BriefcaseBusiness", "Building2", "CalendarDays", "Layers3"]) {
-    assert.ok(view.includes(`<${icon} `) || view.includes(`<${icon} aria-hidden`), `Missing semantic profile icon ${icon}`);
+    assert.ok(panel.includes(`<${icon} `) || panel.includes(`<${icon} aria-hidden`), `Missing icon ${icon}`);
   }
-  for (const rule of [".iconFacts{display:grid;", ".jobAssignments{padding:0;", ".assignedJobTitle{display:block;", ".jobMeta{display:flex;", ".addControls>.primary{display:inline-flex;"]) {
-    assert.ok(candidate.includes(rule), `Missing Candidate Detail styling ${rule}`);
+  for (const rule of [".detailHead{padding:18px", ".detailTabs{display:flex", ".detailBody{display:flex", ".detailFactLines{display:flex", ".assignmentList{list-style:none", ".addControls>.primary{display:inline-flex"]) {
+    assert.ok(candidate.includes(rule) || candidate.includes(rule.replace(".addControls>.primary", ".detailBody .addControls>.primary")), `Missing panel style ${rule}`);
   }
-  assert.ok(view.includes("profile.candidate.current_title || profile.candidate.primary_role"), "Current Role comes from existing candidate API");
-  assert.ok(view.includes("assignedJob?.business_unit"), "Job BU comes from authorized jobs");
-  assert.ok(view.includes("application.stage") && view.includes("application.status"), "Assignment metadata remains real");
-  assert.ok(!view.includes("profile.candidate.skills"), "No unsupported Skills field is fabricated");
-  assert.ok(!view.includes("matching_score"), "No fictitious matching pill");
-  assert.ok(view.includes("onClick={() => void addToJob()}"), "Existing submit callback retained");
-  assert.ok(view.includes("onClick={() => setView(\"cv-review\")}"), "Existing CV review navigation retained");
+  assert.ok(view.includes("<BoschCandidateDetail"), "Dedicated panel is mounted instead of legacy profile sections");
+  assert.ok(view.includes("onAddToJob={() => void addToJob()}"), "Original submit callback retained");
+  assert.ok(view.includes('onClick={() => setView("cv-review")}'), "CV review navigation retained");
+  assert.ok(workspace.includes('onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}'), "Job navigation reuses approved route handler");
+  assert.ok(panel.includes('onClick={() => setTab("overview")}') && panel.includes('onClick={() => setTab("resume")}'), "Only data-backed tabs enabled");
+  assert.ok(panel.includes("profile.documents.map"), "Resume tab lists actual authorized CV documents");
+  assert.ok(panel.includes("application.stage") && panel.includes("application.status"), "Assigned Jobs use real stage/status");
+  assert.ok(!panel.includes("candidate.skills") && !panel.includes("matching_score"), "No fabricated skills or matching");
+  assert.ok(panel.includes("onClick={onAddToJob}"), "Single Add to Job action preserved");
 });
