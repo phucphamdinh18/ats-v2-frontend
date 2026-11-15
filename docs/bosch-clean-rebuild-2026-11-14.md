@@ -860,3 +860,19 @@ Native display settings offered only resolutions at or below 1364×1024. Opening
 **Verdict: PARTIAL.** Responsive/reference acceptance, multi-page pagination, actual CV rendering, Add to Job submission and Supabase E2E remain incomplete. PR #44 must remain Draft/unmerged. No production or real recruitment data change.
 
 **Rollback:** this documentation-only commit can be reverted independently. For UI rollback retain the prior documented commits and backup branch; if necessary republish verified Preview `84b5d3e19516cd0123d35cac94cdd979fbb601b2` using path-preview with freshly verified production root `71ff88ebdb68bea9f6456375c4c9d970e11c0379`. No database rollback is required.
+
+## Follow-up — Candidate Detail icons and real-data Jobs presentation (2026-11-15)
+
+Owner requested direct implementation on PR #44, not a prompt. Scope limited to Candidate Database right-panel markup/CSS and regression test; no backend, data access, search, paging, selection, CV review, Open CV or Add to Job behavior changes.
+
+- `web/components/talent-pool.tsx` commit `3948ebc`: adds Lucide line icons Mail, Phone, MapPin to Contact; BriefcaseBusiness, Building2, CalendarDays, Layers3 to Current Role facts. Renders existing candidate role, company, total experience and seniority alongside corresponding labels and icons, respecting unknown values as `—`. Restyles **Assigned Jobs** from actual authorized `jobs` and `profile.applications`, showing actual Job title, available BU, stage and application status, with a stage badge. Does **not** fabricate match score, interview round, opened date or any new workflow link. Existing Drive CV links, document data, source selectors and single Add to Job submit button retain their old handlers and guards.
+- `web/components/bosch-v2-candidates.module.css` commit `f9a2643`: scoped 16px navy line icons and compact two-column fact alignment; Job rows use title, BU and stage pill/status metadata; Add to Job CTA is an emphasized red button with disabled state. No top bar/sidebar changes.
+- `web/tests/responsive-contract.test.ts` commit `72db01e`: static regression assertions for icons, authorized metadata and existing action callbacks. Static tests do not establish browser-rendered visual PASS.
+
+**Skills gating:** The current `web/lib/candidates.ts` `CandidateProfile` contract returns `candidate`, `documents`, `applications`; `Candidate` does **not** expose skills. A Skills chip card would require a separately scoped, authorized data/API change. In this CSS/markup-only task it is **not rendered**, avoiding fictitious data. Do not infer skills from title, documents or candidate names.
+
+**Jobs link gating:** This component does not receive an existing job navigation callback. It only receives `jobs: Job[]`; therefore a fake "View Job" link is deliberately omitted. The title is visually styled like the reference but is not misrepresented as a functional link. A real navigable Job link requires a follow-up route/navigation contract, not an invented URL. The returned application lacks Round/Matching; these are omitted rather than mocked.
+
+**QA pending:** Run CI for final HEAD, verify authenticated Preview at 1440×900/100% and VI/EN. Check long names/emails/BU wrapping, scrolling, mobile stacking, two selectors and single submit action. No real-data mutations in visual QA. PR #44 remains Draft, production unchanged.
+
+**Rollback:** on the Draft branch, revert scoped commits `72db01e`, `f9a2643`, `3948ebc` and this documentation entry in reverse chronological order. Preserve live production and backup.
