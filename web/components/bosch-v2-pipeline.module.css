@@ -161,3 +161,6 @@
 .root :is(input,select){font-weight:500}
 .table td{font-weight:600}
 .muted,.stageCell small,.rejected{font-weight:600;color:#526174}
+
+/* Prevent long Source values from forcing a horizontal table overflow. */
+.table td:nth-child(7){white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important;min-width:0;max-width:0;line-height:1.35}
