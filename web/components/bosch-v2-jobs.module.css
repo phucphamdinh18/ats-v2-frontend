@@ -84,20 +84,16 @@
 .table th,.table td{white-space:normal;overflow-wrap:anywhere;word-break:normal;min-width:0}
 .action{max-width:100%;white-space:normal;line-height:1.2}
 @container(max-width:1150px){
-  /* Detailed requisition, priority and SLA remain available in Job Snapshot. */
-  .table th:nth-child(3),.table td:nth-child(3),.table th:nth-child(4),.table td:nth-child(4),.table th:nth-child(6),.table td:nth-child(6){display:none}
-  .table th:nth-child(1),.table td:nth-child(1){width:36%}
-  .table th:nth-child(2),.table td:nth-child(2){width:22%}
-  .table th:nth-child(5),.table td:nth-child(5){width:12%}
-  .table th:nth-child(7),.table td:nth-child(7){width:18%}
-  .table th:nth-child(8),.table td:nth-child(8){width:12%}
+  .table{table-layout:fixed;min-width:0;width:100%}
+  .table th:nth-child(1),.table td:nth-child(1){width:34%}
+  .table th:nth-child(2),.table td:nth-child(2){width:19%}
+  .table th:nth-child(3),.table td:nth-child(3){width:13%}
+  .table th:nth-child(4),.table td:nth-child(4){width:18%}
+  .table th:nth-child(5),.table td:nth-child(5){width:16%}
 }
 @container(max-width:650px){
-  .table th:nth-child(2),.table td:nth-child(2){display:none}
-  .table th:nth-child(1),.table td:nth-child(1){width:42%}
-  .table th:nth-child(5),.table td:nth-child(5){width:14%}
-  .table th:nth-child(7),.table td:nth-child(7){width:26%}
-  .table th:nth-child(8),.table td:nth-child(8){width:18%}
+  .tableScroll{overflow-x:auto}
+  .table{min-width:680px;width:100%}
 }
 
 /* Bosch readability pass: component-local typography only; preserve responsive and data contracts. */
