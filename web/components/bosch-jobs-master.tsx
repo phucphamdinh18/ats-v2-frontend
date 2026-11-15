@@ -141,7 +141,7 @@ export default function BoschJobsMaster({
           </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
-              <colgroup><col style={{ width: "34%" }}/><col style={{ width: "18%" }}/><col style={{ width: "12%" }}/><col style={{ width: "20%" }}/><col style={{ width: "16%" }}/></colgroup>
+              <colgroup><col style={{ width: "36%" }}/><col style={{ width: "20%" }}/><col style={{ width: "12%" }}/><col style={{ width: "18%" }}/><col style={{ width: "14%" }}/></colgroup>
               <thead><tr>
                 <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th>
                 <th scope="col">{labels.status}</th><th scope="col">{labels.volume}</th>
@@ -152,11 +152,10 @@ export default function BoschJobsMaster({
                   <button type="button" className={styles.jobName} title={job.title} aria-label={`Chọn Job ${job.title}`}
                     onClick={() => choose(job)}>{job.title}</button>
                   <span className={styles.jobCode}>{job.job_code || dash}</span></div></td>
-                <td><span className={job.business_unit ? styles.department : styles.departmentEmpty}>{job.business_unit || dash}</span></td>
+                <td><div className={styles.departmentCell}><b className={job.business_unit ? styles.department : styles.departmentEmpty}>{job.business_unit || dash}</b>{job.function_group && <div className={styles.dim} title={job.function_group}>{job.function_group}</div>}</div></td>
                 <td><span className={`${styles.state} ${job.status === "OPEN" ? styles.open : job.status === "DRAFT" ? styles.draft : ""}`}>{job.status === "OPEN" ? labels.open : job.status === "DRAFT" ? labels.draft : job.status}</span></td>
-                <td><div className={styles.applicationCell}><strong>{job.metrics?.total_candidates ?? dash}</strong>
-                  <span className={styles.dim}>{labels.applications}</span>
-                  <span className={styles.dim}>{sourceOf(job)}</span></div></td>
+                <td><div className={styles.applicationCell}><div><b>{job.metrics?.total_candidates ?? dash}</b> {labels.applications}</div>
+                  <div className={styles.dim} title={sourceOf(job)}>{sourceOf(job)}</div></div></td>
                 <td><button className={styles.action} type="button"
                   aria-label={en ? `Open pipeline for ${job.title}` : `Mở pipeline ${job.title}`}
                   onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button></td>
