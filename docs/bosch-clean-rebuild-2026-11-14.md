@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 35247)
+Warning: truncated output (original token count: 35286)
 Total output lines: 943
 
 # Bosch V2 clean rebuild — implementation log
@@ -373,7 +373,38 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 ## Follow-up: Candidate table headers and source attribution — 2026-11-15
 
 - Live path-preview review at `60bd38b4d2e881c32ba359d098f66f2648dca785` confirmed the Bosch ATS V2 wordmark is fully visible and the Candidates table includes Source and Sub-source.
-- The laptop screenshot showed `Current Job / Company` and `Experience` headings running toge…9247 tokens truncated…ts as a minimum under the table layout algorithm. Source text can be long. Do not claim identical row pixel height without authenticated browser checks at target viewport sizes. Left card contains summary above the table, while right detail panel spans that full left stack; their *bottoms* align, not necessarily their tops. Do not introduce artificial blank fields or move summary data.
+- The laptop screenshot showed `Current Job / Company` and `Experience` headings running together because table headers were forced to one line in a fixed-width table. Updated the Candidates module CSS to wrap headings within their cells (`white-space: normal`, compact line-height, safe wrapping).
+- Source/Sub-source are application-level attribution fields read through the existing authenticated Supabase client and current RLS. Existing applications with no `sub_source` continue to show an empty marker; no inferred values or backend changes were added. The shared source catalog remains the source for selectable source/sub-source options.
+- Fix commit: `6dc1409252a3ea6d8ac8e486c7c6834d4d679bae`. Preview deployment and post-fix browser verification are pending.
+
+## Follow-up — Cross-module typography and contrast pass (2026-11-15)
+
+**Scope:** Owner instructed fixing readability across the entire active ATS V2 frontend, not only Home. Continued on Draft PR #44; no production merge/deploy. Offer feature implementation remains explicitly deferred per Step 15.
+
+### CSS changes committed
+- Shell: `web/components/bosch-v2-shell.module.css` — `bc0ba2f`
+- Home: `web/components/bosch-home-dashboard.module.css` — `5ae0183`
+- Jobs Overview: `web/components/bosch-v2-jobs.module.css` — `7fc93a6`
+- Job Detail: `web/components/bosch-v2-job-detail.module.css` — `3c4b229`
+- Pipeline: `web/components/bosch-v2-pipeline.module.css` — `4d31b9c`
+- Candidates: `web/components/bosch-v2-candidates.module.css` — `a4677e5`
+- Interviews: `web/components/bosch-v2-interviews.module.css` — `e086cb0`
+- Candidate Intake: `web/components/bosch-v2-candidate-intake.module.css` — `53cb5e1`
+
+Adjusted only scoped small text rules: 9px to 11px, 10px to 11px, 11px to 12px. Darkened selected pale-gray metadata labels to #526174. Existing component markup, responsive breakpoints/container queries, table columns, Source/Sub-source, roles, API calls, data mapping, Auth, RLS, backend and Offer workflow were not changed. No new global CSS overrides were introduced.
+
+### Verification / a…8286 tokens truncated…s `production_ref`, then run the existing `path-preview` workflow with the chosen earlier `preview_ref`. Do not change the production root.
+
+## Follow-up — Job Openings five-column alignment and equal-height cards (2026-11-15)
+
+Scope restricted to Jobs Overview table markup/CSS and footer, plus the neighboring grid/card presentation needed to align bottom edges. No API/query/filter/pagination state changes; production untouched; PR #44 remains Draft.
+
+**Changes**
+- `web/components/bosch-jobs-master.tsx` `9007911`: explicit `colgroup` 34/18/12/20/16; added full-title tooltip; normalized Department/BU to a single primary business-unit value (or one dash) instead of stacking an empty Function dash; added a structured Applications number/label/source block; scoped Job Openings panel class and right-panel final section class without altering their controls/data.
+- `web/components/bosch-v2-jobs.module.css` `4aa5117`, `c8a6289`: fixed-layout table, 84px rows and vertically centered cells, two-line truncated title with full-text hover, one-line ellipsized Job code, consistent 13px department labels, badges, standardized applications block and 34px action; full-width 56px footer with aligned 32px paging controls. Desktop workspace: flexible left track + 360px right detail; stack/card flex layout to align card bottoms; right action pinned with margin-top:auto; 12px radius cards. Below 1180px detail stacks; below 1100px table scrolls in its own region with 860px minimum instead of overflowing the page.
+- `web/tests/responsive-contract.test.ts` `f3990d7`: structural regression checks for column widths, full-title accessibility, 84px row rule, footer, desktop alignment and internal horizontal scroll.
+
+**Caveat:** Exact 84px visible rows depend on content not exceeding the allocated height; CSS `height:84px` on a table row acts as a minimum under the table layout algorithm. Source text can be long. Do not claim identical row pixel height without authenticated browser checks at target viewport sizes. Left card contains summary above the table, while right detail panel spans that full left stack; their *bottoms* align, not necessarily their tops. Do not introduce artificial blank fields or move summary data.
 
 **Verification pending:** Check QA checks, Next web checks, Pages artifact and preview-only deployment SHA; verify at 1920x1080, 1440x900, 768x1024, 390x844, VI/EN and browser zoom 100%. Test search, status/priority filters, paging, row selection, View detail and Open Job Detail. If the 860px table needs an internal horizontal scrollbar on a laptop, that is preferable to body overflow. PR remains Draft. Do not infer visual PASS from structural tests.
 
@@ -691,4 +722,4 @@ At actual 1363×936, Status column starts at x=983.59375 versus prior x=1006: **
 
 Owner clarified that Job Details is the reference size and the Job Openings Snapshot should be visibly larger. Enlarge the shared desktop detail track from `clamp(380px,30%,460px)` to `clamp(420px,30%,500px)`. Jobs Overview and Job Detail/Pipeline both consume this token, so they remain equal at desktop widths while the Snapshot gains a larger minimum and maximum width. Existing responsive stacking breakpoints, Snapshot contents, type scale, and table local scrolling remain unchanged. No schema, API, data, Auth, RLS or workflow changes.
 
-The supplied 1630px screenshot is the visual reference for this follow-up. The updated desktop width has not yet been screenshot-verified or published; inspect a width above both Jobs (1370px) and Pipeline (1200px) stacking breakpoints, compare both right panels, and confirm the Jobs table still scrolls locally without page overflow. PR #44 remains Draft. Rollback is a one-line token revert to `clamp(380px,30%,460px)`; no database rollback.
+The supplied 1630px screenshot is the visual reference for this follow-up. The updated desktop width has not yet been screenshot-verified or published; inspect a width above both Jobs (1370px) and Pipeline (1200px) stacking breakpoints, compare both right panels, and confirm the Jobs table still scrolls locally without page overflow. UI commit: `3dfaf4c2d4359cda17bd67781b1d7e3c0ef2be0d`; PR #44 remains Draft. No test or Preview publish was run for this one-token CSS adjustment; production remains unchanged. Rollback is a one-line token revert to `clamp(380px,30%,460px)`; no database rollback.
