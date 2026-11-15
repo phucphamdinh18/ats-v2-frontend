@@ -1,6 +1,7 @@
 "use client";
 
-import { BriefcaseBusiness, ChevronRight, Filter, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronRight, Search } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-jobs.module.css";
@@ -16,130 +17,202 @@ type Props = {
   onSelect: (job: Job) => void;
   onOpen: (job: Job) => void;
 };
+const PAGE_SIZE = 10;
+const dash = "—";
+function sourceOf(job: Job) {
+  const sources = job.metrics?.source_summary || [];
+  const total = sources.reduce((sum, item) => sum + Math.max(0, item.count || 0), 0);
+  if (!total) return dash;
+  return [...sources].sort((a, b) => b.count - a.count)[0]?.source || dash;
+}
+function reqDate(value: string | null | undefined, en: boolean) {
+  if (!value) return dash;
+  // YYYY-MM-DD is a date-only value; do not parse in the browser's timezone.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-");
+    return en ? `${d}/${m}/${y}` : `${d}/${m}/${y}`;
+  }
+  return value;
+}
+function priorityLabel(value: Job["priority"], en: boolean) {
+  if (!value) return dash;
+  const vi: Record<string, string> = { CRITICAL: "Khẩn cấp", HIGH: "Cao", NORMAL: "Bình thường", LOW: "Thấp" };
+  return en ? value : (vi[value] || value);
+}
+function requestLabel(value: Job["request_type"], en: boolean) {
+  if (!value) return dash;
+  return value === "NEW" ? (en ? "New HC" : "Tuyển mới") : (en ? "Replacement" : "Thay thế");
+}
 
-/**
- * Presentation-only module with an isolated CSS module.
- * Authorization, RLS, API calls and job selection remain owned by Workspace.
- */
 export default function BoschJobsMaster({
   jobs, allJobs, selectedJobId, query, onQuery, status, onStatus, onSelect, onOpen,
 }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
+  const [priority, setPriority] = useState("ALL");
+  const [page, setPage] = useState(0);
+  const [snapshotId, setSnapshotId] = useState<string | null>(null);
+
   const labels = en ? {
-    title: "Job Openings", subtitle: "Recruitment positions in your authorized workspace.", total: "Total Jobs", open: "Open", draft: "Draft", other: "Other Status",
-    search: "Search job openings", allStatuses: "All Statuses", jobId: "Job Opening / ID", department: "Department", location: "Location", hiringStatus: "Hiring Status", candidates: "Candidates", pipeline: "Pipeline", priority: "Priority", action: "Action",
-    noMatch: "No Job matches this filter.", clear: "Clear filters", openings: "Job openings", new: "New", screening: "Screening", interview: "Interview", hired: "Hired", openPipeline: "Open pipeline",
+    title: "Job Openings", subtitle: "Manage requisitions, hiring priorities and job-level performance.",
+    overview: "Job Overview", summary: "Job Summary", total: "Total Jobs", open: "Open", draft: "Draft", other: "Other Status",
+    search: "Search Job ID / position", allStatuses: "All Statuses", allPriorities: "All Priorities",
+    job: "Job Opening / ID", unit: "BU / Function", req: "Req Type / Date", level: "Level / Priority",
+    status: "Status", sla: "SLA Target", volume: "Applications / Source", action: "Action",
+    noMatch: "No Jobs match these filters.", clear: "Clear filters", select: "Select Job",
+    snapshot: "Job Snapshot", requisition: "Requisition Information", progress: "Hiring Status & SLA",
+    metrics: "Job-level Metrics", department: "Department", function: "Function", requestType: "Request type",
+    reqDate: "Req Date", priority: "Priority", actual: "Actual SLA", applications: "Applications",
+    topSource: "Top source", target: "Configured target", openDetail: "Open Job Detail",
+    notAvailable: "Not available", source: "Source", levelLabel: "Level", candidate: "Candidates",
   } : {
-    title: "Vị trí tuyển dụng", subtitle: "Theo dõi các vị trí bạn được phân quyền.", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", other: "Trạng thái khác",
-    search: "Tìm vị trí tuyển dụng", allStatuses: "Tất cả trạng thái", jobId: "Vị trí / Mã Job", department: "Phòng ban", location: "Địa điểm", hiringStatus: "Trạng thái tuyển dụng", candidates: "Ứng viên", pipeline: "Tiến độ", priority: "Ưu tiên", action: "Thao tác",
-    noMatch: "Không có Job phù hợp với bộ lọc này.", clear: "Xóa bộ lọc", openings: "vị trí tuyển dụng", new: "Mới", screening: "Sơ loại", interview: "Phỏng vấn", hired: "Đã tuyển", openPipeline: "Mở Pipeline",
+    title: "Vị trí tuyển dụng", subtitle: "Quản lý yêu cầu tuyển, mức ưu tiên và tiến độ theo từng Job.",
+    overview: "Tổng quan Job", summary: "Tổng quan Job", total: "Tổng số Job", open: "Đang tuyển", draft: "Bản nháp", other: "Trạng thái khác",
+    search: "Tìm mã hoặc tên Job", allStatuses: "Tất cả trạng thái", allPriorities: "Tất cả ưu tiên",
+    job: "Vị trí / Mã Job", unit: "Đơn vị / Chức năng", req: "Loại Req / Ngày", level: "Level / Ưu tiên",
+    status: "Trạng thái", sla: "SLA mục tiêu", volume: "Hồ sơ / Nguồn", action: "Thao tác",
+    noMatch: "Không tìm thấy Job phù hợp.", clear: "Xóa bộ lọc", select: "Chọn Job",
+    snapshot: "Tóm tắt Job", requisition: "Thông tin yêu cầu tuyển", progress: "Trạng thái & SLA",
+    metrics: "Số liệu theo Job", department: "Đơn vị", function: "Chức năng", requestType: "Loại yêu cầu",
+    reqDate: "Ngày Req", priority: "Ưu tiên", actual: "SLA thực tế", applications: "Hồ sơ",
+    topSource: "Nguồn chính", target: "Mục tiêu cấu hình", openDetail: "Mở chi tiết Job",
+    notAvailable: "Chưa có dữ liệu", source: "Nguồn", levelLabel: "Level", candidate: "Ứng viên",
   };
-  const open = allJobs.filter((job) => job.status === "OPEN").length;
-  const draft = allJobs.filter((job) => job.status === "DRAFT").length;
+
   const statusOptions = ["ALL", "OPEN", "DRAFT", ...allJobs.map((job) => job.status)]
     .filter((value, index, values) => values.indexOf(value) === index);
-
+  const priorityOptions = ["ALL", "CRITICAL", "HIGH", "NORMAL", "LOW"];
+  const visible = useMemo(
+    () => jobs.filter((job) => priority === "ALL" || job.priority === priority),
+    [jobs, priority],
+  );
+  const pages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pages - 1);
+  const rows = visible.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const selected = allJobs.find((job) => job.id === snapshotId)
+    || allJobs.find((job) => job.id === selectedJobId) || visible[0] || null;
+  const openCount = allJobs.filter((job) => job.status === "OPEN").length;
+  const draftCount = allJobs.filter((job) => job.status === "DRAFT").length;
+  const otherCount = allJobs.length - openCount - draftCount;
   const summary = [
-    [labels.total, allJobs.length],
-    [labels.open, open],
-    [labels.draft, draft],
-    [labels.other, allJobs.length - open - draft],
+    [labels.total, allJobs.length, false], [labels.open, openCount, true],
+    [labels.draft, draftCount, false], [labels.other, otherCount, false],
   ] as const;
+  const choose = (job: Job) => { setSnapshotId(job.id); onSelect(job); };
+  const clear = () => { onQuery(""); onStatus("ALL"); setPriority("ALL"); setPage(0); };
 
   return <section className={styles.root} aria-label={labels.title}>
     <header className={styles.heading}>
-      <div className={styles.crumb}><strong>{en ? "Jobs" : "Job"}</strong><ChevronRight size={14}/><span>{labels.title}</span></div>
+      <div className={styles.crumb}><strong>Jobs</strong><ChevronRight size={14}/><span>{labels.title}</span></div>
       <h1>{labels.title}</h1>
       <p className={styles.subtitle}>{labels.subtitle}</p>
     </header>
-
-    <div className={styles.summary} aria-label={en ? "Job summary" : "Tổng quan Job"}>
-      {summary.map(([label, count]) => <div className={styles.metric} key={label}><span>{label}</span><strong>{count}</strong></div>)}
+    <div className={styles.tabs}><span className={styles.tabActive}>{labels.overview}</span></div>
+    <div className={styles.workspace}>
+      <div className={styles.stack}>
+        <section className={styles.panel} aria-label={labels.summary}>
+          <div className={styles.panelHead}><h2>{labels.summary}</h2><span className={styles.count}>{en ? "Authorized Jobs" : "Job được phân quyền"}</span></div>
+          <div className={styles.summary}>
+            {summary.map(([label, count, active]) => <div key={label} className={`${styles.metric} ${active ? styles.metricActive : ""}`}>
+              <strong>{count}</strong><span>{label}</span>
+            </div>)}
+          </div>
+        </section>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <h2>{labels.title} <span className={styles.count}>({visible.length})</span></h2>
+            <div className={styles.controls}>
+              <label className={styles.search}><Search size={16} aria-hidden="true"/>
+                <input value={query} onChange={(event) => { onQuery(event.target.value); setPage(0); }}
+                  aria-label={en ? "Search Job" : "Tìm Job"} placeholder={labels.search}/></label>
+              <select className={styles.select} aria-label={en ? "Job status" : "Trạng thái Job"}
+                value={status} onChange={(event) => { onStatus(event.target.value); setPage(0); }}>
+                {statusOptions.map((value) => <option key={value} value={value}>
+                  {value === "ALL" ? labels.allStatuses : value === "OPEN" ? labels.open : value === "DRAFT" ? labels.draft : value}
+                </option>)}
+              </select>
+              <select className={styles.select} aria-label={en ? "Job priority" : "Ưu tiên Job"}
+                value={priority} onChange={(event) => { setPriority(event.target.value); setPage(0); }}>
+                {priorityOptions.map((value) => <option key={value} value={value}>
+                  {value === "ALL" ? labels.allPriorities : priorityLabel(value as Job["priority"], en)}
+                </option>)}
+              </select>
+            </div>
+          </div>
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead><tr>
+                <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th>
+                <th scope="col">{labels.req}</th><th scope="col">{labels.level}</th>
+                <th scope="col">{labels.status}</th><th scope="col">{labels.sla}</th>
+                <th scope="col">{labels.volume}</th><th scope="col">{labels.action}</th>
+              </tr></thead>
+              <tbody>{rows.map((job) => <tr key={job.id} className={selected?.id === job.id ? styles.selected : undefined}>
+                <td><div className={styles.jobCell}>
+                  <button type="button" className={styles.jobName} aria-label={`Chọn Job ${job.title}`}
+                    onClick={() => choose(job)}>{job.title}</button>
+                  <span className={styles.jobCode}>{job.job_code || dash}</span></div></td>
+                <td><strong>{job.business_unit || dash}</strong><div className={styles.dim}>{job.function_group || dash}</div></td>
+                <td>{requestLabel(job.request_type, en)}<div className={styles.dim}>{reqDate(job.req_date, en)}</div></td>
+                <td>{job.level == null ? dash : `L${job.level}`}<div className={styles.pillWrap}>
+                  <span className={`${styles.state} ${job.priority === "CRITICAL" || job.priority === "HIGH" ? styles.high : job.priority === "NORMAL" ? styles.medium : ""}`}>
+                    {priorityLabel(job.priority, en)}</span></div></td>
+                <td><span className={`${styles.state} ${job.status === "OPEN" ? styles.open : job.status === "DRAFT" ? styles.draft : ""}`}>{job.status === "OPEN" ? labels.open : job.status === "DRAFT" ? labels.draft : job.status}</span></td>
+                <td>{job.sla_target_workdays == null ? dash : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}
+                  <div className={styles.dim}>{labels.target}</div></td>
+                <td><strong>{job.metrics?.total_candidates ?? dash}</strong>
+                  <span className={styles.dim}> {labels.applications}</span>
+                  <div className={styles.dim}>{sourceOf(job)}</div></td>
+                <td><button className={styles.action} type="button"
+                  aria-label={en ? `Open pipeline for ${job.title}` : `Mở pipeline ${job.title}`}
+                  onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button></td>
+              </tr>)}</tbody>
+            </table>
+            {!visible.length && <div className={styles.empty}><p>{labels.noMatch}</p>
+              <button className={styles.clear} onClick={clear} type="button">{labels.clear}</button></div>}
+          </div>
+          <footer className={styles.footer}>
+            <span>{visible.length ? `${currentPage * PAGE_SIZE + 1}–${Math.min((currentPage + 1) * PAGE_SIZE, visible.length)} / ${visible.length}` : "0"} {en ? "Jobs" : "Job"}</span>
+            <div className={styles.pagination}>
+              <button type="button" disabled={currentPage === 0} onClick={() => setPage(Math.max(0, currentPage - 1))}>{en ? "Previous" : "Trước"}</button>
+              <span>{currentPage + 1} / {pages}</span>
+              <button type="button" disabled={currentPage + 1 >= pages} onClick={() => setPage(currentPage + 1)}>{en ? "Next" : "Sau"}</button>
+            </div>
+          </footer>
+        </section>
+      </div>
+      <aside className={`${styles.panel} ${styles.snapshot}`} aria-label={labels.snapshot}>
+        {selected ? <>
+          <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p></div>
+          <div className={styles.snapshotSection}><h3>{labels.requisition}</h3>
+            <dl className={styles.facts}>
+              <dt>{labels.department}</dt><dd>{selected.business_unit || dash}</dd>
+              <dt>{labels.function}</dt><dd>{selected.function_group || dash}</dd>
+              <dt>{labels.requestType}</dt><dd>{requestLabel(selected.request_type, en)}</dd>
+              <dt>{labels.reqDate}</dt><dd>{reqDate(selected.req_date, en)}</dd>
+              <dt>{labels.levelLabel}</dt><dd>{selected.level == null ? dash : `L${selected.level}`}</dd>
+              <dt>{labels.priority}</dt><dd>{priorityLabel(selected.priority, en)}</dd>
+            </dl>
+          </div>
+          <div className={styles.snapshotSection}><h3>{labels.progress}</h3>
+            <dl className={styles.facts}>
+              <dt>{labels.status}</dt><dd>{selected.status}</dd>
+              <dt>{labels.sla}</dt><dd>{selected.sla_target_workdays == null ? dash : `${selected.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</dd>
+              <dt>{labels.actual}</dt><dd>{dash}</dd>
+            </dl>
+          </div>
+          <div className={styles.snapshotSection}><h3>{labels.metrics}</h3>
+            <dl className={styles.facts}>
+              <dt>{labels.applications}</dt><dd>{selected.metrics?.total_candidates ?? dash}</dd>
+              <dt>{labels.topSource}</dt><dd>{sourceOf(selected)}</dd>
+            </dl>
+            <button className={styles.primary} type="button" onClick={() => onOpen(selected)}>{labels.openDetail} <ChevronRight size={14}/></button>
+          </div>
+        </> : <div className={styles.empty}>{en ? "No Job selected" : "Chưa chọn Job"}</div>}
+      </aside>
     </div>
-
-    <section className={styles.panel}>
-      <div className={styles.panelHead}>
-        <h2>{labels.title} <span className={styles.count}>({jobs.length})</span></h2>
-        <div className={styles.controls}>
-          <label className={styles.search}>
-            <Search size={16} aria-hidden="true"/>
-            <input value={query} onChange={(event) => onQuery(event.target.value)}
-              aria-label={en ? "Search Job" : "Tìm Job"} placeholder={labels.search}/>
-          </label>
-          <label className={styles.filter}>
-            <Filter size={15} aria-hidden="true"/>
-            <select aria-label={en ? "Job status" : "Trạng thái Job"} value={status} onChange={(event) => onStatus(event.target.value)}>
-              {statusOptions.map((value) => <option key={value} value={value}>
-                {value === "ALL" ? labels.allStatuses : value === "OPEN" ? labels.open : value === "DRAFT" ? labels.draft : value}
-              </option>)}
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div className={styles.tableScroll}>
-        <table className={styles.table}>
-          <colgroup>
-            <col style={{ width: "29%" }}/><col style={{ width: "12%" }}/><col style={{ width: "13%" }}/>
-            <col style={{ width: "10%" }}/><col style={{ width: "8%" }}/><col style={{ width: "12%" }}/>
-            <col style={{ width: "7%" }}/><col style={{ width: "9%" }}/>
-          </colgroup>
-          <thead><tr>
-            <th scope="col">{labels.jobId}</th>
-            <th scope="col">{labels.department}</th>
-            <th scope="col">{labels.location}</th>
-            <th scope="col">{labels.hiringStatus}</th>
-            <th scope="col">{labels.candidates}</th>
-            <th scope="col">{labels.pipeline}</th>
-            <th scope="col">{labels.priority}</th>
-            <th scope="col">{labels.action}</th>
-          </tr></thead>
-          <tbody>
-            {jobs.map((job) => <tr key={job.id} className={selectedJobId === job.id ? styles.selected : undefined}>
-              <td>
-                <div className={styles.jobCell}>
-                  <div className={styles.jobLine}>
-                    <BriefcaseBusiness size={17} aria-hidden="true"/>
-                    <button type="button" className={styles.jobName} aria-label={`Chọn Job ${job.title}`}
-                      onClick={() => onSelect(job)}>{job.title}</button>
-                  </div>
-                  <button type="button" className={styles.jobCode}
-                    aria-label={`Mở Job ID ${job.job_code || job.title}`} onClick={() => onOpen(job)}>
-                    {job.job_code || "—"}
-                  </button>
-                </div>
-              </td>
-              <td>{job.business_unit || "—"}</td>
-              <td>{job.location || "—"}</td>
-              <td>
-                <span className={[styles.state, job.status === "OPEN" ? styles.open : job.status === "DRAFT" ? styles.draft : ""].filter(Boolean).join(" ")}>
-                  {job.status === "OPEN" ? labels.open : job.status === "DRAFT" ? labels.draft : job.status}
-                </span>
-              </td>
-              <td>{job.metrics?.total_candidates ?? "—"}</td>
-              <td><div className={styles.pipeline} title={`${labels.new} · ${labels.screening} · ${labels.interview} · ${labels.hired}`}>
-                <span>{job.metrics?.new_count ?? "—"}</span>
-                <span>{job.metrics?.screening_count ?? "—"}</span>
-                <span>{job.metrics?.interview_count ?? "—"}</span>
-                <span>{job.metrics?.hired_count ?? "—"}</span>
-              </div></td>
-              <td>{job.priority || "—"}</td>
-              <td><button className={styles.action} type="button" aria-label={en ? `Open pipeline for ${job.title}` : `Mở pipeline ${job.title}`}
-                onClick={() => onOpen(job)}>{labels.pipeline} <ChevronRight size={14}/></button></td>
-            </tr>)}
-          </tbody>
-        </table>
-        {!jobs.length && <div className={styles.empty}>
-          <p>{labels.noMatch}</p>
-          <button type="button" className={styles.clear} onClick={() => { onQuery(""); onStatus("ALL"); }}>{labels.clear}</button>
-        </div>}
-      </div>
-
-      <footer className={styles.footer}>
-        <span>{en ? `${jobs.length} of ${allJobs.length} ${labels.openings}` : `${jobs.length} / ${allJobs.length} ${labels.openings}`}</span>
-        <span>{labels.new} · {labels.screening} · {labels.interview} · {labels.hired}</span>
-      </footer>
-    </section>
+    <p className={styles.note}>{en
+      ? "SLA is a configured target, not a breach calculation. Counts and source data come from authorized Job metrics; unavailable fields show —."
+      : "SLA là mục tiêu cấu hình, không phải kết luận quá hạn. Chỉ số lấy từ dữ liệu Job được phân quyền; trường thiếu hiển thị —."}</p>
   </section>;
 }
