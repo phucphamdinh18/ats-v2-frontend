@@ -122,3 +122,20 @@
   .jobSwitch{justify-content:flex-start;align-items:stretch}
   .jobSwitch select{flex:1 1 100%;max-width:100%}
 }
+
+
+/* Constrain independently scrolling Job Detail controls without clipping their content. */
+.root{max-width:100%}
+.tabs{min-width:0;overscroll-behavior-x:contain;scrollbar-width:thin}
+.tabs button:focus-visible,.outline:focus-visible,.linkButton:focus-visible{outline:2px solid #367fc1;outline-offset:2px}
+.tableScroll{scrollbar-width:thin;touch-action:pan-x pan-y}
+@media(max-width:768px){
+  .detailsGrid,.twoColumn{grid-template-columns:minmax(0,1fr)}
+  .jobSwitch select{width:100%;max-width:100%}
+  .sectionHead{align-items:stretch}
+}
+@media(max-width:420px){
+  .summaryGrid>div{min-width:0}
+  .metadata span{overflow-wrap:anywhere}
+  .tableScroll{overflow-x:auto}
+}
