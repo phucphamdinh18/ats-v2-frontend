@@ -16,6 +16,7 @@ import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
 import CandidateInterviewProgress from "./candidate-interview-progress";
+import { UserRound, BriefcaseBusiness, Building2, GraduationCap } from "lucide-react";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-pipeline.module.css";
 
@@ -312,7 +313,12 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         </div>
         <div className={styles.profileCard}>
           <h3>{copy.summary}</h3><p className={styles.profileMuted}>{copy.apiLimit}</p>
-          <dl className={styles.profileFields}><dt>{copy.currentRole}</dt><dd>—</dd><dt>{copy.experience}</dt><dd>—</dd><dt>{copy.company}</dt><dd>—</dd></dl>
+          <dl className={styles.professionalFacts}>
+            <dt><UserRound aria-hidden="true" size={17}/><span>{copy.experience}</span></dt><dd>—</dd>
+            <dt><BriefcaseBusiness aria-hidden="true" size={17}/><span>{copy.currentRole}</span></dt><dd>—</dd>
+            <dt><Building2 aria-hidden="true" size={17}/><span>{copy.company}</span></dt><dd>—</dd>
+            <dt><GraduationCap aria-hidden="true" size={17}/><span>{en ? "Education" : "Học vấn"}</span></dt><dd>—</dd>
+          </dl>
         </div>
         <div className={styles.profileCard}><h3>{copy.history}</h3><ol className={styles.timeline}>{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage ? copy.stageLabel(event.from_stage) : "—"} → {event.to_stage ? copy.stageLabel(event.to_stage) : "—"}</span><small>{event.actor_display_name || copy.user} · {new Date(event.created_at).toLocaleString(en ? "en-GB" : "vi-VN")}</small></li>)}</ol></div>
         {detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
