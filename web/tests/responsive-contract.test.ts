@@ -38,23 +38,29 @@ test("four requested viewport widths meet intended panel stacking breakpoint", (
 });
 
 
-test("Job Pipeline uses six data columns, no Last Activity, and wraps full candidate names", () => {
-  const source = readFileSync(join(process.cwd(), "components", "application-pipeline.tsx"), "utf8");
-  assert.ok(source.includes("<th>{copy.source}</th></tr>"), "Source is the last information column");
-  assert.ok(!source.includes("<th>{copy.activity}</th>"), "Last Activity must not be duplicated in the table");
-  assert.ok(pipeline.includes(".candidateLink{display:block;width:100%"), "Long candidate names should wrap naturally");
-  assert.ok(pipeline.includes("overflow-wrap:break-word;word-break:normal"), "Long names must not overflow the candidate column");
-  assert.ok(!pipeline.includes("-webkit-line-clamp:2"), "Long names must not be cut off");
-  assert.ok(pipeline.includes("@container (max-width:650px)"), "Narrow panels must reflow safely");
+test("Job Pipeline has seven table columns and clamped accessible candidate/source names", () => {
+  assert.ok(applicationPipeline.includes("<colgroup>"), "Colgroup fixes all column proportions");
+  for (const col of ["checkCol", "candidateCol", "stageCol", "roundCol", "matchCol", "experienceCol", "sourceCol"]) {
+    assert.ok(applicationPipeline.includes(`styles.${col}`), `Missing column ${col}`);
+  }
+  assert.ok(applicationPipeline.includes("<th>{copy.source}</th></tr>"), "Source remains final column");
+  assert.ok(!applicationPipeline.includes("<th>{copy.activity}</th>"), "No duplicate Last Activity column");
+  assert.ok(applicationPipeline.includes("title={application.candidate_name}"), "Full long names remain accessible");
+  assert.ok(applicationPipeline.includes('title={application.source || "—"}'), "Full source remains accessible");
+  assert.ok(pipeline.includes(".candidateLink{display:-webkit-box;"), "Candidate name is clamped to two lines");
+  assert.ok(pipeline.includes(".sourceText{display:-webkit-box;"), "Source is clamped to two lines");
+  assert.ok(pipeline.includes("min-width:820px"), "Table scroll is local to its wrapper");
 });
 
-
-test("Pipeline keeps the candidate table beside a scrollable detail panel", () => {
-  assert.ok(applicationPipeline.includes("<div className={styles.mainColumn}>") && applicationPipeline.includes("</div>\n    {!selected && <aside"), "Summary and candidate table stay together in the left column");
-  assert.ok(pipeline.includes(".mainColumn{grid-column:1;display:flex;flex-direction:column;gap:12px;min-width:0}"), "Left column stacks the summary and candidate table with consistent spacing");
-  assert.ok(pipeline.includes(".side{grid-column:2;grid-row:1;position:sticky"), "Candidate detail stays aligned beside the left column");
-  assert.ok(pipeline.includes("max-height:calc(100vh - 320px);overflow-y:auto"), "Long history scrolls inside the detail panel without making it taller than its workspace area");
-  assert.ok(pipeline.includes("@media(max-width:1250px)"), "Small displays stack the panel");
+test("Pipeline has centered pagination and a scrollable height-matched detail rail", () => {
+  assert.ok(pipeline.includes(".mainColumn{display:contents}"), "Allow Candidate card and detail panel to share a grid row");
+  assert.ok(pipeline.includes(".listSection{grid-column:1;grid-row:2;"), "Candidate list is on the detail panel's row");
+  assert.ok(pipeline.includes(".side{grid-column:2;grid-row:2;position:relative"), "Right detail matches Candidate card height");
+  assert.ok(pipeline.includes(".sideInner{position:absolute;inset:0;overflow-y:auto"), "Long History stays scrollable inside the panel");
+  assert.ok(pipeline.includes(".pagination{display:grid;grid-template-columns:1fr auto 1fr"), "Current page is centered independent of button widths");
+  assert.ok(pipeline.includes(".table tbody tr{height:56px}"), "Rows target consistent height");
+  assert.ok(pipeline.includes("@media(max-width:1200px)"), "Narrow viewports stack the detail rail");
+  assert.ok(applicationPipeline.includes("className={styles.detailSticky}"), "Candidate header and tabs remain visible while scrolling");
 });
 
 
