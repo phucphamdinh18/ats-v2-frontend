@@ -344,3 +344,15 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Role testing was limited to the authorized Admin session. TA, Hiring Manager and Interviewer permission checks, API 401/403, responsive target matrix, and mutations/add-candidate flow remain **SKIPPED**. No real recruiting record was changed.
 - The Interviews overlap is fixed and verified at the available width, but all three modules remain **not accepted** against the full responsive criteria until the requested viewport matrix and role E2E are run in a browser with viewport controls and the matching test roles.
 - **Rollback:** revert commit `ca9640c5918680dd0ed71d70d07312b010bd6725` on `redesign/bosch-enterprise-v2` to remove only the Interview cell wrapping override. Preview can be republished from the prior preview ref; do not change production root. PR #44 remains draft and unmerged; backup branch is untouched.
+
+
+## Follow-up UI fixes — candidate source fields and shell title (2026-11-15)
+
+- Fixed the Bosch shell wordmark clipping: reduced only the identity area's internal gap/padding and ATS V2 label size; retained the 235px sidebar and full Bosch logo.
+- Candidates now show **Source** and **Sub-source** from the newest application the signed-in user is allowed to read. These values are application-specific; the table labels them as latest to avoid implying that one source belongs permanently to a candidate.
+- The source lookup reads only `applications` through the existing authenticated Supabase client and existing RLS. The current policy allows Admin to read all applications and TA/Recruiter or Hiring Manager only applications for Jobs where they have the corresponding assignment; no service key, API, schema, policy, or backend changes were made. The Candidate directory itself remains Admin/TA scoped by the existing list API.
+- When source lookup fails, the UI shows a localized notice and does not invent attribution. At small widths, source fields remain available; only unavailable/placeholder fields are hidden.
+- Language labels for Source/Sub-source and the latest attribution hint support Vietnamese and English.
+- Code commits: shell fix `ae02e1539e1db8adb4afa3a1927d10c4b31a2511`; candidate attribution `b287dd2482d702d3a3f8367eacf0d09828b0acb0`; table styling `704f9867ef608feeedcc03d883ac07c559c8b0c9`; narrow-pane visibility correction `bed99ab178b1b21a292955c1489b1ec86e40e1df`.
+- CI at `704f9867...`: QA checks passed; Next web checks and Pages build were still running at the time of this note; Supabase local browser E2E was skipped by workflow. Recheck latest HEAD `bed99ab...` before relying on the CI state.
+- Preview was not redeployed or visually rechecked in this update. Production was not touched; PR #44 remains unmerged. Do not claim responsive/browser acceptance until preview screenshots are checked.
