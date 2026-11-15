@@ -1,7 +1,7 @@
-/* ATS V2 — Bosch Enterprise Jobs Master, screen-scoped styles. */
-.root{--ink:#172236;--red:#e20015;--line:#dce2ea;--muted:#657286;font:14px/1.45 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;min-width:0;width:100%}
+/* Bosch V2 Jobs Master — scoped reference styling. No global CSS overrides. */
+.root{--navy:#1e3049;--red:#e20015;--ink:#172236;--muted:#657286;--line:#dce2ea;--soft:#f6f8fa;--blue:#0b55b4;font:14px/1.45 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff;min-width:0;width:100%}
 .root *,.root *::before,.root *::after{box-sizing:border-box}
-.root button,.root select,.root input{font:inherit}
+.root button,.root select,.root input{font-family:inherit}
 .root button{cursor:pointer}
 .root button:focus-visible,.root input:focus-visible,.root select:focus-visible{outline:2px solid #3c7eca;outline-offset:2px}
 .root h1,.root h2,.root h3,.root p{margin:0}
@@ -9,125 +9,94 @@
 .crumb{display:flex;align-items:center;gap:9px;font-size:13px;color:#647489}
 .crumb strong{color:#192638}
 .heading h1{font-size:27px;letter-spacing:-.6px;font-weight:800;line-height:1.2}
-.subtitle{font-size:13px;color:#67788c}
+.subtitle{font-size:13px;color:#657286}
 .tabs{display:flex;border-bottom:1px solid #dce1e7;margin:0 0 18px;gap:25px}
 .tabActive{font-size:13px;font-weight:800;color:var(--red);padding:10px 2px 12px;border-bottom:3px solid var(--red)}
-.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,28%);gap:15px;align-items:start}
-.stack{display:flex;flex-direction:column;min-width:0;gap:15px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:17px;align-items:stretch;min-width:0}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0;height:100%}
 .panel{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:7px;background:#fff}
-.panelHead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 15px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.panelHead h2{font-size:16px;font-weight:800}
-.count{font-size:13px;font-weight:500;color:#526174}
-.summary{padding:15px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
-.metric{min-height:83px;border:1px solid #dfe4ea;border-right:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;padding:10px 5px;background:#fafbfd}
+.jobsPanel{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.panelHead{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.panelHead h2{font-size:17px;line-height:1.2;margin:0;color:#17202d;font-weight:800}
+.count{font-size:12px;font-weight:600;color:#788698}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:16px}
+.metric{padding:16px 5px;background:#fbfcfd;border:1px solid #dfe4ea;border-right:0;text-align:center;min-height:83px}
 .metric:first-child{border-radius:5px 0 0 5px}
 .metric:last-child{border-right:1px solid #dfe4ea;border-radius:0 5px 5px 0}
 .metricActive{background:#fee9eb}
-.metric strong{font-weight:850;font-size:25px;line-height:1.1}
-.metric span{font-size:13px;font-weight:700;color:#25374b}
-.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.search{display:flex;align-items:center;gap:6px;min-height:36px;padding:0 9px;border:1px solid #cad4df;border-radius:5px;color:#50627a;background:#fff;min-width:170px}
-.search input{min-width:0;width:175px;background:transparent;border:0;outline:0;font-size:13px;color:#172236}
+.metric strong{font-size:27px;font-weight:800;display:block;line-height:1.2}
+.metric span{display:block;font-size:12px;margin-top:5px;font-weight:700}
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
+.search{display:flex;align-items:center;gap:6px;min-height:37px;border:1px solid #cbd4df;border-radius:5px;background:#fff;color:#283a54;padding:0 10px}
+.search input{min-width:225px;width:225px;padding:8px 0;border:0;outline:0;background:transparent;color:#283a54;font-size:12px}
 .search:focus-within{outline:2px solid #9eb8d7;outline-offset:1px}
-.select{border:1px solid #cad4df;border-radius:5px;padding:8px 9px;color:#263c58;background:#fff;min-height:36px;max-width:170px;font-size:13px}
-.tableScroll{overflow-x:auto;width:100%}
-.table{width:100%;min-width:930px;table-layout:auto;border-collapse:collapse;font-size:13px;line-height:1.5}
-.table th{position:static;top:auto;z-index:auto;padding:12px 10px;background:#f4f6f8;border-bottom:1px solid var(--line);font-size:13px;color:#26394f;font-weight:800;text-align:left;white-space:nowrap}
-.table td{padding:11px 10px;border-bottom:1px solid #e9edf1;vertical-align:middle;color:#273b54;font-weight:500}
+.select{padding:10px 11px;border:1px solid #cbd4df;border-radius:5px;color:#283a54;background:#fff;font-size:12px;max-width:180px}
+.tableScroll{width:100%;max-width:100%;min-width:0;flex:1 1 auto;overflow-x:auto;overflow-y:visible}
+.table{composes:atsTable from "./ats-table.module.css";width:100%;min-width:760px;table-layout:fixed;text-align:left;font-size:12px}
+.table th{background:#f4f6f8;color:#2e3e56;font-size:11px;font-weight:700;white-space:nowrap;padding:13px 12px;border-bottom:1px solid var(--line);letter-spacing:.04em;text-transform:uppercase;text-align:left;overflow:hidden;text-overflow:ellipsis}
+.table td{padding:13px 12px;border-bottom:1px solid #e9ecf0;vertical-align:middle;color:#34465f;font-size:12px}
+.table tbody tr{height:70px;cursor:pointer}
+.table tbody tr:hover{background:#f8fafc}
+.table tbody tr.selected,.table tbody tr.selected:hover{background:#fff1f2}
 .table tbody tr:last-child td{border-bottom:0}
-.table tbody tr:hover,.table tbody tr.selected{background:#fff1f2}
-.jobCell{display:flex;flex-direction:column;gap:4px;min-width:180px}
-.jobName{text-align:left;color:#0757b8;font-weight:750;border:0;background:transparent;padding:0;font-size:13px;white-space:normal;line-height:1.45}
+.jobCell{display:flex;flex-direction:column;min-width:0;max-width:100%}
+.jobName{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;max-width:100%;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word;text-align:left;font-size:12px;font-weight:750;line-height:1.4;color:#0757b8;border:0;background:none;padding:0}
 .jobName:hover{text-decoration:underline}
-.jobCode,.dim{font-size:13px;color:#5c6f87;line-height:1.45}
-.dim{display:block;margin-top:4px}
-.state{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:4px 9px;border-radius:20px;background:#edf0f4;color:#41546b;font-size:13px;font-weight:750}
-.open{background:#e2f5e4;color:#21703c}
-.draft,.medium{background:#fff0d6;color:#92610f}
+.jobCode{display:block;max-width:100%;color:#7a8899;font-size:11px;line-height:1.4;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dim{composes:dim from "./ats-table.module.css";display:block;color:#7a8899;font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.departmentCell{min-width:0;max-width:100%;font-size:12px;line-height:1.45}
+.department{font-size:12px;font-weight:700;text-transform:none;color:#34465f;overflow-wrap:anywhere}
+.departmentEmpty{font-size:12px;font-weight:400;color:#7a8899}
+.state{composes:tag from "./ats-table.module.css";display:inline-block;padding:4px 9px;border-radius:20px;background:#edf0f4;color:#526174;font-size:11px;font-weight:800;white-space:nowrap}
+.open{background:#e3f6e5;color:#21703c}
+.draft,.medium{background:#fff1d7;color:#92610f}
 .high{background:#fde5e7;color:#b21c2c}
-.pillWrap{margin-top:5px}
-.action{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:7px 9px;border:1px solid #cbd5df;background:white;color:#1054a7;border-radius:4px;font-size:13px;font-weight:750}
+.applicationCell{min-width:0;max-width:100%;font-size:12px;font-weight:400;line-height:1.45}
+.applicationCell b{font-size:12px;font-weight:800}
+.applicationCell .dim{font-size:11px;font-weight:400}
+.action{display:inline-flex;align-items:center;gap:5px;padding:8px 10px;border:1px solid #cbd5e1;background:#fff;color:#1351a5;border-radius:4px;font-weight:800;font-size:11px;white-space:nowrap;max-width:100%}
 .action:hover{background:#f4f7fb;border-color:#9cafc5}
-.empty{padding:20px;text-align:center;color:#68798e;font-size:13px}
+.empty{padding:20px;text-align:center;color:#68798e;font-size:12px}
 .clear{padding:6px 8px;border:0;background:none;color:#0754af;font-weight:750}
-.footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:11px 14px;border-top:1px solid var(--line);color:#65778e;font-size:13px}
-.pagination{display:flex;align-items:center;gap:8px}
-.pagination button{border:1px solid #cbd5df;border-radius:4px;background:#fff;padding:5px 8px;color:#2b4360;font-size:13px}
+.footer{composes:foot from "./ats-table.module.css";padding:13px 16px;color:#6b798c;font-size:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;flex-wrap:wrap;width:100%}
+.pagination{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.pagination button{border:1px solid #ced8e2;border-radius:4px;background:#fff;padding:5px 10px;font-size:12px;color:#34465f;margin-left:8px}
 .pagination button:disabled{opacity:.4;cursor:not-allowed}
-.snapshot{position:sticky;top:82px}
-.snapshotHead{padding:17px 16px;border-bottom:1px solid var(--line)}
-.snapshotHead h2{font-size:18px;line-height:1.3;font-weight:850;overflow-wrap:anywhere}
-.snapshotHead p{font-size:13px;color:#5a718c;margin-top:6px}
-.snapshotSection{padding:15px;border-bottom:1px solid #e9edf1}
+.snapshot{position:static;align-self:stretch;display:flex;flex-direction:column;min-width:0;height:100%}
+.snapshotHead{padding:18px;border-bottom:1px solid var(--line)}
+.snapshotHead h2{font-size:19px;line-height:1.3;font-weight:800;margin:0 0 9px;overflow-wrap:anywhere}
+.snapshotHead p{margin:0;color:#718096;font-size:12px}
+.snapshotSection{padding:16px 17px;border-bottom:1px solid #e8ecf1}
 .snapshotSection:last-child{border:0}
-.snapshotSection h3{font-size:13px;font-weight:850;margin-bottom:11px}
-.facts{display:grid;grid-template-columns:minmax(92px,112px) minmax(0,1fr);gap:10px 8px;margin:0;font-size:13px}
-.facts dt{color:#61748c;font-weight:500}
-.facts dd{margin:0;font-weight:700;color:#23354b;overflow-wrap:anywhere}
-.primary{display:inline-flex;align-items:center;gap:7px;padding:9px 11px;background:#d7192d;color:#fff;border:0;border-radius:4px;font-size:13px;font-weight:800;margin-top:15px}
+.snapshotSection h3{margin:0 0 12px;font-size:14px;font-weight:800}
+.facts{display:grid;grid-template-columns:108px minmax(0,1fr);gap:10px 8px;font-size:12px;margin:0}
+.facts dt{color:#718096}
+.facts dd{font-weight:700;margin:0;overflow-wrap:anywhere}
+.snapshotFinal{display:flex;flex-direction:column;flex:1 1 auto;margin-top:auto}
+.primary{display:inline-flex;align-items:center;align-self:flex-start;gap:7px;padding:11px 15px;background:#d7192d;color:#fff;border:0;border-radius:4px;font-size:12px;font-weight:800;margin-top:auto}
 .primary:hover{background:#b80f24}
-.note{font-size:13px;line-height:1.5;color:#66778c;margin-top:14px!important}
-@media(max-width:1180px){.workspace{grid-template-columns:minmax(0,1fr)}.snapshot{position:static;display:grid;grid-template-columns:1fr 1fr}.snapshotHead{grid-column:1/-1}.snapshotSection{border-right:1px solid #e8ecf1}.snapshotSection:last-child{border-right:0}}
-@media(max-width:780px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.metric:nth-child(2){border-right:1px solid var(--line);border-radius:0 5px 0 0}.metric:nth-child(3){border-top:0;border-radius:0 0 0 5px}.metric:last-child{border-top:0;border-radius:0 0 5px 0}.search{flex:1}.search input{width:100%}.controls{width:100%}.snapshot{display:block}.panelHead{align-items:flex-start}.table{min-width:900px}}
-@media(max-width:520px){.heading h1{font-size:23px}.summary{padding:10px}.metric strong{font-size:21px}.panelHead{padding:12px}.select{flex:1;max-width:none}.search{width:100%;flex:auto}.footer{padding:11px}}
-
-/* Readability weight pass: scoped, no layout or workflow changes. */
-.root :is(input,select){font-weight:500}
-.table td{font-weight:600}
-.facts dt,.subtitle,.crumb,.count,.note,.footer{font-weight:600;color:#526174}
-.facts dd{font-weight:750}
-
-/* Bosch readability pass: component-local typography only; preserve responsive and data contracts. */
-
-
-/* Jobs Overview table layout (PR #44): 5 stable columns, natural content and aligned footer. */
-.workspace{grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
-.stack{display:flex;flex-direction:column;min-width:0;gap:15px;height:100%}
-.jobsPanel{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;height:100%;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-.tableScroll{flex:1 1 auto;min-height:0;width:100%;max-width:100%;overflow-x:auto;overflow-y:visible}
-.table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse;font-size:13px;line-height:1.4}
-.table col{min-width:0}
-.table th{padding:12px 16px;background:#f3f4f6;color:#374151;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;text-align:left;white-space:nowrap;overflow-wrap:normal}
-.table tbody tr{height:84px}
-.table td{height:84px;padding:12px 16px;vertical-align:middle;color:#111827;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:500;min-width:0;overflow-wrap:anywhere;word-break:normal}
-.table tbody tr:last-child td{border-bottom:0}
-.table tbody tr:hover{background:#fff1f2}
-.table tbody tr.selected,.table tbody tr.selected:hover{background:#fee2e2}
-.jobCell{display:flex;flex-direction:column;gap:2px;min-width:0;width:100%}
-.jobName{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;max-width:100%;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word;text-align:left;font-size:14px;font-weight:600;line-height:1.4;color:#1d4ed8;border:0;background:transparent;padding:0}
-.jobCode{display:block;max-width:100%;margin-top:2px;font-size:12px;color:#6b7280;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.department,.departmentEmpty{display:block;font-size:13px;font-weight:500;text-transform:none;line-height:1.4;color:#111827}
-.departmentEmpty{color:#9ca3af}
-.state{display:inline-flex;align-items:center;justify-content:center;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4;white-space:nowrap}
-.open{background:#dcfce7;color:#166534}
-.draft{background:#fef3c7;color:#b45309}
-.applicationCell{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-width:0}
-.applicationCell strong{font-size:14px;font-weight:600;color:#111827;line-height:1.35}
-.applicationCell .dim{display:block;margin:0;font-size:12px;font-weight:500;line-height:1.35;color:#6b7280;overflow-wrap:anywhere}
-.action{display:inline-flex;align-items:center;justify-content:flex-start;gap:5px;height:34px;max-width:100%;padding:0 14px;font-size:13px;font-weight:600;white-space:nowrap;line-height:1.2}
-.footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-height:56px;width:100%;margin-top:auto;padding:12px 16px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;font-weight:500}
-.pagination{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:12px}
-.pagination button{height:32px;padding:0 12px;font-size:12px;border:1px solid #cbd5df;color:#2b4360}
-.pagination button:disabled{color:#9ca3af;border-color:#e5e7eb;opacity:1;cursor:not-allowed}
-.snapshot{position:static;display:flex;flex-direction:column;min-width:0;height:100%;align-self:stretch;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-.snapshotFinal{display:flex;flex-direction:column;flex:1 1 auto}
-.snapshotFinal .primary{align-self:flex-start;margin-top:auto}
-@media(max-width:1640px){
+.note{font-size:12px;line-height:1.5;color:#657286;margin:14px 0 0!important}
+@media(max-width:1370px){
   .workspace{grid-template-columns:minmax(0,1fr)}
   .stack{height:auto}
-  .snapshot{height:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-  .snapshotHead{grid-column:1/-1}
-  .snapshotFinal{display:flex;flex-direction:column}
-}
-@media(max-width:1100px){
-  .tableScroll{overflow-x:auto}
-  .table{min-width:860px}
+  .snapshot{position:static;height:auto}
 }
 @media(max-width:780px){
-  .snapshot{display:block}
-  .table{min-width:860px}
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric:nth-child(2){border-right:1px solid var(--line);border-radius:0 5px 0 0}
+  .metric:nth-child(3){border-top:0;border-radius:0 0 0 5px}
+  .metric:last-child{border-top:0;border-radius:0 0 5px 0}
+  .controls{width:100%}
+  .search{flex:1 1 220px}
+  .search input{width:100%;min-width:0}
+  .snapshot{display:flex}
 }
 @media(max-width:520px){
-  .footer{padding:12px 16px}
-  .pagination button{padding:0 8px}
+  .heading h1{font-size:23px}
+  .summary{padding:10px}
+  .metric strong{font-size:21px}
+  .panelHead{padding:12px}
+  .select{flex:1 1 auto;max-width:none}
+  .search{width:100%;flex:1 1 100%}
+  .footer{gap:9px}
 }
