@@ -7,7 +7,7 @@ import { candidateProfile, listCandidates, type Candidate, type CandidateProfile
 import { createApplication } from "@/lib/applications";
 import { driveLink } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
-import { Mail, Phone, MapPin, BriefcaseBusiness, Building2, CalendarDays, Layers3 } from "lucide-react";
+import BoschCandidateDetail from "./bosch-candidate-detail";
 import styles from "./bosch-v2-candidates.module.css";
 import { useLanguage } from "./language";
 
@@ -15,7 +15,7 @@ const PAGE_SIZE = 25;
 type SourceOption = { sub_source: string; source: string; source_ownership: string };
 type CandidateAttribution = { candidate_id: string; source: string | null; sub_source: string | null; created_at: string };
 
-export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAccessLost: () => void }) {
+export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Job[]; onAccessLost: () => void; onOpenJob?: (job: Job) => void }) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const tr = (vi: string, english: string) => en ? english : vi;
@@ -212,33 +212,24 @@ export default function TalentPool({ jobs, onAccessLost }: { jobs: Job[]; onAcce
       </div>
       <aside className={styles.profileCard} aria-busy={detailLoading}>
         <div className={styles.profileScroll}>
-        {detailLoading ? <p className={styles.empty}>{tr("Đang mở hồ sơ…", "Loading candidate profile…")}</p> : profile ? <>
-          <div className={styles.profileHeader}><div><h3>{profile.candidate.full_name}</h3><p>{profile.candidate.current_title || profile.candidate.primary_role || tr("Chưa có chức danh", "Title unavailable")}</p></div></div>
-          {profileError && <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div>}
-          {message && <div className={`${styles.notice} ${styles.success}`} role="status">{message}</div>}
-          <div className={styles.section}><h3 className={styles.subheading}>{tr("Liên hệ", "Contact")}</h3>
-            <dl className={styles.iconFacts}>
-              <dt><Mail size={16} aria-hidden="true"/><span>Email</span></dt><dd>{profile.candidate.email || "—"}</dd>
-              <dt><Phone size={16} aria-hidden="true"/><span>{tr("Điện thoại", "Phone")}</span></dt><dd>{profile.candidate.phone || "—"}</dd>
-              <dt><MapPin size={16} aria-hidden="true"/><span>{tr("Địa điểm", "Location")}</span></dt><dd>{profile.candidate.location || "—"}</dd>
-            </dl></div>
-          <div className={styles.section}><h3 className={styles.subheading}>{tr("Công việc hiện tại", "Current Role")}</h3>
-            <dl className={styles.iconFacts}>
-              <dt><BriefcaseBusiness size={16} aria-hidden="true"/><span>{tr("Vị trí", "Role")}</span></dt><dd>{profile.candidate.current_title || profile.candidate.primary_role || "—"}</dd>
-              <dt><Building2 size={16} aria-hidden="true"/><span>{tr("Công ty", "Company")}</span></dt><dd>{profile.candidate.current_company || "—"}</dd>
-              <dt><CalendarDays size={16} aria-hidden="true"/><span>{tr("Kinh nghiệm", "Experience")}</span></dt><dd>{profile.candidate.total_experience_years == null ? "—" : `${profile.candidate.total_experience_years} ${en ? "yrs" : "năm"}`}</dd>
-              <dt><Layers3 size={16} aria-hidden="true"/><span>{tr("Cấp bậc", "Seniority")}</span></dt><dd>{profile.candidate.seniority || "—"}</dd>
-            </dl></div>
-          <div className={styles.section}><h3 className={styles.subheading}>{tr("CV / tài liệu", "CV / Documents")}</h3>
-          {profile.documents.length ? <ul className={styles.documents}>{profile.documents.map((document) => <li key={`${document.drive_file_id}-${document.created_at}`}><span>{document.original_name}</span>{driveLink(document.drive_url) ? <a href={driveLink(document.drive_url)!} target="_blank" rel="noopener noreferrer">{tr("Mở CV ↗", "Open CV ↗")}</a> : <small>{tr("Link không hợp lệ", "Invalid link")}</small>}</li>)}</ul> : <p className={styles.muted}>{tr("Chưa có CV được lưu trong hồ sơ.", "No CV documents are saved on this profile.")}</p>}
-          </div><div className={styles.section}><h3 className={styles.subheading}>{tr("Job đang tham gia", "Jobs")} ({profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length})</h3>
-          {profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).length ? <ul className={styles.jobAssignments}>{profile.applications.filter((application) => jobs.some((job) => job.id === application.job_id)).map((application) => { const assignedJob = jobs.find((job) => job.id === application.job_id); return <li key={application.id}>
-            <strong className={styles.assignedJobTitle} title={assignedJob?.title}>{assignedJob?.title}</strong>
-            {assignedJob?.business_unit && <span className={styles.jobDepartment}><BriefcaseBusiness aria-hidden="true" size={14}/>{assignedJob.business_unit}</span>}
-            <div className={styles.jobMeta}><span className={`${styles.jobStage} ${application.stage === "INTERVIEW" ? styles.stageInterview : application.stage === "SCREEN" ? styles.stageScreen : styles.stageNeutral}`}>{application.stage}</span><span className={styles.jobStatus}>{application.status}</span></div>
-          </li>; })}</ul> : <p className={styles.muted}>{tr("Chưa được thêm vào Job nào trong phạm vi bạn được xem.", "Not assigned to any Job you can access.")}</p>}
-          </div><div className={styles.section}><h3 className={styles.subheading}>{tr("Thêm vào Job", "Add to Job")}</h3>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).length ? <div className={styles.addControls}><select aria-label={tr("Chọn Job để thêm ứng viên", "Select Job to add candidate")} value={jobId} onChange={(event) => { setJobId(event.target.value); requestId.current = null; }}><option value="">{tr("Chọn Job đang mở", "Select an open Job")}</option>{openJobs.filter((job) => !profile.applications.some((application) => application.job_id === job.id)).map((job) => <option key={job.id} value={job.id}>{job.job_code ? `${job.job_code} · ` : ""}{job.title}</option>)}</select><select aria-label={tr("Chọn nguồn ứng viên", "Select candidate source")} value={subSource} onChange={(event) => { setSubSource(event.target.value); requestId.current = null; }} disabled={!!sourceLoadError}><option value="">{tr("Chọn nguồn ứng viên", "Select candidate source")}</option>{sourceOptions.map((source) => <option key={source.sub_source} value={source.sub_source}>{source.sub_source} · {source.source} · {source.source_ownership}</option>)}</select><button className={styles.primary} disabled={!jobId || !subSource || busy || !sourceOptions.length} onClick={() => void addToJob()}>{busy ? tr("Đang thêm…", "Adding…") : requestId.current ? tr("Thử lại", "Retry") : tr("Thêm vào Job", "Add to Job")}</button></div> : <p className={styles.muted}>{tr("Không có Job đang mở mà bạn có quyền thêm hồ sơ này.", "No eligible open Job is available for this candidate.")}</p>}{sourceLoadError && <p className={`${styles.notice} ${styles.error}`} role="alert">{tr("Không tải được danh mục nguồn tuyển dụng.", "Could not load the recruitment source catalog.")}</p>}</div>
-        </> : profileError ? <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div> : <div className={styles.empty}><h3>{tr("Chọn một hồ sơ", "Select a candidate")}</h3><p>{tr("Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.", "Profile details and related Jobs will appear here.")}</p></div>}
+        {detailLoading ? <p className={styles.empty}>{tr("Đang mở hồ sơ…", "Loading candidate profile…")}</p>
+          : profile ? <BoschCandidateDetail
+              key={selectedId || profile.candidate.id}
+              profile={profile} jobs={jobs} openJobs={openJobs} en={en}
+              jobId={jobId} subSource={subSource} sourceOptions={sourceOptions}
+              sourceLoadError={sourceLoadError} busy={busy} message={message}
+              profileError={profileError} requestRetry={!!requestId.current}
+              onJobChange={(value) => { setJobId(value); requestId.current = null; }}
+              onSourceChange={(value) => { setSubSource(value); requestId.current = null; }}
+              onAddToJob={() => void addToJob()}
+              onOpenJob={onOpenJob}
+              hasPrevious={candidates.findIndex((candidate) => candidate.id === selectedId) > 0}
+              hasNext={candidates.findIndex((candidate) => candidate.id === selectedId) >= 0 && candidates.findIndex((candidate) => candidate.id === selectedId) < candidates.length - 1}
+              onPrevious={() => { const ix = candidates.findIndex((candidate) => candidate.id === selectedId); if (ix > 0) setSelectedId(candidates[ix - 1].id); }}
+              onNext={() => { const ix = candidates.findIndex((candidate) => candidate.id === selectedId); if (ix >= 0 && ix < candidates.length - 1) setSelectedId(candidates[ix + 1].id); }}
+            />
+          : profileError ? <div className={`${styles.notice} ${styles.error}`} role="alert">{profileError}</div>
+          : <div className={styles.empty}><h3>{tr("Chọn một hồ sơ", "Select a candidate")}</h3><p>{tr("Thông tin chi tiết và các Job liên quan sẽ hiển thị tại đây.", "Profile details and related Jobs will appear here.")}</p></div>}
         </div>
       </aside>
     </div>
