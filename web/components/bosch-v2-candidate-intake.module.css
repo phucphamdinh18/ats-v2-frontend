@@ -23,3 +23,8 @@
 .disabled{color:#8a4b1d;background:#fff6e6;border-color:#edd6a4}
 .retry{margin-left:8px;padding:4px 7px;border:0;background:transparent;color:#064b99;text-decoration:underline;font-weight:800;font-size:12px}
 @media(max-width:700px){.root{padding:12px}.form{grid-template-columns:1fr}.actions{align-items:stretch;flex-direction:column}.submit{width:100%}}
+
+/* Readability weight pass: scoped, no layout or workflow changes. */
+.root :is(input,select){font-weight:500}
+.header p,.actions p{font-weight:600;color:#526174}
+.form label{font-weight:750}
