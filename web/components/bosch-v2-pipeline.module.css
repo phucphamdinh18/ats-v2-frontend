@@ -168,9 +168,8 @@
   .pagination button{padding:0 8px}
 }
 
-/* Readability weight pass: scoped, no layout or workflow changes. */
+/* Readability weight pass: preserve input weight without overriding table specification. */
 .root :is(input,select){font-weight:500}
-.table td{font-weight:600}
 .muted,.stageCell small,.rejected{font-weight:600;color:#526174}
 
 
