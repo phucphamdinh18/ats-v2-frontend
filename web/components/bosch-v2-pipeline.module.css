@@ -214,3 +214,12 @@
 .side .profileCard h3{font-size:20px;line-height:1.4}
 .side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileFields,.side .profileMuted{font-size:16px;line-height:1.5}
 .side .timeline small{font-size:var(--ats-font-body)}
+
+
+/* Job Pipeline reference treatment: blue selection and active navigation, with a soft gray table header and the interview metric as the main focus. */
+.stageHighlight{background:#e8f1ff}
+.table tbody tr:hover,.selected{background:#f5f8fc}
+.table tbody tr.selected,.table tbody tr.selected:hover{background:#e7f0ff}
+.table input[type=checkbox]{accent-color:#0756bd}
+.profileTabs .active{color:#0756bd;border-bottom-color:#0756bd}
+.table thead th{background:#f1f3f5}
