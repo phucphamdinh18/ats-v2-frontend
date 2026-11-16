@@ -109,11 +109,9 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
           : (en ? "YOUR RECRUITMENT WORKSPACE" : "KHÔNG GIAN TUYỂN DỤNG CỦA BẠN");
   const overviewTitle = isDepartmentHead
     ? (en ? "Department hiring overview" : "Tổng quan tuyển dụng phòng ban")
-    : isHiringManager
-      ? (en ? "Your hiring overview" : "Tổng quan tuyển dụng của bạn")
-      : isTA
-        ? (en ? "Recruitment work for today" : "Việc tuyển dụng hôm nay")
-        : (en ? "Recruitment overview" : "Tổng quan tuyển dụng");
+    : isTA
+      ? (en ? "Recruitment work for today" : "Việc tuyển dụng hôm nay")
+      : (en ? "Recruitment overview" : "Tổng quan tuyển dụng");
 
   const metrics = [
     { label: en ? "Open jobs" : "Job đang mở", value: openJobs.length, icon: BriefcaseBusiness, tone: "neutral" },
