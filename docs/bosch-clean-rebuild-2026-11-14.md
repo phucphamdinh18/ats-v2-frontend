@@ -632,4 +632,12 @@ Owner reports that in Vietnamese the “Hồ sơ” table heading sits too close
 
 ### Follow-up adjustment
 
-Owner requests another right shift to visually center “Hồ sơ” between “Trạng thái” and “Thao tác.” Increase the Vietnamese-only Applications cell/header left padding to 40px (from 24px); English remains untouched. Rebuild and publish Preview only. Production remains unchanged.
+Owner first requested a right shift to visually center “Hồ sơ” between “Trạng thái” and “Thao tác.” The Vietnamese-only Applications cell/header padding was raised from 24px to 40px; after owner feedback that this was still not enough, it was raised again to 64px total (an additional 24px). English remains untouched.
+
+
+### Final follow-up — Additional right shift for Vietnamese “Hồ sơ” (2026-11-16)
+
+- Raised left padding on the Applications (“Hồ sơ”) header and cells from 40px to 64px in Vietnamese only. The table column is now visibly shifted right; English keeps its original 12px cell padding.
+- Published the change to the separate `/preview/` path with workflow run #521. Build and deploy completed successfully.
+- Production root stayed on commit `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; no production deployment was performed.
+- Scope: Jobs Overview table CSS only for the UI; no data, table order, API, Auth/RLS, backend or schema changes.
