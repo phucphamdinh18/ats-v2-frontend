@@ -605,7 +605,7 @@ export default function Workspace() {
                 ))}
               </div>}
               {tab === "home" ? (
-                <BoschHomeDashboard key={access.userId} jobs={access.jobs} roles={access.roles}
+                <BoschHomeDashboard key={access.userId} jobs={access.jobs} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
                   onAccessLost={invalidate}
                   onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}
                   onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}
