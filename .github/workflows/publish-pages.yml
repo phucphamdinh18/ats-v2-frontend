@@ -118,7 +118,25 @@ jobs:
   deploy:
     # A PR may validate a preview artifact, but may never alter GitHub Pages.
     # Production deployment is an explicit manual dispatch from main only.
-    if: github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || (inputs.mode == 'path-preview' && github.ref == 'refs/heads/redesign/bosch-enterprise-v2'))
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
+
+  # Preview-only publisher. Its build always reconstructs the existing Pages root
+  # from production_ref and places the feature branch under /preview/.
+  deploy-preview:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview' && github.ref == 'refs/heads/redesign/bosch-enterprise-v2'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
