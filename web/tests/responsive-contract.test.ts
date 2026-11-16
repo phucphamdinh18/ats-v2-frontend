@@ -83,7 +83,8 @@ test("Bosch identity grows on desktop while sidebar remains compact on mobile", 
   const shell = file("bosch-v2-shell.module.css");
   const workspace = file("workspace.tsx");
   assert.ok(shell.includes("grid-template-columns:310px minmax(0,1fr)"), "Desktop sidebar should match the approved reference proportions");
-  assert.ok(shell.includes(".identity img{width:224px;max-height:56px"), "Bosch wordmark should be larger and tagline easier to read");
+  assert.ok(shell.includes(".identity img{width:166px;max-height:56px"), "Bosch wordmark should keep its size without excess SVG whitespace");
+  assert.ok(readFileSync(join(process.cwd(), "public", "bosch-inspired-wordmark.svg"), "utf8").includes('viewBox="0 0 156 52"'), "Wordmark canvas should end close to its tagline and letters");
   assert.ok(shell.includes("@media(max-width:1280px)"), "Laptop should use the compact sidebar width");
   assert.ok(shell.includes("@media(max-width:760px)"), "Mobile sidebar still collapses to icons");
   assert.ok(workspace.includes('alt="Bosch" width="188" height="52"'), "Logo intrinsic dimensions should match the design");
