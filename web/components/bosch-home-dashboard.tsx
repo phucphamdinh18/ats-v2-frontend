@@ -144,7 +144,7 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
           const isDraft = job.status === "DRAFT";
           return <button type="button" key={`job-${job.id}`} className={styles.taskRow} onClick={() => onOpenJob(job)}>
             <span className={`${styles.taskIcon} ${isDraft ? styles.taskIconAmber : styles.taskIconBlue}`}>{isDraft ? <ClipboardCheck size={17}/> : <BriefcaseBusiness size={17}/>}</span>
-            <span className={styles.taskCopy}><strong>{isDraft ? (en ? "Complete draft job" : "Hoàn thiện Job bản nháp") : (en ? "Review high-priority job" : "Theo dõi Job ưu tiên cao")}</strong><small>{job.title} · {job.job_code || dash}</small></span>
+            <span className={styles.taskCopy}><strong>{isDraft ? (en ? "Complete draft job" : "Hoàn thiện Job bản nháp") : (en ? "Review high-priority job" : "Theo dõi Job ưu tiên cao / khẩn cấp")}</strong><small>{job.title} · {job.job_code || dash}</small></span>
             <span className={styles.taskAction}>{en ? "Open" : "Mở"}<ChevronRight size={15}/></span>
           </button>;
         })}
