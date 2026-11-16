@@ -95,9 +95,25 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
   const attentionJobs = [...drafts, ...priorityJobs].slice(0, 4);
   const isAdmin = roles.includes("ADMIN");
   const isTA = roles.includes("TA_RECRUITER");
+  const isDepartmentHead = roles.some((role) => ["DEPARTMENT_HEAD", "DEPT_HEAD", "DH"].includes(role));
+  const isHiringManager = roles.includes("HIRING_MANAGER");
   const scope = isAdmin ? (en ? "Authorized organization scope" : "Phạm vi tổ chức được phân quyền")
     : isTA ? (en ? "Jobs assigned to you" : "Các Job được phân công cho bạn")
+      : isDepartmentHead ? (en ? "Jobs in your authorized department scope" : "Job trong phạm vi phòng ban được phân quyền")
+        : isHiringManager ? (en ? "Jobs assigned to your hiring scope" : "Job trong phạm vi tuyển dụng được phân quyền")
       : (en ? "Jobs and interviews you can access" : "Job và lịch phỏng vấn bạn được phép xem");
+  const perspective = isAdmin ? (en ? "ADMIN WORKSPACE" : "KHÔNG GIAN ADMIN")
+    : isTA ? (en ? "RECRUITER WORKSPACE" : "KHÔNG GIAN TA")
+      : isDepartmentHead ? (en ? "DEPARTMENT HEAD WORKSPACE" : "GÓC NHÌN TRƯỞNG PHÒNG BAN")
+        : isHiringManager ? (en ? "HIRING MANAGER WORKSPACE" : "GÓC NHÌN HIRING MANAGER")
+          : (en ? "YOUR RECRUITMENT WORKSPACE" : "KHÔNG GIAN TUYỂN DỤNG CỦA BẠN");
+  const overviewTitle = isDepartmentHead
+    ? (en ? "Department hiring overview" : "Tổng quan tuyển dụng phòng ban")
+    : isHiringManager
+      ? (en ? "Your hiring overview" : "Tổng quan tuyển dụng của bạn")
+      : isTA
+        ? (en ? "Recruitment work for today" : "Việc tuyển dụng hôm nay")
+        : (en ? "Recruitment overview" : "Tổng quan tuyển dụng");
 
   const metrics = [
     { label: en ? "Open jobs" : "Job đang mở", value: openJobs.length, icon: BriefcaseBusiness, tone: "neutral" },
@@ -106,13 +122,13 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
     { label: en ? "Interviews · next 7 days" : "Phỏng vấn · 7 ngày tới", value: scheduleError || interviewLoading ? dash : upcoming.length, icon: CalendarClock, tone: "neutral" },
   ] as const;
 
-  return <section className={styles.root} aria-label={en ? "Recruitment overview" : "Tổng quan tuyển dụng"}>
+  return <section className={styles.root} aria-label={en ? "Recruitment home" : "Trang chủ tuyển dụng"}>
     <div className={styles.crumb}>Home <ChevronRight size={13}/>{en ? "Overview" : "Tổng quan"}</div>
     <header className={styles.hero}>
       <div className={styles.heroCopy}>
-        <p className={styles.eyebrow}>{en ? "YOUR RECRUITMENT WORKSPACE" : "KHÔNG GIAN TUYỂN DỤNG CỦA BẠN"}</p>
-        <h1>{en ? "Good to see you" : "Tổng quan tuyển dụng"}</h1>
-        <p className={styles.subtitle}>{en ? "See what needs attention and what is coming up next." : "Xem nhanh việc cần chú ý và lịch tuyển dụng sắp tới."}</p>
+        <p className={styles.eyebrow}>{perspective}</p>
+        <h1>{overviewTitle}</h1>
+        <p className={styles.subtitle}>{en ? "See your authorized jobs, upcoming interviews, and the next actions to take." : "Xem Job được phân quyền, lịch phỏng vấn sắp tới và việc cần xử lý tiếp theo."}</p>
         <span className={styles.scope}><span className={styles.scopeDot}/>{scope}</span>
       </div>
       <div className={styles.heroActions}>
@@ -144,12 +160,12 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
           const isDraft = job.status === "DRAFT";
           return <button type="button" key={`job-${job.id}`} className={styles.taskRow} onClick={() => onOpenJob(job)}>
             <span className={`${styles.taskIcon} ${isDraft ? styles.taskIconAmber : styles.taskIconBlue}`}>{isDraft ? <ClipboardCheck size={17}/> : <BriefcaseBusiness size={17}/>}</span>
-            <span className={styles.taskCopy}><strong>{isDraft ? (en ? "Complete draft job" : "Hoàn thiện Job bản nháp") : (en ? "Review high-priority job" : "Job ưu tiên cao / khẩn cấp")}</strong><small>{job.title} · {job.job_code || dash}</small></span>
+            <span className={styles.taskCopy}><strong>{isDraft ? (en ? "Complete draft job" : "Hoàn thiện Job bản nháp") : (en ? "Review high-priority job" : "Theo dõi Job ưu tiên cao")}</strong><small>{job.title} · {job.job_code || dash}</small></span>
             <span className={styles.taskAction}>{en ? "Open" : "Mở"}<ChevronRight size={15}/></span>
           </button>;
         })}
         {!feedbackItems.length && !attentionJobs.length && !feedbackError && <div className={styles.emptyState}><CheckCircle2 size={21}/><p>{en ? "Nothing needs attention in the data currently available to you." : "Hiện không có việc cần chú ý trong dữ liệu bạn được phép xem."}</p></div>}
-        <p className={styles.cardFootnote}>{en ? "Draft and priority jobs are reminders; no overdue SLA or pending offer is inferred." : "Job nháp và Job ưu tiên là việc nhắc theo dõi. SLA và Offer chờ duyệt chỉ hiển thị khi API có dữ liệu được phân quyền; Home không tự suy đoán."}</p>
+        <p className={styles.cardFootnote}>{en ? "Draft and priority jobs are reminders; no overdue SLA or pending offer is inferred." : "Job nháp và Job ưu tiên là mục nhắc theo dõi; Home không tự kết luận quá SLA hay Offer đang chờ duyệt."}</p>
       </section>
 
       <section className={styles.card} aria-label={en ? "Upcoming interviews" : "Lịch phỏng vấn sắp tới"}>
@@ -178,7 +194,7 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
         <span><strong>{priorityJobs.length}</strong>{en ? "high priority" : "ưu tiên cao"}</span>
       </div>
       <div className={styles.jobList}>
-        {[...attentionJobs, ...openJobs.filter((job) => !priorityJobs.some((priorityJob) => priorityJob.id === job.id))].slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} aria-label={job.title} onClick={() => onOpenJob(job)}>
+        {[...attentionJobs, ...openJobs.filter((job) => !priorityJobs.some((priorityJob) => priorityJob.id === job.id))].slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} onClick={() => onOpenJob(job)}>
           <span className={styles.jobBrief}><strong>{job.title}</strong><small>{job.job_code || dash} · {job.business_unit || (en ? "No department" : "Chưa có phòng ban")}</small></span>
           <span className={`${styles.jobState} ${job.status === "DRAFT" ? styles.jobDraft : ""}`}>{job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : (en ? "Open" : "Đang mở")}</span>
           <span className={styles.jobPriority}>{formatPriority(job.priority, en)}</span>
