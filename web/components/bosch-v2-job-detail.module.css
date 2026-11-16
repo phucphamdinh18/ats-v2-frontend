@@ -170,3 +170,8 @@
 .pipelineLayout>.metadata{font-size:15px;line-height:1.5}
 .pipelineLayout>.tabs button{font-size:16px;line-height:1.5}
 @media(max-width:650px){.pipelineLayout>.titleRow h1{font-size:24px}}
+
+
+/* Match the blue navigation accents in the Bosch reference screens. */
+.tabs button.active{color:#0756bd}
+.tabs button.active::after{background:#0756bd}
