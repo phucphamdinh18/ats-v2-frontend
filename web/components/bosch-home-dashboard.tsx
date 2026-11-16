@@ -149,7 +149,7 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
           </button>;
         })}
         {!feedbackItems.length && !attentionJobs.length && !feedbackError && <div className={styles.emptyState}><CheckCircle2 size={21}/><p>{en ? "Nothing needs attention in the data currently available to you." : "Hiện không có việc cần chú ý trong dữ liệu bạn được phép xem."}</p></div>}
-        <p className={styles.cardFootnote}>{en ? "Draft and priority jobs are reminders; no overdue SLA or pending offer is inferred." : "Job nháp và Job ưu tiên là mục nhắc theo dõi; Home không tự kết luận quá SLA hay Offer đang chờ duyệt."}</p>
+        <p className={styles.cardFootnote}>{en ? "Draft and priority jobs are reminders; no overdue SLA or pending offer is inferred." : "Job nháp và Job ưu tiên là việc nhắc theo dõi. SLA và Offer chờ duyệt chỉ hiển thị khi API có dữ liệu được phân quyền; Home không tự suy đoán."}</p>
       </section>
 
       <section className={styles.card} aria-label={en ? "Upcoming interviews" : "Lịch phỏng vấn sắp tới"}>
