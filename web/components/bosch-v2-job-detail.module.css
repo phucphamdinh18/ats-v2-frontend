@@ -144,6 +144,8 @@
 .root :is(input,select){font-weight:500}
 .metadata,.facts dd{font-weight:600}
 .facts dt{font-weight:750}
+.detailPane .facts dt{background:#f8fafc;color:#758399;padding-inline:12px;border-radius:4px 0 0 4px}
+.detailPane .facts dd{padding-inline:14px}
 
 /* Bosch readability pass: component-local typography only; preserve responsive and data contracts. */
 
