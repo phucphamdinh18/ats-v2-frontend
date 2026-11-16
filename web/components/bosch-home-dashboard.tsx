@@ -106,7 +106,7 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
     { label: en ? "Interviews · next 7 days" : "Phỏng vấn · 7 ngày tới", value: scheduleError || interviewLoading ? dash : upcoming.length, icon: CalendarClock, tone: "neutral" },
   ] as const;
 
-  return <section className={styles.root} aria-label={en ? "Recruitment home" : "Trang chủ tuyển dụng"}>
+  return <section className={styles.root} aria-label={en ? "Recruitment overview" : "Tổng quan tuyển dụng"}>
     <div className={styles.crumb}>Home <ChevronRight size={13}/>{en ? "Overview" : "Tổng quan"}</div>
     <header className={styles.hero}>
       <div className={styles.heroCopy}>
