@@ -11,6 +11,7 @@ import styles from "./bosch-home-dashboard.module.css";
 type Props = {
   jobs: Job[];
   roles: string[];
+  userName: string;
   onOpenJob: (job: Job) => void;
   onOpenJobs: () => void;
   onOpenInterviews: () => void;
@@ -23,9 +24,13 @@ const WEEK_MS = 7 * 86400000;
 function formatDate(value: string, locale: "vi" | "en", includeDate = true) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return dash;
-  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", includeDate
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { timeZone: "Asia/Ho_Chi_Minh", ...(includeDate
     ? { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }
-    : { hour: "2-digit", minute: "2-digit" }).format(date);
+    : { hour: "2-digit", minute: "2-digit" }) }).format(date);
+}
+
+function dateKey(value: Date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(value);
 }
 
 function formatPriority(value: Job["priority"], en: boolean) {
@@ -37,7 +42,7 @@ function accessError(error: unknown) {
   return error instanceof ApiError && (error.status === 401 || error.status === 403);
 }
 
-export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs, onOpenInterviews, onAccessLost }: Props) {
+export default function BoschHomeDashboard({ jobs, roles, userName, onOpenJob, onOpenJobs, onOpenInterviews, onAccessLost }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const [scheduled, setScheduled] = useState<InterviewWorklistItem[]>([]);
@@ -88,6 +93,8 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
       return Number.isFinite(starts) && starts >= now && starts <= weekEnd;
     })
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)), [scheduled, now, weekEnd]);
+  const todayKey = dateKey(new Date());
+  const todayInterviews = upcoming.filter((item) => dateKey(new Date(item.starts_at)) === todayKey);
 
   const drafts = jobs.filter((job) => job.status === "DRAFT");
   const openJobs = jobs.filter((job) => job.status === "OPEN");
@@ -112,12 +119,13 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
     : isTA
       ? (en ? "Recruitment work for today" : "Việc tuyển dụng hôm nay")
       : (en ? "Recruitment overview" : "Tổng quan tuyển dụng");
+  const greetingName = userName ? `${userName.charAt(0).toUpperCase()}${userName.slice(1)}` : "";
+  const todayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "Asia/Ho_Chi_Minh", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
 
   const metrics = [
-    { label: en ? "Open jobs" : "Job đang mở", value: openJobs.length, icon: BriefcaseBusiness, tone: "neutral" },
-    { label: en ? "Draft jobs" : "Job bản nháp", value: drafts.length, icon: ClipboardCheck, tone: drafts.length ? "warning" : "neutral" },
-    { label: en ? "Feedback to submit" : "Feedback cần gửi", value: feedbackError ? dash : feedbackItems.length, icon: AlertCircle, tone: feedbackItems.length ? "warning" : "neutral" },
-    { label: en ? "Interviews · next 7 days" : "Phỏng vấn · 7 ngày tới", value: scheduleError || interviewLoading ? dash : upcoming.length, icon: CalendarClock, tone: "neutral" },
+    { label: en ? "Feedback to submit" : "Feedback cần gửi", value: feedbackError ? dash : feedbackItems.length, icon: ClipboardCheck, tone: feedbackItems.length ? "warning" : "blue", action: onOpenInterviews },
+    { label: en ? "Interviews today" : "Phỏng vấn hôm nay", value: scheduleError || interviewLoading ? dash : todayInterviews.length, icon: CalendarClock, tone: "blue", action: onOpenInterviews },
+    { label: en ? "Jobs needing attention" : "Job cần theo dõi", value: drafts.length + priorityJobs.length, icon: BriefcaseBusiness, tone: "neutral", action: onOpenJobs },
   ] as const;
 
   return <section className={styles.root} aria-label={en ? "Recruitment overview" : "Tổng quan tuyển dụng"}>
@@ -125,27 +133,29 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
     <header className={styles.hero}>
       <div className={styles.heroCopy}>
         <p className={styles.eyebrow}>{perspective}</p>
-        <h1>{overviewTitle}</h1>
-        <p className={styles.subtitle}>{en ? "See your authorized jobs, upcoming interviews, and the next actions to take." : "Xem Job được phân quyền, lịch phỏng vấn sắp tới và việc cần xử lý tiếp theo."}</p>
+        <h1>{en ? `Good morning${greetingName ? `, ${greetingName}` : ""}` : `Chào buổi sáng${greetingName ? `, ${greetingName}` : ""}`}</h1>
+        <p className={styles.overviewTitle}>{overviewTitle}</p>
+        <p className={styles.todayLabel}>{todayLabel}</p>
+        <p className={styles.subtitle}>{en ? `${overviewTitle}. Here are the items you can act on today.` : `${overviewTitle}. Đây là những việc bạn có thể xử lý hôm nay.`}</p>
         <span className={styles.scope}><span className={styles.scopeDot}/>{scope}</span>
       </div>
       <div className={styles.heroActions}>
-        <button type="button" className={styles.primaryAction} onClick={onOpenJobs}>{en ? "Open Jobs" : "Mở Job tuyển dụng"}<ArrowRight size={16}/></button>
+        <button type="button" className={styles.primaryAction} onClick={() => attentionJobs[0] ? onOpenJob(attentionJobs[0]) : onOpenJobs()}>{en ? "Review priority tasks" : "Xử lý việc ưu tiên"}<ArrowRight size={16}/></button>
         <button type="button" className={styles.secondaryAction} onClick={onOpenInterviews}>{en ? "Open interviews" : "Mở lịch phỏng vấn"}<CalendarClock size={16}/></button>
       </div>
     </header>
 
     <section className={styles.metrics} aria-label={en ? "At a glance" : "Tóm tắt nhanh"}>
-      {metrics.map(({ label, value, icon: Icon, tone }) => <div className={`${styles.metric} ${tone === "warning" ? styles.metricWarning : ""}`} key={label}>
-        <span className={styles.metricIcon}><Icon size={17}/></span>
-        <span className={styles.metricText}><strong>{value}</strong><small>{label}</small></span>
-      </div>)}
+      {metrics.map(({ label, value, icon: Icon, tone, action }) => <button type="button" onClick={action} className={`${styles.metric} ${tone === "warning" ? styles.metricWarning : tone === "blue" ? styles.metricBlue : ""}`} key={label}>
+        <span className={styles.metricIcon}><Icon size={23}/></span>
+        <span className={styles.metricText}><strong>{value}</strong><small>{label}</small></span><ChevronRight className={styles.metricArrow} size={18}/>
+      </button>)}
     </section>
 
     <div className={styles.contentGrid}>
       <section className={styles.card} aria-label={en ? "Next actions" : "Việc cần làm tiếp theo"}>
         <div className={styles.cardHeading}>
-          <div><p className={styles.eyebrow}>{en ? "NEXT STEPS" : "BƯỚC TIẾP THEO"}</p><h2>{en ? "Needs your attention" : "Việc cần bạn chú ý"}</h2></div>
+          <div><p className={styles.eyebrow}>{en ? "MY TASKS" : "VIỆC CỦA TÔI"}</p><h2>{en ? "Action items for today" : "Việc cần xử lý hôm nay"}</h2></div>
           <span className={styles.countBadge}>{feedbackItems.length + attentionJobs.length}</span>
         </div>
         {feedbackError && <div className={styles.inlineError} role="alert"><span>{feedbackError}</span><button type="button" onClick={() => void loadWork()}>{en ? "Retry" : "Tải lại"}</button></div>}
@@ -168,22 +178,22 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
 
       <section className={styles.card} aria-label={en ? "Upcoming interviews" : "Lịch phỏng vấn sắp tới"}>
         <div className={styles.cardHeading}>
-          <div><p className={styles.eyebrow}>{en ? "YOUR CALENDAR" : "LỊCH CỦA BẠN"}</p><h2>{en ? "Next 7 days" : "7 ngày tới"}</h2></div>
+          <div><p className={styles.eyebrow}>{en ? "YOUR CALENDAR" : "LỊCH CỦA BẠN"}</p><h2>{en ? "Today's interviews" : "Phỏng vấn hôm nay"}</h2><p className={styles.subtitle}>{en ? `${todayInterviews.length} scheduled today · GMT+7` : `${todayInterviews.length} lịch hôm nay · GMT+7`}</p></div>
           <button type="button" className={styles.textAction} onClick={onOpenInterviews}>{en ? "All interviews" : "Tất cả lịch"}<ArrowRight size={15}/></button>
         </div>
         {scheduleError && <div className={styles.inlineError} role="alert"><span>{scheduleError}</span><button type="button" onClick={() => void loadWork()}>{en ? "Retry" : "Tải lại"}</button></div>}
         {interviewLoading && <p className={styles.loading} role="status">{en ? "Loading your schedule…" : "Đang tải lịch của bạn…"}</p>}
-        {!interviewLoading && !scheduleError && (upcoming.length ? upcoming.slice(0, 5).map((item) => <div className={styles.interviewRow} key={item.id}>
+        {!interviewLoading && !scheduleError && (todayInterviews.length ? todayInterviews.slice(0, 5).map((item) => <div className={styles.interviewRow} key={item.id}>
           <span className={styles.dateBlock}><strong>{formatDate(item.starts_at, locale).split(",")[1]?.trim().split(" ")[0] || "—"}</strong><small>{formatDate(item.starts_at, locale).split(",")[0]}</small></span>
           <span className={styles.interviewCopy}><strong>{item.candidate_name}</strong><small>{item.job_title || item.job_code || dash}</small><small><Clock3 size={13}/>{formatDate(item.starts_at, locale, false)}</small></span>
-        </div>) : <div className={styles.emptyState}><CalendarClock size={21}/><p>{en ? "No upcoming interviews in the next 7 days." : "Không có lịch phỏng vấn trong 7 ngày tới."}</p></div>)}
-        <p className={styles.cardFootnote}>{en ? "Schedule is limited to the first authorized API page (up to 25 interviews)." : "Lịch lấy từ trang API được phân quyền đầu tiên (tối đa 25 lịch)."}</p>
+        </div>) : <div className={styles.emptyState}><CalendarClock size={21}/><p>{en ? "No interviews scheduled for today." : "Hôm nay chưa có lịch phỏng vấn."}</p></div>)}
+        <p className={styles.cardFootnote}>{en ? `Next 7 days: ${upcoming.length}. Schedule is limited to the first authorized API page.` : `7 ngày tới: ${upcoming.length} lịch. Dữ liệu lấy từ trang API được phân quyền đầu tiên.`}</p>
       </section>
     </div>
 
     <section className={styles.jobsCard}>
       <div className={styles.cardHeading}>
-        <div><p className={styles.eyebrow}>{en ? "YOUR JOBS" : "JOB CỦA BẠN"}</p><h2>{en ? "Hiring at a glance" : "Tình hình các Job"}</h2></div>
+        <div><p className={styles.eyebrow}>{en ? "REQUIRES ATTENTION" : "CẦN THEO DÕI"}</p><h2>{en ? "Jobs needing attention" : "Job cần chú ý"}</h2></div>
         <button type="button" className={styles.textAction} onClick={onOpenJobs}>{en ? "View all jobs" : "Xem tất cả Job"}<ArrowRight size={15}/></button>
       </div>
       <div className={styles.jobsSummary}>
@@ -192,13 +202,13 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
         <span><strong>{priorityJobs.length}</strong>{en ? "high priority" : "ưu tiên cao"}</span>
       </div>
       <div className={styles.jobList}>
-        {[...attentionJobs, ...openJobs.filter((job) => !priorityJobs.some((priorityJob) => priorityJob.id === job.id))].slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} aria-label={`${en ? "Open pipeline" : "Mở pipeline"} ${job.title}`} onClick={() => onOpenJob(job)}>
+        {attentionJobs.slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} aria-label={`${en ? "Open pipeline" : "Mở pipeline"} ${job.title}`} onClick={() => onOpenJob(job)}>
           <span className={styles.jobBrief}><strong>{job.title}</strong><small>{job.job_code || dash} · {job.business_unit || (en ? "No department" : "Chưa có phòng ban")}</small></span>
-          <span className={`${styles.jobState} ${job.status === "DRAFT" ? styles.jobDraft : ""}`}>{job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : (en ? "Open" : "Đang mở")}</span>
-          <span className={styles.jobPriority}>{formatPriority(job.priority, en)}</span>
+          <span className={styles.jobReason}>{job.status === "DRAFT" ? (en ? "Draft needs completion" : "Cần hoàn thiện bản nháp") : (en ? "High priority" : "Ưu tiên cao")}</span>
+          <span className={`${styles.jobState} ${job.status === "DRAFT" ? styles.jobDraft : ""}`}>{job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : (en ? "Open" : "Đang tuyển")}</span>
           <ChevronRight size={16}/>
         </button>)}
-        {!jobs.length && <p className={styles.loading}>{en ? "No jobs are available in your current access scope." : "Chưa có Job trong phạm vi truy cập hiện tại."}</p>}
+        {!attentionJobs.length && <div className={styles.emptyState}><CheckCircle2 size={21}/><p>{en ? "No draft or high-priority jobs need attention." : "Không có Job nháp hoặc Job ưu tiên cao cần theo dõi."}</p></div>}
       </div>
     </section>
 
