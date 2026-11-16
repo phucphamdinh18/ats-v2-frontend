@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 22881)
-Total output lines: 631
-
 Warning: truncated output (original token count: 35553)
 Total output lines: 950
 
@@ -307,7 +304,84 @@ Rollback remains the documented path: keep production root at `71ff88ebdb68bea9f
 - Backend error bodies currently provide arbitrary Vietnamese strings without a machine-readable locale-independent message code. The client retains these backend messages rather than guessing translations or concealing errors. Exact EN localization of backend errors requires a separate verified API contract, not a risky frontend-only string replacement.
 - Admin Console and additional older components may contain untranslated text beyond this core module scope. A browser-based bilingual sweep is still required to locate and log every visible remainder.
 - Offers remains deferred and unresolved. No migration, Edge Function, database, RLS or production changes were made.
-- **Not yet accepted:** check both …2881 tokens truncated…375c4c9d970e11c0379` and Preview `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`. Production was not changed.
+- **Not yet accepted:** check both locales with 1440×900, 1920×1080, 768px and 390px viewport screenshots; verify visual fit; run local/test role-based E2E for Admin, TA, HM and Interviewer. Unit tests and Next CI do not substitute for browser E2E or visual acceptance.
+- Keep Draft PR #44, branch backup and production root unchanged. Next: responsive table/layout corrections in non-Offer modules, then viewport-based Visual QA and E2E.
+
+
+## Step 17 — Candidates, Interviews and Job Detail responsive stabilization (2026-11-15)
+
+**Owner request:** eliminate laptop table crowding while retaining usable mobile behavior; verify four viewport sizes: `1440×900`, `1920×1080`, `768px`, `390px`. Offers remains **DEFERRED** (Step 15).
+
+### Implemented on Draft PR #44
+- Existing branch commits `c5e0a29`, `1c4c5c9`, `dcf958e` and `eaf592f` already added base responsive behavior to Candidate Database, Interview Schedule, Application Pipeline and Job Detail. This iteration **preserved those changes**, rather than rewriting them.
+- `web/components/bosch-v2-candidates.module.css`: use `container-type: inline-size` on the table panel and collapse the five placeholder-only columns when **actual list-pane width <=1250px**, even at large desktop viewport widths. Preserve Candidate, current position/company and experience; further reduce columns on a narrow phone.
+- `web/components/bosch-v2-interviews.module.css`: use actual pane width <=850px to collapse Type and Feedback columns (the real values remain in Interview Details). Retain Candidate, Job and start date; preserve read-only schedule and status filters.
+- `web/components/bosch-v2-pipeline.module.css`: collapse only unavailable placeholder Application fields by pane width <=1250px. Preserve actual Candidate, Stage and Source values, and show Source in the detail area when the phone table is narrower than 440px.
+- `web/components/bosch-v2-job-detail.module.css`: enforce scroll containment on Job tab bar and audit/requisition tables, keyboard focus visibility, stacked detail cards on tablet and safe Job switching on phone.
+- Added `web/tests/responsive-contract.test.ts` structural assertions for container queries, table overflow boundaries and four target breakpoint widths. No API, Supabase, RLS, migrations, Offers workflow or production files were modified.
+
+### Verification and limits
+- Ran **local Chromium synthetic layout fixture** at `1440×900`, `1920×1080`, `768×900`, and `390×844` for representative Candidates, Interviews and Pipeline split-pane structures with the new responsive rules: document horizontal overflow **false** for all 12 combinations; detail pane stacked beneath table at 768px and 390px, side-by-side at 1440px and 1920px. Visible table columns by viewport were Candidates **4/4/4/3**, Interviews **3/5/3/3**, Pipeline **4/4/4/3** respectively (ordered 1440/1920/768/390). These are **fixture results only**, not screenshots of the live authenticated Next.js ATS.
+- **Browser-backed preview Visual QA is NOT complete.** The browser connector is unavailable outside its originating browser context, and the available container cannot reach the GitHub Pages preview domain. This iteration therefore cannot truthfully certify actual signed-in page rendering, layout screenshots, or pixel comparison at any requested viewport. Record as `SKIPPED / BLOCKED` until an authenticated preview browser with viewport controls is available.
+- Confirm CI status on the final HEAD (QA/Next/Pages) before approval. Browser role-based E2E remains `SKIPPED` until test identities and a suitable test backend are available.
+- **Rollback:** revert only the scoped responsive CSS and structural test commits on `redesign/bosch-enterprise-v2`, retaining the preexisting responsive commits and documented backup. Do not merge or modify production to test.
+
+
+## Step 18 — Live authenticated responsive QA and Interview table fix (2026-11-15)
+
+### Version and deployment
+- Verified Draft PR #44 was open and unmerged; the responsive UI commit under test was `9bf2c948d35f329c69ae4bce6ec58c729352a8aa`. QA checks, Next web check…13553 tokens truncated…requested target sizes not checked |
+| Pipeline candidate selection and detail panel | PASS at 1363×936 (read-only) | TEST ONLY record; right panel and History visible in accessibility tree |
+| Candidate table widths / Round / Experience / Source | PARTIAL | No wrapping; narrow pane requires internal horizontal scroll; headers ellipsized and Source offscreen until scroll |
+| Row heights, footer centering and panel bottom alignment | PARTIAL | DOM structure and prior preview behavior; not fully measured at final revision due available browser controls/viewport |
+| Search/filter/add/stage interactions on final revision | PARTIAL | Smoke checks performed on immediately preceding markup-equivalent preview; final candidate detail selection checked; no submit |
+| 1920×1080, 1440×900, 768×1024, 390×844; VI/EN full matrix | BLOCKED | Browser did not expose viewport resizing |
+| Admin / TA / HM / Interviewer role matrix | BLOCKED | Only authorized Admin session available |
+
+Overall Visual QA for the requested responsive matrix remains **BLOCKED**, not PASS. The specific Jobs heading wrap defect is corrected and observed; Pipeline is visually usable at the available viewport with internal table scrolling, but strict Bosch fidelity and exact row/footer/baseline requirements are not fully certified.
+
+### Outstanding issues
+- P2: top navigation clips “Job Reviews” at the available 1363px viewport.
+- Pipeline headers for Round/Experience are ellipsized while the pane is narrow; users can scroll the table internally and the full accessible label remains available. Source is likewise reachable by horizontal scroll.
+- Exact responsive matrix, row-height measurement, footer alignment and bottom-edge comparison remain unverified. TA/HM/Interviewer behavior and live API error/retry cases remain unverified.
+
+### Rollback
+- No production change was made. Preserve backup branch `backup/bosch-pr44-before-clean-rebuild-20261114` at `938dc56382d5d48b6203786a437b20c496409873`.
+- To revert this pass, use reviewed revert commits for `c7d5a79fbba76c03705093f0dd8e12e6e6729089` and `2de4ef1146c9e3016526056e05cc740c1e03bc59` on the Draft branch (reverse order), then publish the chosen preview revision with `path-preview` only after rechecking the live production ref. Do not force-push, merge or delete the backup.
+
+
+### Final publication after this QA note (2026-11-15)
+- Documentation commit `ef7dd31702152a005913e02dd10b186293cbea2d` became the current PR HEAD. QA #420, Next web checks #393 and Pages PR build #439 passed; Supabase browser E2E #311 skipped.
+- Manually ran Publish ATS Pages #440 from `main`, `mode=path-preview`, with verified `production_ref=71ff88ebdb68bea9f6456375c4c9d970e11c0379` and `preview_ref=ef7dd31702152a005913e02dd10b186293cbea2d`. Run succeeded. Live `release.json` confirms root production revision unchanged and preview revision `ef7dd31702152a005913e02dd10b186293cbea2d`.
+- Reopened the final Preview SHA `ef7dd31702152a005913e02dd10b186293cbea2d` in the authenticated Admin session. Jobs Overview displayed all five aligned column headers and four real authorized Job rows. Pipeline opened on the TEST ONLY Job; selecting the TEST ONLY Drag Retry candidate loaded actual details and all three History events, with stage unchanged. This confirms the deployed final preview is the same visual code inspected above. No mutation submitted.
+- The PR remains Draft and unmerged; production, backend and recruitment data remain unchanged.
+
+## Follow-up — Jobs Overview Bosch reference CSS restyle, keep five data columns (2026-11-15)
+
+**Owner source of truth:** inline extracted CSS from `ATS_V2_Bosch_Jobs_Master_Fullscreen_Demo.html` provided in chat. The actual reference HTML file was not supplied here, so identical browser pixel rendering against that HTML is not independently verified. Scope: Jobs Overview CSS/markup/class names only, preserve data logic, search, filters, pagination state, job selection, APIs and RLS.
+
+- `web/components/ats-table.module.css` `a803d16`: new **opt-in** shared CSS Module with `atsTable`, `tag`, `dim`, `foot`. Does not change Candidates yet; any adoption there needs a separate reviewed UI pass.
+- `web/components/bosch-jobs-master.tsx` `50be926`: colgroup now **36% Job / 20% BU / 12% Status / 18% Applications / 14% Action**, kept exactly five columns and all existing handlers and values. Renders existing Function under BU only if present, and Applications as number + label, top Source beneath. Preserves title tooltip.
+- `web/components/bosch-v2-jobs.module.css` `f7000d2`, `4fd7ae2`: replaced accumulated conflicting override sections with screen-scoped reference styling. 315px detail track + 17px gap, 1370px stack breakpoint, 4 summary metrics, 70px table rows, compact 11px table headers, two-line title clamp, muted 11px metadata, status badges, compact action, footer pinned at bottom, Snapshot final section and button pushed to bottom. First-cell vertical padding 8px (instead of 13px) to fit two lines + Job code inside the target 70px height. Horizontal scroll remains local with table minimum width 760px. The app shell/header/sidebar remains unchanged.
+- `web/tests/responsive-contract.test.ts` `ed067d6`: updated Jobs-specific static structural expectations and checked shared CSS reuse.
+
+**Important acceptance caveats:** A CSS table row `height:70px` is a **minimum** in the table layout algorithm, not a hard cap, particularly with larger font/zoom; rendered dimensions require browser checks. At desktop widths the whole left stack (Summary + Jobs card) aligns to the height of the right Snapshot; only the **bottom** of Jobs card should match the Snapshot. At <=1370px the cards stack, so side-by-side bottom alignment is not applicable. Source code and CI do not prove pixel-for-pixel similarity.
+
+**Status:** Draft PR #44 only, not production; preview revision and signed-in visual QA pending. Recheck 1920x1080, 1440x900, 768x1024, 390x844, both VI/EN; verify footer baseline, all four rows, two-line titles, hover tooltip and functionality of search/status/priority/pagination/row selection/View detail/Open Job Detail. No changes to backend/Offer workflow or shared Candidate table. Rollback via reviewed revert of these four scoped commits; preserve backup.
+
+
+## 2026-11-15 — Jobs Overview Preview QA (PR #44)
+
+**Scope:** Jobs Overview only. No changes to APIs, Supabase/Auth/RLS, business logic, Candidates, Interviews, Offers, or production.
+
+### Commit and CI
+- PR #44 remained Draft / open / unmerged.
+- Requested Jobs CSS was present in source commit `fc84d35c1205d0395ba056da25069cd94ebf535e`.
+- Browser QA exposed a table header collision: the global `th { position: sticky; top: 68px; }` rule shifted the Jobs header over the first row inside its table scroller.
+- Fixed only `web/components/bosch-v2-jobs.module.css` in `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`: scoped Jobs headers now use `position: static; top: auto`.
+- Latest CI for `d37e5f9`: QA checks #428 **PASS**; Next web checks #401 **PASS**; Pages build in Publish ATS Pages #450 **PASS**; Supabase local browser E2E #319 **SKIPPED**.
+- Manual Preview deployment: Publish ATS Pages run #451 **SUCCESS**, mode `path-preview`, production_ref `71ff88ebdb68bea9f6456375c4c9d970e11c0379`, preview_ref `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`.
+- Live `release.json` after deployment reported root `71ff88ebdb68bea9f6456375c4c9d970e11c0379` and Preview `d37e5f940ef9504cfc2bf51950daacbf0256d5c6`. Production was not changed.
 - Links: [Preview](https://phucphamdinh18.github.io/ats-v2-frontend/preview/) · [Publish run #451](https://github.com/phucphamdinh18/ats-v2-frontend/actions/runs/43714316767) · [PR #44](https://github.com/phucphamdinh18/ats-v2-frontend/pull/44)
 
 ### Browser QA evidence
@@ -555,3 +629,7 @@ Scope: bundled wordmark SVG, Bosch shell CSS, matching responsive-contract asser
 ## Follow-up — Separate Vietnamese Applications column from Status (2026-11-16)
 
 Owner reports that in Vietnamese the “Hồ sơ” table heading sits too close to “Trạng thái” and asks to move it right without changing English. Add a locale-specific class to the Jobs Overview table and increase left padding for the Applications header and cells only in Vietnamese. English keeps its existing column padding and geometry. No changes to data, column ordering, widths in English, API, Auth/RLS or workflow. Production remains unchanged; verify both locales in Preview. Rollback by removing the Vietnamese class and its scoped rule.
+
+### Follow-up adjustment
+
+Owner requests another right shift to visually center “Hồ sơ” between “Trạng thái” and “Thao tác.” Increase the Vietnamese-only Applications cell/header left padding to 40px (from 24px); English remains untouched. Rebuild and publish Preview only. Production remains unchanged.
