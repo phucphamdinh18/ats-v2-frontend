@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
-import { OFFER_RETURN_KEY, approvalReturnPath } from "@/lib/offer-approval";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
@@ -249,17 +248,6 @@ export default function Workspace() {
       setAuthBusy(false);
     }
   }
-  useEffect(() => {
-    if (!access?.userId) return;
-    try {
-      const offerId = sessionStorage.getItem(OFFER_RETURN_KEY);
-      if (!offerId) return;
-      sessionStorage.removeItem(OFFER_RETURN_KEY);
-      const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
-      const target = offerId === "inbox" ? base + "/offer-approval/" : approvalReturnPath(base, offerId);
-      if (target) window.location.replace(target);
-    } catch { /* The user can reopen the approval email if storage is unavailable. */ }
-  }, [access?.userId]);
   const allowed = access?.active && access.roles.length > 0;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
@@ -406,21 +394,15 @@ export default function Workspace() {
   return (
     <div className={`${styles.shell} ${sidebarCollapsed ? styles.collapsed : ""}`}>
       <a className={styles.skip} href="#main-content">{t.navigation}</a>
-      <a className={styles.identity} href={`${basePath}/`} aria-label="Bosch ATS V2">
-        <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="188" height="52"/>
-        <span className={styles.divider} aria-hidden="true"/>
-        <strong>ATS V2</strong>
-      </a>
         <header className={styles.topbar}>
-          <nav className={styles.topnav} aria-label={locale === "en" ? "Main modules" : "Các phân hệ"}>
-            <button type="button" className={tab === "home" ? styles.active : ""} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}>Home</button>
-            <button type="button" className={tab === "jobs" ? styles.active : ""} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}>Jobs</button>
-            {reviewAllowed && <button type="button" className={tab === "talent" ? styles.active : ""} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}>{locale === "en" ? "Candidates" : "Ứng viên"}</button>}
-            {allowed && <button type="button" className={tab === "interviews" ? styles.active : ""} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</button>}
-            {reviewAllowed && <button type="button" className={tab === "offers" ? styles.active : ""} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</button>}
-            {reviewAllowed && <button type="button" className={tab === "jd" ? styles.active : ""} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}>{locale === "en" ? "Job Reviews" : "Duyệt JD"}</button>}
-            {adminAllowed && <button type="button" className={tab === "admin" ? styles.active : ""} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}>{locale === "en" ? "Administration" : "Quản trị"}</button>}
-          </nav>
+          <div className={styles.topbarBrand}>
+            <a className={styles.identity} href={`${basePath}/`} aria-label="Bosch ATS V2">
+              <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="188" height="52"/>
+              <span className={styles.divider} aria-hidden="true"/>
+              <strong>ATS V2</strong>
+            </a>
+            <div className={styles.productContext}><strong>ATS V2</strong><span>{locale === "en" ? "Daily recruitment overview" : "Tổng quan tuyển dụng hằng ngày"}</span></div>
+          </div>
           <div className={styles.headerActions}>
             <div className={styles.searchContainer}>
               {globalSearchOpen ? (
@@ -439,7 +421,6 @@ export default function Workspace() {
               ) : <button className={styles.searchTrigger} type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
             </div>
             <label className={styles.language}>
-              <Icon name="globe" size={17} />
               <select
                 aria-label={t.language}
                 value={locale}
@@ -473,7 +454,7 @@ export default function Workspace() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTitle}>{locale === "en" ? "Recruitment" : "Tuyển dụng"}</div>
         <nav className={styles.nav} aria-label={t.navigation}>
-          <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Dashboard</span></button>
+          <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Home</span></button>
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {allowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
