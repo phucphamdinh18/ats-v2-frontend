@@ -351,7 +351,7 @@ it("Home is a dedicated Bosch Dashboard, not a duplicate Jobs Master", async () 
         : { applications: [], limit: 25, offset: 0 }, error: null }));
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Home Test Job" });
-  fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+  fireEvent.click(screen.getByRole("button", { name: "Home" }));
   expect(screen.getByRole("heading", { name: "Tổng quan tuyển dụng", level: 1 })).toBeTruthy();
   expect(screen.getByText("Job ưu tiên cao / khẩn cấp")).toBeTruthy();
   expect(screen.queryByRole("heading", { name: "Vị trí tuyển dụng", level: 1 })).toBeNull();
@@ -368,7 +368,7 @@ it("Home only shows actual authorized metrics, without fabricating Offer/SLA or 
         : { applications: [], limit: 25, offset: 0 }, error: null }));
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Authorized A" });
-  fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+  fireEvent.click(screen.getByRole("button", { name: "Home" }));
   await screen.findByRole("heading", { name: "Tổng quan tuyển dụng", level: 1 });
   const home = screen.getByRole("region", { name: "Tổng quan tuyển dụng" });
   expect(home.textContent).toContain("Offer chờ duyệt");
