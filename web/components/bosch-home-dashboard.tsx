@@ -178,7 +178,7 @@ export default function BoschHomeDashboard({ jobs, roles, onOpenJob, onOpenJobs,
         <span><strong>{priorityJobs.length}</strong>{en ? "high priority" : "ưu tiên cao"}</span>
       </div>
       <div className={styles.jobList}>
-        {[...attentionJobs, ...openJobs.filter((job) => !priorityJobs.some((priorityJob) => priorityJob.id === job.id))].slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} onClick={() => onOpenJob(job)}>
+        {[...attentionJobs, ...openJobs.filter((job) => !priorityJobs.some((priorityJob) => priorityJob.id === job.id))].slice(0, 5).map((job) => <button type="button" className={styles.jobRow} key={job.id} aria-label={job.title} onClick={() => onOpenJob(job)}>
           <span className={styles.jobBrief}><strong>{job.title}</strong><small>{job.job_code || dash} · {job.business_unit || (en ? "No department" : "Chưa có phòng ban")}</small></span>
           <span className={`${styles.jobState} ${job.status === "DRAFT" ? styles.jobDraft : ""}`}>{job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : (en ? "Open" : "Đang mở")}</span>
           <span className={styles.jobPriority}>{formatPriority(job.priority, en)}</span>
