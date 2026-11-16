@@ -143,7 +143,7 @@ export default function BoschJobsMaster({
             </div>
           </div>
           <div className={styles.tableScroll}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${en ? "" : styles.vietnamese}`}>
               <colgroup><col style={{ width: "30%" }}/><col style={{ width: "15%" }}/><col style={{ width: "13%" }}/><col style={{ width: "12%" }}/><col style={{ width: "17%" }}/><col style={{ width: "13%" }}/></colgroup>
               <thead><tr>
                 <th scope="col">{labels.job}</th><th scope="col">{labels.unit}</th><th scope="col">{labels.function}</th>
