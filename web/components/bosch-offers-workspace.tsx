@@ -68,6 +68,7 @@ export default function BoschOffersWorkspace({ jobs, onAccessLost }: { jobs: Job
   const matching=rows.filter(x=>`${x.candidate_name} ${x.job_title} ${x.status}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   const perStatus=(s:string)=>rows.filter(x=>x.status===s).length;
   return <section className={styles.root}>
+    <p><a href={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/offer-approval/`}>Offer Proposal · Tạo đề xuất / DH–CEO phê duyệt</a></p>
     <div className={styles.summary}>
       <div className={styles.title}><h2>Offer Pipeline <span title="Counts reflect only the current page." aria-hidden="true">ⓘ</span></h2>
         <label className={styles.jobSelect}><span>Job Opening</span><select aria-label="Chọn Job Offer" value={jobId} onChange={e=>{setJobId(e.target.value);setOffset(0);}}>{!jobs.length&&<option value="">No authorized jobs</option>}{jobs.map(x=><option key={x.id} value={x.id}>{x.job_code||"—"} · {x.title}</option>)}</select></label>

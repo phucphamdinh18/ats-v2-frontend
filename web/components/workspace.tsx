@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
+import { OFFER_RETURN_KEY, approvalReturnPath } from "@/lib/offer-approval";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
@@ -248,6 +249,17 @@ export default function Workspace() {
       setAuthBusy(false);
     }
   }
+  useEffect(() => {
+    if (!access?.userId) return;
+    try {
+      const offerId = sessionStorage.getItem(OFFER_RETURN_KEY);
+      if (!offerId) return;
+      sessionStorage.removeItem(OFFER_RETURN_KEY);
+      const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+      const target = offerId === "inbox" ? base + "/offer-approval/" : approvalReturnPath(base, offerId);
+      if (target) window.location.replace(target);
+    } catch { /* The user can reopen the approval email if storage is unavailable. */ }
+  }, [access?.userId]);
   const allowed = access?.active && access.roles.length > 0;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
