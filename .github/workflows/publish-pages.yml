@@ -20,21 +20,21 @@ on:
       preview_ref:
         description: 'Branch or commit containing the UI to show under /preview/'
         required: false
-        default: 'feat/ats-job-master-ui-magicpath'
+        default: 'redesign/bosch-enterprise-v2'
         type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ats-pages-publish
+  group: ats-pages-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event_name }}
   cancel-in-progress: false
 
 jobs:
   build:
     # PR previews may only publish code from branches in this repository.
     # Forks never receive Pages credentials.
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && inputs.mode == 'path-preview' && github.ref == 'refs/heads/redesign/bosch-enterprise-v2')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -118,7 +118,7 @@ jobs:
   deploy:
     # A PR may validate a preview artifact, but may never alter GitHub Pages.
     # Production deployment is an explicit manual dispatch from main only.
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || (inputs.mode == 'path-preview' && github.ref == 'refs/heads/redesign/bosch-enterprise-v2'))
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
