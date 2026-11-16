@@ -36,7 +36,7 @@
 .facts dd {overflow-wrap:anywhere}
 .nativeTable {width:100%;border-collapse:collapse}
 .nativeTable th,.nativeTable td {padding:10px;border-bottom:1px solid var(--b2-line);text-align:left;font-size:var(--ats-font-body)}
-.nativeTable th {background:#f3f5f7}
+.nativeTable th {position:static;top:auto;z-index:auto;background:#f3f5f7}
 .jobSwitch {display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid var(--b2-line);font-size:var(--ats-font-body);color:#344259}
 .jobSwitch select {border:1px solid #c7cfd9;border-radius:5px;background:#fff;padding:7px 10px;color:#23384e;max-width:330px}
 @media(max-width:750px){.titleRow h1{font-size:22px}.metadata span{margin:4px 0}.tabs{gap:4px}.tabs button{font-size:var(--ats-font-body);padding:10px 8px}.actions{margin-left:0}.jobSwitch{justify-content:flex-start;flex-wrap:wrap}}
