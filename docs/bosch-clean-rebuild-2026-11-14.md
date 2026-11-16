@@ -604,3 +604,10 @@ The supplied 1630px screenshot is the visual reference for this follow-up. The u
 Owner supplied a Pipeline candidate snapshot reference and asked the Candidate Database right-side snapshot to use the same cleaner presentation. Candidate detail heading is reduced to 24px, the duplicate contact line under the heading is removed (contact remains under Contact), and the body sections become unboxed with subtle dividers and consistent left alignment. Existing Overview/Resume tabs, real profile fields, assigned Jobs, CV links, Add to Job behavior and previous/next navigation remain intact. Notes and Activity tabs are not added because Candidate Database has no supporting API data for them; no placeholder tabs or fabricated interview/history facts.
 
 Scope: Candidate Detail component markup and scoped CSS plus this DOC only. No backend/API, schema, data, RLS, permissions or workflow change. Preview and visual screenshot QA pending. PR #44 remains Draft; production unchanged. Rollback by reverting this scoped component/CSS change; no data rollback.
+
+
+## Follow-up — Increase Bosch wordmark visibility in the shell (2026-11-16)
+
+Owner says Bosch is not prominent enough and “Invented for life” is hard to read. Increase the displayed logo width from 188px to 224px and max height from 52px to 56px; reduce the ATS V2 label from 20px to 16px. Tighten identity padding/gaps so both marks remain within the 310px desktop header. On compact 245px sidebars, use a 150px logo and 14px ATS V2 label. Collapsed/mobile icon-only behavior remains unchanged.
+
+Scope: Bosch shell CSS only. No navigation, data, APIs, Auth/RLS, backend or product workflow changes. Verify Preview at desktop and compact widths after publish; production remains unchanged. Rollback by reverting these scoped CSS values.
