@@ -72,11 +72,6 @@ export default function BoschCandidateDetail({
         </div>
       </div>
       <p className={styles.detailRole}>{candidate.current_title || candidate.primary_role || t("Chưa có chức danh", "Title unavailable")}</p>
-      <div className={styles.detailContactLine}>
-        {candidate.email && <span title={candidate.email}><Mail size={15} aria-hidden="true"/>{candidate.email}</span>}
-        {candidate.phone && <span><Phone size={15} aria-hidden="true"/>{candidate.phone}</span>}
-        {candidate.location && <span><MapPin size={15} aria-hidden="true"/>{candidate.location}</span>}
-      </div>
       <nav className={styles.detailTabs} aria-label={t("Thông tin hồ sơ", "Candidate detail tabs")}>
         <button type="button" className={tab === "overview" ? styles.detailTabActive : ""} aria-current={tab === "overview" ? "page" : undefined} onClick={() => setTab("overview")}>{t("Tổng quan", "Overview")}</button>
         <button type="button" className={tab === "resume" ? styles.detailTabActive : ""} aria-current={tab === "resume" ? "page" : undefined} onClick={() => setTab("resume")}>{t("Hồ sơ CV", "Resume")}</button>
