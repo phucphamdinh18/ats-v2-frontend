@@ -611,3 +611,10 @@ Scope: Candidate Detail component markup and scoped CSS plus this DOC only. No b
 Owner says Bosch is not prominent enough and “Invented for life” is hard to read. Increase the displayed logo width from 188px to 224px and max height from 52px to 56px; reduce the ATS V2 label from 20px to 16px. Tighten identity padding/gaps so both marks remain within the 310px desktop header. On compact 245px sidebars, use a 150px logo and 14px ATS V2 label. Collapsed/mobile icon-only behavior remains unchanged.
 
 Scope: Bosch shell CSS only. No navigation, data, APIs, Auth/RLS, backend or product workflow changes. Verify Preview at desktop and compact widths after publish; production remains unchanged. Rollback by reverting these scoped CSS values.
+
+
+### Logo sizing preview deployment — run #512 (2026-11-16)
+
+- Preview revision `bb7a221d5a02fd0c9007e815bda468873c24499f` published successfully by Publish ATS Pages run #512 (`43796799930`) in `path-preview` mode. Build and deploy succeeded; the build reported 12 inline-script tests, 23 locale/pages tests, 51 interaction tests, 81 component tests, and successful Next.js static build/TypeScript. The first run at the CSS-only commit failed because an existing test asserted the old 188px logo width; the assertion was updated to the new 224px/56px sizing and the rerun passed.
+- Live `release.json` confirms production root remains `71ff88ebdb68bea9f6456375c4c9d970e11c0379`; Preview is `bb7a221d5a02fd0c9007e815bda468873c24499f`. No production change.
+- The authenticated app rendered before deployment. After navigation/reload for post-deploy inspection, the browser remained on “Đang tải không gian làm việc…”; this pass does not claim a post-deploy visual screenshot verification. Open Preview directly to review the larger Bosch wordmark and smaller ATS V2 label.
