@@ -286,8 +286,8 @@ export default function JobTeamAccess({
             ) : (
               <p>
                 {tr(
-                  "Chưa có người duyệt Offer được phân công.",
-                  "No Offer approvers assigned.",
+                  "Chưa có người duyệt Offer được phân công. Quyền Hiring Manager / Interviewer không bao gồm quyền duyệt Offer; hãy gán riêng vai trò Offer Approver ở mục Thêm thành viên.",
+                  "No Offer approvers are assigned. Hiring Manager / Interviewer access does not include Offer approval; assign the Offer Approver role separately under Add team member.",
                 )}
               </p>
             ))
