@@ -108,12 +108,19 @@ export default function Workspace() {
           if (membershipResult.error) throw membershipResult.error;
           memberships = (membershipResult.data || []) as JobMembership[];
         }
-        const result = await client
-          .from("jobs")
-          .select("id,job_code,title,status,business_unit,location,level,function_group,hiring_season,req_date,request_type,priority,replacement_for")
-          .order("job_code")
-          .limit(100);
-        if (result.error) throw result.error;
+        const jobRows: Job[] = [];
+        for (let offset = 0; ; offset += 100) {
+          const result = await client.from("jobs")
+            .select("id,job_code,title,status,business_unit,location,level,function_group,hiring_season,req_date,request_type,priority,replacement_for")
+            .order("job_code").order("id").range(offset, offset + 99);
+          if (result.error) throw result.error;
+          if (!gate.current.current(ticket)) return;
+          const page = (result.data || []) as Job[];
+          if (offset && page.some(row => jobRows.some(old => old.id === row.id))) throw new Error("Không tải được đầy đủ danh sách Job. Vui lòng thử lại.");
+          jobRows.push(...page);
+          if (page.length < 100) break;
+          if (offset >= 100000) throw new Error("Danh sách Job quá lớn để tải đầy đủ. Liên hệ quản trị viên.");
+        }
         const rules = await client.from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
@@ -122,7 +129,7 @@ export default function Workspace() {
         const byKey = new Map((rules.data || []).map((rule) =>
           [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
         ));
-        jobs = (result.data || []).map((job) => ({
+        jobs = jobRows.map((job) => ({
           ...job,
           sla_target_workdays: job.level != null && job.function_group && job.hiring_season
             ? byKey.get(`${job.level}:${job.function_group}:${job.hiring_season}`) ?? null
@@ -134,6 +141,7 @@ export default function Workspace() {
         setSelectedJob((current) =>
           jobs.find((job) => job.id === current?.id) || jobs[0] || null,
         );
+        if (active && !roleNames.length) setTab("home");
         setAccess({
           userId: session.user.id,
           email: session.user.email || "",
@@ -248,7 +256,8 @@ export default function Workspace() {
       setAuthBusy(false);
     }
   }
-  const allowed = access?.active && access.roles.length > 0;
+  const allowed = access?.active;
+  const interviewAllowed = !!allowed && !!access?.roles.length;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
       (status === "ALL" || job.status === status) &&
@@ -284,9 +293,9 @@ export default function Workspace() {
   }, []);
   useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
-    if (tab === "interviews" && !allowed) setTab("jobs");
+    if (tab === "interviews" && !interviewAllowed) setTab("jobs");
     if (tab === "offers" && !reviewAllowed) setTab("jobs");
-  }, [tab, adminAllowed, allowed, reviewAllowed]);
+  }, [tab, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
   const globalNavMatches = [
@@ -456,8 +465,9 @@ export default function Workspace() {
           <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Home</span></button>
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
-          {allowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
+          {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "offers" ? styles.active : ""}`} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs"/><span className={styles.navLabel}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</span></button>}
+          {allowed && <a className={styles.navButton} href={`${basePath}/offer-approval/`}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Offer approvals" : "Duyệt đề xuất"}</span></a>}
           <span className={styles.sidebarGroup}>{locale === "en" ? "Administration" : "Quản trị"}</span>
           {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span></button>}
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "jd" ? styles.active : ""}`} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span></button>}
@@ -604,7 +614,7 @@ export default function Workspace() {
                 ))}
               </div>}
               {tab === "home" ? (
-                <BoschHomeDashboard key={access.userId} jobs={access.jobs} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
+                <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
                   onAccessLost={invalidate}
                   onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}
                   onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}

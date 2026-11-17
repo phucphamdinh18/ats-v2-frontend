@@ -76,6 +76,7 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
       maybeSingle: () => Promise.resolve(result),
       order: () => query,
       limit: () => Promise.resolve(result),
+      range: (start: number, end: number) => Promise.resolve({...result, data: Array.isArray(result.data) ? result.data.slice(start, end + 1) : result.data}),
       then: (resolve: (data: unknown) => unknown) =>
         Promise.resolve(result).then(resolve),
     };
@@ -353,7 +354,7 @@ it("Home is a dedicated Bosch Dashboard, not a duplicate Jobs Master", async () 
   await screen.findByRole("button", { name: "Mở pipeline Home Test Job" });
   fireEvent.click(screen.getByRole("button", { name: "Home" }));
   expect(screen.getByRole("heading", { name: /Xin chào/, level: 1 })).toBeTruthy();
-  expect(screen.getByText("Job ưu tiên cao / khẩn cấp")).toBeTruthy();
+  expect(await screen.findByText("Job ưu tiên cao / khẩn cấp")).toBeTruthy();
   expect(screen.queryByRole("heading", { name: "Vị trí tuyển dụng", level: 1 })).toBeNull();
   expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
 });
@@ -396,4 +397,14 @@ it("Job Summary has five real status counts and retains the authorized scope whi
   fireEvent.change(screen.getByRole("combobox", { name: "Trạng thái Job" }), { target: { value: "OPEN" } });
   expect(within(summary).getByText("Tổng số Job").previousElementSibling?.textContent).toBe("9");
   expect(within(summary).getByText("Đã đóng").previousElementSibling?.textContent).toBe("1");
+});
+
+it("an active role-less approver can open Home without gaining Admin or general Offer privileges", async () => {
+  scope(true, [], []);
+  mocks.functionInvoke.mockImplementation((name: string, options: {body?: {action?:string}}) => Promise.resolve({data:name==="offer-workflow"?{result:[]} : name==="tasks"?{tasks:[]} : options.body?.action==="worklist"?{interviews:[]} : {jobs:[]},error:null}));
+  render(<Workspace/>);
+  await screen.findByRole("heading",{name:/Xin chào/,level:1});
+  expect(screen.queryByRole("button",{name:"Quản trị & quyền"})).toBeNull();
+  expect(screen.queryByRole("button",{name:"Đề nghị tuyển dụng"})).toBeNull();
+  expect(screen.getByRole("link",{name:"Duyệt đề xuất"})).toBeTruthy();
 });

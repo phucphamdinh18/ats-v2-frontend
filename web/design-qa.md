@@ -32,3 +32,11 @@ Scope: selected Bosch Home design applied to Home and the clipped shared header.
 Browser comparison remains blocked: the internal preview URL returned `upstream connect error ... connection termination`; the public Preview is at sign-in. The attempted local-only fixture has been removed. Authenticated desktop/mobile rendering and primary flows have not been visually certified. This report does not claim a published Preview update.
 
 final result: blocked
+
+## Home roles, full lists and assignment — 17 November 2026
+
+Implemented the selected grouped task/owner/agenda design using existing authenticated contracts. Tasks have pagination and the agenda has a focusable scroll region. Data/DOM tests cover populated, empty, partial-failure and role-specific states. See `docs/home-role-workflow-2026-11-17.md` for implementation, tests, activation boundaries and rollback.
+
+Visual comparison is blocked: the browser rejected the local fixture's file URL under its URL policy. No screenshot comparison was completed or claimed. Hosted integration is independently blocked because Tasks and Offer Workflow APIs and their new schema are absent from the currently deployed Supabase project. No hosted schema/data writes were performed.
+
+final result: blocked
