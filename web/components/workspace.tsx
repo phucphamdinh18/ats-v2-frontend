@@ -673,8 +673,6 @@ export default function Workspace() {
                   /> : selectedJob ? <BoschJobDetail
                     key={selectedJob.id}
                     job={selectedJob}
-                    allJobs={access.jobs}
-                    onSelectJob={setSelectedJob}
                     onBack={() => setJobView("master")}
                     onModule={setTab}
                     canAdmin={adminAllowed}

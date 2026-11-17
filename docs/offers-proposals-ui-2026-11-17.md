@@ -4,6 +4,10 @@ Supersedes the earlier two-section global Offers design after user review of scr
 
 - Remove global Offers and Offer approvals sidebar entries and the global Offers workspace branch.
 - Job detail → Offers opens Offer proposals directly. No second Offer pipeline, Job selector, tab pair or Open Offers module shortcut.
+- Offers explains the internal approval → candidate Offer Letter sequence in one short note; it does not render a separate three-card pipeline.
+- The Offer list gives a useful empty state and a clear filter reset. It is scoped to the already-open Job.
+- Job detail does not repeat a Job ID switcher at the bottom. Use Jobs to return to the master and select another Job.
+- Activity candidate names wrap inside a fixed first column; stage and status remain aligned on long names.
 - The embedded proposal receives the current Job explicitly. Every list request, including pagination, supplies job_id; setup and candidate selection use the same Job. Unexpected cross-Job list/detail responses fail closed. React keys clear all drafts and cached detail when changing Jobs.
 - Keep /offer-approval/ for assigned approver deep links and Home approval tasks. It is no longer a sidebar category. Existing independent approval accounts retain access through those authorized links.
 - Keep managed API, SQL/RLS, statuses and mail dispatcher configuration unchanged. This UI change does not send emails.

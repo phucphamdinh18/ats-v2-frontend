@@ -37,9 +37,7 @@
 .nativeTable {width:100%;border-collapse:collapse}
 .nativeTable th,.nativeTable td {padding:10px;border-bottom:1px solid var(--b2-line);text-align:left;font-size:var(--ats-font-body)}
 .nativeTable th {position:static;top:auto;z-index:auto;background:#f3f5f7}
-.jobSwitch {display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid var(--b2-line);font-size:var(--ats-font-body);color:#344259}
-.jobSwitch select {border:1px solid #c7cfd9;border-radius:5px;background:#fff;padding:7px 10px;color:#23384e;max-width:330px}
-@media(max-width:750px){.titleRow h1{font-size:22px}.metadata span{margin:4px 0}.tabs{gap:4px}.tabs button{font-size:var(--ats-font-body);padding:10px 8px}.actions{margin-left:0}.jobSwitch{justify-content:flex-start;flex-wrap:wrap}}
+@media(max-width:750px){.titleRow h1{font-size:22px}.metadata span{margin:4px 0}.tabs{gap:4px}.tabs button{font-size:var(--ats-font-body);padding:10px 8px}.actions{margin-left:0}}
 
 
 /* Read-only Job Detail workspaces: isolated tables and snapshots */
@@ -94,8 +92,8 @@
 .nativeTable{width:100%;min-width:0;table-layout:fixed}
 .nativeTable th,.nativeTable td{overflow-wrap:anywhere;word-break:normal;vertical-align:top}
 .facts dd{min-width:0;overflow-wrap:anywhere}
-.jobSwitch{min-width:0;max-width:100%;flex-wrap:wrap}
-.jobSwitch select{max-width:min(100%,330px);min-width:0}
+
+
 .embedded>*{min-width:0;max-width:100%}
 @media(max-width:1250px){
   .detailsGrid,.twoColumn{grid-template-columns:minmax(0,1fr);gap:12px}
@@ -119,8 +117,8 @@
   .summaryGrid strong{font-size:18px}
   .summaryGrid span{font-size:var(--ats-font-body);overflow-wrap:anywhere}
   .pager{justify-content:flex-start}
-  .jobSwitch{justify-content:flex-start;align-items:stretch}
-  .jobSwitch select{flex:1 1 100%;max-width:100%}
+  
+  
 }
 
 
@@ -131,7 +129,7 @@
 .tableScroll{scrollbar-width:thin;touch-action:pan-x pan-y}
 @media(max-width:768px){
   .detailsGrid,.twoColumn{grid-template-columns:minmax(0,1fr)}
-  .jobSwitch select{width:100%;max-width:100%}
+  
   .sectionHead{align-items:stretch}
 }
 @media(max-width:420px){
@@ -158,7 +156,7 @@
 .pipelineLayout>.metadata{grid-column:1;grid-row:3}
 .pipelineLayout>.tabs{grid-column:1;grid-row:4}
 .pipelineLayout>.content{display:contents}
-.pipelineLayout>.jobSwitch{grid-column:1;grid-row:7}
+.pipelineLayout>
 @media(max-width:1200px){
   .pipelineLayout{display:block;--job-pipeline-display:grid;--job-pipeline-summary-row:1;--job-pipeline-list-row:2;--job-pipeline-side-row:3;--job-pipeline-list-margin:0px}
 }
@@ -175,3 +173,16 @@
 /* Match the blue navigation accents in the Bosch reference screens. */
 .tabs button.active{color:#0756bd}
 .tabs button.active::after{background:#0756bd}
+
+/* Bosch finish: clear table alignment and remove the redundant Job switcher. */
+.tabs button.active{color:#e0001b}
+.tabs button.active::after{background:#e0001b}
+.tabs button:hover:not(.active){color:#ba0014}
+.twoColumn{align-items:stretch}
+.twoColumn > .detailPane{min-height:144px}
+.nativeTable{table-layout:fixed}
+.nativeTable th:nth-child(1),.nativeTable td:nth-child(1){width:58%}
+.nativeTable th:nth-child(2),.nativeTable td:nth-child(2){width:23%}
+.nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:19%;white-space:nowrap}
+.linkButton{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
+@media(max-width:580px){.nativeTable th:nth-child(1),.nativeTable td:nth-child(1){width:52%}.nativeTable th:nth-child(2),.nativeTable td:nth-child(2){width:26%}.nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:22%}}

@@ -7,14 +7,12 @@ import BoschOffersWorkspace from "./bosch-offers-workspace";
 import BoschJobInterviews from "./bosch-job-interviews";
 import BoschJobActivity from "./bosch-job-activity";
 import type { Job } from "@/lib/policy";
-import { CalendarDays, ChevronDown, ChevronRight, Layers3, MapPin, Target, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, ChevronDown, Layers3, MapPin, Target, SlidersHorizontal } from "lucide-react";
 import styles from "./bosch-v2-job-detail.module.css";
 
 type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team" | "activity";
 type Props = {
   job: Job;
-  allJobs: Job[];
-  onSelectJob: (job: Job | null) => void;
   onBack: () => void;
   onModule: (module: "interviews" | "admin") => void;
   canViewOffers: boolean;
@@ -41,13 +39,13 @@ function readableDate(value: string | null | undefined, locale: "vi" | "en") {
 }
 
 /** New composition only; no API/stage/role changes. */
-export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], canManageApplications = false, children }: Props) {
+export default function BoschJobDetail({ job, onBack, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], canManageApplications = false, children }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
   return <section className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
-    <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button><ChevronRight size={14}/><strong>{job.job_code || "Job detail"}</strong></div>
+    <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button></div>
     <div className={styles.titleRow}>
       <h1>{job.title}</h1>
       <span className={[styles.status, job.status === "OPEN" ? styles.statusOpen : ""].filter(Boolean).join(" ")}>{job.status === "OPEN" ? (en ? "Open" : "Đang tuyển") : job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : job.status}</span>
@@ -120,11 +118,5 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
       <p className={styles.footnote}>{en ? "Contact your administrator to change team assignments." : "Liên hệ Admin để thay đổi phân công đội ngũ."}</p>
     </section>)}
     {tab === "activity" && <BoschJobActivity key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
-    <div className={styles.jobSwitch} aria-label={en ? "Switch requisition" : "Chuyển Job"}>
-      <label htmlFor="bosch-job-switcher">Job ID</label>
-      <select id="bosch-job-switcher" aria-label={en ? "Select Job for Hiring Pipeline" : "Chọn Job cho Hiring Pipeline"} value={job.id} onChange={(event)=>onSelectJob(allJobs.find(x=>x.id===event.target.value)||null)}>
-        {allJobs.map(x=><option key={x.id} value={x.id}>{x.job_code||"—"} · {x.title}</option>)}
-      </select>
-    </div>
   </section>;
 }

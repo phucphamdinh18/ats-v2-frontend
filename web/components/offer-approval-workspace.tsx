@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FileText,
   ShieldCheck,
   Send,
   Plus,
@@ -473,8 +472,8 @@ export default function OfferApprovalWorkspace({
           <h2>{tr("Đề xuất Offer", "Offer proposals")}</h2>
           <p>
             {tr(
-              "Thống nhất level và gói lương trước khi gửi offer letter cho ứng viên.",
-              "Align on level and compensation before sending the candidate’s offer letter.",
+              "Chuẩn bị level và lương để DH / CEO duyệt trước khi gửi Offer Letter cho ứng viên.",
+              "Prepare the level and compensation for DH / CEO approval before sending the candidate’s Offer Letter.",
             )}
           </p>
         </div>
@@ -496,48 +495,15 @@ export default function OfferApprovalWorkspace({
           )}
         </div>
       </header>
-      <ol
-        className={styles.workflow}
-        aria-label={tr("Quy trình Offer", "Offer workflow")}
-      >
-        <li>
-          <span>
-            <FileText size={19} />
-          </span>
-          <div>
-            <strong>01 · {tr("Đề xuất", "Proposal")}</strong>
-            <small>
-              {tr(
-                "Ứng viên, level và gói lương",
-                "Candidate, level and compensation",
-              )}
-            </small>
-          </div>
-        </li>
-        <li>
-          <span>
-            <ShieldCheck size={19} />
-          </span>
-          <div>
-            <strong>02 · {tr("Phê duyệt", "Approval")}</strong>
-            <small>{tr("DH / CEO được chỉ định", "Assigned DH / CEO")}</small>
-          </div>
-        </li>
-        <li>
-          <span>
-            <Send size={19} />
-          </span>
-          <div>
-            <strong>03 · Offer letter</strong>
-            <small>
-              {tr(
-                "Theo dõi gửi thư và phản hồi",
-                "Track delivery and response",
-              )}
-            </small>
-          </div>
-        </li>
-      </ol>
+      <div className={styles.flowNote} role="note">
+        <strong>{tr("Cách hoạt động", "How it works")}</strong>
+        <p>
+          {tr(
+            "TA gửi Offer Proposal nội bộ để DH / CEO phê duyệt. Sau khi được duyệt, hệ thống gửi Offer Letter cho ứng viên. ATS chỉ ghi Accepted khi ứng viên đồng ý.",
+            "TA submits an internal Offer Proposal for DH / CEO approval. After approval, the system sends the Offer Letter. ATS shows Accepted only when the candidate agrees.",
+          )}
+        </p>
+      </div>
       {error && (
         <p role="alert" className={`${styles.notice} ${styles.error}`}>
           {error}
@@ -575,12 +541,6 @@ export default function OfferApprovalWorkspace({
       ) : (
         <>
           <div className={styles.toolbar}>
-            <p className={styles.small}>
-              {tr(
-                "Phê duyệt nội bộ và phản hồi của ứng viên là hai trạng thái riêng biệt.",
-                "Internal approval and the candidate’s response are separate statuses.",
-              )}
-            </p>
             <button disabled={frozen} onClick={() => void reload()}>
               <RefreshCw size={15} />
               {tr("Tải lại danh sách", "Refresh list")}
@@ -611,11 +571,7 @@ export default function OfferApprovalWorkspace({
                 <div>
                   <h3>{tr("Danh sách đề xuất", "Proposals")}</h3>
                   <p className={styles.small}>
-                    {tr(
-                      "Tìm và lọc trong trang đang tải",
-                      "Search and filter the loaded page",
-                    )}{" "}
-                    · {rows.length} / 25
+                    {rows.length} {tr("đề xuất trên trang này", "proposals on this page")}
                   </p>
                 </div>
                 <span className={styles.count}>{filteredRows.length}</span>
@@ -711,12 +667,29 @@ export default function OfferApprovalWorkspace({
                 </table>
               </div>
               {!filteredRows.length && (
-                <p className={styles.empty}>
-                  {tr(
-                    "Không có đề xuất phù hợp trên trang này.",
-                    "No matching proposals on this page.",
+                <div className={styles.empty} role="status">
+                  <strong>
+                    {rows.length === 0
+                      ? tr("Job này chưa có Offer Proposal.", "This Job has no Offer Proposals yet.")
+                      : tr("Không tìm thấy đề xuất theo bộ lọc này.", "No proposals match this filter.")}
+                  </strong>
+                  <p>
+                    {rows.length === 0
+                      ? manager
+                        ? tr("Nhấn “Tạo đề xuất” để bắt đầu.", "Select “New proposal” to get started.")
+                        : tr("Đề xuất sẽ xuất hiện tại đây sau khi được gửi.", "Proposals will appear here after submission.")
+                      : tr("Thử chọn “Tất cả trạng thái” hoặc xóa nội dung tìm kiếm.", "Choose “All statuses” or clear the search.")}
+                  </p>
+                  {rows.length > 0 && (filter !== "ALL" || search.trim()) && (
+                    <button
+                      type="button"
+                      className={styles.clearFilter}
+                      onClick={() => { setFilter("ALL"); setSearch(""); }}
+                    >
+                      {tr("Xóa bộ lọc", "Clear filters")}
+                    </button>
                   )}
-                </p>
+                </div>
               )}
               <div className={styles.bar}>
                 <button
@@ -1004,11 +977,11 @@ export default function OfferApprovalWorkspace({
               {!selected ? (
                 <div className={styles.detailEmpty}>
                   <ShieldCheck size={34} />
-                  <h3>{tr("Sẵn sàng để xem xét", "Ready for review")}</h3>
+                  <h3>{tr("Chọn một đề xuất", "Select a proposal")}</h3>
                   <p>
                     {tr(
-                      "Chọn một đề xuất bên trái để xem gói lương, người duyệt và lịch sử xử lý.",
-                      "Select a proposal to review compensation, the approver and its activity.",
+                      "Chọn tên ứng viên trong danh sách bên trái để xem chi tiết.",
+                      "Select a candidate in the list to view its details.",
                     )}
                   </p>
                 </div>

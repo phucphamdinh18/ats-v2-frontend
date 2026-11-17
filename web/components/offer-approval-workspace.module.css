@@ -619,3 +619,15 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Bosch visual pass: one clear instruction replaces the decorative stage strip. */
+.flowNote{display:flex;align-items:flex-start;gap:12px;margin:0 0 18px;padding:12px 15px;border:1px solid #d9dde2;border-left:3px solid #e0001b;border-radius:4px;background:#f6f7f9}
+.flowNote strong{flex:0 0 auto;color:#14171c;font-weight:700}
+.flowNote p{margin:0;color:#5e6671;line-height:1.55}
+.empty strong{display:block;color:#26303a;font-size:15px}
+.empty p{margin:6px 0 0;color:#5e6671}
+.root .clearFilter{margin-top:10px;min-height:32px;border-color:#e0001b;color:#b60018;background:#fff}
+.root .clearFilter:hover:not(:disabled){background:#fff2f3;border-color:#b60018}
+.root .link{color:#0754ad}
+.root :is(button,a,input,select,textarea):focus-visible{outline-color:#e0001b}
+@media(max-width:680px){.flowNote{display:block}.flowNote strong{display:block;margin-bottom:4px}}
