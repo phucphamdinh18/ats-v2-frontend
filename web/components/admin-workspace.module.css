@@ -367,3 +367,7 @@
 @media (max-width: 650px) {
   .root .saveActions > button { min-width: 0; flex: 1 1 180px; }
 }
+
+
+/* Job team tables should scroll with the card; sticky global headers overlap rows. */
+.teamLayout th{position:static;top:auto;z-index:auto}
