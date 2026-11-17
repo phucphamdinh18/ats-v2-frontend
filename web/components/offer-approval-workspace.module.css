@@ -631,3 +631,31 @@
 .root .link{color:#0754ad}
 .root :is(button,a,input,select,textarea):focus-visible{outline-color:#e0001b}
 @media(max-width:680px){.flowNote{display:block}.flowNote strong{display:block;margin-bottom:4px}}
+
+
+/* Keep the embedded workspace inside Job Detail at every available pane width. */
+.root { min-width: 0; width: 100%; container-type: inline-size; }
+.root :is(.header, .header > div, .headerActions, .flowNote, .flowNote p, .grid, .grid > *, .filters, .scroll) { min-width: 0; max-width: 100%; }
+.root .header { flex-wrap: wrap; }
+.root .header > div:first-child { flex: 1 1 340px; }
+.root .headerActions { flex: 0 1 auto; flex-wrap: wrap; }
+.root .flowNote { flex-wrap: wrap; }
+.root .flowNote p { flex: 1 1 400px; white-space: normal; overflow-wrap: anywhere; }
+.root .grid { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
+.root .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 190px); align-items: stretch; }
+.root .filters > .search { width: auto; min-width: 0; max-width: 100%; min-height: 42px; margin: 0; }
+.root .filters > .search input { flex: 1 1 0; width: 0; min-width: 0; max-width: 100%; }
+.root .filters > .search svg { flex: none; }
+.root .filters > select { width: 100%; min-width: 0; max-width: 100%; min-height: 42px; }
+.root th { position: static; top: auto; z-index: auto; }
+.root .scroll { width: 100%; overflow-x: auto; }
+.root table { white-space: normal; table-layout: fixed; }
+.root td { white-space: normal; overflow-wrap: anywhere; }
+@container (max-width: 1000px) {
+  .root .grid { grid-template-columns: minmax(0, 1fr); }
+  .root .detailPanel { position: static; max-height: none; }
+}
+@container (max-width: 600px) {
+  .root .filters { grid-template-columns: minmax(0, 1fr); }
+  .root .headerActions { width: 100%; }
+}

@@ -371,3 +371,26 @@
 
 /* Job team tables should scroll with the card; sticky global headers overlap rows. */
 .teamLayout th{position:static;top:auto;z-index:auto}
+
+
+/* Team workspace owns its table geometry; legacy global tables use sticky headers. */
+.root .teamLayout { min-width: 0; width: 100%; }
+.root .teamLayout > * { min-width: 0; max-width: 100%; }
+.root .tableScroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+.root .tableScroll table { min-width: 0; table-layout: fixed; white-space: normal; }
+.root .tableScroll th { position: static; top: auto; z-index: auto; }
+.root .tableScroll :is(th, td) { white-space: normal; vertical-align: middle; overflow-wrap: anywhere; }
+.root .tableScroll :is(th, td):nth-child(1) { width: 52%; }
+.root .tableScroll :is(th, td):nth-child(2) { width: 28%; }
+.root .tableScroll :is(th, td):nth-child(3) { width: 20%; }
+.root .role { white-space: normal; }
+.root .teamLayout h3 { margin-top: 18px; }
+.root .teamLayout .formHead h3 { margin-top: 0; }
+.root .header { flex-wrap: wrap; }
+@media (max-width: 650px) {
+  .root .tableScroll :is(th, td) { padding: 12px 6px; }
+  .root .tableScroll td button { padding: 8px; min-height: 40px; }
+}
+
+.root { width: 100%; max-width: 100%; container-type: inline-size; }
+@container (max-width: 900px) { .root .teamLayout { grid-template-columns: minmax(0, 1fr); } }
