@@ -1,5 +1,5 @@
 // Browser -> real local GoTrue/JWT -> Edge -> disposable PostgreSQL. No Gmail.
-import {chromium} from 'playwright';
+const {chromium}=await import(process.env.ATS_E2E_PLAYWRIGHT_MODULE||'playwright');
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
