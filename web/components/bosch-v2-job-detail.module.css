@@ -156,7 +156,7 @@
 .pipelineLayout>.metadata{grid-column:1;grid-row:3}
 .pipelineLayout>.tabs{grid-column:1;grid-row:4}
 .pipelineLayout>.content{display:contents}
-.pipelineLayout>
+
 @media(max-width:1200px){
   .pipelineLayout{display:block;--job-pipeline-display:grid;--job-pipeline-summary-row:1;--job-pipeline-list-row:2;--job-pipeline-side-row:3;--job-pipeline-list-margin:0px}
 }
