@@ -22,8 +22,6 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
       NEXT_PUBLIC_SUPABASE_URL: https://izchulqhmhqevfmuvqlx.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_3z9T_XwfGujrPObIj-8rbg_bjbpnXnt
-      NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend
-      NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,6 +34,9 @@ jobs:
       - run: npm --prefix web test
       - run: npm --prefix web run typecheck
       - run: npm --prefix web run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
       - run: node web/scripts/prepare-pages.mjs single
       - uses: actions/upload-pages-artifact@v3
         with:
