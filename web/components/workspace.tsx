@@ -37,14 +37,14 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "admin" | "interviews">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [jobView, setJobView] = useState<"master" | "pipeline">("master");
+  const [jobView, setJobView] = useState<"master" | "pipeline" | "create">("master");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
@@ -290,9 +290,9 @@ export default function Workspace() {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
   useEffect(() => {
-    if (tab === "admin" && !adminAllowed) setTab("jobs");
+    if (jobView === "create" && !adminAllowed) setJobView("master");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
-  }, [tab, adminAllowed, interviewAllowed, reviewAllowed]);
+  }, [tab, jobView, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
   const globalNavMatches = [
@@ -301,7 +301,6 @@ export default function Workspace() {
     ...(reviewAllowed ? [
       { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
     ] : []),
-    ...(adminAllowed ? [{ label: locale === "en" ? "Job administration" : "Quản trị Job", description: "Tạo vị trí tuyển dụng", destination: "admin" as const }] : []),
   ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
   const globalJobMatches = (access?.jobs || []).filter((job) =>
     normalizedGlobalQuery && `${job.title} ${job.job_code || ""}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery),
@@ -464,11 +463,9 @@ export default function Workspace() {
         <div className={styles.sidebarTitle}>{locale === "en" ? "Recruitment" : "Tuyển dụng"}</div>
         <nav className={styles.nav} aria-label={t.navigation}>
           <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Home</span></button>
-          <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
+          <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
-          <span className={styles.sidebarGroup}>{locale === "en" ? "Administration" : "Quản trị"}</span>
-          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Job administration" : "Quản trị Job"}</span></button>}
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
@@ -603,8 +600,6 @@ export default function Workspace() {
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
 
 
-              ) : tab === "admin" && adminAllowed ? (
-                <AdminConsole jobs={access.jobs} onRefresh={() => refresh(true)} onAccessLost={invalidate} />
               ) : (
                 <>
                   {guideOpen && (
@@ -644,15 +639,15 @@ export default function Workspace() {
                           <span className="step-number">
                             02
                           </span>
-                          <h3>{adminAllowed ? t.guideAdmin : t.guideAccess}</h3>
+                          <h3>{adminAllowed ? (locale === "en" ? "Add a Job Opening" : "Thêm vị trí tuyển dụng") : t.guideAccess}</h3>
                           <p>
                             {adminAllowed
-                              ? t.guideAdminBody
+                              ? (locale === "en" ? "Use Add Job on Job Openings to create a draft or open recruitment." : "Dùng nút Thêm Job trên trang Vị trí tuyển dụng để lưu nháp hoặc mở tuyển.")
                               : t.guideAccessBody}
                           </p>
                           {adminAllowed && (
-                            <button className="text-link" onClick={() => setTab("admin")}>
-                              {t.guideAdminAction}
+                            <button className="text-link" onClick={() => { setGuideOpen(false); setJobView("create"); }}>
+                              {locale === "en" ? "Add Job" : "Thêm Job"}
                               <Icon name="external" size={15} />
                             </button>
                           )}
@@ -660,7 +655,11 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  {jobView === "master" ? <BoschJobsMaster
+                  {jobView === "create" && adminAllowed ? <>
+                    <button type="button" className="secondary" onClick={() => setJobView("master")}>{locale === "en" ? "← Back to Job Openings" : "← Về danh sách Job"}</button>
+                    <AdminConsole jobs={access.jobs} onRefresh={async () => { await refresh(true); setSearch(""); setStatus("ALL"); setJobView("master"); }} onAccessLost={invalidate} />
+                  </> : jobView === "master" ? <BoschJobsMaster
+                    onCreate={adminAllowed ? () => { setGuideOpen(false); setJobView("create"); } : undefined}
                     jobs={jobs}
                     allJobs={access.jobs}
                     selectedJobId={selectedJob?.id}
@@ -696,3 +695,4 @@ export default function Workspace() {
     </div>
   );
 }
+

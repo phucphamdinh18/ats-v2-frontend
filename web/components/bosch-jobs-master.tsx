@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, Plus } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-jobs.module.css";
 
 type Props = {
+  onCreate?: () => void;
   jobs: Job[];
   allJobs: Job[];
   selectedJobId?: string | null;
@@ -46,7 +47,7 @@ function requestLabel(value: Job["request_type"], en: boolean) {
 }
 
 export default function BoschJobsMaster({
-  jobs, allJobs, selectedJobId, query, onQuery, status, onStatus, onSelect, onOpen,
+  jobs, allJobs, selectedJobId, query, onQuery, status, onStatus, onSelect, onOpen, onCreate,
 }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
@@ -107,7 +108,7 @@ export default function BoschJobsMaster({
   return <section className={styles.root} aria-label={labels.title}>
     <header className={styles.heading}>
       <div className={styles.crumb}><strong>Jobs</strong><ChevronRight size={14}/><span>{labels.title}</span></div>
-      <h1>{labels.title}</h1>
+      <div className={styles.headingRow}><h1>{labels.title}</h1>{onCreate && <button type="button" className={styles.addJob} onClick={onCreate}><Plus size={18} aria-hidden="true"/>{en ? "Add Job" : "Thêm Job"}</button>}</div>
       <p className={styles.subtitle}>{labels.subtitle}</p>
     </header>
     <div className={styles.tabs}><span className={styles.tabActive}>{labels.overview}</span></div>

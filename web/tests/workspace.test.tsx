@@ -144,8 +144,9 @@ it("opens Pipeline from Job Master and switches requisitions", async () => {
   render(<Workspace />);
   fireEvent.click(await screen.findByRole("button", { name: "Mở pipeline First Job" }));
   await screen.findByRole("region", { name: "Tiến độ tuyển dụng First Job" });
-  const requisition = screen.getByRole("combobox", { name: "Chọn Job cho Hiring Pipeline" });
-  fireEvent.change(requisition, { target: { value: "job2" } });
+  expect(screen.queryByRole("combobox", { name: "Chọn Job cho Hiring Pipeline" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Quay lại Bảng Master" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Mở pipeline Second Job" }));
   await screen.findByRole("region", { name: "Tiến độ tuyển dụng Second Job" });
   fireEvent.click(screen.getByRole("button", { name: "Quay lại Bảng Master" }));
   await screen.findByRole("button", { name: "Mở pipeline First Job" });
@@ -200,7 +201,7 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
 
 it("same-user auth refresh preserves the new Job form",async()=>{
  scope(true,["ADMIN"]);render(<Workspace/>);
- fireEvent.click(await screen.findByRole("button",{name:"Quản trị Job"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
  fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Unsaved role"}});
  const before=mocks.session.mock.calls.length;
  await act(async()=>{mocks.authCallback?.("SIGNED_IN",{user:{id:"synthetic"}});});
@@ -209,13 +210,13 @@ it("same-user auth refresh preserves the new Job form",async()=>{
  expect(screen.queryByRole("button",{name:"JD tuyển dụng"})).toBeNull();
 });
 it("silent auth refresh removes Admin creation when roles are revoked",async()=>{
- scope(true,["ADMIN"]);render(<Workspace/>);fireEvent.click(await screen.findByRole("button",{name:"Quản trị Job"}));
+ scope(true,["ADMIN"]);render(<Workspace/>);fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
  scope(false,[]);await act(async()=>{mocks.authCallback?.("TOKEN_REFRESHED",{user:{id:"synthetic"}});});
  await screen.findByRole("heading",{name:"Tài khoản đang chờ kích hoạt"});expect(screen.queryByLabelText("Tên vị trí")).toBeNull();
 });
 it("switches administration language without resetting its form or scope",async()=>{
  localStorage.clear();scope(true,["ADMIN"]);render(<LanguageProvider><Workspace/></LanguageProvider>);
- fireEvent.click(await screen.findByRole("button",{name:"Quản trị Job"}));fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Saved locally"}});
+ fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Saved locally"}});
  const calls=mocks.session.mock.calls.length;fireEvent.change(screen.getByRole("combobox",{name:"Ngôn ngữ / Language"}),{target:{value:"en"}});
  expect(screen.getByRole("heading",{name:"Create Job Opening"})).toBeTruthy();expect((screen.getByLabelText("Job title") as HTMLInputElement).value).toBe("Saved locally");expect(mocks.session.mock.calls.length).toBe(calls);localStorage.clear();
 });
@@ -359,7 +360,17 @@ it("an active role-less approver can open Home without gaining Admin or general 
   mocks.functionInvoke.mockImplementation((name: string, options: {body?: {action?:string}}) => Promise.resolve({data:name==="offer-workflow"?{result:[]} : name==="tasks"?{tasks:[]} : options.body?.action==="worklist"?{interviews:[]} : {jobs:[]},error:null}));
   render(<Workspace/>);
   await screen.findByRole("heading",{name:/Xin chào/,level:1});
-  expect(screen.queryByRole("button",{name:"Quản trị Job"})).toBeNull();
+  expect(screen.queryByRole("button",{name:"Thêm Job"})).toBeNull();
   expect(screen.queryByRole("button",{name:"Đề nghị tuyển dụng"})).toBeNull();
   expect(screen.queryByRole("link",{name:"Duyệt đề xuất"})).toBeNull();
+});
+
+it("Add Job belongs to Job Openings and returns to the list without an Admin sidebar entry", async () => {
+ scope(true,["ADMIN"]);render(<Workspace/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
+ expect(screen.queryByRole("button",{name:"Quản trị Job"})).toBeNull();
+ expect(screen.getByLabelText("Tên vị trí")).toBeTruthy();
+ fireEvent.click(screen.getByRole("button",{name:"← Về danh sách Job"}));
+ expect(screen.getByRole("button",{name:"Thêm Job"})).toBeTruthy();
+ expect(screen.queryByLabelText("Tên vị trí")).toBeNull();
 });

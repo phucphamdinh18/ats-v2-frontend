@@ -177,7 +177,7 @@ export default function AdminConsole({
         </div>
         <div>
           <span className={styles.eyebrow}>
-            {tr("QUẢN TRỊ TUYỂN DỤNG", "RECRUITMENT ADMINISTRATION")}
+            {tr("VỊ TRÍ TUYỂN DỤNG", "JOB OPENINGS")}
           </span>
           <h1>{tr("Tạo Job Opening", "Create Job Opening")}</h1>
           <p>

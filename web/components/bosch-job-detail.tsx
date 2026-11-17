@@ -14,7 +14,7 @@ type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team
 type Props = {
   job: Job;
   onBack: () => void;
-  onModule: (module: "interviews" | "admin") => void;
+  onModule: (module: "interviews") => void;
   canViewOffers: boolean;
   canAdmin: boolean;
   children: ReactNode;
@@ -53,7 +53,6 @@ export default function BoschJobDetail({ job, onBack, onModule, canViewOffers, c
         <button type="button" className={styles.outline} aria-expanded={actionsOpen} onClick={() => setActionsOpen(x=>!x)}>{en ? "Actions" : "Thao tác"} <ChevronDown size={15}/></button>
         {actionsOpen && <div className={styles.actionMenu}>
           <button type="button" onClick={() => { setActionsOpen(false); onBack(); }}>{en ? "All job openings" : "Tất cả Job"}</button>
-          {canAdmin && <button type="button" onClick={() => { setActionsOpen(false); onModule("admin"); }}>{en ? "Manage this Job" : "Quản lý Job này"}</button>}
         </div>}
       </div>
     </div>
@@ -120,3 +119,4 @@ export default function BoschJobDetail({ job, onBack, onModule, canViewOffers, c
     {tab === "activity" && <BoschJobActivity key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
   </section>;
 }
+

@@ -8,7 +8,7 @@ const job = {id:"job-1", job_code:"JOB-1001", title:"Senior Embedded Software En
 const next = {id:"job-2",job_code:"JOB-1002",title:"Software Tester",status:"DRAFT"};
 it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  const onBack=vi.fn(),onSelectJob=vi.fn(),onModule=vi.fn();
- render(<BoschJobDetail job={job} allJobs={[job,next]} onSelectJob={onSelectJob} onBack={onBack} onModule={onModule} canViewOffers canAdmin><div>Pipeline Fixture</div></BoschJobDetail>);
+ render(<BoschJobDetail job={job} onBack={onBack} onModule={onModule} canViewOffers canAdmin><div>Pipeline Fixture</div></BoschJobDetail>);
  expect(screen.getByRole("heading",{name:"Senior Embedded Software Engineer (EPC)"})).toBeTruthy();
  expect(screen.getByText("EPC – Embedded Systems")).toBeTruthy();
  expect(screen.getByText("Pipeline Fixture")).toBeTruthy();
@@ -16,21 +16,20 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  expect(screen.getByText("Đang tuyển")).toBeTruthy();
  fireEvent.click(screen.getByRole("button",{name:"Quay lại Bảng Master"}));
  expect(onBack).toHaveBeenCalledTimes(1);
- fireEvent.change(screen.getByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"}),{target:{value:"job-2"}});
- expect(onSelectJob).toHaveBeenCalledWith(next);
+ expect(screen.queryByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Phỏng vấn"}));
  fireEvent.click(screen.getByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/}));
  expect(onModule).toHaveBeenCalledWith("interviews");
 });
 it("hides unauthorized Offer navigation on Job Detail",()=>{
- render(<BoschJobDetail job={job} allJobs={[job]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Work</span></BoschJobDetail>);
+ render(<BoschJobDetail job={job} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Work</span></BoschJobDetail>);
  expect(screen.queryByRole("button",{name:"Offers"})).toBeNull();
 });
 
 
 it("Job Details shows real requisition metadata and configured SLA without inventing actual SLA", () => {
  const rich: Job = {...job, level:52, function_group:"Tech/Product", request_type:"REPLACEMENT", replacement_for:"Previous engineer", hiring_season:"Normal Time", priority:"HIGH", sla_target_workdays:35};
- render(<BoschJobDetail job={rich} allJobs={[rich]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
+ render(<BoschJobDetail job={rich} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Chi tiết Job"}));
  const detail=screen.getByRole("region",{name:"Chi tiết Job"});
  expect(detail.textContent).toContain("Previous engineer");
@@ -42,16 +41,16 @@ it("Job Details shows real requisition metadata and configured SLA without inven
 });
 it("Sourcing only shows existing authorized metrics and handles missing metrics", () => {
  const withMetrics: Job={...job, metrics:{total_candidates:8,new_count:3,screening_count:2,interview_count:2,hired_count:1,rejected_count:0,source_summary:[{source:"Referral",sub_source:"Employee",source_ownership:"Company",count:8}]}};
- const view=render(<BoschJobDetail job={withMetrics} allJobs={[withMetrics]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
+ const view=render(<BoschJobDetail job={withMetrics} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Nguồn tuyển"}));
  expect(screen.getByText("Referral")).toBeTruthy();
  expect(screen.getByText("Employee")).toBeTruthy();
  expect(screen.getByRole("table")).toBeTruthy();
- view.rerender(<BoschJobDetail job={{...job}} allJobs={[job]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
+ view.rerender(<BoschJobDetail job={{...job}} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  expect(screen.getByText("Job này chưa có dữ liệu nguồn tuyển dụng được API trả về.")).toBeTruthy();
 });
 it("Team and Access only exposes the current role's verified permissions, not a fabricated team list", () => {
- render(<BoschJobDetail job={job} allJobs={[job]} onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()}
+ render(<BoschJobDetail job={job} onBack={vi.fn()} onModule={vi.fn()}
    canViewOffers={false} canManageApplications={false} roles={["HIRING_MANAGER"]} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Nhóm & Quyền"}));
  expect(screen.getByText("HIRING_MANAGER")).toBeTruthy();
@@ -66,8 +65,8 @@ function EnglishToggle() {
  return <button type="button" onClick={() => setLocale("en")}>Switch English</button>;
 }
 it("switches Job Detail metadata, tabs and permission labels from VI to EN", () => {
- render(<LanguageProvider><EnglishToggle/><BoschJobDetail job={job} allJobs={[job]}
-   onSelectJob={vi.fn()} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}>
+ render(<LanguageProvider><EnglishToggle/><BoschJobDetail job={job}
+   onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}>
    <span>Pipeline fixture</span>
  </BoschJobDetail></LanguageProvider>);
  expect(screen.getByRole("button", { name: "Chi tiết Job" })).toBeTruthy();
