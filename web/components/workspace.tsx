@@ -399,7 +399,6 @@ export default function Workspace() {
             <a className={styles.identity} href={`${basePath}/`} aria-label="Bosch ATS V2">
               <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch" width="188" height="52"/>
               <span className={styles.divider} aria-hidden="true"/>
-              <strong>ATS V2</strong>
             </a>
             <div className={styles.productContext}><strong>ATS V2</strong><span>{locale === "en" ? "Daily recruitment overview" : "Tổng quan tuyển dụng hằng ngày"}</span></div>
           </div>

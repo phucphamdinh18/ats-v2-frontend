@@ -352,7 +352,7 @@ it("Home is a dedicated Bosch Dashboard, not a duplicate Jobs Master", async () 
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Home Test Job" });
   fireEvent.click(screen.getByRole("button", { name: "Home" }));
-  expect(screen.getByRole("heading", { name: /Chào buổi sáng/, level: 1 })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: /Xin chào/, level: 1 })).toBeTruthy();
   expect(screen.getByText("Job ưu tiên cao / khẩn cấp")).toBeTruthy();
   expect(screen.queryByRole("heading", { name: "Vị trí tuyển dụng", level: 1 })).toBeNull();
   expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
@@ -369,9 +369,11 @@ it("Home only shows actual authorized metrics, without fabricating Offer/SLA or 
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline Authorized A" });
   fireEvent.click(screen.getByRole("button", { name: "Home" }));
-  await screen.findByRole("heading", { name: /Chào buổi sáng/, level: 1 });
+  await screen.findByRole("heading", { name: /Xin chào/, level: 1 });
   const home = screen.getByRole("region", { name: "Tổng quan tuyển dụng" });
-  expect(home.textContent).toContain("Offer chờ duyệt");
+  expect(home.textContent).not.toContain("Offer chờ duyệt");
+  expect(home.textContent).not.toContain("API");
+  await screen.findByText("Hôm nay chưa có lịch phỏng vấn.");
   expect(home.textContent).not.toContain("Nguồn chính");
   expect(home.textContent).toContain("Authorized A");
   fireEvent.click(screen.getByRole("button", { name: "Mở pipeline Authorized A" }));
