@@ -11,7 +11,10 @@ vi.mock('@/lib/supabase',()=>{class ApiError extends Error{constructor(message:s
  return {ApiError,getClient:()=>({auth:{getSession:async()=>({data:{session:mock.session?{user:{id:userId,email:'approver@example.invalid'}}:null},error:null}),onAuthStateChange:(fn:(e:string)=>void)=>{mock.authEvent=fn;return {data:{subscription:{unsubscribe(){}}}};},signOut:async()=>{mock.authEvent?.('SIGNED_OUT');return {error:null}},signInWithOAuth:vi.fn()},from:(name:string)=>{const data=name==='app_users'?{is_active:mock.active}:name==='user_roles'?mock.roles.map(role=>({role})):[{id:jobId,job_code:'TEST',title:'TEST Job',status:'OPEN'}];const query={select:()=>query,eq:()=>query,order:()=>query,limit:async()=>({data,error:null}),maybeSingle:async()=>({data,error:null}),then:(resolve:(x:unknown)=>unknown)=>Promise.resolve({data,error:null}).then(resolve)};return query;}})};
 });
 vi.mock('@/lib/offer-approval',async importOriginal=>({...await importOriginal<object>(),offerWorkflow:(body:unknown)=>mock.api(body)}));
-vi.mock('@/lib/applications',()=>({searchApplications:async()=>({applications:[{application_id:offerId,candidate_name:'TEST Candidate',stage:'INTERVIEW',status:'ACTIVE'}]})}));
+vi.mock('@/lib/applications',()=>({
+ listApplications:async()=>({applications:[{application_id:offerId,candidate_name:'TEST Candidate',stage:'INTERVIEW',status:'ACTIVE'}]}),
+ searchApplications:async(_jobId:string,query:string)=>{if(!query.trim())throw Error('Blank candidate queries must use the list API');return {applications:[{application_id:offerId,candidate_name:'TEST Candidate',stage:'INTERVIEW',status:'ACTIVE'}]};}
+}));
 function renderPage(){return render(<LanguageProvider><OfferApprovalWorkspace/></LanguageProvider>);}
 beforeEach(()=>{localStorage.clear();mock.roles=[];mock.active=true;mock.session=true;mock.api.mockReset();window.history.replaceState(null,'','/offer-approval/?offer='+offerId);mock.api.mockImplementation(async(body:{action:string})=>body.action==='list'||body.action==='detail'?[proposal()]:body.action==='setup'?{approvers:[{id:offerId,display_name:'TEST DH'}],templates:[{id:offerId,name:'TEST Letter',version:1}]}:{offer_id:offerId});});
 afterEach(cleanup);

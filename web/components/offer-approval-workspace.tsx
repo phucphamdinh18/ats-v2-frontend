@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "./language";
 import { ApiError, getClient } from "@/lib/supabase";
-import { searchApplications, type Application } from "@/lib/applications";
+import { listApplications, searchApplications, type Application } from "@/lib/applications";
 import {
   offerWorkflow,
   offerError,
@@ -225,7 +225,7 @@ export default function OfferApprovalWorkspace() {
     if (!manager || !jobId) return;
     void Promise.all([
       offerWorkflow<OfferSetup>({ action: "setup", job_id: jobId }),
-      searchApplications(jobId, "", 25, 0),
+      listApplications(jobId, 25, 0),
     ])
       .then(([config, result]) => {
         if (ticket !== candidateTicket.current) return;
@@ -340,7 +340,8 @@ export default function OfferApprovalWorkspace() {
   async function findCandidates(page: number) {
     const ticket = ++candidateTicket.current;
     try {
-      const result = await searchApplications(jobId, candidateQuery, 25, page);
+      const query = candidateQuery.trim();
+      const result = query ? await searchApplications(jobId, query, 25, page) : await listApplications(jobId, 25, page);
       if (ticket !== candidateTicket.current) return;
       setCandidateOffset(page);
       setCandidatePageFull(result.applications.length === 25);
