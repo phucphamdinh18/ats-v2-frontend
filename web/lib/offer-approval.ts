@@ -79,6 +79,10 @@ export function approvalReturnPath(basePath: string, offerId: string) {
 export function offerError(error: unknown, en = false) {
   const code = error instanceof Error ? error.message : "";
   const messages: Record<string, [string, string]> = {
+    OFFER_JOB_MISMATCH: [
+      "Dữ liệu đề xuất không khớp Job đang mở. Hãy tải lại danh sách.",
+      "Proposal data does not match this Job. Refresh the list.",
+    ],
     ADMIN_REQUIRED: [
       "Chỉ Admin được thay đổi cấu hình.",
       "Only Admin may change this setting.",

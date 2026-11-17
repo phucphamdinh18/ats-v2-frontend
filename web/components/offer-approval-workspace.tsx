@@ -44,7 +44,9 @@ type DraftForm = typeof emptyFields;
 type Identity = { id: string; email: string; roles: string[]; active: boolean };
 export default function OfferApprovalWorkspace({
   embedded = false,
-}: { embedded?: boolean } = {}) {
+  scopedJob,
+  onAccessLost,
+}: { embedded?: boolean; scopedJob?: Job; onAccessLost?: () => void } = {}) {
   const { locale, setLocale } = useLanguage();
   const en = locale === "en";
   const tr = (vi: string, english: string) => (en ? english : vi);
@@ -106,26 +108,36 @@ export default function OfferApprovalWorkspace({
     setEditing(null);
     setForm(emptyFields);
     setApplicationId("");
-  }, []);
-  const refreshRows = useCallback(async (page = 0, focus?: string) => {
-    const ticket = epoch.current;
-    const detail = ++detailTicket.current;
-    const list = await offerWorkflow<WorkflowOffer[]>({
-      action: "list",
-      limit: 25,
-      offset: page,
-    });
-    if (ticket !== epoch.current) return;
-    setRows(list);
-    if (focus) {
-      const result = await offerWorkflow<WorkflowOffer[]>({
-        action: "detail",
-        offer_id: focus,
+    onAccessLost?.();
+  }, [onAccessLost]);
+  const refreshRows = useCallback(
+    async (page = 0, focus?: string) => {
+      const ticket = epoch.current;
+      const detail = ++detailTicket.current;
+      const list = await offerWorkflow<WorkflowOffer[]>({
+        action: "list",
+        ...(scopedJob ? { job_id: scopedJob.id } : {}),
+        limit: 25,
+        offset: page,
       });
-      if (ticket === epoch.current && detail === detailTicket.current)
-        setSelected(result[0] || null);
-    }
-  }, []);
+      if (ticket !== epoch.current) return;
+      if (scopedJob && list.some((o) => o.job_id !== scopedJob.id))
+        throw new ApiError("OFFER_JOB_MISMATCH");
+      setRows(list);
+      if (focus) {
+        const result = await offerWorkflow<WorkflowOffer[]>({
+          action: "detail",
+          offer_id: focus,
+        });
+        if (ticket === epoch.current && detail === detailTicket.current) {
+          if (scopedJob && result.some((o) => o.job_id !== scopedJob.id))
+            throw new ApiError("OFFER_JOB_MISMATCH");
+          setSelected(result[0] || null);
+        }
+      }
+    },
+    [scopedJob?.id],
+  );
   useEffect(() => {
     const id = new URL(window.location.href).searchParams.get("offer");
     initialOffer.current = id && offerUuid.test(id) ? id : null;
@@ -182,24 +194,27 @@ export default function OfferApprovalWorkspace({
           return;
         }
         if (roleNames.some((r) => r === "ADMIN" || r === "TA_RECRUITER")) {
-          const result = await client
-            .from("jobs")
-            .select("id,job_code,title,status,business_unit")
-            .order("job_code")
-            .limit(100);
-          if (result.error) throw result.error;
-          if (!mounted || ticket !== epoch.current) return;
-          setJobs(result.data as Job[]);
-          setJobId(result.data[0]?.id || "");
+          if (scopedJob) {
+            setJobs([scopedJob]);
+            setJobId(scopedJob.id);
+          } else {
+            const result = await client
+              .from("jobs")
+              .select("id,job_code,title,status,business_unit")
+              .order("job_code")
+              .limit(100);
+            if (result.error) throw result.error;
+            if (!mounted || ticket !== epoch.current) return;
+            setJobs(result.data as Job[]);
+            setJobId(result.data[0]?.id || "");
+          }
         }
         await refreshRows(0, initialOffer.current || undefined);
       } catch (e) {
         if (mounted) {
           if (e instanceof ApiError && (e.status === 401 || e.status === 403))
             loseAccess();
-          setError(
-            e instanceof Error ? e.message : "Không tải được quyền truy cập.",
-          );
+          setError(offerError(e, en));
         }
       } finally {
         if (mounted) setLoading(false);
@@ -285,8 +300,11 @@ export default function OfferApprovalWorkspace({
         action: "detail",
         offer_id: id,
       });
-      if (ticket === epoch.current && seq === detailTicket.current)
+      if (ticket === epoch.current && seq === detailTicket.current) {
+        if (scopedJob && result.some((o) => o.job_id !== scopedJob.id))
+          throw new ApiError("OFFER_JOB_MISMATCH");
         setSelected(result[0] || null);
+      }
     } catch (e) {
       if (ticket !== epoch.current) return;
       if (e instanceof ApiError && (e.status === 401 || e.status === 403))
@@ -749,21 +767,29 @@ export default function OfferApprovalWorkspace({
                       "Save a draft first, then review the details and select an approver.",
                     )}
                   </p>
-                  <label>
-                    Job
-                    <select
-                      value={jobId}
-                      disabled={frozen || !!editing}
-                      onChange={(e) => setJobId(e.target.value)}
-                    >
-                      <option value="">{tr("Chọn Job", "Select Job")}</option>
-                      {jobs.map((j) => (
-                        <option key={j.id} value={j.id}>
-                          {j.job_code} · {j.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {scopedJob ? (
+                    <div className={styles.packageSummary}>
+                      <small>Job</small>
+                      <strong>{scopedJob.title}</strong>
+                      <span>{scopedJob.job_code || "—"}</span>
+                    </div>
+                  ) : (
+                    <label>
+                      Job
+                      <select
+                        value={jobId}
+                        disabled={frozen || !!editing}
+                        onChange={(e) => setJobId(e.target.value)}
+                      >
+                        <option value="">{tr("Chọn Job", "Select Job")}</option>
+                        {jobs.map((j) => (
+                          <option key={j.id} value={j.id}>
+                            {j.job_code} · {j.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   {!editing && (
                     <>
                       <div className={styles.bar}>

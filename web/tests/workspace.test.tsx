@@ -91,11 +91,12 @@ it("exposes Interview to a scoped Hiring Manager but never offers privileged Off
   expect(screen.queryByRole("button", { name: "Đề nghị tuyển dụng" })).toBeNull();
 });
 
-it("limits the Offers navigation to active Admin or TA roles", async () => {
+it("keeps Offer proposal access in Job details rather than duplicate sidebar entries", async () => {
   scope(true, ["TA_RECRUITER"], [{ id: "job1", title: "TA Job", status: "OPEN", job_code: "TA-1" }]);
   render(<Workspace />);
   await screen.findByRole("button", { name: "Mở pipeline TA Job" });
-  expect(screen.getAllByRole("button", { name: "Đề nghị tuyển dụng" }).length).toBeGreaterThan(0);
+  expect(screen.queryByRole("button", { name: "Đề nghị tuyển dụng" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "Duyệt đề xuất" })).toBeNull();
 });
 
 it("passes stage permission only when the TA membership matches the selected Job", async () => {
@@ -406,5 +407,5 @@ it("an active role-less approver can open Home without gaining Admin or general 
   await screen.findByRole("heading",{name:/Xin chào/,level:1});
   expect(screen.queryByRole("button",{name:"Quản trị & quyền"})).toBeNull();
   expect(screen.queryByRole("button",{name:"Đề nghị tuyển dụng"})).toBeNull();
-  expect(screen.getByRole("link",{name:"Duyệt đề xuất"})).toBeTruthy();
+  expect(screen.queryByRole("link",{name:"Duyệt đề xuất"})).toBeNull();
 });

@@ -15,7 +15,7 @@ type Props = {
   allJobs: Job[];
   onSelectJob: (job: Job | null) => void;
   onBack: () => void;
-  onModule: (module: "interviews" | "offers" | "admin") => void;
+  onModule: (module: "interviews" | "admin") => void;
   canViewOffers: boolean;
   canAdmin: boolean;
   children: ReactNode;
@@ -103,9 +103,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
     </section>}
     {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
-      <div className={styles.sectionHead}><div><h2>{en ? "Offers for this Job" : "Offer theo Job"}</h2><p>{en ? "Existing authorized Offer workflow and audited detail." : "Dữ liệu Offer và lịch sử theo quyền hiện có; không thay đổi phê duyệt."}</p></div>
-        <button type="button" className={styles.outline} onClick={() => onModule("offers")}>{en ? "Open Offers module" : "Mở quản lý Offers"} <ChevronRight size={15}/></button></div>
-      <BoschOffersWorkspace key={job.id} jobs={[job]} onAccessLost={onAccessLost || NOOP_ACCESS}/>
+      <BoschOffersWorkspace key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
     {tab === "team" && <section className={styles.aux} aria-label={en ? "Team & Access" : "Nhóm & Phân quyền"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Team & Access" : "Nhóm & Phân quyền"}</h2><p>{en ? "Your current permissions for this Job." : "Quyền truy cập của tài khoản hiện tại đối với Job này."}</p></div></div>

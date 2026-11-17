@@ -12,7 +12,6 @@ import BoschJobsMaster from "./bosch-jobs-master";
 import BoschHomeDashboard from "./bosch-home-dashboard";
 import styles from "./bosch-v2-shell.module.css";
 import BoschModuleLayout from "./bosch-module-layout";
-import BoschOffersWorkspace from "./bosch-offers-workspace";
 import { jobOverview } from "@/lib/applications";
 import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
@@ -39,7 +38,7 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "jd" | "admin" | "interviews" | "offers">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "jd" | "admin" | "interviews">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -294,7 +293,6 @@ export default function Workspace() {
   useEffect(() => {
     if (tab === "admin" && !adminAllowed) setTab("jobs");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
-    if (tab === "offers" && !reviewAllowed) setTab("jobs");
   }, [tab, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
@@ -471,8 +469,6 @@ export default function Workspace() {
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => setTab("jobs")}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
-          {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "offers" ? styles.active : ""}`} aria-current={tab === "offers" ? "page" : undefined} onClick={() => setTab("offers")}><Icon name="jobs"/><span className={styles.navLabel}>{locale === "en" ? "Offers" : "Đề nghị tuyển dụng"}</span></button>}
-          {allowed && <a className={styles.navButton} href={`${basePath}/offer-approval/`}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Offer approvals" : "Duyệt đề xuất"}</span></a>}
           <span className={styles.sidebarGroup}>{locale === "en" ? "Administration" : "Quản trị"}</span>
           {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span></button>}
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "jd" ? styles.active : ""}`} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span></button>}
@@ -628,8 +624,7 @@ export default function Workspace() {
                 <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
-              ) : tab === "offers" && reviewAllowed ? (
-                <BoschModuleLayout module="offers"><BoschOffersWorkspace jobs={access.jobs} onAccessLost={invalidate} /></BoschModuleLayout>
+
               ) : tab === "jd" && reviewAllowed ? (
                 <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
               ) : tab === "admin" && adminAllowed ? (

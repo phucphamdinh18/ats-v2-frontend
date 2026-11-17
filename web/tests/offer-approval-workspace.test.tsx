@@ -370,3 +370,85 @@ it("recruiter explicitly opens the composer and retains unsaved fields after clo
     mock.api.mock.calls.filter((x) => x[0].action === "draft"),
   ).toHaveLength(0);
 });
+
+it("scopes every list page to the current Job and locks the draft Job", async () => {
+  mock.roles = ["TA_RECRUITER"];
+  window.history.replaceState(null, "", "/");
+  render(
+    <LanguageProvider>
+      <OfferApprovalWorkspace
+        embedded
+        scopedJob={{
+          id: jobId,
+          title: "TEST Job",
+          job_code: "TEST",
+          status: "OPEN",
+        }}
+      />
+    </LanguageProvider>,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Tạo đề xuất" }));
+  expect(screen.queryByRole("combobox", { name: "Job" })).toBeNull();
+  expect(
+    mock.api.mock.calls
+      .filter((x) => x[0].action === "list")
+      .every((x) => x[0].job_id === jobId),
+  ).toBe(true);
+  expect(
+    mock.api.mock.calls.some(
+      (x) => x[0].action === "setup" && x[0].job_id === jobId,
+    ),
+  ).toBe(true);
+});
+it("does not display a proposal returned for a different Job", async () => {
+  mock.api.mockImplementation(async (body: { action: string }) =>
+    body.action === "list" ? [{ ...proposal(), job_id: "other-job" }] : [],
+  );
+  render(
+    <LanguageProvider>
+      <OfferApprovalWorkspace
+        embedded
+        scopedJob={{
+          id: jobId,
+          title: "TEST Job",
+          job_code: "TEST",
+          status: "OPEN",
+        }}
+      />
+    </LanguageProvider>,
+  );
+  await screen.findByRole("alert");
+  expect(screen.queryByRole("button", { name: "TEST Candidate" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Phê duyệt" })).toBeNull();
+});
+
+it("rejects a detail belonging to another Job even when its offer id is in a link", async () => {
+  mock.api.mockImplementation(async (body: { action: string }) =>
+    body.action === "detail"
+      ? [
+          {
+            ...proposal(),
+            job_id: "other-job",
+            candidate_name: "Other private candidate",
+            snapshot: null,
+          },
+        ]
+      : [proposal()],
+  );
+  render(
+    <LanguageProvider>
+      <OfferApprovalWorkspace
+        embedded
+        scopedJob={{
+          id: jobId,
+          title: "TEST Job",
+          job_code: "TEST",
+          status: "OPEN",
+        }}
+      />
+    </LanguageProvider>,
+  );
+  await screen.findByRole("alert");
+  expect(screen.queryByText("Other private candidate")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Phê duyệt" })).toBeNull();
+});
