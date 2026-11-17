@@ -9,7 +9,7 @@ import {
   HOME_TIME_ZONE,
   type TaskDetail,
 } from "@/lib/home-data";
-import { listJobMembers, type JobMember } from "@/lib/admin-jobs";
+type TaskOwner = { user_id: string; display_name: string; role: string };
 import type { InterviewWorklistItem } from "@/lib/interviews";
 import styles from "./bosch-home-dashboard.module.css";
 type Props = {
@@ -33,7 +33,7 @@ export default function HomeWorkDialog({
   onAccessLost,
 }: Props) {
   const [detail, setDetail] = useState<TaskDetail | null>(null),
-    [members, setMembers] = useState<JobMember[]>([]),
+    [members, setMembers] = useState<TaskOwner[]>([]),
     [owner, setOwner] = useState("");
   const [error, setError] = useState(""),
     [loading, setLoading] = useState(false),
@@ -77,10 +77,10 @@ export default function HomeWorkDialog({
           if (!mounted) return;
           setDetail(r);
           setOwner(r.task.owner_id);
-          if (r.task.job_id) {
+          if (r.task) {
             try {
-              const roster = await listJobMembers(r.task.job_id);
-              if (mounted) setMembers(roster.members);
+              const roster = await taskCall<{ owners: TaskOwner[] }>({ action: "roster", task_id: r.task.id });
+              if (mounted) setMembers(roster.owners);
             } catch {
               if (mounted) setMemberError(true);
             }
@@ -224,7 +224,7 @@ export default function HomeWorkDialog({
                   ? "Assigned to you"
                   : "Được giao cho bạn"
                 : members.find((m) => m.user_id === detail.task.owner_id)
-                    ?.email ||
+                    ?.display_name ||
                   (en ? "Assigned colleague" : "Đồng nghiệp được giao")}
             </p>
             <p>
@@ -271,7 +271,7 @@ export default function HomeWorkDialog({
                       ...new Map(members.map((m) => [m.user_id, m])).values(),
                     ].map((m) => (
                       <option key={m.user_id} value={m.user_id}>
-                        {m.email} · {m.role}
+                        {m.display_name} · {m.role}
                       </option>
                     ))}
                   </select>

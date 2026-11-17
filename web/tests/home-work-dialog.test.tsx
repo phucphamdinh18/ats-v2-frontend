@@ -26,7 +26,7 @@ beforeEach(() => {
   mock.task.mockReset();
   mock.members.mockReset();
   mock.invoke.mockReset();
-  mock.task.mockResolvedValue({
+  const detail = {
     task: {
       id: "t",
       title: "Assigned task",
@@ -38,17 +38,18 @@ beforeEach(() => {
       job_id: "j",
     },
     events: [],
-  });
-  mock.members.mockResolvedValue({
-    members: [
-      { user_id: "me", email: "me@example.invalid", role: "TA_RECRUITER" },
+  };
+  const roster = {
+    owners: [
+      { user_id: "me", display_name: "me@example.invalid", role: "TA_RECRUITER" },
       {
         user_id: "other",
-        email: "other@example.invalid",
+        display_name: "other@example.invalid",
         role: "HIRING_MANAGER",
       },
     ],
-  });
+  };
+  mock.task.mockImplementation(async (command) => command.action === "roster" ? roster : detail);
 });
 afterEach(cleanup);
 it("reassignment uses selected real colleague, retaining identical payload on lost-response retry", async () => {
