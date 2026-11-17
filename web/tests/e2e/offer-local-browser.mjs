@@ -39,7 +39,7 @@ try{
  assert.equal(decisions.length,2);assert.deepEqual(decisions[0],decisions[1],'Retry must retain the exact request ID and payload');
  await dh.screenshot({path:path.join(artifacts,'offer-dh-approved.png'),fullPage:true});
  await ta.getByRole('button',{name:'Tải lại danh sách',exact:true}).click();await ta.getByText('Đã duyệt nội bộ',{exact:true}).first().waitFor({state:'visible',timeout:15000});
- const scope=ta.getByRole('complementary');assert.equal(await scope.getByText('Offer Letter cho ứng viên',{exact:true}).count(),1,'There must be exactly one candidate letter task');
+ const scope=ta.getByRole('complementary');await scope.getByText('Offer Letter cho ứng viên',{exact:true}).waitFor({state:'visible',timeout:15000});assert.equal(await scope.getByText('Offer Letter cho ứng viên',{exact:true}).count(),1,'There must be exactly one candidate letter task');
  assert.equal(await scope.getByText('Ứng viên đồng ý',{exact:true}).count(),0,'DH approval is not candidate acceptance');
  assert.deepEqual(errors,[]);
  console.log('Offer browser E2E PASS: TA draft/submit; unassigned HM denied; role-less DH approval; lost-response exact retry; one letter task. No email sent.');
