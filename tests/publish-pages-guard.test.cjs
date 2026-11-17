@@ -23,3 +23,10 @@ test("Pages deployment requires an explicit manual run from main", () => {
     "A pull request must never satisfy the deploy condition",
   );
 });
+
+test("one root build replaces legacy QA and parallel preview release modes", () => {
+  assert.match(workflow, /prepare-pages\.mjs single/);
+  assert.match(workflow, /NEXT_PUBLIC_BASE_PATH: \/ats-v2-frontend\n/);
+  assert.doesNotMatch(workflow, /production_ref|preview_ref|path-preview|deploy-preview|inline-script-syntax/);
+  assert.ok(!fs.existsSync("index.html"), "The legacy HTML frontend must be retired");
+});
