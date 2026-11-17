@@ -320,16 +320,31 @@ export default function Workspace() {
   if (!access) {
     return (
       <main className="auth-screen">
-        <section className="auth-brand-panel" aria-label={t.workspace} style={{ backgroundImage: `linear-gradient(135deg, rgb(19 24 68 / 84%), rgb(57 39 143 / 82%)), url("${basePath}/login-brand-background.webp")` }}>
+        <header className="auth-header">
+          <a className="auth-identity" href={`${basePath}/`} aria-label="Bosch ATS V2">
+            <img src={`${basePath}/bosch-inspired-wordmark.svg`} alt="Bosch — Invented for life" width="180" height="60" />
+            <span className="auth-identity-divider" aria-hidden="true" />
+            <span><strong>ATS V2</strong><small>{locale === "en" ? "Daily recruitment overview" : "Tổng quan tuyển dụng hằng ngày"}</small></span>
+          </a>
+          <div className="auth-language">
+            <Icon name="globe" size={17} />
+            <select aria-label={t.language} value={locale} onChange={(event) => setLocale(event.target.value === "en" ? "en" : "vi")}>
+              <option value="vi">Tiếng Việt</option><option value="en">English</option>
+            </select>
+          </div>
+        </header>
+        <section className="auth-brand-panel" aria-label={t.workspace}>
           <div className="auth-brand-content">
-            <a className="auth-brand" href={`${basePath}/`} aria-label="ATS">
-              <span className="auth-brand-mark"><Icon name="jobs" size={22} /></span>
-              <span>ATS<small>Applicant Tracking System</small></span>
-            </a>
+            <div className="auth-brand"><Icon name="jobs" size={21} /><span>{locale === "en" ? "RECRUITMENT WORKSPACE" : "KHÔNG GIAN TUYỂN DỤNG"}</span></div>
             <div className="auth-brand-copy">
               <span className="auth-kicker">{t.workspace}</span>
               <h1>{t.loginTitle}</h1>
               <p>{t.loginIntro}</p>
+              <ul className="auth-capabilities">
+                <li><Icon name="jobs" size={20} /><span>{locale === "en" ? "Jobs & candidates" : "Vị trí & ứng viên"}</span></li>
+                <li><Icon name="clock" size={20} /><span>{locale === "en" ? "Interviews & feedback" : "Phỏng vấn & đánh giá"}</span></li>
+                <li><Icon name="team" size={20} /><span>{locale === "en" ? "Tasks & approvals" : "Công việc & phê duyệt"}</span></li>
+              </ul>
             </div>
             <div className="auth-brand-footer">
               <Icon name="shield" size={17} />
@@ -338,21 +353,11 @@ export default function Workspace() {
           </div>
         </section>
         <section className="auth-main-panel">
-          <div className="auth-language">
-            <Icon name="globe" size={17} />
-            <select
-              aria-label={t.language}
-              value={locale}
-              onChange={(event) => setLocale(event.target.value === "en" ? "en" : "vi")}
-            >
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
-            </select>
-          </div>
           <div className="auth-login-content">
             <span className="auth-welcome-icon"><Icon name="team" size={25} /></span>
             <span className="auth-kicker">{t.loginEyebrow}</span>
-            <h2>{locale === "vi" ? "Đăng nhập vào ATS" : "Sign in to ATS"}</h2>
+            <h2>{locale === "vi" ? "Đăng nhập vào ATS V2" : "Sign in to ATS V2"}</h2>
+            <p className="auth-login-subtitle">{locale === "en" ? "Your next step in hiring starts here." : "Bắt đầu ngày tuyển dụng của bạn tại đây."}</p>
             {error && (
               <div className="notice error auth-error" role="alert">
                 <Icon name="help" />
