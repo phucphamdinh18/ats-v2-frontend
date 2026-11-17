@@ -353,3 +353,17 @@
     margin-left: auto;
   }
 }
+
+.root .saveActions > button {
+  min-height: 56px;
+  min-width: 176px;
+  padding: 14px 24px;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 700;
+  gap: 12px;
+}
+.root .saveActions { gap: 14px; padding-top: 24px; }
+@media (max-width: 650px) {
+  .root .saveActions > button { min-width: 0; flex: 1 1 180px; }
+}

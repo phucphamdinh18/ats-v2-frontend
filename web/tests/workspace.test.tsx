@@ -218,7 +218,7 @@ it("switches administration language without resetting its form or scope",async(
  localStorage.clear();scope(true,["ADMIN"]);render(<LanguageProvider><Workspace/></LanguageProvider>);
  fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Saved locally"}});
  const calls=mocks.session.mock.calls.length;fireEvent.change(screen.getByRole("combobox",{name:"Ngôn ngữ / Language"}),{target:{value:"en"}});
- expect(screen.getByRole("heading",{name:"Create Job Opening"})).toBeTruthy();expect((screen.getByLabelText("Job title") as HTMLInputElement).value).toBe("Saved locally");expect(mocks.session.mock.calls.length).toBe(calls);localStorage.clear();
+ expect(screen.getByRole("heading",{name:"Create Job"})).toBeTruthy();expect((screen.getByLabelText("Job title") as HTMLInputElement).value).toBe("Saved locally");expect(mocks.session.mock.calls.length).toBe(calls);localStorage.clear();
 });
 it("quick start opens actual open-job filtering, without creating any records", async () => {
   scope(

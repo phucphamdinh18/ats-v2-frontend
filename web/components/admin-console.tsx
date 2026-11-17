@@ -169,17 +169,14 @@ export default function AdminConsole({
   return (
     <section
       className={styles.root}
-      aria-label={tr("Tạo Job Opening", "Job Opening administration")}
+      aria-label={tr("Tạo Job", "Create Job")}
     >
       <header className={styles.header}>
         <div className={styles.headingIcon}>
           <BriefcaseBusiness size={24} />
         </div>
         <div>
-          <span className={styles.eyebrow}>
-            {tr("VỊ TRÍ TUYỂN DỤNG", "JOB OPENINGS")}
-          </span>
-          <h1>{tr("Tạo Job Opening", "Create Job Opening")}</h1>
+          <h1>{tr("Tạo Job", "Create Job")}</h1>
           <p>
             {tr(
               "Thông tin vị trí, yêu cầu tuyển dụng và SLA trong một form.",
@@ -391,13 +388,13 @@ export default function AdminConsole({
               )}
             </div>
           </fieldset>
-          <footer className={styles.actions}>
+          <footer className={`${styles.actions} ${styles.saveActions}`}>
             <button
               type="submit"
               value="DRAFT"
               disabled={frozen || (!!draftId && !editing)}
             >
-              <Save size={16} />
+              <Save size={22} aria-hidden="true" />
               {tr("Lưu nháp", "Save draft")}
             </button>
             <button
@@ -407,7 +404,7 @@ export default function AdminConsole({
               disabled={frozen || (!!draftId && !editing)}
             >
               {tr("Lưu & mở tuyển", "Save & open")}
-              <ArrowRight size={16} />
+              <ArrowRight size={22} aria-hidden="true" />
             </button>
           </footer>
         </form>
