@@ -1,8 +1,23 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FileText,
+  ShieldCheck,
+  Send,
+  Plus,
+  RefreshCw,
+  Search,
+  X,
+  SlidersHorizontal,
+  ChevronRight,
+} from "lucide-react";
 import { useLanguage } from "./language";
 import { ApiError, getClient } from "@/lib/supabase";
-import { listApplications, searchApplications, type Application } from "@/lib/applications";
+import {
+  listApplications,
+  searchApplications,
+  type Application,
+} from "@/lib/applications";
 import {
   offerWorkflow,
   offerError,
@@ -27,10 +42,16 @@ const emptyFields = {
 };
 type DraftForm = typeof emptyFields;
 type Identity = { id: string; email: string; roles: string[]; active: boolean };
-export default function OfferApprovalWorkspace() {
+export default function OfferApprovalWorkspace({
+  embedded = false,
+}: { embedded?: boolean } = {}) {
   const { locale, setLocale } = useLanguage();
   const en = locale === "en";
   const tr = (vi: string, english: string) => (en ? english : vi);
+  const [showComposer, setShowComposer] = useState(false);
+  const [filter, setFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const composerRef = useRef<HTMLDivElement>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -286,6 +307,7 @@ export default function OfferApprovalWorkspace() {
       setPending(null);
       setSelected(null);
       if (command.action === "draft") {
+        setShowComposer(false);
         setEditing(null);
         setForm(emptyFields);
         setApplicationId("");
@@ -341,7 +363,9 @@ export default function OfferApprovalWorkspace() {
     const ticket = ++candidateTicket.current;
     try {
       const query = candidateQuery.trim();
-      const result = query ? await searchApplications(jobId, query, 25, page) : await listApplications(jobId, 25, page);
+      const result = query
+        ? await searchApplications(jobId, query, 25, page)
+        : await listApplications(jobId, 25, page);
       if (ticket !== candidateTicket.current) return;
       setCandidateOffset(page);
       setCandidatePageFull(result.applications.length === 25);
@@ -360,6 +384,7 @@ export default function OfferApprovalWorkspace() {
     }
   }
   function edit(o: WorkflowOffer) {
+    setShowComposer(true);
     setEditing(o);
     setApplicationId(o.application_id);
     setForm({ ...emptyFields, ...o.fields, salary: String(o.fields.salary) });
@@ -387,25 +412,114 @@ export default function OfferApprovalWorkspace() {
       ACCEPTED: ["Ứng viên đồng ý", "Accepted"],
       DECLINED: ["Ứng viên từ chối", "Declined"],
       EXPIRED: ["Hết hạn", "Expired"],
-      WITHDRAWN:["Đã rút đề xuất","Withdrawn"],
+      WITHDRAWN: ["Đã rút đề xuất", "Withdrawn"],
     };
     return labels[value]?.[en ? 1 : 0] || value;
   }
   const frozen = !!pending || saving;
+  const Container = embedded ? "section" : "main";
+  const filteredRows = rows.filter(
+    (o) =>
+      (filter === "ALL" || o.status === filter) &&
+      `${o.snapshot?.candidate_name || o.candidate_name} ${o.snapshot?.job_title || o.job_title} ${o.fields.department}`
+        .toLocaleLowerCase(locale)
+        .includes(search.trim().toLocaleLowerCase(locale)),
+  );
+  function formatSalary(o: WorkflowOffer) {
+    const f = o.snapshot || o.fields;
+    return `${new Intl.NumberFormat(en ? "en-GB" : "vi-VN").format(f.salary)} ${f.currency} / ${f.salary_period === "YEAR" ? tr("năm", "year") : tr("tháng", "month")}`;
+  }
+  function openComposer() {
+    setShowComposer(true);
+  }
+  useEffect(() => {
+    if (showComposer)
+      composerRef.current?.scrollIntoView?.({
+        behavior: "smooth",
+        block: "start",
+      });
+  }, [showComposer]);
   return (
-    <main className={styles.root}>
+    <Container className={`${styles.root} ${embedded ? styles.embedded : ""}`}>
       <header className={styles.header}>
-        <h1>
-          ATS V2 ·{" "}
-          {tr("Đề xuất và phê duyệt Offer", "Offer Proposal & Approval")}
-        </h1>
         <div>
-          <a href={`${base}/`}>{tr("Về ATS", "Back to ATS")}</a> ·{" "}
-          <button type="button" onClick={() => setLocale(en ? "vi" : "en")}>
-            {en ? "Tiếng Việt" : "English"}
-          </button>
+          {!embedded && (
+            <a className={styles.back} href={`${base}/`}>
+              {tr("Offers", "Offers")} /{" "}
+              {tr("Đề xuất Offer", "Offer proposals")}
+            </a>
+          )}
+          <span className={styles.eyebrow}>
+            {tr("PHÊ DUYỆT NỘI BỘ", "INTERNAL APPROVAL")}
+          </span>
+          <h2>{tr("Đề xuất Offer", "Offer proposals")}</h2>
+          <p>
+            {tr(
+              "Thống nhất level và gói lương trước khi gửi offer letter cho ứng viên.",
+              "Align on level and compensation before sending the candidate’s offer letter.",
+            )}
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          {!embedded && (
+            <button type="button" onClick={() => setLocale(en ? "vi" : "en")}>
+              {en ? "Tiếng Việt" : "English"}
+            </button>
+          )}
+          {manager && !loading && (
+            <button
+              className={styles.primary}
+              disabled={frozen}
+              onClick={openComposer}
+            >
+              <Plus size={17} />
+              {tr("Tạo đề xuất", "New proposal")}
+            </button>
+          )}
         </div>
       </header>
+      <ol
+        className={styles.workflow}
+        aria-label={tr("Quy trình Offer", "Offer workflow")}
+      >
+        <li>
+          <span>
+            <FileText size={19} />
+          </span>
+          <div>
+            <strong>01 · {tr("Đề xuất", "Proposal")}</strong>
+            <small>
+              {tr(
+                "Ứng viên, level và gói lương",
+                "Candidate, level and compensation",
+              )}
+            </small>
+          </div>
+        </li>
+        <li>
+          <span>
+            <ShieldCheck size={19} />
+          </span>
+          <div>
+            <strong>02 · {tr("Phê duyệt", "Approval")}</strong>
+            <small>{tr("DH / CEO được chỉ định", "Assigned DH / CEO")}</small>
+          </div>
+        </li>
+        <li>
+          <span>
+            <Send size={19} />
+          </span>
+          <div>
+            <strong>03 · Offer letter</strong>
+            <small>
+              {tr(
+                "Theo dõi gửi thư và phản hồi",
+                "Track delivery and response",
+              )}
+            </small>
+          </div>
+        </li>
+      </ol>
       {error && (
         <p role="alert" className={`${styles.notice} ${styles.error}`}>
           {error}
@@ -442,17 +556,25 @@ export default function OfferApprovalWorkspace() {
         </p>
       ) : (
         <>
-          <div className={styles.bar}>
-            <span>{identity.email}</span>
-            <button disabled={saving} onClick={() => void reload()}>
+          <div className={styles.toolbar}>
+            <p className={styles.small}>
+              {tr(
+                "Phê duyệt nội bộ và phản hồi của ứng viên là hai trạng thái riêng biệt.",
+                "Internal approval and the candidate’s response are separate statuses.",
+              )}
+            </p>
+            <button disabled={frozen} onClick={() => void reload()}>
+              <RefreshCw size={15} />
               {tr("Tải lại danh sách", "Refresh list")}
             </button>
-            <button
-              disabled={saving}
-              onClick={() => void getClient().auth.signOut()}
-            >
-              {tr("Đăng xuất", "Sign out")}
-            </button>
+            {!embedded && (
+              <button
+                disabled={frozen}
+                onClick={() => void getClient().auth.signOut()}
+              >
+                {tr("Đăng xuất", "Sign out")}
+              </button>
+            )}
           </div>
           {pending && (
             <div role="status" className={styles.notice}>
@@ -467,23 +589,82 @@ export default function OfferApprovalWorkspace() {
           )}
           <div className={styles.grid}>
             <section className={styles.panel}>
-              <h2>
-                {tr("Danh sách đề xuất được phép xem", "Authorized proposals")}
-              </h2>
+              <div className={styles.panelHeading}>
+                <div>
+                  <h3>{tr("Danh sách đề xuất", "Proposals")}</h3>
+                  <p className={styles.small}>
+                    {tr(
+                      "Tìm và lọc trong trang đang tải",
+                      "Search and filter the loaded page",
+                    )}{" "}
+                    · {rows.length} / 25
+                  </p>
+                </div>
+                <span className={styles.count}>{filteredRows.length}</span>
+              </div>
+              <div className={styles.filters}>
+                <label className={styles.search}>
+                  <Search size={16} />
+                  <input
+                    aria-label={tr(
+                      "Tìm đề xuất trong trang",
+                      "Search proposals in page",
+                    )}
+                    placeholder={tr(
+                      "Tên ứng viên, Job hoặc bộ phận…",
+                      "Candidate, Job or department…",
+                    )}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </label>
+                <select
+                  aria-label={tr(
+                    "Lọc trạng thái đề xuất",
+                    "Filter proposal status",
+                  )}
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  <option value="ALL">
+                    {tr("Tất cả trạng thái", "All statuses")}
+                  </option>
+                  {[
+                    "DRAFT",
+                    "PENDING",
+                    "APPROVED",
+                    "REJECTED",
+                    "SENT",
+                    "ACCEPTED",
+                    "DECLINED",
+                    "WITHDRAWN",
+                    "EXPIRED",
+                  ].map((s) => (
+                    <option key={s} value={s}>
+                      {status(s)}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className={styles.scroll}>
                 <table>
                   <thead>
                     <tr>
                       <th>{tr("Ứng viên", "Candidate")}</th>
-                      <th>Job</th>
+                      <th>{tr("Gói lương", "Compensation")}</th>
                       <th>Level</th>
                       <th>{tr("Trạng thái", "Status")}</th>
                       <th>{tr("Phiên bản", "Version")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((o) => (
-                      <tr key={o.id}>
+                    {filteredRows.map((o) => (
+                      <tr
+                        key={o.id}
+                        className={
+                          selected?.id === o.id ? styles.selectedRow : ""
+                        }
+                      >
                         <td>
                           <button
                             className={styles.link}
@@ -492,21 +673,30 @@ export default function OfferApprovalWorkspace() {
                           >
                             {o.snapshot?.candidate_name || o.candidate_name}
                           </button>
+                          <small className={styles.jobName}>
+                            {o.snapshot?.job_title || o.job_title}
+                          </small>
                         </td>
-                        <td>{o.snapshot?.job_title || o.job_title}</td>
+                        <td className={styles.compensation}>
+                          {formatSalary(o)}
+                        </td>
                         <td>{o.fields.level}</td>
-                        <td>{status(o.status)}</td>
+                        <td>
+                          <span className={styles.badge} data-status={o.status}>
+                            {status(o.status)}
+                          </span>
+                        </td>
                         <td>{o.version}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {!rows.length && (
-                <p>
+              {!filteredRows.length && (
+                <p className={styles.empty}>
                   {tr(
-                    "Không có đề xuất trong phạm vi được cấp.",
-                    "No proposals in your authorized scope.",
+                    "Không có đề xuất phù hợp trên trang này.",
+                    "No matching proposals on this page.",
                   )}
                 </p>
               )}
@@ -533,14 +723,32 @@ export default function OfferApprovalWorkspace() {
                   {tr("Tiếp", "Next")}
                 </button>
               </div>
-              {manager && (
-                <>
-                  <hr />
-                  <h2>
-                    {editing
-                      ? tr("Chỉnh bản nháp", "Edit draft")
-                      : tr("Tạo Offer Proposal", "Create Offer Proposal")}
-                  </h2>
+              {manager && showComposer && (
+                <div ref={composerRef} className={styles.composer}>
+                  <div className={styles.panelHeading}>
+                    <h2>
+                      {editing
+                        ? tr("Chỉnh bản nháp", "Edit draft")
+                        : tr("Tạo Offer Proposal", "Create Offer Proposal")}
+                    </h2>
+                    <button
+                      type="button"
+                      aria-label={tr(
+                        "Đóng form đề xuất",
+                        "Close proposal form",
+                      )}
+                      disabled={frozen}
+                      onClick={() => setShowComposer(false)}
+                    >
+                      <X size={17} />
+                    </button>
+                  </div>
+                  <p className={styles.small}>
+                    {tr(
+                      "Lưu bản nháp trước, kiểm tra thông tin rồi chọn người duyệt ở phần chi tiết.",
+                      "Save a draft first, then review the details and select an approver.",
+                    )}
+                  </p>
                   <label>
                     Job
                     <select
@@ -758,63 +966,90 @@ export default function OfferApprovalWorkspace() {
                       </button>
                     )}
                   </form>
-                </>
+                </div>
               )}
             </section>
-            <aside className={styles.panel}>
+            <aside className={`${styles.panel} ${styles.detailPanel}`}>
               <h2>
                 {selected?.snapshot?.candidate_name ||
                   selected?.candidate_name ||
                   tr("Chi tiết đề xuất", "Proposal details")}
               </h2>
               {!selected ? (
-                <p>
-                  {tr(
-                    "Chọn đề xuất để xem thông tin và kết quả duyệt.",
-                    "Select a proposal to review its details.",
-                  )}
-                </p>
+                <div className={styles.detailEmpty}>
+                  <ShieldCheck size={34} />
+                  <h3>{tr("Sẵn sàng để xem xét", "Ready for review")}</h3>
+                  <p>
+                    {tr(
+                      "Chọn một đề xuất bên trái để xem gói lương, người duyệt và lịch sử xử lý.",
+                      "Select a proposal to review compensation, the approver and its activity.",
+                    )}
+                  </p>
+                </div>
               ) : (
                 <>
-                  <p className={styles.badge}>
+                  <p className={styles.badge} data-status={selected.status}>
                     {status(selected.status)} · v{selected.version}
                   </p>
+                  <div className={styles.packageSummary}>
+                    <small>
+                      {tr("GÓI LƯƠNG ĐỀ XUẤT", "PROPOSED COMPENSATION")}
+                    </small>
+                    <strong>{formatSalary(selected)}</strong>
+                    <span>
+                      {selected.snapshot?.job_title || selected.job_title} ·{" "}
+                      {selected.fields.level}
+                    </span>
+                  </div>
+                  <div className={styles.approver}>
+                    <ShieldCheck size={17} />
+                    <div>
+                      <small>
+                        {tr("Người duyệt DH / CEO", "DH / CEO approver")}
+                      </small>
+                      <strong>
+                        {setup.approvers.find(
+                          (a) => a.id === selected.approver_id,
+                        )?.display_name ||
+                          (selected.can_approve
+                            ? tr("Bạn được chỉ định duyệt", "Assigned to you")
+                            : selected.approver_id
+                              ? tr(
+                                  "Người duyệt đã được chỉ định",
+                                  "Assigned approver",
+                                )
+                              : tr(
+                                  "Chưa chọn người duyệt",
+                                  "Not yet assigned",
+                                ))}
+                      </strong>
+                    </div>
+                  </div>
                   <dl className={styles.facts}>
-                    {Object.entries(selected.snapshot || selected.fields)
-                      .filter(
-                        ([k]) =>
-                          ![
-                            "candidate_email",
-                            "job_id",
-                            "offer_id",
-                            "notes",
-                          ].includes(k),
-                      )
-                      .map(([k, v]) => (
-                        <div key={k}>
-                          <dt>
-                            {(
-                              {
-                                candidate_name: tr("Ứng viên", "Candidate"),
-                                job_title: "Job",
-                                level: "Level",
-                                department: tr("Bộ phận", "Department"),
-                                function: "Function",
-                                salary: tr("Mức lương", "Salary"),
-                                currency: tr("Tiền tệ", "Currency"),
-                                salary_period: tr("Kỳ lương", "Salary period"),
-                                start_date: tr(
-                                  "Ngày dự kiến onboard",
-                                  "Expected onboarding",
-                                ),
-                                benefits: tr("Phúc lợi", "Benefits"),
-                                version: tr("Phiên bản", "Version"),
-                              } as Record<string, string>
-                            )[k] || k}
-                          </dt>
-                          <dd>{String(v ?? "—")}</dd>
-                        </div>
-                      ))}
+                    {[
+                      [
+                        tr("Bộ phận", "Department"),
+                        (selected.snapshot || selected.fields).department,
+                      ],
+                      [
+                        "Function",
+                        (selected.snapshot || selected.fields).function,
+                      ],
+                      ["Level", (selected.snapshot || selected.fields).level],
+                      [
+                        tr("Ngày dự kiến onboard", "Expected onboarding"),
+                        (selected.snapshot || selected.fields).start_date,
+                      ],
+                      [
+                        tr("Phúc lợi", "Benefits"),
+                        (selected.snapshot || selected.fields).benefits || "—",
+                      ],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
                   </dl>
                   {selected.fields.notes && <p>{selected.fields.notes}</p>}
                   {selected.can_edit && manager && (
@@ -1032,12 +1267,17 @@ export default function OfferApprovalWorkspace() {
                         )}
                     </div>
                   ))}
-                  <h3>{tr("Lịch sử", "History")}</h3>
+                  <h3>
+                    {tr("Lịch sử", "History")}{" "}
+                    <span className={styles.small}>GMT+7</span>
+                  </h3>
                   <ol className={styles.events}>
                     {selected.events.map((e, i) => (
                       <li key={`${e.at}-${i}`}>
                         {e.type} · {e.actor_name || "—"} ·{" "}
-                        {new Date(e.at).toLocaleString(en ? "en-GB" : "vi-VN")}
+                        {new Date(e.at).toLocaleString(en ? "en-GB" : "vi-VN", {
+                          timeZone: "Asia/Ho_Chi_Minh",
+                        })}
                       </li>
                     ))}
                   </ol>
@@ -1046,7 +1286,15 @@ export default function OfferApprovalWorkspace() {
             </aside>
           </div>
           {admin && (
-            <section className={`${styles.panel} ${styles.admin}`}>
+            <details className={`${styles.panel} ${styles.admin}`}>
+              <summary>
+                <SlidersHorizontal size={18} />
+                {tr(
+                  "Cấu hình người duyệt & mẫu thư",
+                  "Approvers & template settings",
+                )}
+                <ChevronRight size={17} />
+              </summary>
               <h2>
                 {tr(
                   "Admin: Người duyệt và mẫu thư",
@@ -1158,10 +1406,10 @@ export default function OfferApprovalWorkspace() {
                   "Use a separate source document per template version. Registration does not grant Drive access or enable email.",
                 )}
               </p>
-            </section>
+            </details>
           )}
         </>
       )}
-    </main>
+    </Container>
   );
 }
