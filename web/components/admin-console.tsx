@@ -5,11 +5,13 @@ import type { FormEvent } from "react";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
 import { assignJobMember, createJobDraft, listJobMembers, openJob, removeJobMember, updateJobMetadata, type JobMember } from "@/lib/admin-jobs";
+import { offerWorkflow, type OfferSetup } from "@/lib/offer-approval";
 
 const roleNames: Record<string, string> = {
   TA_RECRUITER: "TA / Recruiter",
   HIRING_MANAGER: "Hiring Manager",
   INTERVIEWER: "Interviewer",
+  OFFER_APPROVER: "DH / CEO Approver",
 };
 
 export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
@@ -26,6 +28,7 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
   const [role, setRole] = useState("TA_RECRUITER");
   const [metadata, setMetadata] = useState({ level: "3", functionGroup: "Tech/Product", season: "Normal Time", reqDate: "", requestType: "NEW", priority: "NORMAL", replacementFor: "" });
   const [members, setMembers] = useState<JobMember[]>([]);
+  const [approvers, setApprovers] = useState<OfferSetup["approvers"]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -54,18 +57,24 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
   }, [selectedJob?.id]); // initialize on Job changes
 
   const loadMembers = useCallback(async () => {
-    if (!jobId) { setMembers([]); return; }
+    if (!jobId) { setMembers([]); setApprovers([]); return; }
     setLoadingMembers(true);
     setError("");
     try {
       const result = await listJobMembers(jobId);
       setMembers(result.members || []);
+      if (selectedJob?.status === "DRAFT") {
+        setApprovers([]);
+      } else {
+        const setup = await offerWorkflow<OfferSetup>({ action: "setup", job_id: jobId });
+        setApprovers(setup.approvers || []);
+      }
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
       setMembers([]);
       setError(cause instanceof Error ? cause.message : "Không tải được danh sách quyền của Job.");
     } finally { setLoadingMembers(false); }
-  }, [jobId, onAccessLost]);
+  }, [jobId, onAccessLost, selectedJob?.status]);
 
   useEffect(() => { void loadMembers(); }, [loadMembers]);
 
@@ -128,6 +137,13 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
     if (!jobId || !email.trim() || busy) return;
     setBusy(true); setError(""); setMessage("");
     try {
+      if (role === "OFFER_APPROVER") {
+        await offerWorkflow({ action: "grant_approver_email", job_id: jobId, email: email.trim(), enabled: true });
+        setEmail("");
+        setMessage(`Đã cấp quyền duyệt Offer cho ${email.trim()} trên Job này.`);
+        await loadMembers();
+        return;
+      }
       const result = await assignJobMember(jobId, email.trim(), role);
       setEmail("");
       setMessage(result.member.added ? `Đã gán ${roleNames[role]} cho ${result.member.target_email}.` : "Người này đã có quyền tương ứng trên Job.");
@@ -135,6 +151,19 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
     } catch (cause) {
       if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
       setError(cause instanceof Error ? cause.message : "Không gán được quyền.");
+    } finally { setBusy(false); }
+  }
+
+  async function revokeApprover(approver: OfferSetup["approvers"][number]) {
+    if (!jobId || busy || !window.confirm(`Thu hồi quyền duyệt Offer của ${approver.display_name || approver.id} trên Job này?`)) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await offerWorkflow({ action: "grant_approver", job_id: jobId, user_id: approver.id, enabled: false });
+      setMessage(`Đã thu hồi quyền duyệt Offer của ${approver.display_name || approver.id}.`);
+      await loadMembers();
+    } catch (cause) {
+      if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
+      setError(cause instanceof Error ? cause.message : "Không thu hồi được quyền approver.");
     } finally { setBusy(false); }
   }
 
@@ -196,13 +225,15 @@ export default function AdminConsole({ jobs, onRefresh, onAccessLost }: {
         <form onSubmit={(event) => void assign(event)}>
           <label>Job<select value={jobId} onChange={(event) => setJobId(event.target.value)} required><option value="">Chọn Job</option>{assignableJobs.map((job) => <option key={job.id} value={job.id}>{job.title} · {job.status}</option>)}</select></label>
           <label>Email người dùng<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={254} autoComplete="off" placeholder="name@company.com" /></label>
-          <label>Vai trò trên Job<select value={role} onChange={(event) => setRole(event.target.value)}><option value="TA_RECRUITER">TA / Recruiter</option><option value="HIRING_MANAGER">Hiring Manager</option><option value="INTERVIEWER">Interviewer</option></select></label>
+          <label>Vai trò trên Job<select value={role} onChange={(event) => setRole(event.target.value)}><option value="TA_RECRUITER">TA / Recruiter</option><option value="HIRING_MANAGER">Hiring Manager</option><option value="INTERVIEWER">Interviewer</option><option value="OFFER_APPROVER">Department Head / CEO Approver (chỉ Job này)</option></select></label>
           <button className="primary" type="submit" disabled={busy || !assignableJobs.length}>{busy ? "Đang xử lý…" : "Gán quyền"}</button>
         </form>
         <div className="admin-members"><h4>Người đã được gán {selectedJob ? `· ${selectedJob.title}` : ""}</h4>
           {loadingMembers ? <p className="muted">Đang tải…</p> : members.length ? <ul>{members.map((member) => <li key={`${member.user_id}:${member.role}`}><span><strong>{member.email}</strong><small>{roleNames[member.role] || member.role}</small></span><button className="secondary" disabled={busy} onClick={() => void revoke(member)}>Thu hồi</button></li>)}</ul> : <p className="muted">Chưa có người được gán trên Job này.</p>}
+        <h4>Approver DH / CEO · {selectedJob?.title || "Chọn Job"}</h4>
+        {selectedJob?.status === "DRAFT" ? <p className="muted">Mở Job trước khi cấu hình người duyệt.</p> : approvers.length ? <ul>{approvers.map((approver) => <li key={approver.id}><span><strong>{approver.display_name || approver.id}</strong><small>Chỉ được duyệt Offer Proposal của Job này</small></span><button className="secondary" disabled={busy} onClick={() => void revokeApprover(approver)}>Thu hồi</button></li>)}</ul> : <p className="muted">Chưa có approver được gán trên Job này.</p>}
         </div>
-        <p className="admin-security-note">Vai trò Admin toàn hệ thống chỉ được cấp bởi người quản trị cơ sở dữ liệu. Trang này chỉ gán quyền công việc, không thể tự nâng một người thành Admin.</p>
+        <p className="admin-security-note">Approver DH / CEO cần có tài khoản ATS đang hoạt động và đăng nhập ít nhất một lần. Quyền duyệt chỉ áp dụng cho Job được chọn, không tạo vai trò toàn hệ thống. Vai trò Admin toàn hệ thống chỉ được cấp bởi người quản trị cơ sở dữ liệu.</p>
       </section>
     </div>
   </section>;
