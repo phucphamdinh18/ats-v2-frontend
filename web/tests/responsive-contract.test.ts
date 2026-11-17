@@ -134,7 +134,7 @@ test("Dedicated Candidate Detail renders authenticated facts and working navigat
   }
   assert.ok(view.includes("<BoschCandidateDetail"), "Dedicated panel is mounted instead of legacy profile sections");
   assert.ok(view.includes("onAddToJob={() => void addToJob()}"), "Original submit callback retained");
-  assert.ok(view.includes('onClick={() => setView("cv-review")}'), "CV review navigation retained");
+  assert.ok(!view.includes('setView("cv-review")'), "CV review entry removed");
   assert.ok(workspace.includes('onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}'), "Job navigation reuses approved route handler");
   assert.ok(panel.includes('onClick={() => setTab("overview")}') && panel.includes('onClick={() => setTab("resume")}'), "Only data-backed tabs enabled");
   assert.ok(panel.includes("profile.documents.map"), "Resume tab lists actual authorized CV documents");

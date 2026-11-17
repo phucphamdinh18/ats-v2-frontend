@@ -125,7 +125,7 @@ it("changes Candidate Database labels, actions and profile facts to English with
   for (const name of ["Candidate", "Current Job / Company", "Experience", "Source"]) {
     expect(screen.getByRole("columnheader", { name })).toBeTruthy();
   }
-  expect(screen.getByRole("button", { name: "Review CVs" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Review CVs" })).toBeNull();
   expect(screen.getByRole("textbox", { name: "Search candidates" })).toBeTruthy();
   expect(await screen.findByRole("heading", { name: "Contact" })).toBeTruthy();
   expect(screen.getByRole("heading", { name: "Current Role" })).toBeTruthy();

@@ -57,7 +57,7 @@ it("Team and Access only exposes the current role's verified permissions, not a 
  expect(screen.getByText("HIRING_MANAGER")).toBeTruthy();
  expect(screen.getByText("Chỉ xem")).toBeTruthy();
  expect(screen.queryByRole("button",{name:"Quản lý phân quyền"})).toBeNull();
- expect(screen.getByText(/API Job hiện không trả danh sách đầy đủ thành viên/)).toBeTruthy();
+ expect(screen.getByText(/Liên hệ Admin để thay đổi phân công/)).toBeTruthy();
 });
 
 

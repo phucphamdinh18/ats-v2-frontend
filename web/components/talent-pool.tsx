@@ -5,7 +5,6 @@ import type { Job } from "@/lib/policy";
 import { ApiError, getClient } from "@/lib/supabase";
 import { candidateProfile, listCandidates, type Candidate, type CandidateProfile } from "@/lib/candidates";
 import { createApplication } from "@/lib/applications";
-import ReviewQueue from "./review-queue";
 import BoschCandidateDetail from "./bosch-candidate-detail";
 import styles from "./bosch-v2-candidates.module.css";
 import { useLanguage } from "./language";
@@ -18,7 +17,6 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
   const { locale } = useLanguage();
   const en = locale === "en";
   const tr = (vi: string, english: string) => en ? english : vi;
-  const [view, setView] = useState<"pool" | "cv-review">("pool");
   const [query, setQuery] = useState("");
   const [offset, setOffset] = useState(0);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -160,18 +158,12 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
     }
   }
 
-  if (view === "cv-review") return <section className={styles.root}>
-    <div className={styles.heading}><div><span className={styles.eyebrow}>Talent Pool</span><h2>{tr("CV cần duyệt", "CVs Awaiting Review")}</h2><p>{tr("Duyệt CV trước; CV được chấp thuận sẽ trở thành hồ sơ trong Talent Pool.", "Review CVs before their profiles enter the Candidate Database.")}</p></div><button className={styles.secondary} onClick={() => setView("pool")}>{tr("Quay lại Talent Pool", "Back to Candidate Database")}</button></div>
-    <ReviewQueue fixedKind="cv" onAccessLost={onAccessLost} />
-  </section>;
-
   return <section className={styles.root} aria-label={tr("Talent Pool", "Candidate Database")}>
     <nav className={styles.breadcrumb} aria-label={tr("Đường dẫn", "Breadcrumb")}>{tr("Ứng viên", "Candidates")} <span aria-hidden="true">›</span> {tr("Danh sách ứng viên", "Candidate Database")}</nav>
     <div className={styles.pageGrid}>
       <div className={styles.pageLeft}>
         <div className={styles.heading}>
-          <div><h1>{tr("Ứng viên", "Candidates")}</h1><p>{tr("CV được duyệt sẽ xuất hiện ở đây. Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.", "Approved CVs appear here. Select a profile to view documents and assign the candidate to an open Job.")}</p></div>
-          <button className={styles.primary} onClick={() => setView("cv-review")}>{tr("CV chờ duyệt", "Review CVs")}</button>
+          <div><h1>{tr("Ứng viên", "Candidates")}</h1><p>{tr("Chọn hồ sơ để xem CV và thêm ứng viên vào Job đang mở.", "Select a profile to view documents and assign the candidate to an open Job.")}</p></div>
         </div>
         <nav className={styles.tabs} aria-label={tr("Mục ứng viên", "Candidate section")}>
           <span className={styles.active} aria-current="page">{tr("Danh sách ứng viên", "Candidate Database")}</span>
@@ -204,7 +196,7 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
               {attribution?.source ? <span className={styles.sourceMain} title={attribution.source}>{attribution.source}</span> : attribution?.sub_source ? null : <span className={styles.placeholder}>—</span>}
               {attribution?.sub_source && <span className={styles.sourceSub} title={attribution.sub_source}>{attribution.sub_source}</span>}
             </div></td>
-          </tr>; })}</tbody></table></div> : !error ? <div className={styles.empty}><h3>{tr("Talent Pool chưa có hồ sơ", "No candidates yet")}</h3><p>{tr("Thêm CV vào hàng chờ duyệt. Sau khi Admin/TA chấp thuận, ứng viên sẽ được đưa vào kho.", "Submit a CV for review. An Admin or Recruiter must approve it before the profile appears here.")}</p><button className={styles.secondary} onClick={() => setView("cv-review")}>{tr("Mở CV chờ duyệt", "Open CV review queue")}</button></div> : null}
+          </tr>; })}</tbody></table></div> : !error ? <div className={styles.empty}><h3>{tr("Talent Pool chưa có hồ sơ", "No candidates yet")}</h3><p>{tr("Bạn có thể thêm ứng viên từ một Job đang mở tuyển.", "Add a candidate from an open Job to get started.")}</p></div> : null}
         {attributionError && <p className={styles.notice} role="status">{tr("Chưa tải được nguồn ứng tuyển. Hãy thử tải lại trang.", "Could not load application sources. Please refresh the page.")}</p>}
         <div className={styles.pagination}><span className={styles.pageCount}>{candidates.length} {tr("ứng viên", "candidates")}</span><div className={styles.pagerControls}><button className={styles.secondary} aria-label={tr("Trang trước", "Previous")} title={tr("Trang trước", "Previous")} disabled={loading || offset === 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE), query)}>‹</button><span className={styles.currentPage} aria-label={`${tr("Trang", "Page")} ${offset / PAGE_SIZE + 1}`}>{offset / PAGE_SIZE + 1}</span><button className={styles.secondary} aria-label={tr("Trang sau", "Next")} title={tr("Trang sau", "Next")} disabled={loading || candidates.length < PAGE_SIZE} onClick={() => void load(offset + PAGE_SIZE, query)}>›</button></div></div>
         </div>

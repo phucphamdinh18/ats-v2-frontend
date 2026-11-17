@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
-import ReviewQueue from "./review-queue";
 import { useLanguage } from "./language";
 import Icon from "./icon";
 import LoadingState from "./loading-state";
@@ -38,7 +37,7 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "jd" | "admin" | "interviews">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "admin" | "interviews">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -301,9 +300,8 @@ export default function Workspace() {
     { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
     ...(reviewAllowed ? [
       { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
-      { label: locale === "en" ? "Job descriptions" : "JD tuyển dụng", description: "Hàng chờ duyệt mô tả công việc", destination: "jd" as const },
     ] : []),
-    ...(adminAllowed ? [{ label: locale === "en" ? "Admin & permissions" : "Quản trị & quyền", description: "Quản lý Job và phân quyền", destination: "admin" as const }] : []),
+    ...(adminAllowed ? [{ label: locale === "en" ? "Job administration" : "Quản trị Job", description: "Tạo vị trí tuyển dụng", destination: "admin" as const }] : []),
   ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
   const globalJobMatches = (access?.jobs || []).filter((job) =>
     normalizedGlobalQuery && `${job.title} ${job.job_code || ""}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery),
@@ -425,7 +423,7 @@ export default function Workspace() {
                   </label>
                   <div className={styles.results} role="listbox" aria-label={locale === "en" ? "Search results" : "Kết quả tìm kiếm"}>
                     {globalJobMatches.map((job) => <button key={job.id} type="button" role="option" aria-selected="false" onClick={() => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className={styles.searchResultIcon}><Icon name="jobs" size={16} /></span><span><strong>{job.title}</strong><small>{job.job_code || t.noCode} · {jobStatusLabel(job.status, t)}</small></span><Icon name="arrow" size={15} /></button>)}
-                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className={styles.searchResultIcon}><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : item.destination === "jd" ? "review" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
+                    {globalNavMatches.map((item) => <button key={item.destination} type="button" role="option" aria-selected="false" onClick={() => { setTab(item.destination); setGlobalSearchOpen(false); setGlobalSearchQuery(""); }}><span className={styles.searchResultIcon}><Icon name={item.destination === "jobs" ? "jobs" : item.destination === "talent" ? "team" : "shield"} size={16} /></span><span><strong>{item.label}</strong><small>{item.description}</small></span><Icon name="arrow" size={15} /></button>)}
                     {!globalJobMatches.length && !globalNavMatches.length && <p className={styles.noResults}>{locale === "en" ? "No matching Jobs or pages." : "Không tìm thấy Job hoặc màn hình phù hợp."}</p>}
                   </div>
                 </>
@@ -470,8 +468,7 @@ export default function Workspace() {
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
           <span className={styles.sidebarGroup}>{locale === "en" ? "Administration" : "Quản trị"}</span>
-          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Admin & permissions" : "Quản trị & quyền"}</span></button>}
-          {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "jd" ? styles.active : ""}`} aria-current={tab === "jd" ? "page" : undefined} onClick={() => setTab("jd")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Job descriptions" : "JD tuyển dụng"}</span></button>}
+          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "admin" ? styles.active : ""}`} aria-current={tab === "admin" ? "page" : undefined} onClick={() => setTab("admin")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "Job administration" : "Quản trị Job"}</span></button>}
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
@@ -594,26 +591,6 @@ export default function Workspace() {
             </section>
           ) : (
             <>
-              {(tab === "jd" || tab === "admin") && <div className="page-heading">
-                <div>
-                  <span className="eyebrow">{t.workspace}</span>
-                  <h1>{tab === "jd" ? (locale === "en" ? "Job review" : "Duyệt JD tuyển dụng") : (locale === "en" ? "Workspace administration" : "Quản trị ATS")}</h1>
-                  <p>{tab === "jd" ? (locale === "en" ? "Review job descriptions before creating a draft job." : "Kiểm tra và duyệt mô tả công việc trước khi tạo vị trí nháp.") : (locale === "en" ? "Create jobs and assign teammates. Existing ATS permissions are checked before saving." : "Tạo vị trí và phân công đội ngũ. ATS sẽ kiểm tra quyền trước khi lưu.")}</p>
-                </div>
-                <div className="heading-actions">
-                  <button className="secondary" onClick={() => void refresh()}>
-                    <Icon name="refresh" size={17}/>
-                    {t.refreshAccess}
-                  </button>
-                </div>
-              </div>}
-              {(tab === "jd" || tab === "admin") && <div className="role-line">
-                {access.roles.map((role) => (
-                  <span className="role" key={role}>
-                    {roleLabel(role, t)}
-                  </span>
-                ))}
-              </div>}
               {tab === "home" ? (
                 <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
                   onAccessLost={invalidate}
@@ -625,8 +602,7 @@ export default function Workspace() {
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
 
-              ) : tab === "jd" && reviewAllowed ? (
-                <ReviewQueue key={`${access.userId}-jd`} fixedKind="jd" onAccessLost={invalidate} />
+
               ) : tab === "admin" && adminAllowed ? (
                 <AdminConsole jobs={access.jobs} onRefresh={() => refresh(true)} onAccessLost={invalidate} />
               ) : (
@@ -663,23 +639,10 @@ export default function Workspace() {
                             <Icon name="arrow" size={16} />
                           </button>
                         </article>
-                        {reviewAllowed && (
-                          <article>
-                            <span className="step-number">02</span>
-                            <h3>{t.guideReview}</h3>
-                            <p>{t.guideReviewBody}</p>
-                            <button
-                              className="text-link"
-                              onClick={() => setTab("talent")}
-                            >
-                              {t.guideReviewAction}
-                              <Icon name="arrow" size={16} />
-                            </button>
-                          </article>
-                        )}
+
                         <article>
                           <span className="step-number">
-                            {reviewAllowed ? "03" : "02"}
+                            02
                           </span>
                           <h3>{adminAllowed ? t.guideAdmin : t.guideAccess}</h3>
                           <p>

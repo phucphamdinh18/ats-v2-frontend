@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { useLanguage } from "./language";
+import JobTeamAccess from "./job-team-access";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
 import BoschJobInterviews from "./bosch-job-interviews";
 import BoschJobActivity from "./bosch-job-activity";
@@ -105,7 +106,7 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <BoschOffersWorkspace key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
-    {tab === "team" && <section className={styles.aux} aria-label={en ? "Team & Access" : "Nhóm & Phân quyền"}>
+    {tab === "team" && (canAdmin ? <JobTeamAccess key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/> : <section className={styles.aux} aria-label={en ? "Team & Access" : "Nhóm & Phân quyền"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Team & Access" : "Nhóm & Phân quyền"}</h2><p>{en ? "Your current permissions for this Job." : "Quyền truy cập của tài khoản hiện tại đối với Job này."}</p></div></div>
       <div className={styles.detailsGrid}>
         <section className={styles.detailPane}><h3>{en ? "Your roles" : "Vai trò tài khoản"}</h3>
@@ -116,9 +117,8 @@ export default function BoschJobDetail({ job, allJobs, onSelectJob, onBack, onMo
           <dt>{en ? "View Offers" : "Xem Offers"}</dt><dd>{canViewOffers ? (en ? "Allowed" : "Được phép") : (en ? "Not available" : "Không có quyền")}</dd>
         </dl></section>
       </div>
-      <p className={styles.footnote}>{en ? "The current Job contract does not return a complete team roster or named assignees; only verified access rights are shown." : "API Job hiện không trả danh sách đầy đủ thành viên/TA PIC/Hiring Manager. Chỉ hiển thị quyền đã kiểm tra, không suy diễn phân công."}</p>
-      {canAdmin && <button type="button" className={styles.outline} onClick={() => onModule("admin")}>{en ? "Manage permissions" : "Quản lý phân quyền"} <SlidersHorizontal size={15}/></button>}
-    </section>}
+      <p className={styles.footnote}>{en ? "Contact your administrator to change team assignments." : "Liên hệ Admin để thay đổi phân công đội ngũ."}</p>
+    </section>)}
     {tab === "activity" && <BoschJobActivity key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
     <div className={styles.jobSwitch} aria-label={en ? "Switch requisition" : "Chuyển Job"}>
       <label htmlFor="bosch-job-switcher">Job ID</label>
