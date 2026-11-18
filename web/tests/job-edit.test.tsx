@@ -47,14 +47,17 @@ it("does not offer write retry when only the refresh after successful save faile
 
 import JobsMaster from "../components/bosch-jobs-master";
 import JobDetail from "../components/bosch-job-detail";
-it("offers row and snapshot edit for the selected Job and hides edits when unauthorized or closed",()=>{
- const edit=vi.fn(),noop=()=>{};
- const props={jobs:[job],allJobs:[job],query:"",onQuery:noop,status:"ALL",onStatus:noop,onSelect:noop,onOpen:noop,onEdit:edit};
+it("keeps only view actions in the table and edits the selected Job through the header menu",()=>{
+ const edit=vi.fn(),create=vi.fn(),noop=()=>{};
+ const props={jobs:[job],allJobs:[job],query:"",onQuery:noop,status:"ALL",onStatus:noop,onSelect:noop,onOpen:noop,onEdit:edit,onCreate:create};
  const view=render(<JobsMaster {...props}/>);
- fireEvent.click(screen.getByRole("button",{name:`Sửa Job: ${job.title}`}));expect(edit).toHaveBeenCalledWith(job);
- fireEvent.click(screen.getByRole("button",{name:"Sửa Job"}));expect(edit).toHaveBeenCalledTimes(2);
- view.rerender(<JobsMaster {...props} onEdit={undefined}/>);expect(screen.queryByRole("button",{name:/Sửa Job/})).toBeNull();
- view.rerender(<JobsMaster {...props} jobs={[{...job,status:"CLOSED"}]} allJobs={[{...job,status:"CLOSED"}]}/>);expect(screen.queryByRole("button",{name:/Sửa Job/})).toBeNull();
+ expect(screen.queryByRole("button",{name:`Sửa Job: ${job.title}`})).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"Thao tác Job"}));
+ fireEvent.click(screen.getByRole("menuitem",{name:/Sửa Job/}));expect(edit).toHaveBeenCalledWith(job);
+ fireEvent.click(screen.getByRole("button",{name:"Thao tác Job"}));fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));expect(create).toHaveBeenCalledOnce();
+ view.rerender(<JobsMaster {...props} onEdit={undefined} onCreate={undefined}/>);expect(screen.queryByRole("button",{name:"Thao tác Job"})).toBeNull();
+ view.rerender(<JobsMaster {...props} jobs={[{...job,status:"CLOSED"}]} allJobs={[{...job,status:"CLOSED"}]}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Thao tác Job"}));expect(screen.getByRole("menuitem",{name:/Sửa Job/}).hasAttribute("disabled")).toBe(true);
 });
 it("exposes editing in Job Detail only to Admin for an editable Job",()=>{
  const edit=vi.fn();const props={job,onBack:()=>{},onModule:()=>{},canViewOffers:false,canAdmin:true,onEdit:edit,children:<span>Pipeline</span>};

@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronRight, Search, Plus, Pencil } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-jobs.module.css";
+import JobActionsMenu from "./job-actions-menu";
 
 type Props = {
   onCreate?: () => void;
@@ -109,7 +110,7 @@ export default function BoschJobsMaster({
   return <section className={styles.root} aria-label={labels.title}>
     <header className={styles.heading}>
       <div className={styles.crumb}><strong>Jobs</strong><ChevronRight size={14}/><span>{labels.title}</span></div>
-      <div className={styles.headingRow}><h1>{labels.title}</h1>{onCreate && <button type="button" className={styles.addJob} onClick={onCreate}><Plus size={18} aria-hidden="true"/>{en ? "Add Job" : "Thêm Job"}</button>}</div>
+      <div className={styles.headingRow}><h1>{labels.title}</h1><JobActionsMenu job={selected} onCreate={onCreate} onEdit={onEdit} en={en}/></div>
       <p className={styles.subtitle}>{labels.subtitle}</p>
     </header>
     <div className={styles.tabs}><span className={styles.tabActive}>{labels.overview}</span></div>
@@ -164,8 +165,7 @@ export default function BoschJobsMaster({
                   <div className={styles.dim} title={sourceOf(job)}>{sourceOf(job)}</div></div></td>
                 <td><button className={styles.action} type="button"
                   aria-label={en ? `Open pipeline for ${job.title}` : `Mở pipeline ${job.title}`}
-                  onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button>
-                  {onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(job.status) && <button className={styles.action} type="button" aria-label={`${en ? "Edit Job" : "Sửa Job"}: ${job.title}`} onClick={()=>onEdit(job)}><Pencil size={14}/>{en ? "Edit Job" : "Sửa Job"}</button>}</td>
+                  onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button></td>
               </tr>)}</tbody>
             </table>
             {!visible.length && <div className={styles.empty}><p>{labels.noMatch}</p>
@@ -184,8 +184,7 @@ export default function BoschJobsMaster({
       <aside className={`${styles.panel} ${styles.snapshot}`} aria-label={labels.snapshot}>
         <div className={styles.snapshotInner}>
         {selected ? <>
-          <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p>
-            {onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(selected.status) && <button className={styles.action} type="button" onClick={()=>onEdit(selected)}><Pencil size={15}/>{en ? "Edit Job" : "Sửa Job"}</button>}</div>
+          <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p></div>
           <div className={styles.snapshotSection}><h3>{labels.requisition}</h3>
             <dl className={styles.facts}>
               <dt>{labels.department}</dt><dd>{factValue(selected.business_unit || dash)}</dd>

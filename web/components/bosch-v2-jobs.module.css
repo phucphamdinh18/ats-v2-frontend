@@ -121,5 +121,18 @@
 .root .addJob{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#e20015;color:#fff;border:1px solid #e20015;border-radius:4px;padding:10px 18px;font-size:var(--ats-font-body);font-weight:700;min-height:42px}
 .root .addJob:hover{background:#bd0012;border-color:#bd0012}
 
-/* Keep view and edit actions readable in the existing compact action column. */
-.table td:last-child .action {margin: 3px 0; max-width: 100%; white-space: normal;}
+
+/* Header menu keeps edits outside the fixed-width table action column. */
+.heading{container-type:inline-size}
+.jobMenu{position:relative;flex:0 0 auto;max-width:100%;margin-left:auto;z-index:15}
+.jobMenuPanel{position:absolute;right:0;top:calc(100% + 7px);width:min(260px,100cqw);max-width:calc(100vw - 32px);padding:6px;background:#fff;border:1px solid #d5dee8;border-radius:5px;box-shadow:0 8px 22px #17283d20;color:var(--ink)}
+.jobMenuPanel [role="menuitem"]{display:flex;align-items:flex-start;gap:10px;width:100%;min-width:0;padding:11px 10px;border:0;border-radius:3px;background:#fff;text-align:left;color:#17304c;font-size:var(--ats-font-body);line-height:1.4}
+.jobMenuPanel [role="menuitem"]:hover,.jobMenuPanel [role="menuitem"]:focus-visible{background:#eef4fa}
+.jobMenuPanel [role="menuitem"]:disabled{color:#8794a5;cursor:default;background:#fff}
+.jobMenuPanel [role="menuitem"] svg{flex:none;margin-top:2px}
+.jobMenuPanel [role="menuitem"] span{min-width:0}
+.jobMenuPanel small{display:block;margin-top:3px;font-size:13px;color:#63748b;overflow-wrap:anywhere;white-space:normal}
+.jobMenuHint{padding:6px 10px!important;font-size:13px;color:#63748b;line-height:1.4;overflow-wrap:anywhere}
+
+.table td:last-child .action{width:100%;min-width:0;justify-content:center;white-space:normal;overflow-wrap:anywhere}
+.table td:last-child .action svg{flex:none}
