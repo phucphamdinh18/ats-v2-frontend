@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronRight, Search, Plus } from "lucide-react";
+import { ChevronRight, Search, Plus, Pencil } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-jobs.module.css";
 
 type Props = {
   onCreate?: () => void;
+  onEdit?: (job: Job) => void;
   jobs: Job[];
   allJobs: Job[];
   selectedJobId?: string | null;
@@ -47,7 +48,7 @@ function requestLabel(value: Job["request_type"], en: boolean) {
 }
 
 export default function BoschJobsMaster({
-  jobs, allJobs, selectedJobId, query, onQuery, status, onStatus, onSelect, onOpen, onCreate,
+  jobs, allJobs, selectedJobId, query, onQuery, status, onStatus, onSelect, onOpen, onCreate, onEdit,
 }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
@@ -163,7 +164,8 @@ export default function BoschJobsMaster({
                   <div className={styles.dim} title={sourceOf(job)}>{sourceOf(job)}</div></div></td>
                 <td><button className={styles.action} type="button"
                   aria-label={en ? `Open pipeline for ${job.title}` : `Mở pipeline ${job.title}`}
-                  onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button></td>
+                  onClick={() => onOpen(job)}>{en ? "View detail" : "Chi tiết"} <ChevronRight size={14}/></button>
+                  {onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(job.status) && <button className={styles.action} type="button" aria-label={`${en ? "Edit Job" : "Sửa Job"}: ${job.title}`} onClick={()=>onEdit(job)}><Pencil size={14}/>{en ? "Edit Job" : "Sửa Job"}</button>}</td>
               </tr>)}</tbody>
             </table>
             {!visible.length && <div className={styles.empty}><p>{labels.noMatch}</p>
@@ -182,7 +184,8 @@ export default function BoschJobsMaster({
       <aside className={`${styles.panel} ${styles.snapshot}`} aria-label={labels.snapshot}>
         <div className={styles.snapshotInner}>
         {selected ? <>
-          <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p></div>
+          <div className={styles.snapshotHead}><h2>{selected.title}</h2><p>{selected.job_code || dash}</p>
+            {onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(selected.status) && <button className={styles.action} type="button" onClick={()=>onEdit(selected)}><Pencil size={15}/>{en ? "Edit Job" : "Sửa Job"}</button>}</div>
           <div className={styles.snapshotSection}><h3>{labels.requisition}</h3>
             <dl className={styles.facts}>
               <dt>{labels.department}</dt><dd>{factValue(selected.business_unit || dash)}</dd>

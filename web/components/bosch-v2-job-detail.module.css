@@ -156,7 +156,6 @@
 .pipelineLayout>.metadata{grid-column:1;grid-row:3}
 .pipelineLayout>.tabs{grid-column:1;grid-row:4}
 .pipelineLayout>.content{display:contents}
-
 @media(max-width:1200px){
   .pipelineLayout{display:block;--job-pipeline-display:grid;--job-pipeline-summary-row:1;--job-pipeline-list-row:2;--job-pipeline-side-row:3;--job-pipeline-list-margin:0px}
 }
@@ -186,3 +185,7 @@
 .nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:19%;white-space:nowrap}
 .linkButton{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
 @media(max-width:580px){.nativeTable th:nth-child(1),.nativeTable td:nth-child(1){width:52%}.nativeTable th:nth-child(2),.nativeTable td:nth-child(2){width:26%}.nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:22%}}
+
+
+/* Separate the direct edit action from the existing overflow menu. */
+.actions{display:flex;align-items:center;gap:8px;}

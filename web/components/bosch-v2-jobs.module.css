@@ -120,3 +120,6 @@
 .headingRow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .root .addJob{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#e20015;color:#fff;border:1px solid #e20015;border-radius:4px;padding:10px 18px;font-size:var(--ats-font-body);font-weight:700;min-height:42px}
 .root .addJob:hover{background:#bd0012;border-color:#bd0012}
+
+/* Keep view and edit actions readable in the existing compact action column. */
+.table td:last-child .action {margin: 3px 0; max-width: 100%; white-space: normal;}

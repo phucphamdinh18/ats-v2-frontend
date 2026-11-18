@@ -14,6 +14,7 @@ type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team
 type Props = {
   job: Job;
   onBack: () => void;
+  onEdit?: (job: Job) => void;
   onModule: (module: "interviews") => void;
   canViewOffers: boolean;
   canAdmin: boolean;
@@ -39,7 +40,7 @@ function readableDate(value: string | null | undefined, locale: "vi" | "en") {
 }
 
 /** New composition only; no API/stage/role changes. */
-export default function BoschJobDetail({ job, onBack, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], canManageApplications = false, children }: Props) {
+export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], canManageApplications = false, children }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const [tab, setTab] = useState<Tab>("pipeline");
@@ -50,6 +51,7 @@ export default function BoschJobDetail({ job, onBack, onModule, canViewOffers, c
       <h1>{job.title}</h1>
       <span className={[styles.status, job.status === "OPEN" ? styles.statusOpen : ""].filter(Boolean).join(" ")}>{job.status === "OPEN" ? (en ? "Open" : "Đang tuyển") : job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : job.status}</span>
       <div className={styles.actions}>
+        {canAdmin && onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(job.status) && <button type="button" className={styles.outline} onClick={()=>onEdit(job)}>{en ? "Edit Job" : "Sửa Job"}</button>}
         <button type="button" className={styles.outline} aria-expanded={actionsOpen} onClick={() => setActionsOpen(x=>!x)}>{en ? "Actions" : "Thao tác"} <ChevronDown size={15}/></button>
         {actionsOpen && <div className={styles.actionMenu}>
           <button type="button" onClick={() => { setActionsOpen(false); onBack(); }}>{en ? "All job openings" : "Tất cả Job"}</button>

@@ -189,3 +189,17 @@ export function assignJobRecruiter(input: {
     request_id: input.requestId,
   });
 }
+
+export type JobEditFields = {
+ title: string; business_unit: string | null; location: string | null;
+ level: number | null; function_group: string | null; hiring_season: string | null;
+ req_date: string | null; request_type: string | null; priority: string | null; replacement_for: string | null;
+};
+export type JobEditCommand = {requestId: string; jobId: string; expectedUpdatedAt: string; changes: Partial<JobEditFields>};
+export function getJobEdit(jobId: string) {
+ return adminCall<{job: JobOpeningEditor}>({action:"get_job_edit",job_id:jobId});
+}
+export function updateJobEdit(input: JobEditCommand) {
+ return adminCall<{job: JobOpeningResult}>({action:"update_job_edit",request_id:input.requestId,
+ job_id:input.jobId,expected_updated_at:input.expectedUpdatedAt,changes:input.changes});
+}

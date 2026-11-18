@@ -16,6 +16,7 @@ import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
+import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
 type Access = {
@@ -44,7 +45,7 @@ export default function Workspace() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [jobView, setJobView] = useState<"master" | "pipeline" | "create">("master");
+  const [jobView, setJobView] = useState<"master" | "pipeline" | "create" | "edit">("master");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
@@ -290,7 +291,7 @@ export default function Workspace() {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
   useEffect(() => {
-    if (jobView === "create" && !adminAllowed) setJobView("master");
+    if (["create","edit"].includes(jobView) && !adminAllowed) setJobView("master");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
   }, [tab, jobView, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -655,10 +656,14 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  {jobView === "create" && adminAllowed ? <>
+                  {jobView === "edit" && adminAllowed && selectedJob ? <JobEdit key={selectedJob.id} jobId={selectedJob.id}
+                    onCancel={()=>setJobView("master")} onAccessLost={invalidate}
+                    onSaved={async()=>{await refresh(true);setSearch("");setStatus("ALL");setJobView("master");}}/>
+                  : jobView === "create" && adminAllowed ? <>
                     <button type="button" className="secondary" onClick={() => setJobView("master")}>{locale === "en" ? "← Back to Job Openings" : "← Về danh sách Job"}</button>
                     <AdminConsole jobs={access.jobs} onRefresh={async () => { await refresh(true); setSearch(""); setStatus("ALL"); setJobView("master"); }} onAccessLost={invalidate} />
                   </> : jobView === "master" ? <BoschJobsMaster
+                    onEdit={adminAllowed ? job=>{setSelectedJob(job);setGuideOpen(false);setJobView("edit");} : undefined}
                     onCreate={adminAllowed ? () => { setGuideOpen(false); setJobView("create"); } : undefined}
                     jobs={jobs}
                     allJobs={access.jobs}
@@ -674,6 +679,7 @@ export default function Workspace() {
                     job={selectedJob}
                     onBack={() => setJobView("master")}
                     onModule={setTab}
+                    onEdit={adminAllowed ? job=>{setSelectedJob(job);setJobView("edit");} : undefined}
                     canAdmin={adminAllowed}
                     canViewOffers={reviewAllowed}
                     canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)}
