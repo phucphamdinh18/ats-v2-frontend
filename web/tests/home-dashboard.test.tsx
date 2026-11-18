@@ -14,6 +14,7 @@ const mock = vi.hoisted(() => ({
   interviews: vi.fn(),
   tasks: vi.fn(),
   offers: vi.fn(),
+  recruiters: vi.fn(),
 }));
 vi.mock("../lib/home-data", async () => ({
   ...(await vi.importActual("../lib/home-data")),
@@ -21,6 +22,7 @@ vi.mock("../lib/home-data", async () => ({
   allMyTasks: mock.tasks,
   allHomeOffers: mock.offers,
 }));
+vi.mock("../lib/admin-jobs", () => ({listJobRecruiters: mock.recruiters}));
 const noop = () => {};
 function interview(n: number, status = "SCHEDULED") {
   const start = new Date();
@@ -69,6 +71,7 @@ beforeEach(() => {
   );
   mock.tasks.mockResolvedValue(Array.from({ length: 14 }, (_, i) => task(i)));
   mock.offers.mockResolvedValue([]);
+  mock.recruiters.mockResolvedValue([]);
   localStorage.clear();
 });
 afterEach(cleanup);
@@ -151,3 +154,15 @@ it("multi-role Home switches perspective without granting privileges or fabricat
   expect(agenda.textContent).toContain("Đã lên lịch");
 });
 
+
+it("shows real per-Job TA responsibility and replaces revoked team data after refresh", async () => {
+ mock.tasks.mockResolvedValue([]);mock.interviews.mockResolvedValue([]);
+ mock.recruiters.mockResolvedValue([{job_id:"j",user_id:"p",display_name:"Phuc",email:"p@test.invalid",ta_assignment:"PRIMARY"},{job_id:"j",user_id:"s",display_name:"Linh",email:"l@test.invalid",ta_assignment:"SUPPORT"}]);
+ render(<Home {...props} roles={["ADMIN"]} jobs={[{id:"j",title:"Engineer",job_code:"J",status:"OPEN",metrics:{new_count:1} as never}]}/>);
+ await screen.findByText(/Phuc \(TA chính\).*Linh \(TA hỗ trợ\)/);
+ expect(screen.queryByText("Job hiring team")).toBeNull();
+ mock.recruiters.mockRejectedValue(new Error("offline"));
+ fireEvent.focus(window);
+ await screen.findByText("Chưa tải được phân công");
+ expect(screen.queryByText(/Phuc \(TA chính\)/)).toBeNull();
+});

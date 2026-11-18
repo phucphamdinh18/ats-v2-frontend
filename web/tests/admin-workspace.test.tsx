@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
   get: vi.fn(),
   list: vi.fn(),
   assign: vi.fn(),
+  recruiter: vi.fn(),
   remove: vi.fn(),
   workflow: vi.fn(),
 }));
@@ -23,6 +24,7 @@ vi.mock("../lib/admin-jobs", () => ({
   getJobOpening: api.get,
   listJobMembers: api.list,
   assignJobMember: api.assign,
+  assignJobRecruiter: api.recruiter,
   removeJobMember: api.remove,
 }));
 const job = {
@@ -47,6 +49,7 @@ beforeEach(() => {
     job: { ...job, updated_at: "2026-11-17T00:00:00.123456Z" },
   });
   api.list.mockResolvedValue({ members: [] });
+  api.recruiter.mockResolvedValue({member:{}});
   api.assign.mockResolvedValue({ member: { added: true } });
   api.remove.mockResolvedValue({ removed: true });
   api.workflow.mockResolvedValue({ approvers: [] });
@@ -127,18 +130,18 @@ it("assigns only on the current Job and retries the identical member after an un
   fireEvent.change(screen.getByLabelText("Email người dùng"), {
     target: { value: "recruiter@example.invalid" },
   });
-  api.assign.mockRejectedValueOnce(new ApiError("lost", 503));
+  api.recruiter.mockRejectedValueOnce(new ApiError("lost", 503));
   fireEvent.submit(
     screen.getByRole("button", { name: "Gán quyền" }).closest("form")!,
   );
   fireEvent.click(
     await screen.findByRole("button", { name: "Thử lại thao tác" }),
   );
-  await waitFor(() => expect(api.assign).toHaveBeenCalledTimes(2));
-  expect(api.assign.mock.calls).toEqual([
-    [job.id, "recruiter@example.invalid", "TA_RECRUITER"],
-    [job.id, "recruiter@example.invalid", "TA_RECRUITER"],
-  ]);
+  await waitFor(() => expect(api.recruiter).toHaveBeenCalledTimes(2));
+  expect(api.recruiter.mock.calls[0][0]).toMatchObject({jobId:job.id,email:"recruiter@example.invalid",assignment:"SUPPORT",expectedPrimary:null});
+  expect(api.recruiter.mock.calls[1][0]).toEqual(api.recruiter.mock.calls[0][0]);
+  expect(api.recruiter.mock.calls[0][0].requestId).toMatch(/^[0-9a-f-]{36}$/);
+  expect(api.assign).not.toHaveBeenCalled();
 });
 it("requires explicit confirmation before revoking and clears roster on forbidden responses", async () => {
   api.list.mockResolvedValue({
@@ -173,4 +176,19 @@ it("preserves per-job DH/CEO approver assignment in Team and Access without gran
   fireEvent.click(screen.getByRole("button", {name:"Gán quyền"}));
   await waitFor(() => expect(api.workflow).toHaveBeenCalledWith({action:"grant_approver_email",job_id:job.id,email:"head@example.com",enabled:true}));
   expect(api.assign).not.toHaveBeenCalled();
+});
+
+it("classifies existing TAs explicitly and confirms replacement of the current primary", async () => {
+ const members=[{user_id:"one",email:"primary@test.invalid",role:"TA_RECRUITER",ta_assignment:"PRIMARY"}, {user_id:"two",email:"support@test.invalid",role:"TA_RECRUITER",ta_assignment:"SUPPORT"}, {user_id:"three",email:"legacy@test.invalid",role:"TA_RECRUITER",ta_assignment:null}];
+ api.list.mockResolvedValue({members});
+ const confirm=vi.spyOn(window,"confirm").mockReturnValue(false);
+ render(<JobTeamAccess job={job} onAccessLost={noop}/>);
+ await screen.findByText("TA · Chưa phân loại");
+ fireEvent.click(screen.getByRole("button",{name:"Đặt TA chính support@test.invalid"}));
+ expect(confirm).toHaveBeenCalled();expect(api.recruiter).not.toHaveBeenCalled();
+ confirm.mockReturnValue(true);
+ fireEvent.click(screen.getByRole("button",{name:"Đặt TA chính support@test.invalid"}));
+ await waitFor(()=>expect(api.recruiter).toHaveBeenCalledOnce());
+ expect(api.recruiter.mock.calls[0][0]).toMatchObject({jobId:job.id,email:"support@test.invalid",assignment:"PRIMARY",expectedPrimary:"one"});
+ confirm.mockRestore();
 });

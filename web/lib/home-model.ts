@@ -1,6 +1,7 @@
 import type { InterviewWorklistItem } from "./interviews";
 import type { WorkflowOffer } from "./offer-approval";
 import type { Job } from "./policy";
+import type { JobRecruiter } from "./admin-jobs";
 import type { RecruitmentTask } from "./home-data";
 export type HomePerspective =
   | "ADMIN"
@@ -42,8 +43,17 @@ export type HomeTask = {
   job?: Job;
   priority: boolean;
 };
+export function jobRecruitingOwner(jobId: string, recruiters: JobRecruiter[] | undefined, en: boolean) {
+ if (!recruiters) return { owner: en ? "Assignment unavailable" : "Chưa tải được phân công", role: en ? "Job recruiting team" : "Nhóm TA của Job" };
+ const rank = (r: JobRecruiter) => r.ta_assignment === "PRIMARY" ? 0 : r.ta_assignment === "SUPPORT" ? 1 : 2;
+ const team = recruiters.filter(r => r.job_id === jobId).sort((a,b) => rank(a)-rank(b) || a.email.localeCompare(b.email));
+ const label = (r: JobRecruiter) => r.ta_assignment === "PRIMARY" ? (en ? "Primary TA" : "TA chính") : r.ta_assignment === "SUPPORT" ? (en ? "Support TA" : "TA hỗ trợ") : (en ? "TA · Not classified" : "TA · Chưa phân loại");
+ return {owner: team.map(r => `${r.display_name || r.email} (${label(r)})`).join("; ") || (en ? "No TA assigned" : "Chưa phân công TA"),
+ role: team.some(r=>r.ta_assignment === "PRIMARY") ? (en ? "Job recruiting team" : "Nhóm TA của Job") : (en ? "Primary TA not designated" : "Chưa chỉ định TA chính")};
+}
 export function buildHomeTasks(input: {
   perspective: HomePerspective;
+  recruiters?: JobRecruiter[];
   userId: string;
   userName: string;
   jobs: Job[];
@@ -88,8 +98,7 @@ export function buildHomeTasks(input: {
             ? `Review ${count} ${p === "HIRING_MANAGER" ? "screening" : "new"} applications`
             : `Xem ${count} hồ sơ ${p === "HIRING_MANAGER" ? "sơ loại" : "mới"}`,
           context: job.title,
-          owner: en ? "Job hiring team" : "Nhóm tuyển dụng của Job",
-          role: en ? "Review reminder" : "Nhắc xem hồ sơ",
+          ...jobRecruitingOwner(job.id, input.recruiters, en),
           due: null,
           action: "job",
           target: job.id,
@@ -184,8 +193,7 @@ export function buildHomeTasks(input: {
             ? "Review high-priority job"
             : "Job ưu tiên cao / khẩn cấp",
         context: job.title,
-        owner: en ? "Not assigned" : "Chưa có phân công",
-        role: en ? "Job reminder" : "Nhắc theo dõi Job",
+        ...jobRecruitingOwner(job.id, input.recruiters, en),
         due: null,
         action: "job",
         target: job.id,

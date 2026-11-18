@@ -11,6 +11,7 @@ import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
 import {
   assignJobMember,
+  assignJobRecruiter,
   listJobMembers,
   removeJobMember,
   type JobMember,
@@ -26,6 +27,7 @@ const names: Record<string, string> = {
 };
 type Command =
   | { kind: "assign"; email: string; role: string }
+  | { kind: "recruiter"; email: string; assignment: "PRIMARY" | "SUPPORT"; expectedPrimary: string | null; requestId: string }
   | { kind: "remove"; member: JobMember }
   | { kind: "removeApprover"; id: string };
 export default function JobTeamAccess({
@@ -42,6 +44,7 @@ export default function JobTeamAccess({
     [approvers, setApprovers] = useState<OfferSetup["approvers"]>([]),
     [email, setEmail] = useState(""),
     [role, setRole] = useState("TA_RECRUITER"),
+    [assignment, setAssignment] = useState<"PRIMARY" | "SUPPORT">("SUPPORT"),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(true),
@@ -54,6 +57,7 @@ export default function JobTeamAccess({
   const load = useCallback(async () => {
     const seq = ++read.current;
     setLoading(true);
+    setError("");
     try {
       const [r, setup] = await Promise.all([
         listJobMembers(job.id),
@@ -102,6 +106,8 @@ export default function JobTeamAccess({
           user_id: command.id,
           enabled: false,
         });
+      else if (command.kind === "recruiter")
+        await assignJobRecruiter({jobId: job.id, ...command});
       else if (command.kind === "assign" && command.role === "OFFER_APPROVER")
         await offerWorkflow({
           action: "grant_approver_email",
@@ -131,6 +137,10 @@ export default function JobTeamAccess({
     } catch (e) {
       if (ticket !== epoch.current) return;
       if (e instanceof ApiError && e.status && e.status < 500) setPending(null);
+      if (e instanceof ApiError && e.status === 409) {
+        setMembers([]);
+        void load();
+      }
       setError(
         e instanceof Error
           ? e.message
@@ -149,6 +159,15 @@ export default function JobTeamAccess({
       if (ticket === epoch.current) setBusy(false);
     }
   }
+  const primary = members.find(m => m.role === "TA_RECRUITER" && m.ta_assignment === "PRIMARY");
+  function changeRecruiter(email: string, value: "PRIMARY" | "SUPPORT") {
+    if (frozen || loading || error || !assignable) return;
+    if (value === "PRIMARY" && primary && primary.email !== email && !window.confirm(tr(
+      `Chuyển TA chính sang ${email}? ${primary.display_name || primary.email} sẽ thành TA hỗ trợ.`,
+      `Make ${email} the primary TA? ${primary.display_name || primary.email} will become support TA.`))) return;
+    void write({kind: "recruiter", email, assignment: value,
+      expectedPrimary: primary?.user_id || null, requestId: crypto.randomUUID()});
+  }
   function assign(e: FormEvent) {
     e.preventDefault();
     if (
@@ -157,7 +176,8 @@ export default function JobTeamAccess({
       (role === "OFFER_APPROVER" && job.status === "DRAFT")
     )
       return;
-    void write({ kind: "assign", email: email.trim().toLowerCase(), role });
+    if (role === "TA_RECRUITER") changeRecruiter(email.trim().toLowerCase(), assignment);
+    else void write({ kind: "assign", email: email.trim().toLowerCase(), role });
   }
   return (
     <section className={styles.root} aria-label="Team & Access">
@@ -219,13 +239,23 @@ export default function JobTeamAccess({
                 <tbody>
                   {members.map((m) => (
                     <tr key={m.user_id + ":" + m.role}>
-                      <td>{m.email}</td>
+                      <td>{m.display_name || m.email}{m.display_name && <small style={{display:"block"}}>{m.email}</small>}</td>
                       <td>
                         <span className={styles.role}>
-                          {names[m.role] || m.role}
+                          {m.role === "TA_RECRUITER" ? m.ta_assignment === "PRIMARY" ? tr("TA chính", "Primary TA") : m.ta_assignment === "SUPPORT" ? tr("TA hỗ trợ", "Support TA") : tr("TA · Chưa phân loại", "TA · Not classified") : names[m.role] || m.role}
                         </span>
                       </td>
                       <td>
+                        {m.role === "TA_RECRUITER" && <>
+                          {m.ta_assignment !== "PRIMARY" && <button disabled={frozen || loading || !assignable || !!error}
+                            onClick={() => changeRecruiter(m.email, "PRIMARY")}
+                            aria-label={`${tr("Đặt TA chính", "Make primary TA")} ${m.email}`}>
+                            {tr("Đặt TA chính", "Make primary TA")}</button>}
+                          {m.ta_assignment !== "SUPPORT" && <button disabled={frozen || loading || !assignable || !!error}
+                            onClick={() => changeRecruiter(m.email, "SUPPORT")}
+                            aria-label={`${tr("Đặt TA hỗ trợ", "Make support TA")} ${m.email}`}>
+                            {tr("Đặt TA hỗ trợ", "Make support TA")}</button>}
+                        </>}
                         <button
                           disabled={frozen}
                           onClick={() => setConfirm(m)}
@@ -247,6 +277,9 @@ export default function JobTeamAccess({
               )}
             </p>
           )}
+          <p className={styles.muted}>{tr(
+            "TA chính và TA hỗ trợ có cùng quyền. Mỗi Job có tối đa một TA chính; dữ liệu cũ chưa được tự phân loại.",
+            "Primary and support TAs have the same access. Each Job has at most one primary TA; existing assignments are not automatically classified.")}</p>
           <h3>
             {tr("Người duyệt Offer · DH / CEO", "Offer approvers · DH / CEO")}
           </h3>
@@ -327,7 +360,7 @@ export default function JobTeamAccess({
             <UserPlus size={19} />
             <h3>{tr("Thêm thành viên", "Add team member")}</h3>
           </div>
-          <fieldset disabled={frozen || !assignable}>
+          <fieldset disabled={frozen || loading || !!error || !assignable}>
             <label>
               {tr("Email người dùng", "User email")}
               <input
@@ -354,6 +387,13 @@ export default function JobTeamAccess({
                 ))}
               </select>
             </label>
+            {role === "TA_RECRUITER" && <label>
+              {tr("Trách nhiệm tuyển dụng", "Recruiting responsibility")}
+              <select value={assignment} onChange={e => setAssignment(e.target.value as "PRIMARY" | "SUPPORT")}>
+                <option value="SUPPORT">{tr("TA hỗ trợ", "Support TA")}</option>
+                <option value="PRIMARY">{tr("TA chính", "Primary TA")}</option>
+              </select>
+            </label>}
             <button className={styles.primary} type="submit">
               <UserPlus size={16} />
               {tr("Gán quyền", "Assign member")}

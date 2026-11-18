@@ -6,6 +6,8 @@ export type JobMember = {
   email: string;
   role: string;
   assigned_at: string;
+  display_name?: string | null;
+  ta_assignment?: "PRIMARY" | "SUPPORT" | null;
 };
 export type JobMetadataInput = {
   jobId: string;
@@ -155,5 +157,35 @@ export function getJobOpening(jobId: string) {
   return adminCall<{ job: JobOpeningEditor }>({
     action: "get_job_opening",
     job_id: jobId,
+  });
+}
+
+export type JobRecruiter = {
+  job_id: string;
+  user_id: string;
+  display_name: string | null;
+  email: string;
+  ta_assignment: "PRIMARY" | "SUPPORT" | null;
+};
+export async function listJobRecruiters(jobIds: string[]): Promise<JobRecruiter[]> {
+  const ids = [...new Set(jobIds)];
+  const rows: JobRecruiter[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const r = await adminCall<{ recruiters: JobRecruiter[] }>({
+      action: "list_job_recruiters", job_ids: ids.slice(i, i + 50),
+    });
+    if (!Array.isArray(r.recruiters)) throw new Error("Không tải được phân công TA.");
+    rows.push(...r.recruiters);
+  }
+  return rows;
+}
+export function assignJobRecruiter(input: {
+  jobId: string; email: string; assignment: "PRIMARY" | "SUPPORT";
+  expectedPrimary: string | null; requestId: string;
+}) {
+  return adminCall<{ member: JobRecruiter }>({
+    action: "assign_job_recruiter", job_id: input.jobId, email: input.email,
+    ta_assignment: input.assignment, expected_primary: input.expectedPrimary,
+    request_id: input.requestId,
   });
 }

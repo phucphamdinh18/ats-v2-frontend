@@ -13,6 +13,7 @@ import {
   UserRound,
   Video,
 } from "lucide-react";
+import { listJobRecruiters, type JobRecruiter } from "@/lib/admin-jobs";
 import type { Job } from "@/lib/policy";
 import type { InterviewWorklistItem } from "@/lib/interviews";
 import { approvalReturnPath, type WorkflowOffer } from "@/lib/offer-approval";
@@ -91,6 +92,8 @@ export default function BoschHomeDashboard({
   const [busy, setBusy] = useState(true),
     [errors, setErrors] = useState<Record<string, boolean>>({}),
     [now, setNow] = useState(Date.now());
+  const [recruiters, setRecruiters] = useState<JobRecruiter[] | undefined>(undefined);
+  const jobIdsKey = [...new Set(jobs.map(j => j.id))].sort().join(",");
   const [proposalId, setProposalId] = useState("");
   const [selected, setPerspective] = useState<HomePerspective | null>(null),
     [page, setPage] = useState(0),
@@ -108,6 +111,7 @@ export default function BoschHomeDashboard({
       current = () => ticket.current === id;
     setBusy(true);
     setErrors({});
+    setRecruiters(undefined);
     const r = await Promise.allSettled([
       Promise.all([
         allInterviews("SCHEDULED", current),
@@ -116,12 +120,13 @@ export default function BoschHomeDashboard({
       ]).then((p) => [...new Map(p.flat().map((i) => [i.id, i])).values()]),
       allMyTasks(current),
       allHomeOffers(current),
+      listJobRecruiters(jobIdsKey ? jobIdsKey.split(",") : []),
     ]);
     if (!current()) return;
     const failed: Record<string, boolean> = {};
     r.forEach((x, index) => {
       if (x.status === "rejected") {
-        failed[["interviews", "tasks", "offers"][index]] = true;
+        failed[["interviews", "tasks", "offers", "assignments"][index]] = true;
         if (x.reason instanceof ApiError && x.reason.status === 401)
           onAccessLost();
       }
@@ -129,11 +134,12 @@ export default function BoschHomeDashboard({
     setInterviews(r[0].status === "fulfilled" ? r[0].value : []);
     setTasks(r[1].status === "fulfilled" ? r[1].value : []);
     setOffers(r[2].status === "fulfilled" ? r[2].value : []);
+    setRecruiters(r[3].status === "fulfilled" ? r[3].value : undefined);
     setErrors(failed);
     setNow(Date.now());
     setBusy(false);
     inflight.current = false;
-  }, [onAccessLost]);
+  }, [onAccessLost, jobIdsKey]);
   useEffect(() => {
     void load();
     const focus = () => {
@@ -171,6 +177,7 @@ export default function BoschHomeDashboard({
     () =>
       buildHomeTasks({
         perspective,
+        recruiters,
         userId,
         userName,
         jobs,
@@ -179,7 +186,7 @@ export default function BoschHomeDashboard({
         offers,
         en,
       }),
-    [perspective, userId, userName, jobs, tasks, interviews, offers, en],
+    [perspective, recruiters, userId, userName, jobs, tasks, interviews, offers, en],
   );
   const taskError =
     !!errors.tasks ||
