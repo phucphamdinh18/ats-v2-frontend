@@ -158,3 +158,89 @@ export async function syncInterviewGoogleCalendar(interviewId: string): Promise<
   if (!data?.calendar_sync || !["SYNCED", "SYNC_FAILED"].includes(data.calendar_sync.status)) throw new ApiError("Backend trả trạng thái đồng bộ không đúng định dạng.");
   return data.calendar_sync as InterviewCalendarSync;
 }
+
+export type InterviewFeedback = {
+  id: string;
+  interview_id: string;
+  interviewer_id: string;
+  score: number;
+  recommendation: "STRONG_YES" | "YES" | "NO" | "STRONG_NO";
+  strengths: string | null;
+  concerns: string | null;
+  summary: string | null;
+  submitted_at: string;
+};
+export type InterviewDecision = {
+  id: string;
+  decision: "PROCEED" | "HOLD" | "DECLINE";
+  note: string | null;
+  decided_by: string;
+  decided_at: string;
+};
+
+async function interviewCommand<T>(body: Record<string, unknown>, key: string): Promise<T> {
+  const { data, error } = await getClient().functions.invoke("interviews", { body });
+  if (error) {
+    let message = "Không thể xử lý lịch phỏng vấn.";
+    try { const response = await error.context?.json(); if (typeof response?.error === "string") message = response.error; } catch { /* Transport errors may not include JSON. */ }
+    throw new ApiError(message, error.context?.status);
+  }
+  if (data?.error) throw new ApiError(String(data.error), data.status);
+  if (!data || !(key in data)) throw new ApiError("Backend trả kết quả lịch phỏng vấn không đúng định dạng.");
+  return data[key] as T;
+}
+
+function assertInterviewId(id: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new Error("Lịch phỏng vấn không hợp lệ.");
+}
+
+export async function completeInterview(interviewId: string) {
+  assertInterviewId(interviewId);
+  return interviewCommand<{ interview_id: string; completed: boolean }>({ action: "complete", request_id: crypto.randomUUID(), interview_id: interviewId }, "interview");
+}
+
+export async function cancelInterview(interviewId: string) {
+  assertInterviewId(interviewId);
+  return interviewCommand<{ interview_id: string; cancelled: boolean; calendar_sync?: { status: string; code?: string } }>({ action: "cancel", request_id: crypto.randomUUID(), interview_id: interviewId }, "interview");
+}
+
+export async function listInterviewFeedback(interviewId: string) {
+  assertInterviewId(interviewId);
+  return interviewCommand<InterviewFeedback[]>({ action: "feedback_list", interview_id: interviewId }, "feedback");
+}
+
+export async function submitInterviewFeedback(input: {
+  interviewId: string;
+  score: number;
+  recommendation: InterviewFeedback["recommendation"];
+  strengths?: string;
+  concerns?: string;
+  summary?: string;
+}) {
+  assertInterviewId(input.interviewId);
+  if (!Number.isInteger(input.score) || input.score < 1 || input.score > 5 ||
+      [input.strengths, input.concerns, input.summary].some((value) => value !== undefined && value.length > 4000)) throw new Error("Feedback chưa hợp lệ.");
+  return interviewCommand<{ feedback_id: string; submitted: boolean }>({
+    action: "feedback_submit", request_id: crypto.randomUUID(), interview_id: input.interviewId,
+    score: input.score, recommendation: input.recommendation, strengths: input.strengths || null,
+    concerns: input.concerns || null, summary: input.summary || null,
+  }, "feedback");
+}
+
+export async function listInterviewDecisions(interviewId: string) {
+  assertInterviewId(interviewId);
+  return interviewCommand<InterviewDecision[]>({ action: "decision_list", interview_id: interviewId }, "decisions");
+}
+
+export async function submitInterviewDecision(input: {
+  interviewId: string;
+  decision: InterviewDecision["decision"];
+  note?: string;
+}) {
+  assertInterviewId(input.interviewId);
+  if (!(["PROCEED", "HOLD", "DECLINE"] as string[]).includes(input.decision) || (input.note?.length ?? 0) > 1000 || (input.decision === "DECLINE" && !input.note?.trim())) throw new Error("Cần nhập lý do khi từ chối ứng viên.");
+  return interviewCommand<{ decision_id: string; created: boolean }>({
+    action: "decision_submit", request_id: crypto.randomUUID(), interview_id: input.interviewId,
+    decision: input.decision, note: input.note || null,
+  }, "decision");
+}
