@@ -459,7 +459,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
           <div className={styles.weekLegend}><span><i className={styles.legendGoogle} />Google Busy</span><span><i className={styles.legendAts} />{en ? "ATS interview" : "Lịch phỏng vấn ATS"}</span><span><i className={styles.legendSelected} />{en ? "Selected" : "Đang chọn"}</span></div>
           {bookingApplicationId && bookingParticipantIds.length > 0 ? <div ref={weekCalendarRef} className={styles.weekCalendar}>
             <div className={styles.weekHeader}><span>{bookingTimezone}</span>{calendarDays.map((day) => <strong key={dateKey(day)}><small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { weekday: "short" }).format(day)}</small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" }).format(day)}</strong>)}</div>
-            <div ref={weekRowsRef} className={styles.weekRows} onPointerDown={onCalendarPointerDown} onPointerMove={onCalendarPointerMove} onPointerUp={onCalendarPointerUp} onPointerCancel={onCalendarPointerUp}>
+            <div ref={weekRowsRef} className={styles.weekRows} data-calendar-rows="true" onPointerDown={onCalendarPointerDown} onPointerMove={onCalendarPointerMove} onPointerUp={onCalendarPointerUp} onPointerCancel={onCalendarPointerUp}>
               {calendarCells.map((index) => {
                 const minute = 7 * 60 + index * 30;
                 const timeLabel = String(Math.floor(minute / 60)).padStart(2, "0") + ":" + String(minute % 60).padStart(2, "0");
@@ -488,7 +488,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
               })}
             </div>
           </div> : <p className={styles.empty}>{en ? "Choose a candidate and at least one interviewer to load the week." : "Chọn ứng viên và ít nhất một người phỏng vấn để xem lịch tuần."}</p>}
-          {bookingStart && Number.isFinite(bookingStartMs) && <p className={styles.selectedTime}>{en ? "Selected" : "Đã chọn"}: <strong>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full", timeStyle: "short" }).format(new Date(bookingStartMs))} – {new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeStyle: "short" }).format(new Date(bookingEndMs))}</strong></p>}
+          {bookingStart && Number.isFinite(bookingStartMs) && <p data-selected-range="true" className={styles.selectedTime}>{en ? "Selected" : "Đã chọn"}: <strong>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full", timeStyle: "short" }).format(new Date(bookingStartMs))} – {new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeStyle: "short" }).format(new Date(bookingEndMs))}</strong></p>}
         </section>
         <label className={styles.bookingField}><span>{en ? "Notes (optional)" : "Ghi chú (không bắt buộc)"}</span><textarea maxLength={4000} rows={3} value={bookingNote} onChange={(event) => setBookingNote(event.target.value)} /></label>
         <p className={styles.bookingNotice}>{en ? "Google Calendar creates the event on the first selected interviewer’s primary calendar. The backend checks the chosen time again before saving." : "Google Calendar sẽ tạo sự kiện trên lịch chính của người phỏng vấn đầu tiên. Backend kiểm tra lại khung giờ ngay trước khi lưu."}</p>
