@@ -17,6 +17,7 @@ import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
+import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
 type Access = {
@@ -49,7 +50,7 @@ export default function Workspace() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [jobView, setJobView] = useState<"master" | "pipeline" | "create">("master");
+  const [jobView, setJobView] = useState<"master" | "pipeline" | "create" | "edit">("master");
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
@@ -70,60 +71,15 @@ export default function Workspace() {
       email_mismatch: { vi: "Email Google phải trùng email dùng để đăng nhập ATS.", en: "Connect the Google account that matches your ATS login email." },
       state_expired: { vi: "Yêu cầu kết nối đã hết hạn. Hãy thử lại.", en: "The connection request expired. Please try again." },
       not_configured: { vi: "Kết nối Google chưa được cấu hình.", en: "Google Calendar connection is not configured." },
-      token_exchange_failed: { vi: "Google đã nhận quyền, nhưng ATS không đổi được mã kết nối. Cần kiểm tra Client ID/Secret và Redirect URI trong Google Cloud.", en: "Google granted access, but ATS could not exchange the authorization code. Check the OAuth Client ID/Secret and Redirect URI." },
-      token_response_failed: { vi: "Google không trả đủ thông tin để hoàn tất kết nối.", en: "Google did not return the token data needed to finish connecting." },
-      google_profile_failed: { vi: "ATS không xác minh được tài khoản Google vừa chọn.", en: "ATS could not verify the selected Google account." },
-      email_verification_failed: { vi: "Google không xác nhận được email của tài khoản vừa chọn.", en: "Google did not verify the selected account's email address." },
-      ats_user_lookup_failed: { vi: "ATS không tìm thấy tài khoản đăng nhập hiện tại.", en: "ATS could not find the current signed-in account." },
-      refresh_token_missing: { vi: "Google chưa cấp mã kết nối dùng lâu dài. Hãy gỡ quyền ATS trong Google Account rồi kết nối lại.", en: "Google did not issue a refresh token. Revoke ATS access in your Google Account, then connect again." },
-      callback_token_encryption_failed: { vi: "ATS không mã hóa được mã kết nối. Cần kiểm tra secret ATS_GOOGLE_TOKEN_ENCRYPTION_KEY ở Supabase.", en: "ATS could not encrypt the connection token. Check the ATS_GOOGLE_TOKEN_ENCRYPTION_KEY secret in Supabase." },
-      callback_connection_save_failed: { vi: "ATS đã xác minh Google nhưng không lưu được kết nối vào cơ sở dữ liệu.", en: "ATS verified Google but could not save the connection to its database." },
-      callback_token_exchange_failed: { vi: "ATS gặp lỗi khi đổi mã kết nối với Google. Cần kiểm tra cấu hình OAuth.", en: "ATS hit an error exchanging the authorization code with Google. Check the OAuth configuration." },
-      callback_google_profile_failed: { vi: "ATS gặp lỗi khi xác minh tài khoản Google.", en: "ATS hit an error verifying the Google account." },
-      callback_ats_user_lookup_failed: { vi: "ATS gặp lỗi khi xác minh tài khoản đăng nhập.", en: "ATS hit an error checking the signed-in ATS account." },
-      callback_refresh_token_failed: { vi: "ATS gặp lỗi khi xử lý quyền lịch Google.", en: "ATS hit an error processing Google Calendar access." },
       failed: { vi: "Kết nối Google không thành công. Hãy thử lại.", en: "Google connection failed. Please try again." },
     };
-    if (result === "connected") {
-      setGoogleCalendarConnected(true);
-      setCalendarPromptOpen(false);
-      setCalendarPromptError("");
-    } else {
-      const message = messages[result] ?? {
-        vi: `Kết nối chưa hoàn tất (mã ${result}).`,
-        en: `Connection was not completed (code ${result}).`,
-      };
+    if (result !== "connected") {
+      const message = messages[result];
       if (message) setCalendarPromptError(locale === "en" ? message.en : message.vi);
     }
     url.searchParams.delete("calendar_connection");
     window.history.replaceState({}, document.title, url.toString());
   }, [locale]);
-  useEffect(() => {
-    if (!access?.active || !access.userId) {
-      setGoogleCalendarConnected(null);
-      setCalendarPromptOpen(false);
-      return;
-    }
-    let cancelled = false;
-    void getGoogleCalendarConnectionStatus().then((connection) => {
-      if (cancelled) return;
-      setGoogleCalendarConnected(connection.connected);
-      if (connection.connected) {
-        setCalendarPromptOpen(false);
-        setCalendarPromptError("");
-      } else if (!calendarPromptDismissed.current) {
-        setCalendarPromptOpen(true);
-      }
-    }).catch((cause) => {
-      if (cancelled) return;
-      setGoogleCalendarConnected(false);
-      setCalendarPromptError(cause instanceof Error
-        ? cause.message
-        : (locale === "en" ? "Could not check Google Calendar connection." : "Không thể kiểm tra kết nối Google Calendar."));
-      if (!calendarPromptDismissed.current) setCalendarPromptOpen(true);
-    });
-    return () => { cancelled = true; };
-  }, [access?.userId, access?.active, locale]);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
@@ -371,7 +327,7 @@ export default function Workspace() {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
   useEffect(() => {
-    if (jobView === "create" && !adminAllowed) setJobView("master");
+    if (["create","edit"].includes(jobView) && !adminAllowed) setJobView("master");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
   }, [tab, jobView, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -751,10 +707,14 @@ export default function Workspace() {
                       </div>
                     </section>
                   )}
-                  {jobView === "create" && adminAllowed ? <>
+                  {jobView === "edit" && adminAllowed && selectedJob ? <JobEdit key={selectedJob.id} jobId={selectedJob.id}
+                    onCancel={()=>setJobView("master")} onAccessLost={invalidate}
+                    onSaved={async()=>{await refresh(true);setSearch("");setStatus("ALL");setJobView("master");}}/>
+                  : jobView === "create" && adminAllowed ? <>
                     <button type="button" className="secondary" onClick={() => setJobView("master")}>{locale === "en" ? "← Back to Job Openings" : "← Về danh sách Job"}</button>
                     <AdminConsole jobs={access.jobs} onRefresh={async () => { await refresh(true); setSearch(""); setStatus("ALL"); setJobView("master"); }} onAccessLost={invalidate} />
                   </> : jobView === "master" ? <BoschJobsMaster
+                    onEdit={adminAllowed ? job=>{setSelectedJob(job);setGuideOpen(false);setJobView("edit");} : undefined}
                     onCreate={adminAllowed ? () => { setGuideOpen(false); setJobView("create"); } : undefined}
                     jobs={jobs}
                     allJobs={access.jobs}
@@ -770,6 +730,7 @@ export default function Workspace() {
                     job={selectedJob}
                     onBack={() => setJobView("master")}
                     onModule={setTab}
+                    onEdit={adminAllowed ? job=>{setSelectedJob(job);setJobView("edit");} : undefined}
                     canAdmin={adminAllowed}
                     canViewOffers={reviewAllowed}
                     canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)}
