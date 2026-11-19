@@ -3,7 +3,7 @@ name: Publish ATS Pages
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths: ['web/**', 'tests/publish-pages-guard.test.cjs', '.github/workflows/publish-pages.yml']
+    paths: ['web/**', 'tests/publish-pages-guard.test.cjs', '.github/workflows/publish-pages.yml', '.github/workflows/publish-calendar-preview.yml']
   workflow_dispatch:
 
 permissions:
