@@ -2,10 +2,10 @@ name: Next web checks
 
 on:
   pull_request:
-    paths: ['web/**', '.github/workflows/next-web.yml', '.github/workflows/publish-pages.yml']
+    paths: ['web/**', '.github/workflows/next-web.yml', '.github/workflows/publish-pages.yml', '.github/workflows/publish-calendar-preview.yml']
   push:
     branches: [main]
-    paths: ['web/**', '.github/workflows/next-web.yml', '.github/workflows/publish-pages.yml']
+    paths: ['web/**', '.github/workflows/next-web.yml', '.github/workflows/publish-pages.yml', '.github/workflows/publish-calendar-preview.yml']
 
 permissions:
   contents: read

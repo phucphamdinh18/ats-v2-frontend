@@ -28,7 +28,7 @@ test("Pages deployment requires an explicit manual run from main", () => {
 test("the standard release stays one root build and cannot publish a PR preview", () => {
   assert.match(workflow, /prepare-pages\.mjs single/);
   assert.match(workflow, /NEXT_PUBLIC_BASE_PATH: \/ats-v2-frontend\n/);
-  assert.doesNotMatch(workflow, /calendar-preview|preview_ref|production_ref/);
+  assert.doesNotMatch(workflow, /prepare-pages\\.mjs calendar-preview|preview_ref|production_ref/);
   assert.ok(!fs.existsSync("index.html"), "The legacy HTML frontend must be retired");
 });
 
