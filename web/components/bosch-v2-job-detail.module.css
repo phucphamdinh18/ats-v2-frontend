@@ -156,6 +156,7 @@
 .pipelineLayout>.metadata{grid-column:1;grid-row:3}
 .pipelineLayout>.tabs{grid-column:1;grid-row:4}
 .pipelineLayout>.content{display:contents}
+
 @media(max-width:1200px){
   .pipelineLayout{display:block;--job-pipeline-display:grid;--job-pipeline-summary-row:1;--job-pipeline-list-row:2;--job-pipeline-side-row:3;--job-pipeline-list-margin:0px}
 }
@@ -186,12 +187,31 @@
 .linkButton{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
 @media(max-width:580px){.nativeTable th:nth-child(1),.nativeTable td:nth-child(1){width:52%}.nativeTable th:nth-child(2),.nativeTable td:nth-child(2){width:26%}.nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:22%}}
 
-/* Separate the direct edit action from the existing overflow menu. */
-.actions{display:flex;align-items:center;gap:8px;}
-
 /* Participant availability: Google Free/Busy plus ATS busy intervals; no event details. */
 .availability{display:flex;flex-direction:column;align-items:flex-start;gap:9px;margin-top:18px;padding-top:14px;border-top:1px solid var(--b2-line)}
 .availability>p{margin:0!important;color:#66778d;font-size:var(--ats-font-body);line-height:1.5}
 .availabilityPerson{display:flex;flex-direction:column;gap:4px;width:100%;padding:9px 10px;border:1px solid #e1e6ec;border-radius:5px;background:#f8fafc}
 .availabilityPerson strong{font-size:var(--ats-font-body);color:#20334a}
 .availabilityPerson span{font-size:var(--ats-font-body);color:#58697d;overflow-wrap:anywhere}
+
+/* Interview booking in the Job detail workspace. */
+.bookingPanel{display:flex;flex-direction:column;gap:14px;margin:16px 0;padding:18px;border:1px solid #d8e1ec;border-radius:8px;background:#fff}
+.bookingPanel h3{margin:0;color:#1d3047;font-size:18px}
+.bookingPanel p{margin:5px 0 0;color:#5f6f82;font-size:var(--ats-font-body);line-height:1.5}
+.bookingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bookingField{display:flex;min-width:0;flex-direction:column;gap:6px;color:#273b52;font-size:var(--ats-font-body);font-weight:650}
+.bookingField input,.bookingField select,.bookingField textarea{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#20334a;font:inherit;font-weight:500}
+.bookingField textarea{resize:vertical}
+.bookingParticipants{display:flex;flex-wrap:wrap;gap:9px 16px;margin:0;padding:12px;border:1px solid #d8e1ec;border-radius:6px}
+.bookingParticipants legend{padding:0 5px;color:#273b52;font-size:var(--ats-font-body);font-weight:700}
+.bookingParticipants label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:3px 8px;min-width:min(100%,230px);color:#273b52}
+.bookingParticipants label input{grid-row:span 2}
+.bookingParticipants label small{color:#69798d}
+.bookingNotice{padding:10px 12px;border-left:3px solid #2586b8;background:#f2f8fc}
+.bookingAvailabilityRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 12px;border:1px solid #dfe6ed;border-radius:6px;background:#f8fafc;color:#42546a;font-size:var(--ats-font-body)}
+.bookingAvailabilityRow strong{color:#20334a}
+.bookingActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+.bookButton{min-height:40px;padding:8px 16px;border:1px solid #df001b;border-radius:5px;background:#df001b;color:white;font:inherit;font-weight:700;cursor:pointer}
+.bookButton:disabled{border-color:#cbd5e1;background:#e7ebef;color:#718096;cursor:not-allowed}
+.bookingSuccess{padding:10px 12px;border:1px solid #a7d9b4;border-radius:5px;background:#f0fbf3;color:#236b36}
+@media(max-width:700px){.bookingGrid{grid-template-columns:minmax(0,1fr)}.bookingActions{justify-content:stretch}.bookingActions button{flex:1}}
