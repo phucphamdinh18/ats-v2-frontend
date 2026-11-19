@@ -42,10 +42,12 @@ vi.mock("../lib/supabase", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.review.mockResolvedValue({ drafts: [] });
-  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
-    Promise.resolve({ data: options.body?.action === "overview"
-      ? { jobs: [] }
-      : { applications: [], limit: 25, offset: 0 }, error: null }));
+  mocks.functionInvoke.mockImplementation((name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: name === "google-calendar-oauth" && options.body?.action === "status"
+      ? { connected: true, google_email: "qa@example.invalid", connected_at: "2026-11-19T00:00:00Z" }
+      : options.body?.action === "overview"
+        ? { jobs: [] }
+        : { applications: [], limit: 25, offset: 0 }, error: null }));
   mocks.session.mockResolvedValue({
     data: {
       session: { user: { id: "synthetic", email: "qa@example.invalid" } },
@@ -83,6 +85,29 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
     return query;
   });
 }
+it("prompts an active ATS user to connect Google Calendar when no connection exists", async () => {
+  scope(true, ["ADMIN"]);
+  mocks.functionInvoke.mockImplementation((name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: name === "google-calendar-oauth" && options.body?.action === "status"
+      ? { connected: false, google_email: null, connected_at: null }
+      : options.body?.action === "overview"
+        ? { jobs: [] }
+        : { applications: [], limit: 25, offset: 0 }, error: null }));
+  render(<Workspace />);
+  const prompt = await screen.findByRole("dialog", { name: "Kết nối Google Calendar" });
+  expect(prompt.textContent).toContain("ATS chỉ xem trạng thái bận/rảnh, không đọc nội dung sự kiện");
+  expect(mocks.functionInvoke).toHaveBeenCalledWith("google-calendar-oauth", { body: { action: "status" } });
+});
+
+it("does not show the first-login calendar prompt to a user whose calendar is already connected", async () => {
+  scope(true, ["ADMIN"]);
+  render(<Workspace />);
+  await screen.findByRole("button", { name: "Đăng xuất" });
+  await waitFor(() => expect(mocks.functionInvoke).toHaveBeenCalledWith(
+    "google-calendar-oauth", { body: { action: "status" } },
+  ));
+  expect(screen.queryByRole("dialog", { name: "Kết nối Google Calendar" })).toBeNull();
+});
 it("exposes Interview to a scoped Hiring Manager but never offers privileged Offer module", async () => {
   scope(true, ["HIRING_MANAGER"], [{ id: "job1", title: "Test Job", status: "OPEN", job_code: "TEST-1" }]);
   render(<Workspace />);
