@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { listInterviewWorklist, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
+import { listInterviewAvailability, listInterviewWorklist, type InterviewBusySlot, type InterviewGoogleCalendarStatus, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
 import { ApiError } from "@/lib/supabase";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-job-detail.module.css";
@@ -20,7 +20,13 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const [offset, setOffset] = useState(0);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
+  const [availabilityInterviewId, setAvailabilityInterviewId] = useState<string | null>(null);
+  const [availabilitySlots, setAvailabilitySlots] = useState<InterviewBusySlot[]>([]);
+  const [availabilityCalendars, setAvailabilityCalendars] = useState<InterviewGoogleCalendarStatus[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
   const version = useRef(0);
+  const availabilityVersion = useRef(0);
   useEffect(() => {
     const ticket = ++version.current;
     setBusy(true); setError(""); setItems([]); setHasNext(false); setSelectedId(null);
@@ -40,6 +46,30 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
     const d = new Date(value);
     return Number.isFinite(d.getTime()) ? new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", {dateStyle:"medium", timeStyle:"short"}).format(d) : "—";
   };
+  async function loadParticipantAvailability(item: InterviewWorklistItem) {
+    const ticket = ++availabilityVersion.current;
+    setAvailabilityInterviewId(item.id);
+    setAvailabilitySlots([]);
+    setAvailabilityCalendars([]);
+    setAvailabilityError("");
+    setAvailabilityLoading(true);
+    const start = new Date(item.starts_at);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh";
+      const result = await listInterviewAvailability(item.application_id, item.participants.map((person) => person.id), start.toISOString(), end.toISOString(), timezone);
+      if (ticket === availabilityVersion.current) { setAvailabilitySlots(result.busy_slots); setAvailabilityCalendars(result.google_calendars); }
+    } catch (cause) {
+      if (ticket === availabilityVersion.current) {
+        setAvailabilityError(cause instanceof Error ? cause.message : (en ? "Could not load participant schedules." : "Không tải được lịch của người tham gia."));
+        if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      }
+    } finally {
+      if (ticket === availabilityVersion.current) setAvailabilityLoading(false);
+    }
+  }
   return <section className={styles.aux} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
     <div className={styles.sectionHead}><div><h2>{en ? "Interview Schedule" : "Lịch phỏng vấn theo Job"}</h2><p>{en ? "Read-only schedule records from your authorized worklist." : "Lịch theo quyền truy cập của bạn; không thay đổi lịch hay feedback."}</p></div>
       <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
@@ -65,6 +95,30 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
             <dt>{en ? "Feedback" : "Đánh giá"}</dt><dd>{active.feedback_count}</dd>
             <dt>{en ? "Interviewers" : "Người phỏng vấn"}</dt><dd>{active.participants?.map((p) => p.display_name).join(", ") || "—"}</dd>
           </dl> : <p className={styles.empty}>{en ? "Select an interview." : "Chọn một lịch để xem chi tiết."}</p>}
+          {active?.can_manage && active.participants?.length > 0 && <div className={styles.availability}>
+            <button className={styles.outline} type="button" disabled={availabilityLoading} onClick={() => void loadParticipantAvailability(active)}>
+              {availabilityLoading ? (en ? "Loading schedules…" : "Đang tải lịch…") : (en ? "Check Google and ATS availability" : "Kiểm tra lịch Google và ATS của người tham gia")}
+            </button>
+            <p>{en ? "Shows Google Calendar Free/Busy and ATS appointments for the 7 days starting on this interview date. Event details are never shown." : "Hiển thị giờ Busy từ Google Calendar và lịch ATS trong 7 ngày tính từ ngày phỏng vấn. Không hiển thị nội dung sự kiện."}</p>
+            {availabilityInterviewId === active.id && availabilityLoading && <p role="status">{en ? "Loading busy times…" : "Đang tải các khung giờ bận…"}</p>}
+            {availabilityInterviewId === active.id && availabilityError && <p className={styles.error} role="alert">{availabilityError}</p>}
+            {availabilityInterviewId === active.id && !availabilityLoading && !availabilityError && active.participants.map((person) => {
+              const blocks = availabilitySlots.filter((slot) => slot.participant_id === person.id);
+              const googleStatus = availabilityCalendars.find((entry) => entry.participant_id === person.id)?.status || "UNAVAILABLE";
+              const googleBlocks = blocks.filter((slot) => slot.source === "GOOGLE");
+              const atsBlocks = blocks.filter((slot) => slot.source === "ATS");
+              const googleLabel = en
+                ? ({ AVAILABLE: "Google Calendar checked", NO_ACCESS: "Google Calendar access unavailable", NO_EMAIL: "Google account email not found", NOT_CONFIGURED: "Google connection is not configured", NOT_CONNECTED: "Interviewer has not connected Google Calendar", EMAIL_MISMATCH: "Google email does not match ATS account", REAUTH_REQUIRED: "Google connection expired; reconnect required", UNAVAILABLE: "Google Calendar could not be checked" } as const)[googleStatus]
+                : ({ AVAILABLE: "Đã kiểm tra Google Calendar", NO_ACCESS: "Google không cho phép xem lịch", NO_EMAIL: "Không tìm thấy email Google", NOT_CONFIGURED: "Chưa cấu hình kết nối Google", NOT_CONNECTED: "Interviewer chưa kết nối Google Calendar", EMAIL_MISMATCH: "Email Google không khớp email ATS", REAUTH_REQUIRED: "Kết nối Google hết hạn, cần kết nối lại", UNAVAILABLE: "Không kiểm tra được Google Calendar" } as const)[googleStatus];
+              return <div className={styles.availabilityPerson} key={person.id}>
+                <strong>{person.display_name}</strong>
+                <span>{googleLabel}</span>
+                {googleStatus === "AVAILABLE" && googleBlocks.length === 0 && <span>{en ? "No busy Google Calendar events in this period." : "Google Calendar không có giờ bận trong khoảng này."}</span>}
+                {googleBlocks.map((slot) => <span key={"google-" + slot.participant_id + "-" + slot.starts_at}>{date(slot.starts_at)} – {date(slot.ends_at)} · Google Busy</span>)}
+                {atsBlocks.map((slot) => <span key={"ats-" + slot.participant_id + "-" + slot.starts_at}>{date(slot.starts_at)} – {date(slot.ends_at)} · {en ? "ATS appointment" : "Lịch hẹn ATS"}</span>)}
+              </div>;
+            })}
+          </div>}
         </aside>
       </div>}
     <div className={styles.pager}><span>{en ? "Worklist page" : "Trang lịch tổng"} {Math.floor(offset / LIMIT) + 1}</span>

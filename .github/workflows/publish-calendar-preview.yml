@@ -1,0 +1,122 @@
+name: Publish isolated Google Calendar preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_ref:
+        description: Branch or commit with the Google Calendar preview to publish
+        required: true
+        default: feat/interview-participant-availability-2026-11-18
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ats-calendar-preview-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    outputs:
+      production_revision: ${{ steps.release.outputs.production_revision }}
+    steps:
+      - name: Check out deployment workflow and page assembler
+        uses: actions/checkout@v4
+        with:
+          path: control
+
+      - name: Find the currently published production revision
+        id: release
+        run: |
+          curl --fail --silent --show-error \
+            https://phucphamdinh18.github.io/ats-v2-frontend/release.json \
+            -o "$RUNNER_TEMP/current-release.json"
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const release = JSON.parse(readFileSync(process.env.RUNNER_TEMP + '/current-release.json', 'utf8'));
+          if (!['single', 'calendar-preview'].includes(release.mode)) throw new Error('Current Pages release does not identify a stable production source; refusing to guess which source belongs at the root');
+          if (!/^[a-f0-9]{40}$/.test(release.revision || '')) throw new Error('Published release marker has no valid production source revision');
+          appendFileSync(process.env.GITHUB_OUTPUT, `production_revision=${release.revision}\n`);
+          NODE
+
+      - name: Check out the exact currently published production source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.production_revision }}
+          path: production
+
+      - name: Check out the Google Calendar preview source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.preview_ref }}
+          path: calendar-preview
+
+      - name: Record the exact preview source revision
+        id: preview
+        run: echo "preview_revision=$(git -C calendar-preview rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install production dependencies
+        run: npm ci --prefix production/web --no-fund --no-audit
+
+      - name: Build the unchanged production site
+        run: npm --prefix production/web run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://izchulqhmhqevfmuvqlx.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_3z9T_XwfGujrPObIj-8rbg_bjbpnXnt
+          NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/
+
+      - name: Install isolated preview dependencies
+        run: npm ci --prefix calendar-preview/web --no-fund --no-audit
+
+      - name: Check the publishing guards and preview tests
+        run: |
+          node --test control/tests/publish-pages-guard.test.cjs
+          npm --prefix calendar-preview/web test
+          npm --prefix calendar-preview/web run typecheck
+
+      - name: Build preview against the test Supabase project
+        run: npm --prefix calendar-preview/web run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://gizkwboagulytbmbkire.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_43QuPyq0mp1NO-iKzXqL8Q_AZXloA2v
+          NEXT_PUBLIC_BASE_PATH: /ats-v2-frontend/preview
+          NEXT_PUBLIC_AUTH_REDIRECT_URL: https://phucphamdinh18.github.io/ats-v2-frontend/preview/
+
+      - name: Assemble both outputs without changing the production app
+        run: node control/web/scripts/prepare-pages.mjs calendar-preview
+        env:
+          ATS_PRODUCTION_ROOT: ${{ github.workspace }}/production
+          ATS_PRODUCTION_REVISION: ${{ steps.release.outputs.production_revision }}
+          ATS_PREVIEW_ROOT: ${{ github.workspace }}/calendar-preview
+          ATS_PREVIEW_REVISION: ${{ steps.preview.outputs.preview_revision }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: control/web/.pages-site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
