@@ -45,13 +45,29 @@ it("checks Google and ATS availability before creating an ATS interview", async 
   expect(screen.getByText(/Đã đặt lịch phỏng vấn cho Candidate A/)).toBeTruthy();
 });
 
-it("does not allow booking when a participant is busy or Google cannot be verified", async () => {
+it("does not allow booking when Google cannot be verified", async () => {
   api.availability.mockResolvedValue({ busy_slots: [{ participant_id: roster[0].id, starts_at: "2099-01-01T09:00:00Z", ends_at: "2099-01-01T10:00:00Z", source: "ATS" }], google_calendars: [{ participant_id: roster[0].id, status: "NOT_CONNECTED" }] });
   render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
   fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
   fireEvent.click(await screen.findByLabelText(/Interviewer A/));
   fireEvent.click(screen.getByRole("button", { name: "Kiểm tra lịch bận\/rảnh" }));
   await screen.findByText("Chưa kết nối Google");
+  expect((screen.getByRole("button", { name: "Đặt lịch trong ATS" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(api.create).not.toHaveBeenCalled();
+});
+
+it("does not allow booking when an ATS appointment overlaps the selected slot", async () => {
+  api.availability.mockResolvedValue({
+    busy_slots: [{ participant_id: roster[0].id, starts_at: new Date("2099-01-01T10:30:00").toISOString(), ends_at: new Date("2099-01-01T11:30:00").toISOString(), source: "ATS" }],
+    google_calendars: [{ participant_id: roster[0].id, status: "AVAILABLE" }],
+  });
+  render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
+  fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
+  fireEvent.click(await screen.findByLabelText(/Interviewer A/));
+  fireEvent.change(screen.getByLabelText(/Bắt đầu/), { target: { value: "2099-01-01T10:00" } });
+  fireEvent.change(screen.getByLabelText(/Kết thúc/), { target: { value: "2099-01-01T11:00" } });
+  fireEvent.click(screen.getByRole("button", { name: "Kiểm tra lịch bận\/rảnh" }));
+  await screen.findByText(/Lịch ATS/);
   expect((screen.getByRole("button", { name: "Đặt lịch trong ATS" }) as HTMLButtonElement).disabled).toBe(true);
   expect(api.create).not.toHaveBeenCalled();
 });
