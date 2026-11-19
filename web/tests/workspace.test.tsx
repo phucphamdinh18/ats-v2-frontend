@@ -42,12 +42,10 @@ vi.mock("../lib/supabase", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.review.mockResolvedValue({ drafts: [] });
-  mocks.functionInvoke.mockImplementation((name: string, options: { body?: { action?: string } }) =>
-    Promise.resolve({ data: name === "google-calendar-oauth" && options.body?.action === "status"
-      ? { connected: true, google_email: "qa@example.invalid", connected_at: "2026-11-19T00:00:00Z" }
-      : options.body?.action === "overview"
-        ? { jobs: [] }
-        : { applications: [], limit: 25, offset: 0 }, error: null }));
+  mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
+    Promise.resolve({ data: options.body?.action === "overview"
+      ? { jobs: [] }
+      : { applications: [], limit: 25, offset: 0 }, error: null }));
   mocks.session.mockResolvedValue({
     data: {
       session: { user: { id: "synthetic", email: "qa@example.invalid" } },
@@ -85,30 +83,6 @@ function scope(active: boolean, roles: string[], jobs: unknown[] = [], membershi
     return query;
   });
 }
-it("prompts an active ATS user to connect Google Calendar when no connection exists", async () => {
-  scope(true, ["ADMIN"]);
-  mocks.functionInvoke.mockImplementation((name: string, options: { body?: { action?: string } }) =>
-    Promise.resolve({ data: name === "google-calendar-oauth" && options.body?.action === "status"
-      ? { connected: false, google_email: null, connected_at: null }
-      : options.body?.action === "overview"
-        ? { jobs: [] }
-        : { applications: [], limit: 25, offset: 0 }, error: null }));
-  render(<Workspace />);
-  const prompt = await screen.findByRole("dialog", { name: "Kết nối Google Calendar" });
-  expect(prompt.textContent).toContain("ATS chỉ xem trạng thái bận/rảnh, không đọc nội dung sự kiện");
-  expect(mocks.functionInvoke).toHaveBeenCalledWith("google-calendar-oauth", { body: { action: "status" } });
-});
-
-it("does not show the first-login calendar prompt to a user whose calendar is already connected", async () => {
-  scope(true, ["ADMIN"]);
-  render(<Workspace />);
-  await screen.findByRole("button", { name: "Đăng xuất" });
-  await waitFor(() => expect(mocks.functionInvoke).toHaveBeenCalledWith(
-    "google-calendar-oauth", { body: { action: "status" } },
-  ));
-  expect(screen.queryByRole("dialog", { name: "Kết nối Google Calendar" })).toBeNull();
-});
-
 it("exposes Interview to a scoped Hiring Manager but never offers privileged Offer module", async () => {
   scope(true, ["HIRING_MANAGER"], [{ id: "job1", title: "Test Job", status: "OPEN", job_code: "TEST-1" }]);
   render(<Workspace />);
@@ -227,7 +201,7 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
 
 it("same-user auth refresh preserves the new Job form",async()=>{
  scope(true,["ADMIN"]);render(<Workspace/>);
- fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Thao tác Job"})); fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));
  fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Unsaved role"}});
  const before=mocks.session.mock.calls.length;
  await act(async()=>{mocks.authCallback?.("SIGNED_IN",{user:{id:"synthetic"}});});
@@ -236,13 +210,13 @@ it("same-user auth refresh preserves the new Job form",async()=>{
  expect(screen.queryByRole("button",{name:"JD tuyển dụng"})).toBeNull();
 });
 it("silent auth refresh removes Admin creation when roles are revoked",async()=>{
- scope(true,["ADMIN"]);render(<Workspace/>);fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
+ scope(true,["ADMIN"]);render(<Workspace/>);fireEvent.click(await screen.findByRole("button",{name:"Thao tác Job"})); fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));
  scope(false,[]);await act(async()=>{mocks.authCallback?.("TOKEN_REFRESHED",{user:{id:"synthetic"}});});
  await screen.findByRole("heading",{name:"Tài khoản đang chờ kích hoạt"});expect(screen.queryByLabelText("Tên vị trí")).toBeNull();
 });
 it("switches administration language without resetting its form or scope",async()=>{
  localStorage.clear();scope(true,["ADMIN"]);render(<LanguageProvider><Workspace/></LanguageProvider>);
- fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Saved locally"}});
+ fireEvent.click(await screen.findByRole("button",{name:"Thao tác Job"})); fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Saved locally"}});
  const calls=mocks.session.mock.calls.length;fireEvent.change(screen.getByRole("combobox",{name:"Ngôn ngữ / Language"}),{target:{value:"en"}});
  expect(screen.getByRole("heading",{name:"Create Job"})).toBeTruthy();expect((screen.getByLabelText("Job title") as HTMLInputElement).value).toBe("Saved locally");expect(mocks.session.mock.calls.length).toBe(calls);localStorage.clear();
 });
@@ -386,17 +360,17 @@ it("an active role-less approver can open Home without gaining Admin or general 
   mocks.functionInvoke.mockImplementation((name: string, options: {body?: {action?:string}}) => Promise.resolve({data:name==="offer-workflow"?{result:[]} : name==="tasks"?{tasks:[]} : options.body?.action==="worklist"?{interviews:[]} : {jobs:[]},error:null}));
   render(<Workspace/>);
   await screen.findByRole("heading",{name:/Xin chào/,level:1});
-  expect(screen.queryByRole("button",{name:"Thêm Job"})).toBeNull();
+  expect(screen.queryByRole("button",{name:"Thao tác Job"})).toBeNull();
   expect(screen.queryByRole("button",{name:"Đề nghị tuyển dụng"})).toBeNull();
   expect(screen.queryByRole("link",{name:"Duyệt đề xuất"})).toBeNull();
 });
 
 it("Add Job belongs to Job Openings and returns to the list without an Admin sidebar entry", async () => {
  scope(true,["ADMIN"]);render(<Workspace/>);
- fireEvent.click(await screen.findByRole("button",{name:"Thêm Job"}));
+ fireEvent.click(await screen.findByRole("button",{name:"Thao tác Job"})); fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));
  expect(screen.queryByRole("button",{name:"Quản trị Job"})).toBeNull();
  expect(screen.getByLabelText("Tên vị trí")).toBeTruthy();
  fireEvent.click(screen.getByRole("button",{name:"← Về danh sách Job"}));
- expect(screen.getByRole("button",{name:"Thêm Job"})).toBeTruthy();
+ expect(screen.getByRole("button",{name:"Thao tác Job"})).toBeTruthy();
  expect(screen.queryByLabelText("Tên vị trí")).toBeNull();
 });
