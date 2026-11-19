@@ -53,6 +53,29 @@ it("checks Google and ATS availability before creating an ATS interview", async 
   expect(api.create.mock.calls[0][0]).toMatchObject({ application_id: application.application_id, participant_ids: [roster[0].id], interview_type: "INTERVIEW" });
   expect(screen.getByText(/Đã đặt lịch cho Candidate A/)).toBeTruthy();
   expect(screen.getByText(/Google Calendar đã tạo sự kiện/)).toBeTruthy();
+  await waitFor(() => expect(screen.getAllByRole("button").some((button) => button.getAttribute("title")?.includes("Phỏng vấn · Candidate A"))).toBe(true));
+});
+
+it("lets the recruiter drag across week cells to choose the full interview time", async () => {
+  const { container } = render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
+  fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
+  fireEvent.click(await screen.findByLabelText(/Interviewer A/));
+  await screen.findByText("Đã kiểm tra Google Calendar");
+
+  const start = screen.getAllByRole("button", { name: /10:00$/ }).find((button) => !(button as HTMLButtonElement).disabled) as HTMLButtonElement;
+  const end = container.querySelector<HTMLButtonElement>(`[data-calendar-slot="true"][data-day="${start.dataset.day}"][data-index="${Number(start.dataset.index) + 1}"]`);
+  const rows = start.closest(".weekRow")?.parentElement as HTMLDivElement;
+  expect(end).toBeTruthy();
+  const originalElementFromPoint = document.elementFromPoint;
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => end) });
+  try {
+    fireEvent.pointerDown(start, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(rows, { pointerId: 1, buttons: 1, clientX: 100, clientY: 132 });
+    fireEvent.pointerUp(rows, { pointerId: 1, button: 0, clientX: 100, clientY: 132 });
+  } finally {
+    Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint });
+  }
+  expect(screen.getByText(/10:00\s*–\s*11:00/)).toBeTruthy();
 });
 
 it("requires event permission for the first selected interviewer before booking", async () => {
