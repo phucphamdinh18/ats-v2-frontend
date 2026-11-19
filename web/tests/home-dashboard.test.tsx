@@ -26,6 +26,8 @@ vi.mock("../lib/admin-jobs", () => ({listJobRecruiters: mock.recruiters}));
 const noop = () => {};
 function interview(n: number, status = "SCHEDULED") {
   const start = new Date();
+  const vietnamToday = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  start.setUTCFullYear(vietnamToday.getUTCFullYear(), vietnamToday.getUTCMonth(), vietnamToday.getUTCDate());
   start.setUTCHours(1, n, 0, 0);
   return {
     id: `i-${n}`,
