@@ -186,6 +186,12 @@
 .linkButton{display:block;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.45}
 @media(max-width:580px){.nativeTable th:nth-child(1),.nativeTable td:nth-child(1){width:52%}.nativeTable th:nth-child(2),.nativeTable td:nth-child(2){width:26%}.nativeTable th:nth-child(3),.nativeTable td:nth-child(3){width:22%}}
 
-
 /* Separate the direct edit action from the existing overflow menu. */
 .actions{display:flex;align-items:center;gap:8px;}
+
+/* Participant availability: Google Free/Busy plus ATS busy intervals; no event details. */
+.availability{display:flex;flex-direction:column;align-items:flex-start;gap:9px;margin-top:18px;padding-top:14px;border-top:1px solid var(--b2-line)}
+.availability>p{margin:0!important;color:#66778d;font-size:var(--ats-font-body);line-height:1.5}
+.availabilityPerson{display:flex;flex-direction:column;gap:4px;width:100%;padding:9px 10px;border:1px solid #e1e6ec;border-radius:5px;background:#f8fafc}
+.availabilityPerson strong{font-size:var(--ats-font-body);color:#20334a}
+.availabilityPerson span{font-size:var(--ats-font-body);color:#58697d;overflow-wrap:anywhere}

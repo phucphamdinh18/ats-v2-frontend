@@ -112,3 +112,19 @@
 @media(max-width:1280px){.shell:not(.collapsed){grid-template-columns:228px minmax(0,1fr)}.shell:not(.collapsed) .identity{width:228px;flex-basis:228px}.shell:not(.collapsed) .identity img{width:164px}.shell:not(.collapsed) .identity strong{font-size:15px}}
 @media(max-width:900px){.shell:not(.collapsed){grid-template-columns:66px minmax(0,1fr)}.shell:not(.collapsed) .sidebar{padding:14px 6px}.shell:not(.collapsed) .identity{width:66px;flex-basis:66px;padding:8px;justify-content:center}.shell:not(.collapsed) .identity img{width:40px;max-width:40px;object-fit:cover;object-position:left}.shell:not(.collapsed) .identity strong,.shell:not(.collapsed) .identity .divider,.shell:not(.collapsed) .sidebarTitle,.shell:not(.collapsed) .sidebarGroup,.shell:not(.collapsed) .navLabel,.shell:not(.collapsed) .scopeCopy{display:none}.shell:not(.collapsed) .navButton{justify-content:center;padding:0}.topbar{padding-right:10px}.productContext{display:none}.content{padding:17px 13px 32px}}
 @media(max-width:600px){.shell,.shell:not(.collapsed){grid-template-columns:54px minmax(0,1fr);grid-template-rows:64px minmax(calc(100vh - 64px),auto)}.topbar:before{height:4px}.topbarBrand{gap:0}.identity,.shell:not(.collapsed) .identity{width:54px;flex-basis:54px;padding:5px;justify-content:center}.identity img,.shell:not(.collapsed) .identity img{width:37px;max-width:37px;object-fit:cover;object-position:left}.identity strong,.identity .divider{display:none}.headerActions{gap:5px}.searchTrigger{padding:7px}.language select{max-width:50px}.account{padding:3px}.account .email{display:none}.sidebar{padding:9px 4px}.navButton{min-height:43px}.content{padding:13px 9px 25px}}
+
+
+/* First-login Google Calendar consent prompt */
+.calendarPromptBackdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(12,25,42,.52)}
+.calendarPrompt{width:min(100%,480px);padding:28px;border:1px solid #d7e0ea;border-radius:12px;background:#fff;box-shadow:0 24px 70px rgba(15,32,52,.24);color:#172a40}
+.calendarPromptIcon{display:grid;place-items:center;width:42px;height:42px;margin-bottom:14px;border-radius:10px;background:#edf5fb;color:#087db5;font-size:24px;font-weight:700}
+.calendarPrompt h2{margin:0 0 10px;font-size:22px;line-height:1.3;font-weight:750}
+.calendarPrompt p{margin:0 0 14px;color:#52657c;font-size:15px;line-height:1.55}
+.calendarPrompt .calendarPromptError{padding:9px 11px;border-left:3px solid #cf2335;background:#fff1f2;color:#9b1c2c}
+.calendarPromptActions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 12px}
+.calendarPromptPrimary,.calendarPromptSecondary{min-height:42px;padding:9px 15px;border:1px solid #c9d3de;border-radius:6px;font:inherit;font-weight:700;cursor:pointer}
+.calendarPromptPrimary{border-color:#d6001c;background:#d6001c;color:#fff}
+.calendarPromptPrimary:disabled{opacity:.6;cursor:wait}
+.calendarPromptSecondary{background:#fff;color:#263a50}
+.calendarPrompt small{display:block;color:#738398;line-height:1.5}
+@media(max-width:520px){.calendarPrompt{padding:21px}.calendarPromptActions{flex-direction:column}.calendarPromptActions button{width:100%}}

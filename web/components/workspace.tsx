@@ -12,6 +12,7 @@ import BoschHomeDashboard from "./bosch-home-dashboard";
 import styles from "./bosch-v2-shell.module.css";
 import BoschModuleLayout from "./bosch-module-layout";
 import { jobOverview } from "@/lib/applications";
+import { getGoogleCalendarConnectionStatus, beginGoogleCalendarConnection } from "@/lib/google-calendar";
 import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
@@ -38,6 +39,10 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState<boolean | null>(null);
+  const [calendarPromptOpen, setCalendarPromptOpen] = useState(false);
+  const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
+  const [calendarPromptError, setCalendarPromptError] = useState("");
   const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -50,12 +55,31 @@ export default function Workspace() {
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
   const authUser = useRef<string | null>(null);
+  const calendarPromptDismissed = useRef(false);
   useEffect(() => {
     const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
       window.location.hostname,
     );
     setLocalLoginVisible(process.env.NODE_ENV === "development" && isLoopback);
   }, []);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("calendar_connection");
+    if (!result) return;
+    const messages: Record<string, { vi: string; en: string }> = {
+      denied: { vi: "Bạn chưa cấp quyền Google Calendar.", en: "Google Calendar permission was not granted." },
+      email_mismatch: { vi: "Email Google phải trùng email dùng để đăng nhập ATS.", en: "Connect the Google account that matches your ATS login email." },
+      state_expired: { vi: "Yêu cầu kết nối đã hết hạn. Hãy thử lại.", en: "The connection request expired. Please try again." },
+      not_configured: { vi: "Kết nối Google chưa được cấu hình.", en: "Google Calendar connection is not configured." },
+      failed: { vi: "Kết nối Google không thành công. Hãy thử lại.", en: "Google connection failed. Please try again." },
+    };
+    if (result !== "connected") {
+      const message = messages[result];
+      if (message) setCalendarPromptError(locale === "en" ? message.en : message.vi);
+    }
+    url.searchParams.delete("calendar_connection");
+    window.history.replaceState({}, document.title, url.toString());
+  }, [locale]);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
@@ -167,6 +191,12 @@ export default function Workspace() {
         // SIGNED_IN also fires when returning to a tab. Recheck permissions without
         // destroying an unchanged user's draft selection or unsaved review form.
         const nextUser = session?.user.id || null;
+        if (event === "SIGNED_OUT" || (nextUser !== null && nextUser !== authUser.current)) {
+          calendarPromptDismissed.current = false;
+          setCalendarPromptOpen(false);
+          setCalendarPromptError("");
+          setGoogleCalendarConnected(null);
+        }
         const quiet =
           nextUser !== null &&
           nextUser === authUser.current &&
@@ -193,6 +223,12 @@ export default function Workspace() {
       cleanup();
     };
   }, [refresh]);
+  async function connectCalendar() {
+    setCalendarPromptBusy(true);
+    setCalendarPromptError("");
+    try { await beginGoogleCalendarConnection(); }
+    catch (cause) { setCalendarPromptError(cause instanceof Error ? cause.message : (locale === "en" ? "Could not start Google connection." : "Không thể bắt đầu kết nối Google.")); setCalendarPromptBusy(false); }
+  }
   async function login() {
     if (loginStarted.current) return;
     loginStarted.current = true;
@@ -403,6 +439,21 @@ export default function Workspace() {
   }
   return (
     <div className={`${styles.shell} ${sidebarCollapsed ? styles.collapsed : ""}`}>
+      {calendarPromptOpen && access?.active && googleCalendarConnected === false && (
+        <div className={styles.calendarPromptBackdrop}>
+          <section className={styles.calendarPrompt} role="dialog" aria-modal="true" aria-labelledby="calendar-prompt-title">
+            <span className={styles.calendarPromptIcon} aria-hidden="true">▦</span>
+            <h2 id="calendar-prompt-title">{locale === "en" ? "Connect Google Calendar" : "Kết nối Google Calendar"}</h2>
+            <p>{locale === "en" ? "Connect once so ATS can show your busy times to authorized interview schedulers. ATS reads availability only, not event details." : "Kết nối một lần để ATS hiển thị giờ bận cho người được phép đặt lịch phỏng vấn. ATS chỉ xem trạng thái bận/rảnh, không đọc nội dung sự kiện."}</p>
+            {calendarPromptError && <p className={styles.calendarPromptError} role="alert">{calendarPromptError}</p>}
+            <div className={styles.calendarPromptActions}>
+              <button type="button" className={styles.calendarPromptPrimary} onClick={() => void connectCalendar()} disabled={calendarPromptBusy}>{calendarPromptBusy ? (locale === "en" ? "Connecting…" : "Đang kết nối…") : (locale === "en" ? "Continue with Google" : "Tiếp tục với Google")}</button>
+              <button type="button" className={styles.calendarPromptSecondary} onClick={() => { calendarPromptDismissed.current = true; setCalendarPromptOpen(false); }}>{locale === "en" ? "Not now" : "Để sau"}</button>
+            </div>
+            <small>{locale === "en" ? "If you skip, interviewers cannot check your calendar until you connect it." : "Nếu bỏ qua, người đặt lịch sẽ chưa kiểm tra được lịch của bạn cho đến khi bạn kết nối."}</small>
+          </section>
+        </div>
+      )}
       <a className={styles.skip} href="#main-content">{t.navigation}</a>
         <header className={styles.topbar}>
           <div className={styles.topbarBrand}>
