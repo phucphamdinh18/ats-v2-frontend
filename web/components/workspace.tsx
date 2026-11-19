@@ -73,13 +73,43 @@ export default function Workspace() {
       not_configured: { vi: "Kết nối Google chưa được cấu hình.", en: "Google Calendar connection is not configured." },
       failed: { vi: "Kết nối Google không thành công. Hãy thử lại.", en: "Google connection failed. Please try again." },
     };
-    if (result !== "connected") {
+    if (result === "connected") {
+      setGoogleCalendarConnected(true);
+      setCalendarPromptOpen(false);
+      setCalendarPromptError("");
+    } else {
       const message = messages[result];
       if (message) setCalendarPromptError(locale === "en" ? message.en : message.vi);
     }
     url.searchParams.delete("calendar_connection");
     window.history.replaceState({}, document.title, url.toString());
   }, [locale]);
+  useEffect(() => {
+    if (!access?.active || !access.userId) {
+      setGoogleCalendarConnected(null);
+      setCalendarPromptOpen(false);
+      return;
+    }
+    let cancelled = false;
+    void getGoogleCalendarConnectionStatus().then((connection) => {
+      if (cancelled) return;
+      setGoogleCalendarConnected(connection.connected);
+      if (connection.connected) {
+        setCalendarPromptOpen(false);
+        setCalendarPromptError("");
+      } else if (!calendarPromptDismissed.current) {
+        setCalendarPromptOpen(true);
+      }
+    }).catch((cause) => {
+      if (cancelled) return;
+      setGoogleCalendarConnected(false);
+      setCalendarPromptError(cause instanceof Error
+        ? cause.message
+        : (locale === "en" ? "Could not check Google Calendar connection." : "Không thể kiểm tra kết nối Google Calendar."));
+      if (!calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    });
+    return () => { cancelled = true; };
+  }, [access?.userId, access?.active, locale]);
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
