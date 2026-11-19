@@ -80,10 +80,11 @@ jobs:
         run: npm ci --prefix calendar-preview/web --no-fund --no-audit
 
       - name: Check the publishing guards and preview tests
+        working-directory: control
         run: |
-          node --test control/tests/publish-pages-guard.test.cjs
-          npm --prefix calendar-preview/web test
-          npm --prefix calendar-preview/web run typecheck
+          node --test tests/publish-pages-guard.test.cjs
+          npm --prefix ../calendar-preview/web test
+          npm --prefix ../calendar-preview/web run typecheck
 
       - name: Build preview against the test Supabase project
         run: npm --prefix calendar-preview/web run build
