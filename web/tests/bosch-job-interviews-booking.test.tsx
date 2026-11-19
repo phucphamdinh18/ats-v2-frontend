@@ -41,6 +41,7 @@ it("checks Google and ATS availability before creating an ATS interview", async 
   fireEvent.click(book);
   await screen.findByRole("status");
   await waitFor(() => expect(api.create).toHaveBeenCalledTimes(1));
+  expect(api.availability).toHaveBeenCalledTimes(2);
   expect(api.create.mock.calls[0][0]).toMatchObject({ application_id: application.application_id, participant_ids: [roster[0].id], interview_type: "INTERVIEW" });
   expect(screen.getByText(/Đã đặt lịch phỏng vấn cho Candidate A/)).toBeTruthy();
 });
