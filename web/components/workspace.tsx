@@ -68,6 +68,7 @@ export default function Workspace() {
     if (!result) return;
     const messages: Record<string, { vi: string; en: string }> = {
       denied: { vi: "Bạn chưa cấp quyền Google Calendar.", en: "Google Calendar permission was not granted." },
+      scope_missing: { vi: "Bạn cần cấp quyền tạo sự kiện trên lịch Google để ATS gửi thư mời.", en: "Grant Google Calendar event access so ATS can create interviews and send invitations." },
       email_mismatch: { vi: "Email Google phải trùng email dùng để đăng nhập ATS.", en: "Connect the Google account that matches your ATS login email." },
       state_expired: { vi: "Yêu cầu kết nối đã hết hạn. Hãy thử lại.", en: "The connection request expired. Please try again." },
       not_configured: { vi: "Kết nối Google chưa được cấu hình.", en: "Google Calendar connection is not configured." },
@@ -752,4 +753,3 @@ export default function Workspace() {
     </div>
   );
 }
-

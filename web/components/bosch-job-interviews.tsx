@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { listApplications, type Application } from "@/lib/applications";
-import { createInterview, listInterviewAvailability, listInterviewRoster, listInterviewWorklist, type InterviewBusySlot, type InterviewGoogleCalendarStatus, type InterviewRosterMember, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
+import { createInterview, listInterviewAvailability, listInterviewRoster, listInterviewWorklist, syncInterviewGoogleCalendar, type InterviewBusySlot, type InterviewGoogleCalendarStatus, type InterviewRosterMember, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
+import { beginGoogleCalendarConnection } from "@/lib/google-calendar";
 import { ApiError } from "@/lib/supabase";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-job-detail.module.css";
@@ -59,6 +60,8 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const [bookingBusy, setBookingBusy] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState("");
+  const [calendarSyncRetryId, setCalendarSyncRetryId] = useState<string | null>(null);
+  const [calendarSyncBusy, setCalendarSyncBusy] = useState(false);
   const [reloadWorklist, setReloadWorklist] = useState(0);
   const version = useRef(0);
   const availabilityVersion = useRef(0);
@@ -73,7 +76,10 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const bookingConflicts = bookingCheckCurrent && bookingAvailability ? bookingAvailability.slots.filter((slot) => overlaps(bookingStartMs, bookingEndMs, slot)) : [];
   const bookingCalendarStatuses = bookingParticipantIds.map((id) => bookingAvailability?.calendars.find((entry) => entry.participant_id === id)?.status || "UNAVAILABLE");
   const bookingHasUnknownCalendar = !bookingCheckCurrent || bookingCalendarStatuses.some((value) => value !== "AVAILABLE");
-  const canCreateBooking = Boolean(bookingApplicationId && bookingParticipantIds.length && Number.isFinite(bookingStartMs) && Number.isFinite(bookingEndMs) && bookingStartMs > Date.now() && bookingEndMs > bookingStartMs && bookingCheckCurrent && !bookingHasUnknownCalendar && bookingConflicts.length === 0);
+  const organizerId = bookingParticipantIds[0];
+  const organizerCanCreateEvents = Boolean(organizerId && bookingAvailability?.calendars.find((entry) => entry.participant_id === organizerId)?.can_create_events);
+  const bookingWriteScopeRequired = bookingCheckCurrent && !bookingHasUnknownCalendar && !organizerCanCreateEvents;
+  const canCreateBooking = Boolean(bookingApplicationId && bookingParticipantIds.length && Number.isFinite(bookingStartMs) && Number.isFinite(bookingEndMs) && bookingStartMs > Date.now() && bookingEndMs > bookingStartMs && bookingCheckCurrent && !bookingHasUnknownCalendar && organizerCanCreateEvents && bookingConflicts.length === 0);
   useEffect(() => {
     let active = true;
     setApplicationsLoading(true); setApplicationsError(""); setApplications([]); setBookingApplicationId(""); setRoster([]); setBookingParticipantIds([]);
@@ -184,19 +190,44 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
         setBookingError(en ? "The selected time now overlaps a busy period. Choose another time." : "Khung giờ vừa chọn đang trùng với lịch bận. Hãy chọn giờ khác.");
         return;
       }
-      await createInterview({
+      const created = await createInterview({
         request_id: crypto.randomUUID(), application_id: bookingApplicationId, participant_ids: bookingParticipantIds,
         starts_at: new Date(bookingStartMs).toISOString(), ends_at: new Date(bookingEndMs).toISOString(),
         interview_type: bookingType, timezone: bookingTimezone,
         location: bookingLocation.trim() || undefined, meeting_url: bookingMeetingUrl.trim() || undefined,
         notes: bookingNote.trim() || undefined,
       });
-      setBookingSuccess(en ? `Interview booked for ${selectedApplication.candidate_name}. It is saved in ATS.` : `Đã đặt lịch phỏng vấn cho ${selectedApplication.candidate_name} trong ATS.`);
+      if (created.calendar_sync.status === "SYNCED") {
+        setBookingSuccess(en
+          ? `Interview booked for ${selectedApplication.candidate_name}. Google Calendar event created and invitation emails requested.`
+          : `Đã đặt lịch cho ${selectedApplication.candidate_name}. Google Calendar đã tạo sự kiện và gửi yêu cầu thư mời.`);
+        setCalendarSyncRetryId(null);
+      } else {
+        setBookingSuccess(en
+          ? `The ATS interview is saved, but Google Calendar sync failed (${created.calendar_sync.code || "unknown error"}). Retry the calendar sync below.`
+          : `Lịch đã lưu trong ATS nhưng chưa đồng bộ Google Calendar (${created.calendar_sync.code || "lỗi chưa xác định"}). Hãy thử đồng bộ lại.`);
+        setCalendarSyncRetryId(created.interview_id);
+      }
       setBookingAvailability(null); setReloadWorklist((value) => value + 1);
     } catch (cause) {
       setBookingError(cause instanceof Error ? cause.message : (en ? "Could not book this interview." : "Không đặt được lịch phỏng vấn."));
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     } finally { setBookingBusy(false); }
+  }
+  async function retryGoogleSync() {
+    if (!calendarSyncRetryId) return;
+    setCalendarSyncBusy(true); setBookingError("");
+    try {
+      const result = await syncInterviewGoogleCalendar(calendarSyncRetryId);
+      if (result.status === "SYNCED") {
+        setBookingSuccess(en ? "Google Calendar event is synced and invitation emails were requested." : "Đã đồng bộ Google Calendar và gửi yêu cầu thư mời.");
+        setCalendarSyncRetryId(null);
+      } else {
+        setBookingError(en ? `Google Calendar sync is still pending (${result.code || "unknown error"}).` : `Google Calendar vẫn chưa đồng bộ được (${result.code || "lỗi chưa xác định"}).`);
+      }
+    } catch (cause) {
+      setBookingError(cause instanceof Error ? cause.message : (en ? "Could not retry Google Calendar sync." : "Không thể thử đồng bộ Google Calendar lần nữa."));
+    } finally { setCalendarSyncBusy(false); }
   }
   const googleStatusLabel = (value: string) => en
     ? ({ AVAILABLE: "Google Calendar checked", NO_ACCESS: "Google access unavailable", NO_EMAIL: "Google email missing", NOT_CONFIGURED: "Google is not configured", NOT_CONNECTED: "Not connected", EMAIL_MISMATCH: "Google email does not match ATS", REAUTH_REQUIRED: "Reconnect Google Calendar", UNAVAILABLE: "Calendar could not be checked" } as Record<string, string>)[value] || "Calendar status unknown"
@@ -205,7 +236,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
     <div className={styles.sectionHead}><div><h2>{en ? "Interview Schedule" : "Lịch phỏng vấn theo Job"}</h2><p>{en ? "Read-only schedule records from your authorized worklist." : "Lịch theo quyền truy cập của bạn; không thay đổi lịch hay feedback."}</p></div>
       <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
-      <div><h3>{en ? "Book an interview" : "Đặt lịch phỏng vấn"}</h3><p>{en ? "Choose an active candidate and job-assigned interviewers. ATS checks Google Free/Busy and existing ATS appointments before saving." : "Chọn hồ sơ đang hoạt động và người phỏng vấn đã được phân quyền cho Job. ATS sẽ kiểm tra giờ bận trên Google và các lịch ATS trước khi lưu."}</p></div>
+      <div><h3>{en ? "Book an interview" : "Đặt lịch phỏng vấn"}</h3><p>{en ? "Choose an active candidate and job-assigned interviewers. ATS checks calendars, creates the event on the first selected interviewer’s primary calendar, and requests Google to email invitations." : "Chọn hồ sơ đang hoạt động và người phỏng vấn đã được phân quyền cho Job. ATS kiểm tra lịch, tạo sự kiện trên lịch chính của người được chọn đầu tiên và nhờ Google gửi thư mời."}</p></div>
       {applicationsError && <p role="alert" className={styles.error}>{applicationsError}</p>}
       {applicationsLoading ? <p role="status">{en ? "Loading eligible applications…" : "Đang tải hồ sơ đủ điều kiện…"}</p> : eligibleApplications.length === 0 ?
         <p className={styles.empty}>{en ? "No active application is at Screening or Interview stage for this Job." : "Job này chưa có hồ sơ đang hoạt động ở vòng Sơ loại hoặc Phỏng vấn."}</p> : <>
@@ -226,17 +257,20 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
           {rosterLoading ? <p role="status">{en ? "Loading job team…" : "Đang tải nhóm Job…"}</p> : rosterError ? <p role="alert" className={styles.error}>{rosterError}</p> : roster.length === 0 ? <p className={styles.empty}>{en ? "No interviewer or hiring manager is assigned to this Job." : "Job chưa được phân quyền Interviewer hoặc Hiring Manager."}</p> : roster.map((person) => <label key={person.id}><input type="checkbox" checked={bookingParticipantIds.includes(person.id)} onChange={(event) => { setBookingParticipantIds((current) => event.target.checked ? [...current, person.id] : current.filter((id) => id !== person.id)); setBookingAvailability(null); setBookingError(""); }} /><span>{person.display_name}</span><small>{person.role === "HIRING_MANAGER" ? "Hiring Manager" : "Interviewer"}</small></label>)}
         </fieldset>
         <label className={styles.bookingField}><span>{en ? "Notes (optional)" : "Ghi chú (không bắt buộc)"}</span><textarea maxLength={4000} rows={3} value={bookingNote} onChange={(event) => setBookingNote(event.target.value)} /></label>
-        <p className={styles.bookingNotice}>{en ? "This step saves an interview in ATS only. It does not send email or create Google Calendar events yet." : "Bước này chỉ lưu lịch trong ATS. Hiện chưa gửi email mời hoặc tạo sự kiện trên Google Calendar."}</p>
+        <p className={styles.bookingNotice}>{en ? "Google Calendar will create the event on the first selected interviewer’s calendar. Google sends the invitation emails to the candidate and other attendees." : "Sự kiện được tạo trên lịch của người phỏng vấn được chọn đầu tiên. Google sẽ gửi email mời ứng viên và những người tham gia còn lại."}</p>
         {bookingError && <p role="alert" className={styles.error}>{bookingError}</p>}{bookingSuccess && <p role="status" className={styles.bookingSuccess}>{bookingSuccess}</p>}
         {bookingCheckCurrent && bookingParticipantIds.map((id) => {
           const person = roster.find((entry) => entry.id === id); const google = bookingAvailability?.calendars.find((entry) => entry.participant_id === id)?.status || "UNAVAILABLE";
           const busy = bookingConflicts.filter((slot) => slot.participant_id === id);
-          return <div className={styles.bookingAvailabilityRow} key={id}><strong>{person?.display_name || id}</strong><span>{googleStatusLabel(google)}</span>{busy.length ? busy.map((slot) => <span key={`${slot.source}:${slot.starts_at}`}>{date(slot.starts_at)} – {date(slot.ends_at)} · {slot.source === "GOOGLE" ? "Google Busy" : (en ? "ATS appointment" : "Lịch ATS")}</span>) : google === "AVAILABLE" ? <span>{en ? "No overlap in the selected period." : "Không trùng lịch trong khung giờ đã chọn."}</span> : null}</div>;
+          const calendar = bookingAvailability?.calendars.find((entry) => entry.participant_id === id);
+          return <div className={styles.bookingAvailabilityRow} key={id}><strong>{person?.display_name || id}</strong><span>{googleStatusLabel(google)}</span>{busy.length ? busy.map((slot) => <span key={`${slot.source}:${slot.starts_at}`}>{date(slot.starts_at)} – {date(slot.ends_at)} · {slot.source === "GOOGLE" ? "Google Busy" : (en ? "ATS appointment" : "Lịch ATS")}</span>) : google === "AVAILABLE" ? <span>{en ? "No overlap in the selected period." : "Không trùng lịch trong khung giờ đã chọn."}</span> : null}{id === organizerId && !calendar?.can_create_events && google === "AVAILABLE" && <button className={styles.outline} type="button" onClick={() => void beginGoogleCalendarConnection().catch((cause) => setBookingError(cause instanceof Error ? cause.message : (en ? "Could not connect Google Calendar." : "Không thể kết nối Google Calendar.")))}>{en ? "Reconnect Google with event permission" : "Kết nối lại Google để cấp quyền tạo lịch"}</button>}</div>;
         })}
+        {bookingWriteScopeRequired && <p role="alert" className={styles.error}>{en ? "The first selected interviewer must reconnect Google and grant permission to create events. The other selected attendees will receive the invitation." : "Người phỏng vấn được chọn đầu tiên cần kết nối lại Google và cấp quyền tạo sự kiện. Những người tham gia còn lại sẽ nhận thư mời."}</p>}
         <div className={styles.bookingActions}>
           <button className={styles.outline} type="button" disabled={bookingAvailabilityBusy || rosterLoading || !bookingApplicationId || !bookingParticipantIds.length || !Number.isFinite(bookingStartMs) || !Number.isFinite(bookingEndMs) || bookingStartMs <= Date.now() || bookingEndMs <= bookingStartMs} onClick={() => void checkBookingAvailability()}>{bookingAvailabilityBusy ? (en ? "Checking calendars…" : "Đang kiểm tra lịch…") : (en ? "Check availability" : "Kiểm tra lịch bận/rảnh")}</button>
-          <button className={styles.bookButton} type="button" disabled={bookingBusy || !canCreateBooking} onClick={() => void submitBooking()}>{bookingBusy ? (en ? "Booking…" : "Đang đặt lịch…") : (en ? "Book in ATS" : "Đặt lịch trong ATS")}</button>
+          <button className={styles.bookButton} type="button" disabled={bookingBusy || !canCreateBooking} onClick={() => void submitBooking()}>{bookingBusy ? (en ? "Booking…" : "Đang đặt lịch…") : (en ? "Book & send invitation" : "Đặt lịch và gửi thư mời")}</button>
         </div>
+        {calendarSyncRetryId && <button className={styles.outline} type="button" disabled={calendarSyncBusy} onClick={() => void retryGoogleSync()}>{calendarSyncBusy ? (en ? "Retrying…" : "Đang đồng bộ lại…") : (en ? "Retry Google Calendar sync" : "Thử đồng bộ Google Calendar lại")}</button>}
       </>}
     </section>
     <div className={styles.subTabs} role="group" aria-label={en ? "Interview status" : "Trạng thái phỏng vấn"}>

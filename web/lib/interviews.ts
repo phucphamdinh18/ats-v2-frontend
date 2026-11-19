@@ -61,6 +61,7 @@ export type InterviewBusySlot = {
 export type InterviewGoogleCalendarStatus = {
   participant_id: string;
   status: "AVAILABLE" | "NO_ACCESS" | "NO_EMAIL" | "NOT_CONFIGURED" | "NOT_CONNECTED" | "EMAIL_MISMATCH" | "REAUTH_REQUIRED" | "UNAVAILABLE";
+  can_create_events?: boolean;
 };
 export type InterviewAvailability = {
   busy_slots: InterviewBusySlot[];
@@ -128,7 +129,9 @@ export type CreateInterviewInput = {
   notes?: string;
 };
 
-export async function createInterview(input: CreateInterviewInput): Promise<{ interview_id: string; created: boolean }> {
+export type InterviewCalendarSync = { status: "SYNCED" | "SYNC_FAILED"; invitation_requested?: boolean; event_url?: string | null; code?: string };
+
+export async function createInterview(input: CreateInterviewInput): Promise<{ interview_id: string; created: boolean; calendar_sync: InterviewCalendarSync }> {
   const { data, error } = await getClient().functions.invoke("interviews", { body: { action: "create", ...input } });
   if (error) {
     let message = "Không thể đặt lịch phỏng vấn.";
@@ -136,8 +139,22 @@ export async function createInterview(input: CreateInterviewInput): Promise<{ in
     throw new ApiError(message, error.context?.status);
   }
   if (data?.error) throw new ApiError(String(data.error), data.status);
-  if (typeof data?.interview?.interview_id !== "string" || typeof data?.interview?.created !== "boolean") {
+  if (typeof data?.interview?.interview_id !== "string" || typeof data?.interview?.created !== "boolean" ||
+      !data?.interview?.calendar_sync || !["SYNCED", "SYNC_FAILED"].includes(data.interview.calendar_sync.status)) {
     throw new ApiError("Backend trả kết quả đặt lịch không đúng định dạng.");
   }
-  return data.interview as { interview_id: string; created: boolean };
+  return data.interview as { interview_id: string; created: boolean; calendar_sync: InterviewCalendarSync };
+}
+
+export async function syncInterviewGoogleCalendar(interviewId: string): Promise<InterviewCalendarSync> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(interviewId)) throw new Error("Lịch phỏng vấn không hợp lệ.");
+  const { data, error } = await getClient().functions.invoke("interviews", { body: { action: "sync_google", interview_id: interviewId } });
+  if (error) {
+    let message = "Không thể đồng bộ lịch Google.";
+    try { const response = await error.context?.json(); if (typeof response?.error === "string") message = response.error; } catch { /* Network failures may not include JSON. */ }
+    throw new ApiError(message, error.context?.status);
+  }
+  if (data?.error) throw new ApiError(String(data.error), data.status);
+  if (!data?.calendar_sync || !["SYNCED", "SYNC_FAILED"].includes(data.calendar_sync.status)) throw new ApiError("Backend trả trạng thái đồng bộ không đúng định dạng.");
+  return data.calendar_sync as InterviewCalendarSync;
 }
