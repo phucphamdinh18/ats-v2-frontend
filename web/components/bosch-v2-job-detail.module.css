@@ -250,7 +250,12 @@
 .weekAtsInterview{background:#dff0ff;color:#075a91;font-weight:700;border-top:1px solid #78b9e7}
 .weekMixedBusy{background:linear-gradient(135deg,#fce7e7 0 50%,#e7f1fb 50% 100%);color:#41546a}
 .weekUnknown{background:repeating-linear-gradient(135deg,#f5f6f7,#f5f6f7 5px,#eceff2 5px,#eceff2 10px)}
-.weekSelected{position:relative;z-index:2;box-shadow:inset 0 0 0 2px #df001b!important;background:#fff5f5!important;color:#b00018;font-weight:800}
+.weekSelected{position:relative;z-index:2;background:#d9eaff!important;color:#174ea6!important;font-weight:700;border-bottom-color:transparent;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8}
+.weekSelectedStart{border-top-left-radius:5px;border-top-right-radius:5px;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 2px #1a73e8}
+.weekSelectedEnd{border-bottom-left-radius:5px;border-bottom-right-radius:5px;border-bottom-color:#1a73e8;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 -2px #1a73e8}
+.selectedCellLabel{position:absolute;z-index:1;padding:1px 3px;border-radius:3px;background:#d9eaff;color:#174ea6;font-size:10px;line-height:12px;pointer-events:none}
+.selectedCellStart{top:2px;left:3px}
+.selectedCellEnd{right:3px;bottom:2px}
 .selectedTime{margin:0!important;padding:9px 11px;border-left:3px solid #df001b;background:#fff6f6;color:#42546a}
 .selectedTime strong{color:#20334a}
 @media(max-width:700px){.bookingGrid{grid-template-columns:minmax(0,1fr)}.bookingActions{justify-content:stretch}.bookingActions button{flex:1}}
