@@ -80,6 +80,13 @@ it("lets the recruiter drag across week cells to choose the full interview time"
   expect(selectedRange).toBeTruthy();
   expect(selectedRange?.textContent).toContain("10:00");
   expect(selectedRange?.textContent).toContain("11:00");
+  const selectedCells = [...container.querySelectorAll<HTMLButtonElement>('[data-calendar-slot="true"][data-range-selected="true"]')];
+  expect(selectedCells).toHaveLength(2);
+  expect(selectedCells[0].getAttribute("data-selected-start")).toBe("true");
+  expect(selectedCells[1].getAttribute("data-selected-end")).toBe("true");
+  expect(selectedCells[0].textContent).toContain("10:00");
+  expect(selectedCells[1].textContent).toContain("11:00");
+  expect(selectedCells.some((cell) => cell.textContent?.includes("✓"))).toBe(false);
 });
 
 it("requires event permission for the first selected interviewer before booking", async () => {
