@@ -4,6 +4,7 @@ export type GoogleCalendarConnection = {
   connected: boolean;
   google_email: string | null;
   connected_at: string | null;
+  can_create_events?: boolean;
 };
 
 async function invoke(action: "status" | "begin" | "disconnect") {
@@ -33,6 +34,7 @@ export async function getGoogleCalendarConnectionStatus(): Promise<GoogleCalenda
     connected: data.connected,
     google_email: data.google_email,
     connected_at: data.connected_at,
+    can_create_events: data.can_create_events === true,
   };
 }
 

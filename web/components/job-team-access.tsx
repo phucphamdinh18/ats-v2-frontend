@@ -46,6 +46,7 @@ export default function JobTeamAccess({
     [role, setRole] = useState("TA_RECRUITER"),
     [assignment, setAssignment] = useState<"PRIMARY" | "SUPPORT">("SUPPORT"),
     [error, setError] = useState(""),
+    [approvalError, setApprovalError] = useState(""),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
@@ -58,24 +59,31 @@ export default function JobTeamAccess({
     const seq = ++read.current;
     setLoading(true);
     setError("");
+    setApprovalError("");
     try {
-      const [r, setup] = await Promise.all([
+      const [membersResult, approversResult] = await Promise.allSettled([
         listJobMembers(job.id),
         job.status === "DRAFT"
-          ? Promise.resolve({ approvers: [] })
+          ? Promise.resolve({ approvers: [] as OfferSetup["approvers"] })
           : offerWorkflow<OfferSetup>({ action: "setup", job_id: job.id }),
       ]);
-      if (seq === read.current) {
-        setMembers(r.members);
-        setApprovers(setup.approvers || []);
-      }
-    } catch (e) {
       if (seq !== read.current) return;
-      setMembers([]);
-      setApprovers([]);
-      setError(e instanceof Error ? e.message : "Không tải được đội ngũ.");
-      if (e instanceof ApiError && [401, 403].includes(e.status || 0))
-        onAccessLost();
+      if (membersResult.status === "fulfilled") {
+        setMembers(membersResult.value.members);
+      } else {
+        setMembers([]);
+        const e = membersResult.reason;
+        setError(e instanceof Error ? e.message : "Không tải được đội ngũ.");
+        if (e instanceof ApiError && [401, 403].includes(e.status || 0))
+          onAccessLost();
+      }
+      if (approversResult.status === "fulfilled") {
+        setApprovers(approversResult.value.approvers || []);
+      } else {
+        setApprovers([]);
+        const e = approversResult.reason;
+        setApprovalError(e instanceof Error ? e.message : "Không tải được approver.");
+      }
     } finally {
       if (seq === read.current) setLoading(false);
     }
@@ -283,7 +291,14 @@ export default function JobTeamAccess({
           <h3>
             {tr("Người duyệt Offer · DH / CEO", "Offer approvers · DH / CEO")}
           </h3>
-          {job.status === "DRAFT" ? (
+          {approvalError ? (
+            <p className={styles.error} role="status">
+              {tr(
+                "Không tải được danh sách người duyệt Offer. Bạn vẫn có thể gán thành viên; nhấn Tải lại để thử lại.",
+                "Could not load Offer approvers. You can still assign team members; select Refresh to retry.",
+              )}
+            </p>
+          ) : job.status === "DRAFT" ? (
             <p>
               {tr(
                 "Mở Job trước khi gán người duyệt Offer.",
@@ -360,7 +375,7 @@ export default function JobTeamAccess({
             <UserPlus size={19} />
             <h3>{tr("Thêm thành viên", "Add team member")}</h3>
           </div>
-          <fieldset disabled={frozen || loading || !!error || !assignable}>
+          <fieldset disabled={frozen || loading || !assignable}>
             <label>
               {tr("Email người dùng", "User email")}
               <input

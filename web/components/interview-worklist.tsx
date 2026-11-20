@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/supabase";
 import { listInterviewWorklist, type InterviewStatus, type InterviewWorklistItem } from "@/lib/interviews";
 import { useLanguage } from "./language";
+import { InterviewLifecycleActions } from "./bosch-job-interviews";
 import styles from "./bosch-v2-interviews.module.css";
 
 const LIMIT = 25;
@@ -33,19 +34,18 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const requestVersion = useRef(0);
   const active = rows.find((row) => row.id === selectedId) || null;
 
   useEffect(() => {
     const version = ++requestVersion.current;
-    setRows([]);
-    setSelectedId(null);
     setError("");
     setLoading(true);
     void listInterviewWorklist(status, LIMIT, offset).then((result) => {
       if (version !== requestVersion.current) return;
       setRows(result);
-      setSelectedId(result[0]?.id || null);
+      setSelectedId((current) => current && result.some((row) => row.id === current) ? current : result[0]?.id || null);
     }).catch((cause: unknown) => {
       if (version !== requestVersion.current) return;
       setRows([]);
@@ -56,7 +56,7 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
       if (version === requestVersion.current) setLoading(false);
     });
     return () => { requestVersion.current += 1; };
-  }, [status, offset, onAccessLost]);
+  }, [status, offset, onAccessLost, refreshVersion]);
 
   function changeStatus(next: InterviewStatus) {
     setStatus(next);
@@ -116,7 +116,15 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
           {safeMeetingUrl(active.meeting_url) && <a className={styles.meeting} href={safeMeetingUrl(active.meeting_url)!} target="_blank" rel="noopener noreferrer">{en ? "Open meeting" : "Mở cuộc họp"}</a>}</div>
           <div className={styles.detailsBlock}><h4>{en ? "Interviewers" : "Người phỏng vấn"}</h4>
           {active.participants?.length ? <ul className={styles.participants}>{active.participants.map((participant) => <li key={participant.id}><strong>{participant.display_name}</strong><small>{participant.role}</small></li>)}</ul> : <p className={styles.muted}>{en ? "No participant information available." : "Chưa có thông tin người tham gia."}</p>}
-          </div><p className={styles.disclaimer}>{en ? "This screen is for tracking only. Scheduling, decisions, and feedback must follow the existing ATS permissions and verified workflows." : "Màn hình này dùng để theo dõi. Việc đặt lịch, ra quyết định và gửi feedback vẫn cần theo quyền và quy trình ATS hiện có."}</p>
+          </div>
+          <InterviewLifecycleActions
+            key={active.id}
+            item={active}
+            en={en}
+            onChanged={() => setRefreshVersion((value) => value + 1)}
+            onAccessLost={onAccessLost}
+          />
+          <p className={styles.disclaimer}>{en ? "Scheduling, decisions, and feedback follow your ATS role and job access." : "Đặt lịch, quyết định và feedback tuân theo vai trò ATS và quyền truy cập Job của bạn."}</p>
         </> : <p className={styles.muted}>{en ? "Choose an interview from the list to view its details." : "Chọn một lịch phỏng vấn trong danh sách để xem chi tiết."}</p>}
       </aside>
     </div>
