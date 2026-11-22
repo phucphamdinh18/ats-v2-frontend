@@ -40,6 +40,7 @@ async function prepareFreeSlot() {
 
 it("checks Google and ATS availability before creating an ATS interview", async () => {
   await prepareFreeSlot();
+  const calendar = document.querySelector<HTMLElement>("[data-calendar-rows]")?.parentElement;
   const freeSlot = screen.getAllByRole("button", { name: /10:00$/ }).find((button) => !(button as HTMLButtonElement).disabled);
   expect(freeSlot).toBeTruthy();
   fireEvent.click(freeSlot!);
@@ -53,7 +54,22 @@ it("checks Google and ATS availability before creating an ATS interview", async 
   expect(api.create.mock.calls[0][0]).toMatchObject({ application_id: application.application_id, participant_ids: [roster[0].id], interview_type: "INTERVIEW" });
   expect(screen.getByText(/Đã đặt lịch cho Candidate A/)).toBeTruthy();
   expect(screen.getByText(/Google Calendar đã tạo sự kiện/)).toBeTruthy();
-  await waitFor(() => expect(screen.getAllByRole("button").some((button) => button.getAttribute("title")?.includes("Phỏng vấn · Candidate A"))).toBe(true));
+  await waitFor(() => expect(calendar?.querySelector('[data-calendar-event="ats"]')?.textContent).toContain("Candidate A"));
+});
+
+it("shows the full Google busy time range inside the weekly calendar block", async () => {
+  const starts = new Date(2026, 10, 20, 10, 0);
+  const ends = new Date(2026, 10, 20, 13, 45);
+  api.availability.mockResolvedValue({
+    busy_slots: [{ participant_id: roster[0].id, starts_at: starts.toISOString(), ends_at: ends.toISOString(), source: "GOOGLE" }],
+    google_calendars: [{ participant_id: roster[0].id, status: "AVAILABLE", can_create_events: true }],
+  });
+  const { container } = render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
+  fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
+  fireEvent.click(await screen.findByLabelText(/Interviewer A/));
+  expect(await screen.findByText("10:00–13:45")).toBeTruthy();
+  expect(container.querySelectorAll('[data-calendar-event="google"]')).toHaveLength(1);
+  expect(screen.getByText("Google Busy")).toBeTruthy();
 });
 
 it("lets the recruiter drag across week cells to choose the full interview time", async () => {
@@ -76,7 +92,7 @@ it("lets the recruiter drag across week cells to choose the full interview time"
   } finally {
     Object.defineProperty(document, "elementFromPoint", { configurable: true, value: originalElementFromPoint });
   }
-  const selectedRange = container.querySelector<HTMLElement>('[data-selected-range="true"]');
+  const selectedRange = container.querySelector<HTMLElement>('[data-calendar-event="selected"]');
   expect(selectedRange).toBeTruthy();
   expect(selectedRange?.textContent).toContain("10:00");
   expect(selectedRange?.textContent).toContain("11:00");
@@ -84,9 +100,9 @@ it("lets the recruiter drag across week cells to choose the full interview time"
   expect(selectedCells).toHaveLength(2);
   expect(selectedCells[0].getAttribute("data-selected-start")).toBe("true");
   expect(selectedCells[1].getAttribute("data-selected-end")).toBe("true");
-  expect(selectedCells[0].textContent).toContain("10:00");
-  expect(selectedCells[1].textContent).toContain("11:00");
-  expect(selectedCells.some((cell) => cell.textContent?.includes("✓"))).toBe(false);
+  expect(selectedRange?.textContent).toContain("10:00");
+  expect(selectedRange?.textContent).toContain("11:00");
+  expect(container.querySelector('[data-selected-range="true"]')).toBeNull();
 });
 
 it("requires event permission for the first selected interviewer before booking", async () => {
