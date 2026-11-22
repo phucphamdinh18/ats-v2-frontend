@@ -111,8 +111,6 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
   const optimisticBookingIds = useRef(new Set<string>());
   const dragOrigin = useRef<{ day: string; index: number } | null>(null);
   const dragInvalid = useRef(false);
-  const weekRowsRef = useRef<HTMLDivElement | null>(null);
-  const weekCalendarRef = useRef<HTMLDivElement | null>(null);
   const [bookingType, setBookingType] = useState<"PHONE_SCREEN" | "INTERVIEW" | "FINAL">("INTERVIEW");
   const [bookingLocation, setBookingLocation] = useState("");
   const [bookingMeetingUrl, setBookingMeetingUrl] = useState("");
@@ -380,12 +378,12 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     event.preventDefault();
     dragOrigin.current = { day: day!, index };
     dragInvalid.current = false;
-    if (weekRowsRef.current?.setPointerCapture) weekRowsRef.current.setPointerCapture(event.pointerId);
+    if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId);
     applyCalendarRange(date, index, index);
   }
   function onCalendarPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     if (!dragOrigin.current) return;
-    const calendar = weekCalendarRef.current;
+    const calendar = event.currentTarget.closest<HTMLElement>("[data-interviewer-calendar]");
     if (calendar) {
       const bounds = calendar.getBoundingClientRect();
       if (event.clientY < bounds.top + 34 && calendar.scrollTop > 0) calendar.scrollTop = Math.max(0, calendar.scrollTop - 18);
@@ -423,8 +421,10 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
           {initialApplicationId && bookingApplicationId === initialApplicationId && selectedApplication ? <div className={styles.bookingField}>
             <span>{en ? "Candidate" : "Ứng viên"}</span>
             <div className={styles.bookingSelectedCandidate} aria-label={en ? "Selected candidate" : "Ứng viên đã chọn"}>
-              <strong>{selectedApplication.candidate_name}</strong><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
-              <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+              <strong>{selectedApplication.candidate_name}</strong>
+              <div className={styles.bookingCandidateMeta}><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
+                <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+              </div>
             </div>
           </div> : <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
             <option value="">{en ? "Choose a candidate" : "Chọn ứng viên"}</option>
@@ -450,87 +450,79 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
             <span>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "short" }).format(calendarWeekStart)} – {new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "medium" }).format(addDays(calendarWeekEnd, -1))}</span>
           </div>
           <p className={styles.weekTimezone}>{en ? "Displayed in" : "Giờ hiển thị theo"} {bookingTimezone}. {en ? "Google events show busy/free only. Drag across free 30-minute cells to choose both start and end." : "Sự kiện Google riêng tư chỉ hiện bận/rảnh. Kéo qua các ô trống 30 phút để chọn cả giờ bắt đầu và kết thúc."}</p>
-          {bookingParticipantIds.length > 0 && <div className={styles.weekPeople}>
-            {bookingParticipantIds.map((id) => {
-              const person = roster.find((entry) => entry.id === id);
-              const calendar = weekAvailabilityCurrent ? weekAvailability?.calendars.find((entry) => entry.participant_id === id) : undefined;
-              const statusValue = calendar?.status || "UNAVAILABLE";
-              const hint = id === organizerId && statusValue === "AVAILABLE" && !calendar?.can_create_events
-                ? (en ? "This interviewer must reconnect to allow ATS to create events." : "Người phỏng vấn này cần kết nối lại để ATS được tạo lịch.")
-                : statusValue === "NOT_CONNECTED"
-                  ? (en ? "This person must connect Google Calendar from their ATS account." : "Người này cần tự kết nối Google Calendar trong tài khoản ATS.")
-                  : "";
-              return <div className={styles.weekPerson} key={id}><strong>{person?.display_name || id}</strong><span>{weekAvailabilityBusy ? (en ? "Checking…" : "Đang kiểm tra…") : googleStatusLabel(statusValue)}</span>{hint && <small>{hint}</small>}</div>;
-            })}
-          </div>}
           {weekAvailabilityError && <p role="alert" className={styles.error}>{weekAvailabilityError}</p>}
           <div className={styles.weekLegend}><span><i className={styles.legendGoogle} />Google Busy</span><span><i className={styles.legendAts} />{en ? "ATS interview" : "Lịch phỏng vấn ATS"}</span><span><i className={styles.legendSelected} />{en ? "Selected" : "Đang chọn"}</span></div>
-          {bookingApplicationId && bookingParticipantIds.length > 0 ? <div ref={weekCalendarRef} className={styles.weekCalendar}>
-            <div className={styles.weekHeader}><span title={bookingTimezone}>{timezoneLabel}</span>{calendarDays.map((day) => <strong key={dateKey(day)}><small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { weekday: "short" }).format(day)}</small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" }).format(day)}</strong>)}</div>
-            <div ref={weekRowsRef} className={styles.weekRows} data-calendar-rows="true" onPointerDown={onCalendarPointerDown} onPointerMove={onCalendarPointerMove} onPointerUp={onCalendarPointerUp} onPointerCancel={onCalendarPointerUp}>
-              {calendarCells.map((index) => {
-                const minute = 7 * 60 + index * 30;
-                const timeLabel = String(Math.floor(minute / 60)).padStart(2, "0") + ":" + String(minute % 60).padStart(2, "0");
-                return <div className={styles.weekRow} key={timeLabel}><span className={styles.weekTime}>{timeLabel}</span>{calendarDays.map((day) => {
-                  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Math.floor(minute / 60), minute % 60);
-                  const end = new Date(start.getTime() + 30 * 60_000);
-                  const rangeOk = end.getHours() < 21 || (end.getHours() === 21 && end.getMinutes() === 0);
-                  const cellSlots = weekAvailabilityCurrent && weekAvailability ? weekAvailability.slots.filter((slot) => overlaps(start.getTime(), end.getTime(), slot)) : [];
-                  const cellInterviews = visibleBookingInterviews.filter((item) => Date.parse(item.starts_at) < end.getTime() && Date.parse(item.ends_at) > start.getTime());
-                  const past = start.getTime() <= Date.now();
-                  const selected = Boolean(bookingStart && new Date(bookingStart).getTime() < end.getTime() && new Date(bookingEnd).getTime() > start.getTime());
-                  const selectedStart = selected && start.getTime() === bookingStartMs;
-                  const selectedEnd = selected && end.getTime() === bookingEndMs;
-                  const unknown = !weekAvailabilityCurrent || bookingHasUnknownCalendar || weekAvailabilityBusy || Boolean(weekAvailabilityError);
-                  const disabled = past || unknown || !rangeOk || cellSlots.length > 0;
-                  const hasGoogle = cellSlots.some((slot) => slot.source === "GOOGLE");
-                  const hasAts = cellSlots.some((slot) => slot.source === "ATS");
-                  const source = hasGoogle && hasAts ? "Google + ATS" : hasGoogle ? "Google Busy" : cellSlots.length ? (en ? "ATS busy" : "ATS bận") : "";
-                  const people = cellSlots.map((slot) => roster.find((person) => person.id === slot.participant_id)?.display_name || "").filter(Boolean).join(", ");
-                  const title = cellInterviews.length ? (en ? `Interview · ${cellInterviews.map((item) => item.candidate_name).join(", ")}` : `Phỏng vấn · ${cellInterviews.map((item) => item.candidate_name).join(", ")}`) : cellSlots.length ? source + (people ? ": " + people : "") : unknown ? (en ? "Calendar availability is not verified" : "Chưa xác minh được lịch") : timeLabel;
-                  const classes = [styles.weekCell, unknown && !past ? styles.weekUnknown : "", selected ? styles.weekSelected : "", selectedStart ? styles.weekSelectedStart : "", selectedEnd ? styles.weekSelectedEnd : ""].filter(Boolean).join(" ");
-                  return <button key={`${dateKey(day)}-${index}`} type="button" data-calendar-slot="true" data-day={dateKey(day)} data-index={index} data-range-selected={selected || undefined} data-selected-start={selectedStart || undefined} data-selected-end={selectedEnd || undefined} aria-disabled={disabled} className={classes} disabled={disabled} title={selectedStart ? `${en ? "Starts" : "Bắt đầu"} ${timeLabel}` : selectedEnd ? `${en ? "Ends" : "Kết thúc"} ${String(Math.floor((minute + 30) / 60)).padStart(2, "0")}:${String((minute + 30) % 60).padStart(2, "0")}` : title} aria-label={new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full" }).format(day) + " " + timeLabel + (cellInterviews.length ? ", " + title : source ? ", " + source : "")} onClick={(event) => { if (event.detail === 0) applyCalendarRange(day, index, index); }} />;
-                })}</div>;
-              })}
-              <div className={styles.weekEventLayer} aria-hidden="true">
-                {calendarDays.flatMap((day, dayIndex) => {
-                  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 7, 0).getTime();
-                  const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 21, 0).getTime();
-                  const formatTime = (value: number) => new Intl.DateTimeFormat(en ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", hour12: en, timeZone: bookingTimezone }).format(new Date(value));
-                  const left = `calc(58px + ((100% - 58px) / 7 * ${dayIndex}) + 3px)`;
-                  const width = "calc((100% - 58px) / 7 - 6px)";
-                  const card = (key: string, start: number, end: number, title: string, kind: "google" | "ats" | "selected") => {
-                    const clippedStart = Math.max(start, dayStart);
-                    const clippedEnd = Math.min(end, dayEnd);
-                    if (clippedEnd <= clippedStart) return null;
-                    const top = (clippedStart - dayStart) / 60_000 * (32 / 30);
-                    const height = (clippedEnd - clippedStart) / 60_000 * (32 / 30);
-                    return <div key={key} className={`${styles.weekEvent} ${kind === "google" ? styles.weekEventGoogle : kind === "ats" ? styles.weekEventAts : styles.weekEventSelected}`} data-calendar-event={kind} style={{ top, height: Math.max(height, 24), left, width }}>
-                      <strong>{title}</strong><small>{formatTime(start)}–{formatTime(end)}</small>
-                    </div>;
-                  };
-                  const dayInterviews = visibleBookingInterviews.filter((item) => {
-                    const starts = Date.parse(item.starts_at); const ends = Date.parse(item.ends_at);
-                    return starts < dayEnd && ends > dayStart;
-                  });
-                  const interviewCards = dayInterviews.map((item) => {
-                    const starts = Date.parse(item.starts_at); const ends = Date.parse(item.ends_at);
-                    return card(`interview-${item.id}-${dayIndex}`, starts, ends, `${en ? "Interview" : "Phỏng vấn"} | ${item.job_code || item.candidate_name}`, "ats");
-                  });
-                  const busyCards = (weekAvailabilityCurrent ? weekAvailability?.slots || [] : [])
-                    .filter((slot) => bookingParticipantIds.includes(slot.participant_id))
-                    .filter((slot) => Date.parse(slot.starts_at) < dayEnd && Date.parse(slot.ends_at) > dayStart)
-                    .filter((slot) => slot.source !== "ATS" || !dayInterviews.some((item) => Date.parse(item.starts_at) < Date.parse(slot.ends_at) && Date.parse(item.ends_at) > Date.parse(slot.starts_at)))
-                    .map((slot) => card(`${slot.source}-${slot.participant_id}-${slot.starts_at}-${dayIndex}`, Date.parse(slot.starts_at), Date.parse(slot.ends_at), slot.source === "GOOGLE" ? (en ? "Busy" : "Bận") : (en ? "ATS busy" : "ATS bận"), slot.source === "GOOGLE" ? "google" : "ats"));
-                  const selectedStartDate = bookingStart ? new Date(bookingStart) : null;
-                  const selectedEndDate = bookingEnd ? new Date(bookingEnd) : null;
-                  const selectedCard = selectedStartDate && selectedEndDate && dateKey(selectedStartDate) === dateKey(day)
-                    ? card(`selected-${dayIndex}`, selectedStartDate.getTime(), selectedEndDate.getTime(), `${en ? "Interview" : "Phỏng vấn"} | ${selectedApplication?.candidate_name || ""}`, "selected")
-                    : null;
-                  return [...busyCards, ...interviewCards, selectedCard];
-                })}
-              </div>
-            </div>
+          {bookingApplicationId && bookingParticipantIds.length > 0 ? <div className={styles.weekInterviewerGrid}>
+            {bookingParticipantIds.map((participantId) => {
+              const person = roster.find((entry) => entry.id === participantId);
+              const calendarStatus = weekAvailabilityCurrent ? weekAvailability?.calendars.find((entry) => entry.participant_id === participantId) : undefined;
+              const statusValue = calendarStatus?.status || "UNAVAILABLE";
+              const personSlots = weekAvailabilityCurrent ? weekAvailability?.slots.filter((slot) => slot.participant_id === participantId) || [] : [];
+              return <section className={styles.weekInterviewerCard} key={participantId} aria-label={`${en ? "Calendar for" : "Lịch của"} ${person?.display_name || participantId}`}>
+                <div className={styles.weekInterviewerHeading}><strong>{person?.display_name || participantId}</strong><span>{weekAvailabilityBusy ? (en ? "Checking Google Calendar…" : "Đang kiểm tra Google Calendar…") : googleStatusLabel(statusValue)}</span></div>
+                <div className={styles.weekInterviewerCalendar} data-interviewer-calendar="true">
+                  <div className={styles.weekMiniHeader}><span title={bookingTimezone}>{timezoneLabel}</span>{calendarDays.map((day) => <strong key={dateKey(day)}><small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { weekday: "short" }).format(day)}</small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" }).format(day)}</strong>)}</div>
+                  <div className={`${styles.weekRows} ${styles.weekMiniRows}`} data-calendar-rows="true" onPointerDown={onCalendarPointerDown} onPointerMove={onCalendarPointerMove} onPointerUp={onCalendarPointerUp} onPointerCancel={onCalendarPointerUp}>
+                    {calendarCells.map((index) => {
+                      const minute = 7 * 60 + index * 30;
+                      const timeLabel = String(Math.floor(minute / 60)).padStart(2, "0") + ":" + String(minute % 60).padStart(2, "0");
+                      return <div className={`${styles.weekRow} ${styles.weekMiniRow}`} key={timeLabel} role="row"><span className={`${styles.weekTime} ${styles.weekMiniTime}`} role="rowheader">{timeLabel}</span>{calendarDays.map((day) => {
+                        const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Math.floor(minute / 60), minute % 60);
+                        const end = new Date(start.getTime() + 30 * 60_000);
+                        const rangeOk = end.getHours() < 21 || (end.getHours() === 21 && end.getMinutes() === 0);
+                        const groupSlots = weekAvailabilityCurrent && weekAvailability ? weekAvailability.slots.filter((slot) => overlaps(start.getTime(), end.getTime(), slot)) : [];
+                        const ownSlots = groupSlots.filter((slot) => slot.participant_id === participantId);
+                        const otherBusyNames = [...new Set(groupSlots.filter((slot) => slot.participant_id !== participantId).map((slot) => roster.find((entry) => entry.id === slot.participant_id)?.display_name).filter(Boolean))];
+                        const personInterviews = visibleBookingInterviews.filter((item) => item.participants.some((entry) => entry.id === participantId) && Date.parse(item.starts_at) < end.getTime() && Date.parse(item.ends_at) > start.getTime());
+                        const past = start.getTime() <= Date.now();
+                        const selected = Boolean(bookingStart && new Date(bookingStart).getTime() < end.getTime() && new Date(bookingEnd).getTime() > start.getTime());
+                        const selectedStart = selected && start.getTime() === bookingStartMs;
+                        const selectedEnd = selected && end.getTime() === bookingEndMs;
+                        const unknown = !weekAvailabilityCurrent || bookingHasUnknownCalendar || weekAvailabilityBusy || Boolean(weekAvailabilityError);
+                        const disabled = past || unknown || !rangeOk || groupSlots.length > 0;
+                        const hasGoogle = ownSlots.some((slot) => slot.source === "GOOGLE");
+                        const hasAts = ownSlots.some((slot) => slot.source === "ATS");
+                        const otherText = otherBusyNames.length ? (en ? `Another interviewer is busy: ${otherBusyNames.join(", ")}` : `Người phỏng vấn khác đang bận: ${otherBusyNames.join(", ")}`) : "";
+                        const busyText = hasGoogle && hasAts ? "Google + ATS Busy" : hasGoogle ? "Google Busy" : hasAts ? (en ? "ATS busy" : "ATS bận") : "";
+                        const title = ownSlots.length ? `${busyText}${personInterviews.length ? ` · ${personInterviews.map((item) => item.candidate_name).join(", ")}` : ""}` : otherText || (personInterviews.length ? (en ? `Interview · ${personInterviews.map((item) => item.candidate_name).join(", ")}` : `Phỏng vấn · ${personInterviews.map((item) => item.candidate_name).join(", ")}`) : unknown ? (en ? "Calendar availability is not verified" : "Chưa xác minh được lịch") : timeLabel);
+                        const classes = [styles.weekCell, styles.weekMiniCell, unknown && !past ? styles.weekUnknown : "", hasGoogle ? styles.weekMiniGoogleBusy : hasAts ? styles.weekMiniAtsBusy : groupSlots.length ? styles.weekMiniGroupConflict : "", selected ? styles.weekSelected : "", selectedStart ? styles.weekSelectedStart : "", selectedEnd ? styles.weekSelectedEnd : ""].filter(Boolean).join(" ");
+                        return <button key={`${participantId}-${dateKey(day)}-${index}`} type="button" role="gridcell" data-calendar-slot="true" data-participant-id={participantId} data-day={dateKey(day)} data-index={index} data-range-selected={selected || undefined} data-selected-start={selectedStart || undefined} data-selected-end={selectedEnd || undefined} aria-disabled={disabled} className={classes} disabled={disabled} title={selectedStart ? `${en ? "Starts" : "Bắt đầu"} ${timeLabel}` : selectedEnd ? `${en ? "Ends" : "Kết thúc"} ${String(Math.floor((minute + 30) / 60)).padStart(2, "0")}:${String((minute + 30) % 60).padStart(2, "0")}` : title} aria-label={`${person?.display_name || participantId} · ${new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full" }).format(day)} ${timeLabel}${title ? ` · ${title}` : ""}`} onClick={(event) => { if (event.detail === 0) applyCalendarRange(day, index, index); }} />;
+                      })}</div>;
+                    })}
+                    <div className={styles.weekEventLayer} aria-hidden="true">
+                      {calendarDays.flatMap((day, dayIndex) => {
+                        const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 7, 0).getTime();
+                        const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 21, 0).getTime();
+                        const formatTime = (value: number) => new Intl.DateTimeFormat(en ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", hour12: en, timeZone: bookingTimezone }).format(new Date(value));
+                        const left = `calc(46px + ((100% - 46px) / 7 * ${dayIndex}) + 2px)`;
+                        const width = "calc((100% - 46px) / 7 - 4px)";
+                        const card = (key: string, start: number, end: number, title: string, kind: "google" | "ats" | "selected") => {
+                          const clippedStart = Math.max(start, dayStart);
+                          const clippedEnd = Math.min(end, dayEnd);
+                          if (clippedEnd <= clippedStart) return null;
+                          const top = (clippedStart - dayStart) / 60_000 * (18 / 30);
+                          const height = (clippedEnd - clippedStart) / 60_000 * (18 / 30);
+                          return <div key={key} className={`${styles.weekEvent} ${kind === "google" ? styles.weekEventGoogle : kind === "ats" ? styles.weekEventAts : styles.weekEventSelected}`} data-calendar-event={kind} style={{ top, height: Math.max(height, 18), left, width }}>
+                            <strong>{title}</strong><small>{formatTime(start)}–{formatTime(end)}</small>
+                          </div>;
+                        };
+                        const dayInterviews = visibleBookingInterviews.filter((item) => item.participants.some((entry) => entry.id === participantId) && Date.parse(item.starts_at) < dayEnd && Date.parse(item.ends_at) > dayStart);
+                        const interviewCards = dayInterviews.map((item) => card(`interview-${participantId}-${item.id}-${dayIndex}`, Date.parse(item.starts_at), Date.parse(item.ends_at), `${en ? "Interview" : "Phỏng vấn"} | ${item.job_code || item.candidate_name}`, "ats"));
+                        const busyCards = personSlots.filter((slot) => Date.parse(slot.starts_at) < dayEnd && Date.parse(slot.ends_at) > dayStart)
+                          .filter((slot) => slot.source !== "ATS" || !dayInterviews.some((item) => Date.parse(item.starts_at) < Date.parse(slot.ends_at) && Date.parse(item.ends_at) > Date.parse(slot.starts_at)))
+                          .map((slot) => card(`${slot.source}-${participantId}-${slot.starts_at}-${dayIndex}`, Date.parse(slot.starts_at), Date.parse(slot.ends_at), slot.source === "GOOGLE" ? (en ? "Busy" : "Bận") : (en ? "ATS busy" : "ATS bận"), slot.source === "GOOGLE" ? "google" : "ats"));
+                        const selectedStartDate = bookingStart ? new Date(bookingStart) : null;
+                        const selectedEndDate = bookingEnd ? new Date(bookingEnd) : null;
+                        const selectedCard = selectedStartDate && selectedEndDate && dateKey(selectedStartDate) === dateKey(day)
+                          ? card(`selected-${participantId}-${dayIndex}`, selectedStartDate.getTime(), selectedEndDate.getTime(), `${en ? "Interview" : "Phỏng vấn"} | ${selectedApplication?.candidate_name || ""}`, "selected")
+                          : null;
+                        return [...busyCards, ...interviewCards, selectedCard];
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </section>;
+            })}
           </div> : <p className={styles.empty}>{en ? "Choose a candidate and at least one interviewer to load the week." : "Chọn ứng viên và ít nhất một người phỏng vấn để xem lịch tuần."}</p>}
         </section>
         <label className={styles.bookingField}><span>{en ? "Notes (optional)" : "Ghi chú (không bắt buộc)"}</span><textarea maxLength={4000} rows={3} value={bookingNote} onChange={(event) => setBookingNote(event.target.value)} /></label>
