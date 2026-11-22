@@ -219,6 +219,11 @@
 .bookingParticipants label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:3px 8px;min-width:min(100%,230px);color:#273b52}
 .bookingParticipants label input{grid-row:span 2}
 .bookingParticipants label small{color:#69798d}
+.bookingParticipants label input{grid-row:span 3}
+.bookingParticipants .bookingCalendarStatus{color:#68798d;font-size:11px}
+.bookingParticipantHint{flex:1 0 100%;margin:0;color:#69798d;font-size:12px;line-height:1.4}
+.bookingParticipantName{display:flex;min-width:0;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bookingParticipantName i{flex:0 0 9px;width:9px;height:9px;border-radius:50%}
 .bookingNotice{padding:10px 12px;border-left:3px solid #2586b8;background:#f2f8fc}
 .bookingAvailabilityRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 12px;border:1px solid #dfe6ed;border-radius:6px;background:#f8fafc;color:#42546a;font-size:var(--ats-font-body)}
 .bookingAvailabilityRow strong{color:#20334a}
@@ -449,27 +454,14 @@
 .bookingNotice{border-left-width:3px;border-radius:0 7px 7px 0}
 .bookingActions{padding-top:4px}
 .bookButton{min-height:44px;border-radius:7px;box-shadow:0 2px 4px #df001b20}
-.weekInterviewerGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:12px;align-items:start}
-.weekInterviewerCard{min-width:0;overflow:hidden;border:1px solid #d7e0e9;border-radius:8px;background:#fff}
-.weekInterviewerHeading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-bottom:1px solid #e4eaf0;background:#f6f9fc;color:#20334a;font-size:13px}
-.weekInterviewerHeading strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.weekInterviewerHeading span{flex:0 0 auto;color:#61748a;font-size:11px}
-.weekInterviewerCalendar{max-height:520px;overflow:auto;overscroll-behavior:contain}
-.weekMiniHeader,.weekMiniRow{display:grid;grid-template-columns:46px repeat(7,minmax(0,1fr));min-width:0}
-.weekMiniHeader{position:sticky;top:0;z-index:5;min-height:48px;background:#fff;border-bottom:1px solid #cbd5e1}
-.weekMiniHeader>span,.weekMiniHeader>strong{display:flex;min-width:0;flex-direction:column;justify-content:center;align-items:center;padding:3px 1px;border-right:1px solid #e4e9ef;color:#20334a;font-size:11px;overflow:hidden}
-.weekMiniHeader>span{position:sticky;left:0;z-index:6;background:#f6f8fb;color:#61748a;font-size:9px;white-space:nowrap}
-.weekMiniHeader>strong small{color:#61748a;font-size:9px;font-weight:650;text-transform:uppercase}
-.weekMiniRows{min-width:0}
-.weekMiniRow{min-height:22px}
-.weekMiniTime,.weekMiniCell{height:22px}
-.weekMiniTime{z-index:2;padding-top:4px;background:#f8fafc;font-size:9px}
-.weekMiniCell{padding:0;border-right-color:#e8edf2;border-bottom-color:#e8edf2}
 .weekMiniGoogleBusy{background:#fff0f0;color:#96323c}
 .weekMiniAtsBusy{background:#edf5ff;color:#17659b}
-.weekMiniGroupConflict{background:#f1f4f7;color:#657487}
-.weekMiniCell.weekSelected{z-index:3}
-.weekInterviewerCalendar .weekEventLayer{z-index:4}
+.weekRows{--week-row-height:32px}
+.weekRow{min-height:var(--week-row-height)}
+.weekTime,.weekCell{height:var(--week-row-height)}
+.weekEventLayer{display:grid;grid-template-columns:58px repeat(7,minmax(104px,1fr));grid-template-rows:1fr;min-width:790px}
+.weekDayEvents{position:relative;grid-row:1;min-width:0;height:100%}
+.weekDayEvents .weekEvent{right:auto;box-sizing:border-box;overflow:hidden}
 .subTabs{
   gap:8px;
   margin:0 0 14px;
@@ -525,6 +517,4 @@
   .weekToolbar{grid-template-columns:minmax(0,1fr) auto}
   .weekToolbar>span{grid-column:1/-1}
   .weekControls{margin-left:0}
-  .weekInterviewerGrid{grid-template-columns:minmax(0,1fr)}
-  .weekInterviewerHeading{align-items:flex-start;flex-direction:column}
 }
