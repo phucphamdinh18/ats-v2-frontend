@@ -14,9 +14,16 @@
 .actions {margin-left:auto;position:relative}
 .outline {display:inline-flex;align-items:center;gap:9px;justify-content:center;border:1px solid #bfc9d6;border-radius:5px;background:#fff;color:#172c43;padding:9px 15px;font-size:var(--ats-font-body);font-weight:700}
 .outline:hover {background:#f4f6f8}
-.actionMenu {position:absolute;right:0;top:calc(100% + 5px);z-index:5;background:#fff;border:1px solid #cad3de;box-shadow:0 9px 22px #13253c22;border-radius:6px;min-width:190px;padding:5px}
-.actionMenu button {display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-radius:3px;color:#1d314a;font-size:var(--ats-font-body)}
+.jobActionsTrigger{display:inline-flex;align-items:center;gap:9px;min-height:42px;padding:8px 15px;border:1px solid #d90018;border-radius:5px;background:#df001b;color:#fff;font-size:var(--ats-font-body);font-weight:750}
+.jobActionsTrigger:hover{background:#bf0017}
+.actionMenu {position:absolute;right:0;top:calc(100% + 5px);z-index:20;background:#fff;border:1px solid #cad3de;box-shadow:0 9px 22px #13253c22;border-radius:6px;min-width:270px;max-width:min(360px,calc(100vw - 28px));padding:5px}
+.actionMenu button {display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-radius:3px;color:#1d314a;font-size:var(--ats-font-body)}
 .actionMenu button:hover {background:#f1f4f8}
+.actionMenu button:disabled{color:#77869a;cursor:not-allowed;opacity:.7}
+.actionMenu button:disabled:hover{background:#fff}
+.actionMenu button svg{flex:0 0 auto;color:#1765a8}
+.actionMenu button span{min-width:0;font-weight:700}
+.actionMenu button small{display:block;margin-top:3px;color:#6c7a8c;font-size:var(--ats-font-meta);font-weight:500;overflow-wrap:anywhere}
 .metadata {display:flex;flex-wrap:wrap;align-items:center;gap:0;margin-bottom:22px;font-size:var(--ats-font-body);color:#27374d}
 .metadata span {display:inline-flex;align-items:center;gap:8px;padding:0 17px;border-right:1px solid #d1d8e2;min-height:20px}
 .metadata span:first-child {padding-left:0}
@@ -200,6 +207,11 @@
 .bookingPanel p{margin:5px 0 0;color:#5f6f82;font-size:var(--ats-font-body);line-height:1.5}
 .bookingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .bookingField{display:flex;min-width:0;flex-direction:column;gap:6px;color:#273b52;font-size:var(--ats-font-body);font-weight:650}
+.bookingSelectedCandidate{min-height:74px;align-items:flex-start;justify-content:center;padding:8px 11px;border:1px solid #b8cce0;border-radius:5px;background:#f7fbff}
+.bookingSelectedCandidate strong{color:#153d65;font-size:var(--ats-font-body)}
+.bookingSelectedCandidate small{color:#66798e;font-size:var(--ats-font-meta);font-weight:500}
+.changeCandidate{padding:2px 0;border:0;background:none;color:#0755af;font-size:var(--ats-font-meta);font-weight:700;cursor:pointer}
+.changeCandidate:hover{text-decoration:underline}
 .bookingField input,.bookingField select,.bookingField textarea{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#20334a;font:inherit;font-weight:500}
 .bookingField textarea{resize:vertical}
 .bookingParticipants{display:flex;flex-wrap:wrap;gap:9px 16px;margin:0;padding:12px;border:1px solid #d8e1ec;border-radius:6px}

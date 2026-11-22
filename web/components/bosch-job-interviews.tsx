@@ -78,8 +78,8 @@ export function InterviewLifecycleActions({ item, en, onChanged, onAccessLost }:
   </section>;
 }
 
-export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterviews }: {
-  jobId: string; onAccessLost: () => void; onAllInterviews: () => void;
+export default function BoschJobInterviews({ jobId, initialApplicationId, onAccessLost, onAllInterviews }: {
+  jobId: string; initialApplicationId?: string; onAccessLost: () => void; onAllInterviews: () => void;
 }) {
   const { locale } = useLanguage();
   const en = locale === "en";
@@ -99,7 +99,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const [applications, setApplications] = useState<Application[]>([]);
   const [applicationsLoading, setApplicationsLoading] = useState(true);
   const [applicationsError, setApplicationsError] = useState("");
-  const [bookingApplicationId, setBookingApplicationId] = useState("");
+  const [bookingApplicationId, setBookingApplicationId] = useState(initialApplicationId || "");
   const [roster, setRoster] = useState<InterviewRosterMember[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState("");
@@ -149,7 +149,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const canCreateBooking = Boolean(bookingApplicationId && bookingParticipantIds.length && Number.isFinite(bookingStartMs) && Number.isFinite(bookingEndMs) && bookingStartMs > Date.now() && bookingEndMs > bookingStartMs && weekAvailabilityCurrent && !bookingHasUnknownCalendar && organizerCanCreateEvents && bookingConflicts.length === 0);
   useEffect(() => {
     let active = true;
-    setApplicationsLoading(true); setApplicationsError(""); setApplications([]); setBookingApplicationId(""); setRoster([]); setBookingParticipantIds([]);
+    setApplicationsLoading(true); setApplicationsError(""); setApplications([]); setBookingApplicationId(initialApplicationId || ""); setRoster([]); setBookingParticipantIds([]);
     void listApplications(jobId, 100, 0).then((result) => {
       if (!active) return;
       setApplications(result.applications);
@@ -159,7 +159,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     }).finally(() => { if (active) setApplicationsLoading(false); });
     return () => { active = false; };
-  }, [jobId, en, onAccessLost]);
+  }, [jobId, initialApplicationId, en, onAccessLost]);
   useEffect(() => {
     let active = true;
     setRoster([]); setBookingParticipantIds([]); setRosterError(""); setWeekAvailability(null); setBookingSuccess("");
@@ -420,10 +420,13 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       {applicationsLoading ? <p role="status">{en ? "Loading eligible applications…" : "Đang tải hồ sơ đủ điều kiện…"}</p> : eligibleApplications.length === 0 ?
         <p className={styles.empty}>{en ? "No active application is at Screening or Interview stage for this Job." : "Job này chưa có hồ sơ đang hoạt động ở vòng Sơ loại hoặc Phỏng vấn."}</p> : <>
         <div className={styles.bookingGrid}>
-          <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
+          {initialApplicationId && bookingApplicationId === initialApplicationId && selectedApplication ? <div className={`${styles.bookingField} ${styles.bookingSelectedCandidate}`} aria-label={en ? "Selected candidate" : "Ứng viên đã chọn"}>
+            <span>{en ? "Candidate" : "Ứng viên"}</span><strong>{selectedApplication.candidate_name}</strong><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
+            <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+          </div> : <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
             <option value="">{en ? "Choose a candidate" : "Chọn ứng viên"}</option>
             {eligibleApplications.map((item) => <option key={item.application_id} value={item.application_id}>{item.candidate_name} · {item.stage === "SCREEN" ? (en ? "Screening" : "Sơ loại") : (en ? "Interview" : "Phỏng vấn")}</option>)}
-          </select></label>
+          </select></label>}
           <label className={styles.bookingField}><span>{en ? "Interview type" : "Loại phỏng vấn"}</span><select value={bookingType} onChange={(event) => setBookingType(event.target.value as typeof bookingType)}>
             <option value="PHONE_SCREEN">{en ? "Phone screen" : "Sơ loại qua điện thoại"}</option><option value="INTERVIEW">{en ? "Interview" : "Phỏng vấn"}</option><option value="FINAL">{en ? "Final interview" : "Phỏng vấn cuối"}</option>
           </select></label>
