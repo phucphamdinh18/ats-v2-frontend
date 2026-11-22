@@ -78,8 +78,8 @@ export function InterviewLifecycleActions({ item, en, onChanged, onAccessLost }:
   </section>;
 }
 
-export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterviews }: {
-  jobId: string; onAccessLost: () => void; onAllInterviews: () => void;
+export default function BoschJobInterviews({ jobId, initialApplicationId, onAccessLost, onAllInterviews }: {
+  jobId: string; initialApplicationId?: string; onAccessLost: () => void; onAllInterviews: () => void;
 }) {
   const { locale } = useLanguage();
   const en = locale === "en";
@@ -99,7 +99,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const [applications, setApplications] = useState<Application[]>([]);
   const [applicationsLoading, setApplicationsLoading] = useState(true);
   const [applicationsError, setApplicationsError] = useState("");
-  const [bookingApplicationId, setBookingApplicationId] = useState("");
+  const [bookingApplicationId, setBookingApplicationId] = useState(initialApplicationId || "");
   const [roster, setRoster] = useState<InterviewRosterMember[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState("");
@@ -132,6 +132,8 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const eligibleApplications = applications.filter((item) => item.status === "ACTIVE" && ["SCREEN", "INTERVIEW"].includes(item.stage));
   const selectedApplication = eligibleApplications.find((item) => item.application_id === bookingApplicationId);
   const bookingTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Ho_Chi_Minh";
+  const timezoneLabel = new Intl.DateTimeFormat("en", { timeZone: bookingTimezone, timeZoneName: "shortOffset" })
+    .formatToParts(new Date()).find((part) => part.type === "timeZoneName")?.value || bookingTimezone;
   const calendarWeekStart = sundayOf(weekAnchor);
   const calendarWeekEnd = addDays(calendarWeekStart, 7);
   const weekSignature = `${bookingApplicationId}|${[...bookingParticipantIds].sort().join(",")}|${calendarWeekStart.toISOString()}|${calendarWeekEnd.toISOString()}|${bookingTimezone}`;
@@ -147,7 +149,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
   const canCreateBooking = Boolean(bookingApplicationId && bookingParticipantIds.length && Number.isFinite(bookingStartMs) && Number.isFinite(bookingEndMs) && bookingStartMs > Date.now() && bookingEndMs > bookingStartMs && weekAvailabilityCurrent && !bookingHasUnknownCalendar && organizerCanCreateEvents && bookingConflicts.length === 0);
   useEffect(() => {
     let active = true;
-    setApplicationsLoading(true); setApplicationsError(""); setApplications([]); setBookingApplicationId(""); setRoster([]); setBookingParticipantIds([]);
+    setApplicationsLoading(true); setApplicationsError(""); setApplications([]); setBookingApplicationId(initialApplicationId || ""); setRoster([]); setBookingParticipantIds([]);
     void listApplications(jobId, 100, 0).then((result) => {
       if (!active) return;
       setApplications(result.applications);
@@ -157,7 +159,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
     }).finally(() => { if (active) setApplicationsLoading(false); });
     return () => { active = false; };
-  }, [jobId, en, onAccessLost]);
+  }, [jobId, initialApplicationId, en, onAccessLost]);
   useEffect(() => {
     let active = true;
     setRoster([]); setBookingParticipantIds([]); setRosterError(""); setWeekAvailability(null); setBookingSuccess("");
@@ -409,7 +411,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
     setWeekAnchor((current) => addDays(current, amount * 7));
     setBookingStart(""); setBookingEnd(""); setBookingError("");
   }
-  return <section className={styles.aux} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
+  return <section className={`${styles.aux} ${styles.interviewWorkspace}`} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
     <div className={styles.sectionHead}><div><h2>{en ? "Interview Schedule" : "Lịch phỏng vấn theo Job"}</h2><p>{en ? "Read-only schedule records from your authorized worklist." : "Lịch theo quyền truy cập của bạn; không thay đổi lịch hay feedback."}</p></div>
       <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
@@ -418,10 +420,13 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
       {applicationsLoading ? <p role="status">{en ? "Loading eligible applications…" : "Đang tải hồ sơ đủ điều kiện…"}</p> : eligibleApplications.length === 0 ?
         <p className={styles.empty}>{en ? "No active application is at Screening or Interview stage for this Job." : "Job này chưa có hồ sơ đang hoạt động ở vòng Sơ loại hoặc Phỏng vấn."}</p> : <>
         <div className={styles.bookingGrid}>
-          <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
+          {initialApplicationId && bookingApplicationId === initialApplicationId && selectedApplication ? <div className={`${styles.bookingField} ${styles.bookingSelectedCandidate}`} aria-label={en ? "Selected candidate" : "Ứng viên đã chọn"}>
+            <span>{en ? "Candidate" : "Ứng viên"}</span><strong>{selectedApplication.candidate_name}</strong><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
+            <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+          </div> : <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
             <option value="">{en ? "Choose a candidate" : "Chọn ứng viên"}</option>
             {eligibleApplications.map((item) => <option key={item.application_id} value={item.application_id}>{item.candidate_name} · {item.stage === "SCREEN" ? (en ? "Screening" : "Sơ loại") : (en ? "Interview" : "Phỏng vấn")}</option>)}
-          </select></label>
+          </select></label>}
           <label className={styles.bookingField}><span>{en ? "Interview type" : "Loại phỏng vấn"}</span><select value={bookingType} onChange={(event) => setBookingType(event.target.value as typeof bookingType)}>
             <option value="PHONE_SCREEN">{en ? "Phone screen" : "Sơ loại qua điện thoại"}</option><option value="INTERVIEW">{en ? "Interview" : "Phỏng vấn"}</option><option value="FINAL">{en ? "Final interview" : "Phỏng vấn cuối"}</option>
           </select></label>
@@ -458,7 +463,7 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
           {weekAvailabilityError && <p role="alert" className={styles.error}>{weekAvailabilityError}</p>}
           <div className={styles.weekLegend}><span><i className={styles.legendGoogle} />Google Busy</span><span><i className={styles.legendAts} />{en ? "ATS interview" : "Lịch phỏng vấn ATS"}</span><span><i className={styles.legendSelected} />{en ? "Selected" : "Đang chọn"}</span></div>
           {bookingApplicationId && bookingParticipantIds.length > 0 ? <div ref={weekCalendarRef} className={styles.weekCalendar}>
-            <div className={styles.weekHeader}><span>{bookingTimezone}</span>{calendarDays.map((day) => <strong key={dateKey(day)}><small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { weekday: "short" }).format(day)}</small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" }).format(day)}</strong>)}</div>
+            <div className={styles.weekHeader}><span title={bookingTimezone}>{timezoneLabel}</span>{calendarDays.map((day) => <strong key={dateKey(day)}><small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { weekday: "short" }).format(day)}</small>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { day: "numeric", month: "numeric" }).format(day)}</strong>)}</div>
             <div ref={weekRowsRef} className={styles.weekRows} data-calendar-rows="true" onPointerDown={onCalendarPointerDown} onPointerMove={onCalendarPointerMove} onPointerUp={onCalendarPointerUp} onPointerCancel={onCalendarPointerUp}>
               {calendarCells.map((index) => {
                 const minute = 7 * 60 + index * 30;
@@ -480,17 +485,50 @@ export default function BoschJobInterviews({ jobId, onAccessLost, onAllInterview
                   const source = hasGoogle && hasAts ? "Google + ATS" : hasGoogle ? "Google Busy" : cellSlots.length ? (en ? "ATS busy" : "ATS bận") : "";
                   const people = cellSlots.map((slot) => roster.find((person) => person.id === slot.participant_id)?.display_name || "").filter(Boolean).join(", ");
                   const title = cellInterviews.length ? (en ? `Interview · ${cellInterviews.map((item) => item.candidate_name).join(", ")}` : `Phỏng vấn · ${cellInterviews.map((item) => item.candidate_name).join(", ")}`) : cellSlots.length ? source + (people ? ": " + people : "") : unknown ? (en ? "Calendar availability is not verified" : "Chưa xác minh được lịch") : timeLabel;
-                  const slotBeginsHere = cellSlots.some((slot) => { const slotStart = Date.parse(slot.starts_at); return slotStart >= start.getTime() && slotStart < start.getTime() + 30 * 60_000; });
-                  const interviewBeginsHere = cellInterviews.some((item) => Date.parse(item.starts_at) >= start.getTime() && Date.parse(item.starts_at) < end.getTime());
-                  const classes = [styles.weekCell, cellInterviews.length ? styles.weekAtsInterview : hasGoogle && hasAts ? styles.weekMixedBusy : cellSlots.length ? (hasGoogle ? styles.weekGoogleBusy : styles.weekAtsBusy) : "", unknown && !past ? styles.weekUnknown : "", selected ? styles.weekSelected : "", selectedStart ? styles.weekSelectedStart : "", selectedEnd ? styles.weekSelectedEnd : ""].filter(Boolean).join(" ");
-                  return <button key={`${dateKey(day)}-${index}`} type="button" data-calendar-slot="true" data-day={dateKey(day)} data-index={index} data-range-selected={selected || undefined} data-selected-start={selectedStart || undefined} data-selected-end={selectedEnd || undefined} aria-disabled={disabled} className={classes} disabled={disabled} title={selectedStart ? `${en ? "Starts" : "Bắt đầu"} ${timeLabel}` : selectedEnd ? `${en ? "Ends" : "Kết thúc"} ${String(Math.floor((minute + 30) / 60)).padStart(2, "0")}:${String((minute + 30) % 60).padStart(2, "0")}` : title} aria-label={new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full" }).format(day) + " " + timeLabel + (cellInterviews.length ? ", " + title : source ? ", " + source : "")} onClick={(event) => { if (event.detail === 0) applyCalendarRange(day, index, index); }}>
-                    {selected ? <>{selectedStart && <span className={`${styles.selectedCellLabel} ${styles.selectedCellStart}`}>{timeLabel}</span>}{selectedEnd && <span className={`${styles.selectedCellLabel} ${styles.selectedCellEnd}`}>{String(Math.floor((minute + 30) / 60)).padStart(2, "0")}:{String((minute + 30) % 60).padStart(2, "0")}</span>}</> : interviewBeginsHere ? `${en ? "Interview" : "Phỏng vấn"} · ${cellInterviews.filter((item) => Date.parse(item.starts_at) >= start.getTime() && Date.parse(item.starts_at) < end.getTime()).map((item) => item.candidate_name).join(", ")}` : slotBeginsHere && !cellInterviews.length ? source : ""}
-                  </button>;
+                  const classes = [styles.weekCell, unknown && !past ? styles.weekUnknown : "", selected ? styles.weekSelected : "", selectedStart ? styles.weekSelectedStart : "", selectedEnd ? styles.weekSelectedEnd : ""].filter(Boolean).join(" ");
+                  return <button key={`${dateKey(day)}-${index}`} type="button" data-calendar-slot="true" data-day={dateKey(day)} data-index={index} data-range-selected={selected || undefined} data-selected-start={selectedStart || undefined} data-selected-end={selectedEnd || undefined} aria-disabled={disabled} className={classes} disabled={disabled} title={selectedStart ? `${en ? "Starts" : "Bắt đầu"} ${timeLabel}` : selectedEnd ? `${en ? "Ends" : "Kết thúc"} ${String(Math.floor((minute + 30) / 60)).padStart(2, "0")}:${String((minute + 30) % 60).padStart(2, "0")}` : title} aria-label={new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full" }).format(day) + " " + timeLabel + (cellInterviews.length ? ", " + title : source ? ", " + source : "")} onClick={(event) => { if (event.detail === 0) applyCalendarRange(day, index, index); }} />;
                 })}</div>;
               })}
+              <div className={styles.weekEventLayer} aria-hidden="true">
+                {calendarDays.flatMap((day, dayIndex) => {
+                  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 7, 0).getTime();
+                  const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 21, 0).getTime();
+                  const formatTime = (value: number) => new Intl.DateTimeFormat(en ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", hour12: en, timeZone: bookingTimezone }).format(new Date(value));
+                  const left = `calc(58px + ((100% - 58px) / 7 * ${dayIndex}) + 3px)`;
+                  const width = "calc((100% - 58px) / 7 - 6px)";
+                  const card = (key: string, start: number, end: number, title: string, kind: "google" | "ats" | "selected") => {
+                    const clippedStart = Math.max(start, dayStart);
+                    const clippedEnd = Math.min(end, dayEnd);
+                    if (clippedEnd <= clippedStart) return null;
+                    const top = (clippedStart - dayStart) / 60_000 * (32 / 30);
+                    const height = (clippedEnd - clippedStart) / 60_000 * (32 / 30);
+                    return <div key={key} className={`${styles.weekEvent} ${kind === "google" ? styles.weekEventGoogle : kind === "ats" ? styles.weekEventAts : styles.weekEventSelected}`} data-calendar-event={kind} style={{ top, height: Math.max(height, 24), left, width }}>
+                      <strong>{title}</strong><small>{formatTime(start)}–{formatTime(end)}</small>
+                    </div>;
+                  };
+                  const dayInterviews = visibleBookingInterviews.filter((item) => {
+                    const starts = Date.parse(item.starts_at); const ends = Date.parse(item.ends_at);
+                    return starts < dayEnd && ends > dayStart;
+                  });
+                  const interviewCards = dayInterviews.map((item) => {
+                    const starts = Date.parse(item.starts_at); const ends = Date.parse(item.ends_at);
+                    return card(`interview-${item.id}-${dayIndex}`, starts, ends, `${en ? "Interview" : "Phỏng vấn"} | ${item.job_code || item.candidate_name}`, "ats");
+                  });
+                  const busyCards = (weekAvailabilityCurrent ? weekAvailability?.slots || [] : [])
+                    .filter((slot) => bookingParticipantIds.includes(slot.participant_id))
+                    .filter((slot) => Date.parse(slot.starts_at) < dayEnd && Date.parse(slot.ends_at) > dayStart)
+                    .filter((slot) => slot.source !== "ATS" || !dayInterviews.some((item) => Date.parse(item.starts_at) < Date.parse(slot.ends_at) && Date.parse(item.ends_at) > Date.parse(slot.starts_at)))
+                    .map((slot) => card(`${slot.source}-${slot.participant_id}-${slot.starts_at}-${dayIndex}`, Date.parse(slot.starts_at), Date.parse(slot.ends_at), slot.source === "GOOGLE" ? (en ? "Busy" : "Bận") : (en ? "ATS busy" : "ATS bận"), slot.source === "GOOGLE" ? "google" : "ats"));
+                  const selectedStartDate = bookingStart ? new Date(bookingStart) : null;
+                  const selectedEndDate = bookingEnd ? new Date(bookingEnd) : null;
+                  const selectedCard = selectedStartDate && selectedEndDate && dateKey(selectedStartDate) === dateKey(day)
+                    ? card(`selected-${dayIndex}`, selectedStartDate.getTime(), selectedEndDate.getTime(), `${en ? "Interview" : "Phỏng vấn"} | ${selectedApplication?.candidate_name || ""}`, "selected")
+                    : null;
+                  return [...busyCards, ...interviewCards, selectedCard];
+                })}
+              </div>
             </div>
           </div> : <p className={styles.empty}>{en ? "Choose a candidate and at least one interviewer to load the week." : "Chọn ứng viên và ít nhất một người phỏng vấn để xem lịch tuần."}</p>}
-          {bookingStart && Number.isFinite(bookingStartMs) && <p data-selected-range="true" className={styles.selectedTime}>{en ? "Selected" : "Đã chọn"}: <strong>{new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { dateStyle: "full", timeStyle: "short" }).format(new Date(bookingStartMs))} – {new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeStyle: "short" }).format(new Date(bookingEndMs))}</strong></p>}
         </section>
         <label className={styles.bookingField}><span>{en ? "Notes (optional)" : "Ghi chú (không bắt buộc)"}</span><textarea maxLength={4000} rows={3} value={bookingNote} onChange={(event) => setBookingNote(event.target.value)} /></label>
         <p className={styles.bookingNotice}>{en ? "Google Calendar creates the event on the first selected interviewer’s primary calendar. The backend checks the chosen time again before saving." : "Google Calendar sẽ tạo sự kiện trên lịch chính của người phỏng vấn đầu tiên. Backend kiểm tra lại khung giờ ngay trước khi lưu."}</p>
