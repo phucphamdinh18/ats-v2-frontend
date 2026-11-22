@@ -420,9 +420,12 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       {applicationsLoading ? <p role="status">{en ? "Loading eligible applications…" : "Đang tải hồ sơ đủ điều kiện…"}</p> : eligibleApplications.length === 0 ?
         <p className={styles.empty}>{en ? "No active application is at Screening or Interview stage for this Job." : "Job này chưa có hồ sơ đang hoạt động ở vòng Sơ loại hoặc Phỏng vấn."}</p> : <>
         <div className={styles.bookingGrid}>
-          {initialApplicationId && bookingApplicationId === initialApplicationId && selectedApplication ? <div className={`${styles.bookingField} ${styles.bookingSelectedCandidate}`} aria-label={en ? "Selected candidate" : "Ứng viên đã chọn"}>
-            <span>{en ? "Candidate" : "Ứng viên"}</span><strong>{selectedApplication.candidate_name}</strong><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
-            <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+          {initialApplicationId && bookingApplicationId === initialApplicationId && selectedApplication ? <div className={styles.bookingField}>
+            <span>{en ? "Candidate" : "Ứng viên"}</span>
+            <div className={styles.bookingSelectedCandidate} aria-label={en ? "Selected candidate" : "Ứng viên đã chọn"}>
+              <strong>{selectedApplication.candidate_name}</strong><small>{en ? "Interview stage · selected from this Job’s Pipeline" : "Vòng Phỏng vấn · đã chọn từ Pipeline của Job"}</small>
+              <button type="button" className={styles.changeCandidate} onClick={() => { setBookingApplicationId(""); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>{en ? "Choose another" : "Chọn ứng viên khác"}</button>
+            </div>
           </div> : <label className={styles.bookingField}><span>{en ? "Candidate" : "Ứng viên"}</span><select value={bookingApplicationId} onChange={(event) => { setBookingApplicationId(event.target.value); setBookingStart(""); setBookingEnd(""); setBookingError(""); }}>
             <option value="">{en ? "Choose a candidate" : "Chọn ứng viên"}</option>
             {eligibleApplications.map((item) => <option key={item.application_id} value={item.application_id}>{item.candidate_name} · {item.stage === "SCREEN" ? (en ? "Screening" : "Sơ loại") : (en ? "Interview" : "Phỏng vấn")}</option>)}

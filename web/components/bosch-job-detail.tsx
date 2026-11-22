@@ -49,6 +49,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [initialBookingApplicationId, setInitialBookingApplicationId] = useState<string | undefined>();
   const actionsRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
   const canInviteSelected = canManageApplications && selectedApplication?.status === "ACTIVE" && selectedApplication.stage === "INTERVIEW";
   const onPipelineSelection = useCallback((application: Application | null) => setSelectedApplication(application), []);
   useEffect(() => {
@@ -70,8 +71,9 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
     setInitialBookingApplicationId(selectedApplication.application_id);
     setActionsOpen(false);
     setTab("interviews");
+    requestAnimationFrame(() => rootRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
   }
-  return <section className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
+  return <section ref={rootRef} className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
     <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button></div>
     <div className={styles.titleRow}>
       <h1>{job.title}</h1>
