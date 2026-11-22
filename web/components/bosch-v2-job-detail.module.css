@@ -375,7 +375,7 @@
   box-shadow:0 0 0 3px #1684c21a;
 }
 .bookingParticipants{
-  gap:10px;
+  display:block;
   padding:12px;
   border-color:#e0e7ef;
   border-radius:9px;
@@ -395,20 +395,30 @@
   font-size:11px;
   font-weight:800;
 }
-.bookingParticipants label{
-  flex:1 1 220px;
-  min-height:52px;
-  padding:8px 10px;
+.bookingParticipants .bookingParticipantPicker{
+  display:flex;
+  width:100%;
+  max-width:100%;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 1px 7px;
+  overscroll-behavior-inline:contain;
+  scrollbar-width:thin;
+}
+.bookingParticipants .bookingParticipantPicker label{
+  flex:0 0 220px;
+  min-height:46px;
+  padding:6px 9px;
   border:1px solid #e2e8ef;
   border-radius:7px;
   background:#fff;
   cursor:pointer;
 }
-.bookingParticipants label:has(input:checked){
+.bookingParticipants .bookingParticipantPicker label:has(input:checked){
   border-color:#a9c8e2;
   background:#f3f8fc;
 }
-.bookingParticipants label input{accent-color:#0878b9}
+.bookingParticipants .bookingParticipantPicker label input{accent-color:#0878b9}
 .weekAvailability{
   gap:14px;
   padding:16px;
