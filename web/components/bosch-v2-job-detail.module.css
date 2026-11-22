@@ -269,3 +269,227 @@
 .weekSelectedStart{border-top-left-radius:5px;border-top-right-radius:5px;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 2px #1a73e8}
 .weekSelectedEnd{border-bottom-left-radius:5px;border-bottom-right-radius:5px;border-bottom-color:#1a73e8;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 -2px #1a73e8}
 @media(max-width:700px){.bookingGrid{grid-template-columns:minmax(0,1fr)}.bookingActions{justify-content:stretch}.bookingActions button{flex:1}}
+
+/* Interview workspace: calmer SaaS surfaces while keeping Bosch red/blue accents. */
+.interviewWorkspace{
+  padding:22px;
+  border-color:#d9e1ea;
+  border-radius:12px;
+  background:#fbfcfe;
+}
+.interviewWorkspace>.sectionHead{
+  align-items:center;
+  margin-bottom:20px;
+}
+.interviewWorkspace>.sectionHead h2{
+  margin:0 0 5px;
+  font-size:24px;
+  letter-spacing:-.02em;
+}
+.bookingPanel{
+  gap:18px;
+  margin:0 0 22px;
+  padding:22px;
+  border-color:#dce4ed;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 8px #20334a08;
+}
+.bookingPanel>div:first-child{
+  padding:0 0 15px;
+  border-bottom:1px solid #e7edf3;
+}
+.bookingPanel h3{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:19px;
+  letter-spacing:-.01em;
+}
+.bookingPanel h3::before{
+  content:"01";
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:12px;
+  font-weight:800;
+}
+.bookingGrid{
+  grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);
+  gap:16px;
+  align-items:start;
+}
+.bookingField{gap:8px}
+.bookingField>span{color:#475a70;font-size:14px;font-weight:700}
+.bookingSelectedCandidate{
+  position:relative;
+  min-height:96px;
+  justify-content:flex-start;
+  gap:5px;
+  padding:13px 15px;
+  border-color:#bdd4e8;
+  border-radius:8px;
+  background:linear-gradient(115deg,#f2f8fd 0%,#fbfdff 100%);
+}
+.bookingSelectedCandidate::after{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  border-radius:8px 0 0 8px;
+  background:#0878b9;
+}
+.bookingSelectedCandidate strong{font-size:15px;line-height:1.4}
+.bookingSelectedCandidate small{font-size:12px}
+.changeCandidate{font-size:13px}
+.bookingField input,.bookingField select,.bookingField textarea{
+  min-height:44px;
+  border-color:#d4dde7;
+  border-radius:7px;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.bookingField :is(input,select,textarea):focus{
+  outline:0;
+  border-color:#1684c2;
+  box-shadow:0 0 0 3px #1684c21a;
+}
+.bookingParticipants{
+  gap:10px;
+  padding:12px;
+  border-color:#e0e7ef;
+  border-radius:9px;
+  background:#fbfcfe;
+}
+.bookingParticipants legend{padding:0 8px;font-size:14px}
+.bookingParticipants legend::before{
+  content:"02";
+  display:inline-grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  margin-right:7px;
+  border-radius:7px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:11px;
+  font-weight:800;
+}
+.bookingParticipants label{
+  flex:1 1 220px;
+  min-height:52px;
+  padding:8px 10px;
+  border:1px solid #e2e8ef;
+  border-radius:7px;
+  background:#fff;
+  cursor:pointer;
+}
+.bookingParticipants label:has(input:checked){
+  border-color:#a9c8e2;
+  background:#f3f8fc;
+}
+.bookingParticipants label input{accent-color:#0878b9}
+.weekAvailability{
+  gap:14px;
+  padding:16px;
+  border-color:#dce4ed;
+  border-radius:10px;
+  background:#f8fafc;
+}
+.weekToolbar{
+  display:grid;
+  grid-template-columns:minmax(140px,1fr) auto auto;
+  gap:10px 14px;
+}
+.weekToolbar>strong{display:flex;align-items:center;gap:9px;font-size:17px}
+.weekToolbar>strong::before{
+  content:"03";
+  display:grid;
+  place-items:center;
+  width:27px;
+  height:27px;
+  border-radius:8px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:11px;
+  font-weight:800;
+}
+.weekToolbar>span{white-space:nowrap}
+.weekControls{margin-left:0}
+.weekControls button{
+  min-height:36px;
+  border-radius:7px;
+  background:#fff;
+}
+.weekTimezone{margin:0!important}
+.weekPeople{gap:8px}
+.weekPerson{border-radius:7px}
+.weekCalendar{max-height:520px;border-color:#d7e0e9;border-radius:8px}
+.weekHeader{box-shadow:0 1px 3px #172b420d}
+.weekRow{min-height:32px}
+.weekTime,.weekCell{height:32px}
+.weekEvent{border-radius:6px}
+.weekEvent strong{font-size:12px}
+.weekEvent small{font-size:11px}
+.bookingNotice{border-left-width:3px;border-radius:0 7px 7px 0}
+.bookingActions{padding-top:4px}
+.bookButton{min-height:44px;border-radius:7px;box-shadow:0 2px 4px #df001b20}
+.subTabs{
+  gap:8px;
+  margin:0 0 14px;
+  padding:4px;
+  width:max-content;
+  max-width:100%;
+  border:1px solid #e2e8ef;
+  border-radius:9px;
+  background:#f3f6f9;
+}
+.subTabs button{
+  border-color:transparent;
+  border-radius:6px;
+  background:transparent;
+}
+.subTabs button.currentSubTab{
+  border-color:#e4eaf0;
+  background:#fff;
+  color:#c51c2c;
+  box-shadow:0 1px 2px #172b4212;
+}
+.twoColumn{grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:18px}
+.interviewWorkspace .tableScroll{max-height:460px;overflow:auto}
+.interviewWorkspace .nativeTable{min-width:560px}
+.interviewWorkspace .nativeTable th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding-block:13px;
+  background:#f4f6f8;
+}
+.interviewWorkspace .nativeTable td{padding-block:13px}
+.interviewWorkspace .nativeTable tbody tr:has(.linkButton[aria-pressed="true"]){background:#f4f8fc}
+.detailPane{
+  padding:19px;
+  border-color:#dce4ed;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 2px 8px #20334a08;
+}
+.detailPane h3{font-size:20px;letter-spacing:-.015em}
+.detailPane .facts dt,.detailPane .facts dd{padding-block:12px}
+.availability{gap:10px;margin-top:20px;padding-top:17px}
+.availability .outline{min-height:40px;border-radius:7px}
+.availabilityPerson{gap:6px;padding:12px;border-radius:8px;background:#f8fafc}
+.bookingParticipants,.weekAvailability,.detailPane,.tableScroll{scroll-margin-top:12px}
+@media(max-width:900px){
+  .twoColumn{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:700px){
+  .interviewWorkspace{padding:14px}
+  .bookingPanel{padding:15px}
+  .weekToolbar{grid-template-columns:minmax(0,1fr) auto}
+  .weekToolbar>span{grid-column:1/-1}
+  .weekControls{margin-left:0}
+}

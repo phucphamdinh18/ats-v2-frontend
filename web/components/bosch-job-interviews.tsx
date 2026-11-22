@@ -411,7 +411,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     setWeekAnchor((current) => addDays(current, amount * 7));
     setBookingStart(""); setBookingEnd(""); setBookingError("");
   }
-  return <section className={styles.aux} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
+  return <section className={`${styles.aux} ${styles.interviewWorkspace}`} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
     <div className={styles.sectionHead}><div><h2>{en ? "Interview Schedule" : "Lịch phỏng vấn theo Job"}</h2><p>{en ? "Read-only schedule records from your authorized worklist." : "Lịch theo quyền truy cập của bạn; không thay đổi lịch hay feedback."}</p></div>
       <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
