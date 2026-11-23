@@ -9,6 +9,15 @@ export type JobMember = {
   display_name?: string | null;
   ta_assignment?: "PRIMARY" | "SUPPORT" | null;
 };
+export type AdminUserAccess = {
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  is_active: boolean;
+  roles: string[];
+  job_count: number;
+  last_sign_in_at: string | null;
+};
 export type JobMetadataInput = {
   jobId: string;
   level: number;
@@ -114,6 +123,18 @@ export function removeJobMember(jobId: string, userId: string, role: string) {
     job_id: jobId,
     user_id: userId,
     role,
+  });
+}
+
+export function listAdminUserAccess() {
+  return adminCall<{ users: AdminUserAccess[] }>({ action: "list_user_access" });
+}
+
+export function setAdminUserActive(userId: string, enabled: boolean) {
+  return adminCall<{ user: { user_id: string; is_active: boolean; changed: boolean } }>({
+    action: "set_user_active",
+    user_id: userId,
+    enabled,
   });
 }
 
