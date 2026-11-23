@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getClient } from "@/lib/supabase";
+import { ApiError, getClient } from "@/lib/supabase";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import { useLanguage } from "./language";
 import Icon from "./icon";
@@ -148,8 +148,15 @@ export default function Workspace() {
         const rules = await client.from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
-        const overview = await jobOverview();
-        const metricsByJob = new Map(overview.jobs.map((row) => [row.job_id, row]));
+        // Job metrics are optional for limited roles such as Interviewer. A 403
+        // from this secondary request must not clear a valid ATS session.
+        let overviewJobs: Awaited<ReturnType<typeof jobOverview>>["jobs"] = [];
+        try {
+          overviewJobs = (await jobOverview()).jobs;
+        } catch (cause) {
+          if (!(cause instanceof ApiError) || cause.status !== 403) throw cause;
+        }
+        const metricsByJob = new Map(overviewJobs.map((row) => [row.job_id, row]));
         const byKey = new Map((rules.data || []).map((rule) =>
           [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
         ));

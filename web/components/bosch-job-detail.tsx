@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
 import { useLanguage } from "./language";
 import JobTeamAccess from "./job-team-access";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
 import BoschJobInterviews from "./bosch-job-interviews";
 import BoschJobActivity from "./bosch-job-activity";
 import type { Job } from "@/lib/policy";
-import { CalendarDays, ChevronDown, Layers3, MapPin, Target, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, CalendarDays, CalendarPlus, ChevronDown, Layers3, MapPin, Pencil, Target } from "lucide-react";
 import styles from "./bosch-v2-job-detail.module.css";
+import type { Application } from "@/lib/applications";
 
 type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team" | "activity";
 type Props = {
@@ -45,16 +46,44 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
   const en = locale === "en";
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
-  return <section className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [initialBookingApplicationId, setInitialBookingApplicationId] = useState<string | undefined>();
+  const actionsRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
+  const canInviteSelected = canManageApplications && selectedApplication?.status === "ACTIVE" && selectedApplication.stage === "INTERVIEW";
+  const onPipelineSelection = useCallback((application: Application | null) => setSelectedApplication(application), []);
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !actionsRef.current?.contains(event.target)) setActionsOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [actionsOpen]);
+  const pipelineChildren = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ onSelectionChange?: (application: Application | null) => void }>, { onSelectionChange: onPipelineSelection })
+    : children;
+  function handleJobActionsKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") { event.preventDefault(); setActionsOpen(false); }
+  }
+  function inviteSelectedCandidate() {
+    if (!canInviteSelected || !selectedApplication) return;
+    setInitialBookingApplicationId(selectedApplication.application_id);
+    setActionsOpen(false);
+    setTab("interviews");
+    requestAnimationFrame(() => rootRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  }
+  return <section ref={rootRef} className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
     <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button></div>
     <div className={styles.titleRow}>
       <h1>{job.title}</h1>
       <span className={[styles.status, job.status === "OPEN" ? styles.statusOpen : ""].filter(Boolean).join(" ")}>{job.status === "OPEN" ? (en ? "Open" : "Đang tuyển") : job.status === "DRAFT" ? (en ? "Draft" : "Bản nháp") : job.status}</span>
-      <div className={styles.actions}>
-        {canAdmin && onEdit && ["DRAFT","OPEN","ON_HOLD"].includes(job.status) && <button type="button" className={styles.outline} onClick={()=>onEdit(job)}>{en ? "Edit Job" : "Sửa Job"}</button>}
-        <button type="button" className={styles.outline} aria-expanded={actionsOpen} onClick={() => setActionsOpen(x=>!x)}>{en ? "Actions" : "Thao tác"} <ChevronDown size={15}/></button>
-        {actionsOpen && <div className={styles.actionMenu}>
-          <button type="button" onClick={() => { setActionsOpen(false); onBack(); }}>{en ? "All job openings" : "Tất cả Job"}</button>
+      <div className={styles.actions} ref={actionsRef}>
+        <button type="button" className={styles.jobActionsTrigger} aria-haspopup="menu" aria-expanded={actionsOpen} onClick={() => setActionsOpen(x=>!x)} onKeyDown={event => { if (event.key === "ArrowDown") { event.preventDefault(); setActionsOpen(true); } }}>{en ? "Job actions" : "Thao tác Job"} <ChevronDown size={15}/></button>
+        {actionsOpen && <div className={styles.actionMenu} role="menu" aria-label={en ? "Job actions" : "Thao tác Job"} onKeyDown={handleJobActionsKeyDown}>
+          {canAdmin && onEdit && <button type="button" role="menuitem" disabled={! ["DRAFT", "OPEN", "ON_HOLD"].includes(job.status)} onClick={() => { setActionsOpen(false); onEdit(job); }}><Pencil size={17}/><span>{en ? "Edit Job" : "Sửa Job"}<small>{job.title}</small></span></button>}
+          <button type="button" role="menuitem" disabled={!canInviteSelected} title={!canInviteSelected ? (en ? "Select an active candidate at the Interview stage first." : "Trước tiên hãy chọn ứng viên đang ở vòng Phỏng vấn.") : undefined} onClick={inviteSelectedCandidate}><CalendarPlus size={17}/><span>{en ? "Invite to interview" : "Mời phỏng vấn"}<small>{canInviteSelected ? selectedApplication?.candidate_name : (en ? "Select an Interview candidate in the Pipeline" : "Chọn ứng viên ở vòng Phỏng vấn trong Pipeline")}</small></span></button>
+          <button type="button" role="menuitem" onClick={() => { setActionsOpen(false); onBack(); }}><ArrowLeft size={17}/><span>{en ? "All job openings" : "Tất cả Job"}</span></button>
         </div>}
       </div>
     </div>
@@ -67,7 +96,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
     <nav className={styles.tabs} aria-label={en ? "Job sections" : "Các tab của Job"}>
       {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? x.label : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Phỏng vấn", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
     </nav>
-    {tab === "pipeline" && <div className={styles.content}>{children}</div>}
+    {tab === "pipeline" && <div className={styles.content}>{pipelineChildren}</div>}
     {tab === "details" && <section className={styles.aux} aria-label={en ? "Job Details" : "Chi tiết Job"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Job Details" : "Chi tiết Job"}</h2><p>{en ? "Verified requisition fields from the authorized Job record." : "Thông tin yêu cầu tuyển từ Job đang được phân quyền."}</p></div></div>
       <div className={styles.detailsGrid}>
@@ -101,7 +130,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
       </tbody></table></div> : <p className={styles.empty}>{en ? "Sourcing data is not available for this Job." : "Job này chưa có dữ liệu nguồn tuyển dụng được API trả về."}</p>}
       <p className={styles.footnote}>{en ? "Counts are Job applications, not unique candidates or source effectiveness scores." : "Các số này là lượt hồ sơ theo Job, không phải ứng viên duy nhất hay điểm hiệu quả nguồn."}</p>
     </section>}
-    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
+    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} initialApplicationId={initialBookingApplicationId} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <BoschOffersWorkspace key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
