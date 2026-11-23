@@ -74,6 +74,7 @@ export type InterviewRosterMember = {
   email?: string | null;
   role: "INTERVIEWER" | "HIRING_MANAGER" | "TA_RECRUITER";
   can_invite?: boolean;
+  is_current_actor?: boolean;
 };
 
 export async function listInterviewRoster(applicationId: string): Promise<InterviewRosterMember[]> {
