@@ -163,11 +163,18 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
   }, [jobId, initialApplicationId, en, onAccessLost]);
   useEffect(() => {
     let active = true;
-    setRoster([]); setBookingParticipantIds([]); setRosterError(""); setWeekAvailability(null); setBookingSuccess("");
+    setRoster([]); setCalendarParticipantIds([]); setBookingParticipantIds([]); setRosterError(""); setWeekAvailability(null); setBookingSuccess("");
     if (!bookingApplicationId) return () => { active = false; };
     setRosterLoading(true);
     void listInterviewRoster(bookingApplicationId).then((people) => {
-      if (active) setRoster(people);
+      if (active) {
+        setRoster(people);
+        const actorId = people.find((person) => person.is_current_actor)?.id;
+        if (actorId) {
+          setCalendarParticipantIds((current) => current.includes(actorId) ? current : [actorId, ...current]);
+          setBookingParticipantIds((current) => current.includes(actorId) ? current : [actorId, ...current]);
+        }
+      }
     }).catch((cause) => {
       if (!active) return;
       setRosterError(cause instanceof Error ? cause.message : (en ? "Could not load interviewers." : "Không tải được danh sách người phỏng vấn."));
@@ -304,12 +311,12 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
         meeting_url: bookingMeetingUrl.trim() || null,
         can_manage: true,
         can_decide: false,
-        is_participant: true,
+        is_participant: false,
         feedback_submitted: false,
         feedback_count: 0,
         participants: bookingParticipantIds.map((id) => {
           const person = roster.find((entry) => entry.id === id);
-          return { id, display_name: person?.display_name || id, role: person?.role || "INTERVIEWER" };
+          return { id, display_name: person?.display_name || id, role: person?.role === "TA_RECRUITER" ? "COORDINATOR" : person?.role || "INTERVIEWER" };
         }),
       };
       optimisticBookingIds.current.add(optimisticInterview.id);
@@ -420,16 +427,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       return;
     }
     setCalendarParticipantIds((current) => checked ? (current.includes(id) ? current : [...current, id]) : current.filter((value) => value !== id));
-    if (!checked) setBookingParticipantIds((current) => current.filter((value) => value !== id));
-    setBookingStart(""); setBookingEnd(""); setBookingError("");
-  }
-  function toggleInviteMember(id: string, checked: boolean) {
-    if (checked && !calendarParticipantIds.includes(id) && calendarParticipantIds.length >= 20) {
-      setWeekAvailabilityError(en ? "You can compare up to 20 calendars at once." : "Bạn có thể đối chiếu tối đa 20 lịch cùng lúc.");
-      return;
-    }
     setBookingParticipantIds((current) => checked ? (current.includes(id) ? current : [...current, id]) : current.filter((value) => value !== id));
-    if (checked) setCalendarParticipantIds((current) => current.includes(id) ? current : [...current, id]);
     setBookingStart(""); setBookingEnd(""); setBookingError("");
   }
   function renderCalendarDayEvents(day: Date, dayIndex: number) {
@@ -511,14 +509,13 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
           <label className={styles.bookingField}><span>{en ? "Meeting link (optional)" : "Link họp (không bắt buộc)"}</span><input type="url" maxLength={2048} value={bookingMeetingUrl} onChange={(event) => setBookingMeetingUrl(event.target.value)} /></label>
         </div>
         <fieldset className={styles.bookingParticipants}><legend>{en ? "Job member calendars and interview invitees" : "Lịch thành viên Job và người được mời phỏng vấn"}</legend>
-          <p className={styles.bookingParticipantHint}>{en ? "Show any assigned member’s calendar. Only Interviewers and Hiring Managers can be added to the invitation." : "Có thể xem lịch của mọi thành viên được phân công. Chỉ Interviewer và Hiring Manager được thêm vào thư mời."}</p>
+          <p className={styles.bookingParticipantHint}>{en ? "The person booking is selected as organizer. Select everyone else involved; each selected member’s calendar is checked and they receive the Google Calendar invitation." : "Người đặt lịch được chọn làm người tổ chức. Tích chọn những người khác tham gia; lịch của họ sẽ được kiểm tra và họ nhận lời mời Google Calendar."}</p>
           {rosterLoading ? <p role="status">{en ? "Loading job team…" : "Đang tải nhóm Job…"}</p> : rosterError ? <p role="alert" className={styles.error}>{rosterError}</p> : roster.length === 0 ? <p className={styles.empty}>{en ? "No members are assigned to this Job." : "Job chưa có thành viên được phân công."}</p> : <div className={styles.bookingParticipantPicker} role="group" aria-label={en ? "Job member calendars and interview invitees" : "Lịch thành viên Job và người được mời phỏng vấn"}>{roster.map((person) => {
             const status = weekAvailabilityCurrent ? weekAvailability?.calendars.find((item) => item.participant_id === person.id)?.status || "UNAVAILABLE" : "UNAVAILABLE";
             const roleLabel = person.role === "HIRING_MANAGER" ? "Hiring Manager" : person.role === "TA_RECRUITER" ? "TA / Recruiter" : "Interviewer";
-            const canInvite = person.can_invite ?? person.role !== "TA_RECRUITER";
+            
             return <div key={person.id} className={styles.bookingMemberCard}>
-              <label><input type="checkbox" checked={calendarParticipantIds.includes(person.id)} onChange={(event) => toggleCalendarMember(person.id, event.target.checked)} /><span className={styles.bookingParticipantIdentity}><span className={styles.bookingParticipantName}><i style={{ backgroundColor: interviewerColor(person.id) }} />{person.display_name === "Team member" && person.email ? person.email : person.display_name}</span>{person.email && <small className={styles.bookingParticipantEmail}>{person.email}</small>}</span><small>{roleLabel}</small>{calendarParticipantIds.includes(person.id) && <small className={styles.bookingCalendarStatus}>{weekAvailabilityBusy ? (en ? "Checking Google Calendar…" : "Đang kiểm tra Google Calendar…") : googleStatusLabel(status)}</small>}</label>
-              {canInvite && <label className={styles.bookingInviteToggle}><input type="checkbox" checked={bookingParticipantIds.includes(person.id)} onChange={(event) => toggleInviteMember(person.id, event.target.checked)} />{en ? "Invite to interview" : "Mời phỏng vấn"}</label>}
+              <label><input type="checkbox" checked={calendarParticipantIds.includes(person.id)} disabled={person.is_current_actor} onChange={(event) => toggleCalendarMember(person.id, event.target.checked)} /><span className={styles.bookingParticipantIdentity}><span className={styles.bookingParticipantName}><i style={{ backgroundColor: interviewerColor(person.id) }} />{person.display_name === "Team member" && person.email ? person.email : person.display_name}</span>{person.email && <small className={styles.bookingParticipantEmail}>{person.email}</small>}</span><small>{roleLabel}{person.is_current_actor ? (en ? " · Organizer" : " · Người tổ chức") : ""}</small>{calendarParticipantIds.includes(person.id) && <small className={styles.bookingCalendarStatus}>{weekAvailabilityBusy ? (en ? "Checking Google Calendar…" : "Đang kiểm tra Google Calendar…") : googleStatusLabel(status)}</small>}</label>
             </div>;
           })}</div>}
         </fieldset>
