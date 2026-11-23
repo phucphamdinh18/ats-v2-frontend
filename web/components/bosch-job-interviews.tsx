@@ -42,14 +42,14 @@ export function InterviewLifecycleActions({ item, en, onChanged, onAccessLost }:
     let active = true; setFeedback([]); setDecisions([]); setError(""); setNotice("");
     if (item.status !== "COMPLETED") return () => { active = false; };
     const reads: Promise<unknown>[] = [];
-    if (mayReadFeedback) reads.push(listInterviewFeedback(item.id).then((rows) => { if (active) setFeedback(rows); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : (en ? "Could not load feedback." : "Không tải được feedback.")); if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost(); }));
-    if (item.can_decide) reads.push(listInterviewDecisions(item.id).then((rows) => { if (active) setDecisions(rows); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : (en ? "Could not load decisions." : "Không tải được quyết định.")); if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost(); }));
+    if (mayReadFeedback) reads.push(listInterviewFeedback(item.id).then((rows) => { if (active) setFeedback(rows); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : (en ? "Could not load feedback." : "Không tải được feedback.")); if (cause instanceof ApiError && cause.status === 401) onAccessLost(); }));
+    if (item.can_decide) reads.push(listInterviewDecisions(item.id).then((rows) => { if (active) setDecisions(rows); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : (en ? "Could not load decisions." : "Không tải được quyết định.")); if (cause instanceof ApiError && cause.status === 401) onAccessLost(); }));
     void Promise.all(reads); return () => { active = false; };
   }, [item.id, item.status, item.can_decide, item.can_manage, item.is_participant, mayReadFeedback, en, onAccessLost]);
   const submit = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true); setError(""); setNotice("");
     try { await action(); setNotice(success); onChanged(); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : (en ? "Could not save this interview action." : "Không lưu được thao tác phỏng vấn.")); if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : (en ? "Could not save this interview action." : "Không lưu được thao tác phỏng vấn.")); if (cause instanceof ApiError && cause.status === 401) onAccessLost(); }
     finally { setBusy(false); }
   };
   const startPassed = Date.parse(item.starts_at) <= Date.now();
@@ -157,7 +157,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     }).catch((cause) => {
       if (!active) return;
       setApplicationsError(cause instanceof Error ? cause.message : (en ? "Could not load eligible applications." : "Không tải được hồ sơ đủ điều kiện đặt lịch."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => { if (active) setApplicationsLoading(false); });
     return () => { active = false; };
   }, [jobId, initialApplicationId, en, onAccessLost]);
@@ -171,7 +171,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     }).catch((cause) => {
       if (!active) return;
       setRosterError(cause instanceof Error ? cause.message : (en ? "Could not load interviewers." : "Không tải được danh sách người phỏng vấn."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => { if (active) setRosterLoading(false); });
     return () => { active = false; };
   }, [bookingApplicationId, en, onAccessLost]);
@@ -188,7 +188,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       if (!active) return;
       setWeekAvailability(null);
       setWeekAvailabilityError(cause instanceof Error ? cause.message : (en ? "Could not load this week's calendars." : "Không tải được lịch tuần này."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => { if (active) setWeekAvailabilityBusy(false); });
     return () => { active = false; };
   }, [bookingApplicationId, calendarParticipantIds, calendarWeekStart.getTime(), calendarWeekEnd.getTime(), bookingTimezone, weekSignature, weekRefresh, en, onAccessLost]);
@@ -208,7 +208,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     }).catch((cause) => {
       if (!active) return;
       setBookingError(cause instanceof Error ? cause.message : (en ? "Could not load this candidate's scheduled interviews." : "Không tải được lịch đã đặt của ứng viên này."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     });
     return () => { active = false; };
   }, [bookingApplicationId, reloadWorklist, en, onAccessLost]);
@@ -224,7 +224,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     }).catch((cause) => {
       if (ticket !== version.current) return;
       setError(cause instanceof Error ? cause.message : (en ? "Could not load interviews." : "Không tải được lịch phỏng vấn."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => { if (ticket === version.current) setBusy(false); });
     return () => { version.current += 1; };
   }, [jobId, status, offset, onAccessLost, reloadWorklist]);
@@ -251,7 +251,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     } catch (cause) {
       if (ticket === availabilityVersion.current) {
         setAvailabilityError(cause instanceof Error ? cause.message : (en ? "Could not load participant schedules." : "Không tải được lịch của người tham gia."));
-        if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+        if (cause instanceof ApiError && cause.status === 401) onAccessLost();
       }
     } finally {
       if (ticket === availabilityVersion.current) setAvailabilityLoading(false);
@@ -330,7 +330,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       setReloadWorklist((value) => value + 1);
     } catch (cause) {
       setBookingError(cause instanceof Error ? cause.message : (en ? "Could not book this interview." : "Không đặt được lịch phỏng vấn."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     } finally { setBookingBusy(false); }
   }
   async function retryGoogleSync() {
