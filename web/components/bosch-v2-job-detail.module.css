@@ -427,6 +427,8 @@
 }
 .bookingParticipants .bookingMemberCard>label input{accent-color:#0878b9}
 .bookingParticipants .bookingMemberCard>label:first-child{flex-wrap:wrap}
+.bookingParticipants .bookingParticipantIdentity{display:flex;flex:1 1 150px;flex-direction:column;gap:1px;min-width:0}
+.bookingParticipants .bookingParticipantEmail{overflow:hidden;color:#63758a;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
 .bookingParticipants .bookingInviteToggle{margin-left:21px;font-size:11px;color:#52667b}
 .weekAvailability{
   gap:14px;
