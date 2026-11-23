@@ -231,6 +231,28 @@ export default function Workspace() {
       cleanup();
     };
   }, [refresh]);
+  useEffect(() => {
+    const calendarRoles = ["ADMIN", "TA_RECRUITER", "HIRING_MANAGER", "INTERVIEWER"];
+    if (!access?.active || !access.roles.some((role) => calendarRoles.includes(role))) {
+      setGoogleCalendarConnected(null);
+      setCalendarPromptOpen(false);
+      return;
+    }
+    let active = true;
+    void getGoogleCalendarConnectionStatus().then((connection) => {
+      if (!active) return;
+      setGoogleCalendarConnected(connection.connected);
+      if (!connection.connected && !calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    }).catch((cause) => {
+      if (!active) return;
+      // Keep login usable if the calendar status endpoint is temporarily unavailable,
+      // but let the member start the connection from the prompt and see the error.
+      setGoogleCalendarConnected(false);
+      setCalendarPromptError(cause instanceof Error ? cause.message : (locale === "en" ? "Could not check Google Calendar connection." : "Không kiểm tra được kết nối Google Calendar."));
+      if (!calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    });
+    return () => { active = false; };
+  }, [access?.active, access?.userId, access?.roles, locale]);
   async function connectCalendar() {
     setCalendarPromptBusy(true);
     setCalendarPromptError("");
