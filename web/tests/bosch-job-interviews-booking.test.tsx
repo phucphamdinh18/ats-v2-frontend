@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import BoschJobInterviews from "../components/bosch-job-interviews";
+import { ApiError } from "../lib/supabase";
 
 const api = vi.hoisted(() => ({ applications: vi.fn(), roster: vi.fn(), availability: vi.fn(), worklist: vi.fn(), create: vi.fn(), connect: vi.fn() }));
 vi.mock("../lib/applications", () => ({ listApplications: api.applications }));
@@ -28,6 +29,14 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.setSystemTime(new Date());
+});
+
+it("keeps the ATS session when a role-protected interview request returns 403", async () => {
+  api.worklist.mockRejectedValueOnce(new ApiError("Forbidden", 403));
+  const onAccessLost = vi.fn();
+  render(<BoschJobInterviews jobId="job-1" onAccessLost={onAccessLost} onAllInterviews={vi.fn()} />);
+  expect(await screen.findByRole("alert")).toBeTruthy();
+  expect(onAccessLost).not.toHaveBeenCalled();
 });
 
 async function prepareFreeSlot() {
