@@ -35,6 +35,7 @@ async function prepareFreeSlot() {
   fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
   const interviewer = await screen.findByLabelText(/Interviewer A/);
   fireEvent.click(interviewer);
+  fireEvent.click(await screen.findByLabelText("Mời phỏng vấn"));
   await screen.findByText("Đã kiểm tra Google Calendar");
 }
 
