@@ -71,6 +71,7 @@ export type InterviewAvailability = {
 export type InterviewRosterMember = {
   id: string;
   display_name: string;
+  email?: string | null;
   role: "INTERVIEWER" | "HIRING_MANAGER" | "TA_RECRUITER";
   can_invite?: boolean;
 };
