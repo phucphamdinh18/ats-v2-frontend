@@ -44,11 +44,10 @@ async function prepareFreeSlot() {
   fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
   const interviewer = await screen.findByLabelText(/Interviewer A/);
   fireEvent.click(interviewer);
-  fireEvent.click(await screen.findByLabelText("Mời phỏng vấn"));
   await screen.findByText("Đã kiểm tra Google Calendar");
 }
 
-it("checks Google and ATS availability before creating an ATS interview", async () => {
+it("checks selected participants and creates an ATS interview with invitations", async () => {
   await prepareFreeSlot();
   const calendar = document.querySelector<HTMLElement>("[data-calendar-rows]")?.parentElement;
   const freeSlot = screen.getAllByRole("button", { name: /10:00$/ }).find((button) => !(button as HTMLButtonElement).disabled);
