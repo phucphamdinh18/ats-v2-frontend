@@ -372,20 +372,21 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       {detailLoading && <p role="status">{en ? "Loading details…" : "Đang tải chi tiết…"}</p>}
       {detailError && <div className={`${styles.notice} ${styles.error}`} role="alert">{detailError}<button className={styles.retry} onClick={() => void openDetail(selected)}>{copy.retry}</button></div>}
       {savedCandidate && <p role="status">{en ? "Candidate profile saved." : "Đã lưu hồ sơ ứng viên."}</p>}
-      {detail && candidateTab === "overview" && <>
-        <div className={styles.profileCard}>
-          <CandidateInterviewProgress applicationId={detail.application.application_id} />
-          <dl className={styles.profileFields}><dt>{copy.stage}</dt><dd>{copy.stageLabel(detail.application.stage)}</dd><dt>{en ? "Status" : "Trạng thái"}</dt><dd>{detail.application.status === "ACTIVE" ? (en ? "In progress" : "Đang xử lý") : detail.application.status}</dd><dt>{copy.source}</dt><dd>{detail.application.source || "—"}</dd></dl>
-        </div>
-        {detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
-      </>}
-      {detail && candidateTab === "profile" && (canManageApplications ? (
-        editingCandidate ? <CandidateEditForm
+      {detail && candidateTab === "overview" && <div className={styles.profileCard}>
+        <CandidateInterviewProgress applicationId={detail.application.application_id} />
+      </div>}
+      {detail && (candidateTab === "overview" || candidateTab === "profile") && (
+        candidateTab === "profile" && canManageApplications && editingCandidate ? <CandidateEditForm
           key={detail.application.application_id} candidateId={detail.application.candidate_id} applicationId={detail.application.application_id}
           jobId={job.id} en={en} onSessionLost={onSessionLost} onClose={() => setEditingCandidate(false)}
           onSave={(name) => candidateSaved(detail.application, name)} />
-          : <PipelineCandidateProfile key={detail.application.candidate_id} candidateId={detail.application.candidate_id} en={en} onSessionLost={onSessionLost} />
-      ) : <p className={styles.profileMuted}>{en ? "Contact details and CV are available to Admins and TAs assigned to this job." : "Chỉ Admin và TA phụ trách Job này có quyền xem thông tin liên hệ và CV."}</p>)}
+          : <PipelineCandidateProfile key={detail.application.candidate_id} view={candidateTab}
+            candidateId={canManageApplications ? detail.application.candidate_id : undefined} en={en} onSessionLost={onSessionLost} />
+      )}
+      {detail && candidateTab === "overview" && <>
+        <dl className={styles.profileFields}><dt>{copy.stage}</dt><dd>{copy.stageLabel(detail.application.stage)}</dd><dt>{en ? "Status" : "Trạng thái"}</dt><dd>{detail.application.status === "ACTIVE" ? (en ? "In progress" : "Đang xử lý") : detail.application.status}</dd><dt>{copy.source}</dt><dd>{detail.application.source || "—"}</dd></dl>
+        {detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
+      </>}
       {detail && candidateTab === "notes" && (canManageApplications ?
         <PipelineCandidateNotes key={detail.application.application_id} jobId={job.id} applicationId={detail.application.application_id} en={en} onSessionLost={onSessionLost} />
         : <p className={styles.profileMuted}>{en ? "Only Admins and TAs assigned to this job can access these notes." : "Chỉ Admin và TA phụ trách Job này có quyền truy cập ghi chú."}</p>)}

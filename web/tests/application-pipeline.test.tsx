@@ -56,6 +56,7 @@ beforeEach(() => {
   Object.values(api).forEach((fn) => fn.mockReset());
   api.rounds.mockResolvedValue(new Map());
   api.worklist.mockResolvedValue([]);
+  api.profile.mockImplementation(async (id: string) => ({ candidate: { id }, documents: [], applications: [] }));
   confirmMock.mockReset().mockReturnValue(true);
   randomUuidMock.mockReset().mockReturnValue(requestId);
   vi.stubGlobal("confirm", confirmMock);
@@ -115,21 +116,31 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(api.notes).not.toHaveBeenCalled();
   });
 
-  it("shows Candidate contact and Drive documents in Profile", async () => {
+  it("restores the Overview summary and reuses the candidate data in Profile", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada")] });
     api.detail.mockResolvedValue(detail("Ada"));
     api.profile.mockResolvedValue({
-      candidate: { id: "candidate-Ada", email: "ada@example.test", current_company: "Test Company", total_experience_years: 0 },
+      candidate: { id: "candidate-Ada", email: "ada@example.test", current_title: "Test Engineer", current_company: "Test Company", total_experience_years: 0 },
       documents: [{ drive_file_id: "test_cv_file", drive_url: "https://drive.google.com/file/d/test_cv_file/view", original_name: "Test CV.pdf", created_at: "2026-11-24T10:00:00Z" }],
     });
     renderPipeline();
     await selectCandidate();
+    const progress = screen.getByRole("heading", { name: "Tiến độ phỏng vấn" });
+    const summary = screen.getByRole("heading", { name: "Tóm tắt" });
+    expect(progress.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(await screen.findByText("Test Engineer")).toBeTruthy();
+    expect(screen.getByText("Test Company")).toBeTruthy();
+    expect(screen.getByText("0 năm")).toBeTruthy();
+    expect(screen.getByText("Học vấn").closest("dt")?.nextElementSibling?.textContent).toBe("—");
+    expect(screen.queryByText("ada@example.test")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Lịch sử" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Hồ sơ" }));
     expect(await screen.findByText("ada@example.test")).toBeTruthy();
     expect(screen.getByText("Test Company")).toBeTruthy();
     expect(screen.getByText("0 năm")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Test CV.pdf" }).getAttribute("href")).toBe("https://drive.google.com/file/d/test_cv_file/view");
     expect(screen.queryByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeNull();
+    expect(api.profile).toHaveBeenCalledTimes(1);
   });
 
   it("adds a Job-scoped note and reuses the request ID after a network error", async () => {
