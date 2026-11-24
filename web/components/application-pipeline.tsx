@@ -31,7 +31,7 @@ function message(error: unknown, en = false) {
   return error instanceof Error ? error.message : en ? "Could not load the data. Please try again." : "Chưa tải được dữ liệu. Bạn thử lại nhé.";
 }
 
-export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
+export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false, onSelectionChange }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean; onSelectionChange?: (application: Application | null) => void }) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const copy = en ? {
@@ -113,6 +113,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     detailTicket.current += 1;
     selectedId.current = null;
     setSelected(null);
+    onSelectionChange?.(null);
     setDetail(null);
     setDetailError("");
     setDetailLoading(false);
@@ -141,6 +142,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const openDetail = useCallback(async (application: Application) => {
     const ticket = ++detailTicket.current;
     setSelected(application);
+    onSelectionChange?.(application);
     selectedId.current = application.application_id;
     setDetail(null);
     setDetailError("");
@@ -153,6 +155,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       setDetail(result);
       // Detail is the authoritative post-action state; the screen RPC returns only ID + changed.
       setSelected(result.application);
+      onSelectionChange?.(result.application);
     } catch (cause) {
       if (ticket !== detailTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
@@ -172,7 +175,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     } finally {
       if (ticket === detailTicket.current) setDetailLoading(false);
     }
-  }, [job.id, onSessionLost]);
+  }, [job.id, onSessionLost, onSelectionChange]);
 
   async function moveApplication(application: Application, targetStage: TransitionStage) {
     if (!canManageApplications) return;
@@ -306,7 +309,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <div className={styles.detailSticky}>
       <div className={styles.profileHead}>
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
-        <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>×</button>
+              <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); onSelectionChange?.(null); }}>×</button>
       </div>
       <nav className={styles.profileTabs} aria-label={copy.tabs}><span className={styles.active}>{copy.overviewTab}</span><span>{copy.profile}</span><span>{copy.notes}</span><span>{copy.activityTab}</span></nav>
       </div>

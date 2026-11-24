@@ -61,6 +61,6 @@ it("keeps only view actions in the table and edits the selected Job through the 
 });
 it("exposes editing in Job Detail only to Admin for an editable Job",()=>{
  const edit=vi.fn();const props={job,onBack:()=>{},onModule:()=>{},canViewOffers:false,canAdmin:true,onEdit:edit,children:<span>Pipeline</span>};
- const view=render(<JobDetail {...props}/>);fireEvent.click(screen.getByRole("button",{name:"Sửa Job"}));expect(edit).toHaveBeenCalledWith(job);
- view.rerender(<JobDetail {...props} canAdmin={false}/>);expect(screen.queryByRole("button",{name:"Sửa Job"})).toBeNull();
+ const view=render(<JobDetail {...props}/>);fireEvent.click(screen.getByRole("button",{name:"Thao tác Job"}));fireEvent.click(screen.getByRole("menuitem",{name:/Sửa Job/}));expect(edit).toHaveBeenCalledWith(job);
+ view.rerender(<JobDetail {...props} canAdmin={false}/>);fireEvent.click(screen.getByRole("button",{name:"Thao tác Job"}));expect(screen.queryByRole("menuitem",{name:/Sửa Job/})).toBeNull();
 });

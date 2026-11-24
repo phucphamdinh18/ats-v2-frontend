@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getClient } from "@/lib/supabase";
+import { ApiError, getClient } from "@/lib/supabase";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import { useLanguage } from "./language";
 import Icon from "./icon";
@@ -17,6 +17,7 @@ import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
+import AdminUserAccess from "./admin-user-access";
 import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
@@ -43,7 +44,7 @@ export default function Workspace() {
   const [calendarPromptOpen, setCalendarPromptOpen] = useState(false);
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
   const [calendarPromptError, setCalendarPromptError] = useState("");
-  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews" | "users">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -68,6 +69,7 @@ export default function Workspace() {
     if (!result) return;
     const messages: Record<string, { vi: string; en: string }> = {
       denied: { vi: "Bạn chưa cấp quyền Google Calendar.", en: "Google Calendar permission was not granted." },
+      scope_missing: { vi: "Bạn cần cấp quyền tạo sự kiện trên lịch Google để ATS gửi thư mời.", en: "Grant Google Calendar event access so ATS can create interviews and send invitations." },
       email_mismatch: { vi: "Email Google phải trùng email dùng để đăng nhập ATS.", en: "Connect the Google account that matches your ATS login email." },
       state_expired: { vi: "Yêu cầu kết nối đã hết hạn. Hãy thử lại.", en: "The connection request expired. Please try again." },
       not_configured: { vi: "Kết nối Google chưa được cấu hình.", en: "Google Calendar connection is not configured." },
@@ -147,8 +149,15 @@ export default function Workspace() {
         const rules = await client.from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
-        const overview = await jobOverview();
-        const metricsByJob = new Map(overview.jobs.map((row) => [row.job_id, row]));
+        // Job metrics are optional for limited roles such as Interviewer. A 403
+        // from this secondary request must not clear a valid ATS session.
+        let overviewJobs: Awaited<ReturnType<typeof jobOverview>>["jobs"] = [];
+        try {
+          overviewJobs = (await jobOverview()).jobs;
+        } catch (cause) {
+          if (!(cause instanceof ApiError) || cause.status !== 403) throw cause;
+        }
+        const metricsByJob = new Map(overviewJobs.map((row) => [row.job_id, row]));
         const byKey = new Map((rules.data || []).map((rule) =>
           [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
         ));
@@ -223,6 +232,28 @@ export default function Workspace() {
       cleanup();
     };
   }, [refresh]);
+  useEffect(() => {
+    const calendarRoles = ["ADMIN", "TA_RECRUITER", "HIRING_MANAGER", "INTERVIEWER"];
+    if (!access?.active || !access.roles.some((role) => calendarRoles.includes(role))) {
+      setGoogleCalendarConnected(null);
+      setCalendarPromptOpen(false);
+      return;
+    }
+    let active = true;
+    void getGoogleCalendarConnectionStatus().then((connection) => {
+      if (!active) return;
+      setGoogleCalendarConnected(connection.connected);
+      if (!connection.connected && !calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    }).catch((cause) => {
+      if (!active) return;
+      // Keep login usable if the calendar status endpoint is temporarily unavailable,
+      // but let the member start the connection from the prompt and see the error.
+      setGoogleCalendarConnected(false);
+      setCalendarPromptError(cause instanceof Error ? cause.message : (locale === "en" ? "Could not check Google Calendar connection." : "Không kiểm tra được kết nối Google Calendar."));
+      if (!calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    });
+    return () => { active = false; };
+  }, [access?.active, access?.userId, access?.roles, locale]);
   async function connectCalendar() {
     setCalendarPromptBusy(true);
     setCalendarPromptError("");
@@ -329,6 +360,7 @@ export default function Workspace() {
   useEffect(() => {
     if (["create","edit"].includes(jobView) && !adminAllowed) setJobView("master");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
+    if (tab === "users" && !adminAllowed) setTab("jobs");
   }, [tab, jobView, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
@@ -337,6 +369,9 @@ export default function Workspace() {
     { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
     ...(reviewAllowed ? [
       { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
+    ] : []),
+    ...(adminAllowed ? [
+      { label: locale === "en" ? "ATS accounts" : "Tài khoản ATS", description: locale === "en" ? "Manage workspace access" : "Quản lý quyền truy cập toàn ATS", destination: "users" as const },
     ] : []),
   ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
   const globalJobMatches = (access?.jobs || []).filter((job) =>
@@ -518,6 +553,7 @@ export default function Workspace() {
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
+          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "users" ? styles.active : ""}`} aria-current={tab === "users" ? "page" : undefined} onClick={() => setTab("users")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "ATS accounts" : "Tài khoản ATS"}</span></button>}
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
@@ -650,8 +686,8 @@ export default function Workspace() {
                 <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
-
-
+              ) : tab === "users" && adminAllowed ? (
+                <AdminUserAccess userId={access.userId} onAccessLost={invalidate} />
               ) : (
                 <>
                   {guideOpen && (
@@ -752,4 +788,3 @@ export default function Workspace() {
     </div>
   );
 }
-
