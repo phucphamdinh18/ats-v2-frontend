@@ -96,16 +96,22 @@ export async function addApplicationNote(jobId: string, applicationId: string, r
   return note;
 }
 
-export async function completedInterviewRounds(jobId: string, applicationIds: string[]) {
+export type ApplicationInterviewRound = {
+  application_id: string;
+  round_number: number;
+  interview_status: "SCHEDULED" | "COMPLETED";
+};
+
+export async function currentInterviewRounds(jobId: string, applicationIds: string[]) {
   const ids = [...new Set(applicationIds)];
-  const results = [];
+  const rounds = new Map<string, ApplicationInterviewRound>();
   for (let start = 0; start < ids.length; start += 100) {
-    const response = await call<{ rounds: { application_id: string; completed_count: number }[] }>({
-      action: "completed_interview_rounds", job_id: jobId, application_ids: ids.slice(start, start + 100),
+    const response = await call<{ rounds: ApplicationInterviewRound[] }>({
+      action: "interview_rounds", job_id: jobId, application_ids: ids.slice(start, start + 100),
     });
-    results.push(...response.rounds);
+    for (const round of response.rounds) rounds.set(round.application_id, round);
   }
-  return new Map(results.map(({ application_id, completed_count }) => [application_id, completed_count]));
+  return rounds;
 }
 
 export type ScreenApplicationResult = {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import {
   applicationDetail,
-  completedInterviewRounds,
+  currentInterviewRounds,
   interviewApplication,
   moveApplicationBack,
   listApplications,
@@ -12,6 +12,7 @@ import {
   searchApplications,
   type Application,
   type ApplicationDetail,
+  type ApplicationInterviewRound,
 } from "@/lib/applications";
 import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
@@ -50,7 +51,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [items, setItems] = useState<Application[]>([]);
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
-  const [rounds, setRounds] = useState<Map<string, number> | null>(null);
+  const [rounds, setRounds] = useState<Map<string, ApplicationInterviewRound> | null>(null);
   const [roundsError, setRoundsError] = useState(false);
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState("");
@@ -102,8 +103,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       setState(result.applications.length || offerCount ? "ready" : "empty");
       const applicationIds = [...result.applications, ...(offerResult instanceof Error ? [] : offerResult.applications.map(({ application }) => application))]
         .map(({ application_id }) => application_id);
-      void completedInterviewRounds(job.id, applicationIds).then((counts) => {
-        if (ticket === listTicket.current) setRounds(counts);
+      void currentInterviewRounds(job.id, applicationIds).then((current) => {
+        if (ticket === listTicket.current) setRounds(current);
       }).catch((cause: unknown) => {
         if (ticket !== listTicket.current) return;
         if (cause instanceof ApiError && cause.status === 401) onSessionLost();
@@ -331,14 +332,18 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
           {stages.flatMap(([stage, applications]) => applications.map((application) => {
-            const round = rounds?.get(application.application_id) ?? 0;
+            const round = rounds?.get(application.application_id);
             return (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
               <td><button className={styles.candidateLink} type="button" title={application.candidate_name} onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
               <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{copy.stageLabel(stage)}</span></td>
               <td className={round ? undefined : styles.emptyValue} title={roundsError ? (en ? "Could not load interview rounds" : "Chưa tải được vòng phỏng vấn") : undefined}>
-                {round ? `${en ? "Round" : "Vòng"} ${round}` : roundsError ? (en ? "Unavailable" : "Chưa tải được") : rounds ? "—" : "…"}
+                {round ? <>
+                  <span>{en ? "Round" : "Vòng"} {round.round_number}</span>
+                  <small className={styles.roundStatus}>{round.interview_status === "COMPLETED"
+                    ? (en ? "Completed" : "Đã hoàn tất") : (en ? "Scheduled" : "Đã lên lịch")}</small>
+                </> : roundsError ? (en ? "Unavailable" : "Chưa tải được") : rounds ? "—" : "…"}
               </td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>

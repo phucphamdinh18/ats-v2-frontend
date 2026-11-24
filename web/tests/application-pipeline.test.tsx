@@ -10,7 +10,7 @@ vi.mock("../lib/applications", () => ({
   listApplications: api.list,
   searchApplications: api.search,
   applicationDetail: api.detail,
-  completedInterviewRounds: api.rounds,
+  currentInterviewRounds: api.rounds,
   APPLICATION_NOTE_LIMIT: 1000,
   listApplicationNotes: api.notes,
   addApplicationNote: api.addNote,
@@ -167,10 +167,15 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(api.addNote.mock.calls).toEqual([[job.id, "Ada", requestId, newNote.body], [job.id, "Ada", requestId, newNote.body]]);
   });
 
-  it("shows scheduled and completed interview dates in the sidebar while keeping the table count completed-only", async () => {
-    api.list.mockResolvedValue({ applications: [application("Ada", "INTERVIEW"), application("Lin", "INTERVIEW")] });
+  it("shows the current round and status in the table, using the same scheduled and completed rounds as the sidebar", async () => {
+    const applicants = ["Ada", "Lin", "Min", "Sam"];
+    api.list.mockResolvedValue({ applications: applicants.map((name) => application(name, "INTERVIEW")) });
     api.detail.mockResolvedValue(detail("Ada", "INTERVIEW"));
-    api.rounds.mockResolvedValue(new Map([["Ada", 1]]));
+    api.rounds.mockResolvedValue(new Map([
+      ["Ada", { application_id: "Ada", round_number: 2, interview_status: "SCHEDULED" }],
+      ["Lin", { application_id: "Lin", round_number: 1, interview_status: "SCHEDULED" }],
+      ["Min", { application_id: "Min", round_number: 1, interview_status: "COMPLETED" }],
+    ]));
     api.worklist.mockImplementation(async (status, _limit, _offset, id) => status === "SCHEDULED" ? [
       { id: `${id}-scheduled`, status: "SCHEDULED", starts_at: "2026-11-20T17:30:00Z", timezone: "Etc/GMT-7", interview_type: "FINAL" },
       { id: "cancelled", status: "CANCELLED", starts_at: "2026-11-20T09:00:00Z", participants: [{ display_name: "Cancelled only" }] },
@@ -179,9 +184,14 @@ describe("Bosch list-only hiring pipeline", () => {
     ] : []);
     renderPipeline();
     await selectCandidate();
-    expect(api.rounds).toHaveBeenCalledWith(job.id, ["Ada", "Lin"]);
-    expect(within(await screen.findByRole("row", { name: /Ada/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("Vòng 1");
-    expect(within(screen.getByRole("row", { name: /Lin/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("—");
+    expect(api.rounds).toHaveBeenCalledWith(job.id, applicants);
+    const roundCell = (name: string) => within(screen.getByRole("row", { name: new RegExp(name) })).getAllByRole("cell")[3];
+    expect(within(roundCell("Ada")).getByText("Vòng 2")).toBeTruthy();
+    expect(within(roundCell("Ada")).getByText("Đã lên lịch")).toBeTruthy();
+    expect(within(roundCell("Lin")).getByText("Vòng 1")).toBeTruthy();
+    expect(within(roundCell("Lin")).getByText("Đã lên lịch")).toBeTruthy();
+    expect(within(roundCell("Min")).getByText("Đã hoàn tất")).toBeTruthy();
+    expect(roundCell("Sam").textContent?.trim()).toBe("—");
     const progress = screen.getByRole("region", { name: "Tiến độ phỏng vấn" });
     expect(await within(progress).findByText("1/2 đã hoàn tất")).toBeTruthy();
     const rounds = within(progress).getAllByRole("listitem");
