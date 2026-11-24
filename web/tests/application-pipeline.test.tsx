@@ -128,6 +128,10 @@ describe("Bosch list-only hiring pipeline", () => {
     const progress = screen.getByRole("heading", { name: "Tiến độ phỏng vấn" });
     const summary = screen.getByRole("heading", { name: "Tóm tắt" });
     expect(progress.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const overview = within(screen.getByLabelText("Chi tiết ứng viên"));
+    for (const label of ["Vòng tuyển dụng", "Trạng thái", "Nguồn"]) {
+      expect(overview.queryByText(label, { exact: true })).toBeNull();
+    }
     expect(await screen.findByText("Test Engineer")).toBeTruthy();
     expect(screen.getByText("Test Company")).toBeTruthy();
     expect(screen.getByText("0 năm")).toBeTruthy();

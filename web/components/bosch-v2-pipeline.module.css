@@ -84,8 +84,6 @@
 @media(max-width:970px){.root{grid-template-columns:minmax(0,1fr)}.mainColumn,.side{grid-column:1}.side{grid-row:auto;position:static;max-height:none;overflow:visible}.stageCell strong{font-size:23px}}
 @media(max-width:580px){.summary{padding:12px}.summaryFilters{flex-wrap:wrap}.stageCell{min-height:75px}.stageCell strong{font-size:19px}.stageCell span{font-size:var(--ats-font-body)}.stageCell small{font-size:var(--ats-font-body)}.toolbar{padding:12px}.search{width:100%}.search input{width:100%;flex:1}}
 
-.profileFields{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px 8px;margin:12px 0;font-size:var(--ats-font-body)}
-.profileFields dt{color:#536276}.profileFields dd{margin:0;font-weight:650;min-width:0;overflow-wrap:anywhere}
 .timeline{padding-left:20px;font-size:var(--ats-font-body)}.timeline li{padding-bottom:9px}.timeline li strong,.timeline li small,.timeline li span{display:block;margin-bottom:3px}.timeline li small{color:#5f6d81}
 
 /* Action and feedback controls are scoped; they no longer rely on legacy globals. */
@@ -168,7 +166,7 @@
   .search{flex:1 1 100%;max-width:none;min-width:0}
   .toolbar>.muted{margin-left:0;white-space:normal}
   .tableHeading{font-size:22px}
-  .profileCard dl,.profileFields{grid-template-columns:minmax(85px,37%) minmax(0,1fr)}
+  .profileCard dl{grid-template-columns:minmax(85px,37%) minmax(0,1fr)}
   .pagination{padding:12px 10px;gap:4px}
   .pagination button{padding:0 8px}
 }
@@ -226,7 +224,7 @@
 .profileHead p,.profileTabs button{font-size:16px;line-height:1.5}
 .profileTabs button{white-space:normal;overflow-wrap:anywhere}
 .side .profileCard h3{font-size:20px;line-height:1.4}
-.side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileFields,.side .profileMuted{font-size:16px;line-height:1.5}
+.side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileMuted{font-size:16px;line-height:1.5}
 .side .timeline small{font-size:var(--ats-font-body)}
 
 

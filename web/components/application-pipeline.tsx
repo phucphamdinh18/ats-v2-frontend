@@ -383,10 +383,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
           : <PipelineCandidateProfile key={detail.application.candidate_id} view={candidateTab}
             candidateId={canManageApplications ? detail.application.candidate_id : undefined} en={en} onSessionLost={onSessionLost} />
       )}
-      {detail && candidateTab === "overview" && <>
-        <dl className={styles.profileFields}><dt>{copy.stage}</dt><dd>{copy.stageLabel(detail.application.stage)}</dd><dt>{en ? "Status" : "Trạng thái"}</dt><dd>{detail.application.status === "ACTIVE" ? (en ? "In progress" : "Đang xử lý") : detail.application.status}</dd><dt>{copy.source}</dt><dd>{detail.application.source || "—"}</dd></dl>
-        {detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
-      </>}
+      {detail && candidateTab === "overview" && detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
       {detail && candidateTab === "notes" && (canManageApplications ?
         <PipelineCandidateNotes key={detail.application.application_id} jobId={job.id} applicationId={detail.application.application_id} en={en} onSessionLost={onSessionLost} />
         : <p className={styles.profileMuted}>{en ? "Only Admins and TAs assigned to this job can access these notes." : "Chỉ Admin và TA phụ trách Job này có quyền truy cập ghi chú."}</p>)}
