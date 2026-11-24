@@ -17,6 +17,7 @@ import TalentPool from "./talent-pool";
 import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
+import AdminUserAccess from "./admin-user-access";
 import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
@@ -43,7 +44,7 @@ export default function Workspace() {
   const [calendarPromptOpen, setCalendarPromptOpen] = useState(false);
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
   const [calendarPromptError, setCalendarPromptError] = useState("");
-  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews">("jobs");
+  const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews" | "users">("jobs");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -359,6 +360,7 @@ export default function Workspace() {
   useEffect(() => {
     if (["create","edit"].includes(jobView) && !adminAllowed) setJobView("master");
     if (tab === "interviews" && !interviewAllowed) setTab("jobs");
+    if (tab === "users" && !adminAllowed) setTab("jobs");
   }, [tab, jobView, adminAllowed, interviewAllowed, reviewAllowed]);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const normalizedGlobalQuery = globalSearchQuery.trim().toLocaleLowerCase(locale);
@@ -367,6 +369,9 @@ export default function Workspace() {
     { label: t.jobs, description: "Job Master & Hiring Pipeline", destination: "jobs" as const },
     ...(reviewAllowed ? [
       { label: "Talent Pool", description: "Kho ứng viên đã duyệt", destination: "talent" as const },
+    ] : []),
+    ...(adminAllowed ? [
+      { label: locale === "en" ? "ATS accounts" : "Tài khoản ATS", description: locale === "en" ? "Manage workspace access" : "Quản lý quyền truy cập toàn ATS", destination: "users" as const },
     ] : []),
   ].filter((item) => !normalizedGlobalQuery || `${item.label} ${item.description}`.toLocaleLowerCase(locale).includes(normalizedGlobalQuery));
   const globalJobMatches = (access?.jobs || []).filter((job) =>
@@ -548,6 +553,7 @@ export default function Workspace() {
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
+          {adminAllowed && <button type="button" className={`${styles.navButton} ${tab === "users" ? styles.active : ""}`} aria-current={tab === "users" ? "page" : undefined} onClick={() => setTab("users")}><Icon name="shield"/><span className={styles.navLabel}>{locale === "en" ? "ATS accounts" : "Tài khoản ATS"}</span></button>}
         </nav>
         <div className={styles.sidebarSpacer}/>
         <div className={styles.scope}><Icon name="shield" size={16}/><span className={styles.scopeCopy}>{t.scoped}</span></div>
@@ -680,8 +686,8 @@ export default function Workspace() {
                 <BoschModuleLayout module="candidates"><TalentPool key={access.userId} jobs={access.jobs} onAccessLost={invalidate} onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }} /></BoschModuleLayout>
               ) : tab === "interviews" && allowed ? (
                 <BoschModuleLayout module="interviews"><InterviewWorklist onAccessLost={invalidate} /></BoschModuleLayout>
-
-
+              ) : tab === "users" && adminAllowed ? (
+                <AdminUserAccess userId={access.userId} onAccessLost={invalidate} />
               ) : (
                 <>
                   {guideOpen && (
