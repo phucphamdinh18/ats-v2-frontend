@@ -167,24 +167,33 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(api.addNote.mock.calls).toEqual([[job.id, "Ada", requestId, newNote.body], [job.id, "Ada", requestId, newNote.body]]);
   });
 
-  it("counts completed interviews in both the row and the sidebar, ignoring scheduled and cancelled appointments", async () => {
+  it("shows scheduled and completed interview dates in the sidebar while keeping the table count completed-only", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada", "INTERVIEW"), application("Lin", "INTERVIEW")] });
     api.detail.mockResolvedValue(detail("Ada", "INTERVIEW"));
     api.rounds.mockResolvedValue(new Map([["Ada", 1]]));
-    api.worklist.mockResolvedValue([
+    api.worklist.mockImplementation(async (status, _limit, _offset, id) => status === "SCHEDULED" ? [
+      { id: `${id}-scheduled`, status: "SCHEDULED", starts_at: "2026-11-20T17:30:00Z", timezone: "Etc/GMT-7", interview_type: "FINAL" },
       { id: "cancelled", status: "CANCELLED", starts_at: "2026-11-20T09:00:00Z", participants: [{ display_name: "Cancelled only" }] },
-      { id: "completed", status: "COMPLETED", starts_at: "2026-11-20T10:00:00Z", interview_type: "INTERVIEW" },
-      { id: "scheduled", status: "SCHEDULED", starts_at: "2026-11-20T11:00:00Z" },
-    ]);
+    ] : id === "Ada" ? [
+      { id: "completed", status: "COMPLETED", starts_at: "2026-11-20T10:00:00Z", timezone: "Etc/GMT-7", interview_type: "INTERVIEW" },
+    ] : []);
     renderPipeline();
     await selectCandidate();
     expect(api.rounds).toHaveBeenCalledWith(job.id, ["Ada", "Lin"]);
     expect(within(await screen.findByRole("row", { name: /Ada/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("Vòng 1");
     expect(within(screen.getByRole("row", { name: /Lin/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("—");
     const progress = screen.getByRole("region", { name: "Tiến độ phỏng vấn" });
-    expect(await within(progress).findByText("1 đã hoàn tất")).toBeTruthy();
-    expect(within(progress).getAllByRole("listitem")).toHaveLength(1);
-    expect(api.worklist.mock.calls).toEqual([["COMPLETED", 100, 0, "Ada"]]);
+    expect(await within(progress).findByText("1/2 đã hoàn tất")).toBeTruthy();
+    const rounds = within(progress).getAllByRole("listitem");
+    expect(rounds).toHaveLength(2);
+    expect(rounds[0].textContent).toContain("Đã hoàn tất · 20/11/2026");
+    expect(rounds[1].textContent).toContain("Đã lên lịch · 21/11/2026, 00:30");
+    expect(within(progress).queryByText("Cancelled only")).toBeNull();
+    expect(api.worklist.mock.calls).toEqual([["SCHEDULED", 100, 0, "Ada"], ["COMPLETED", 100, 0, "Ada"]]);
+
+    api.detail.mockResolvedValue(detail("Lin", "INTERVIEW"));
+    await selectCandidate("Lin");
+    expect(await screen.findByText("0/1 đã hoàn tất")).toBeTruthy();
   });
 
   it("prefills and saves the selected candidate while reloading the application list", async () => {
