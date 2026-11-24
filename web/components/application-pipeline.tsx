@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import {
   applicationDetail,
+  completedInterviewRounds,
   interviewApplication,
   moveApplicationBack,
   listApplications,
@@ -16,6 +17,7 @@ import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
 import CandidateInterviewProgress from "./candidate-interview-progress";
+import CandidateEditForm from "./candidate-edit-form";
 import { UserRound, BriefcaseBusiness, Building2, GraduationCap } from "lucide-react";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-pipeline.module.css";
@@ -46,6 +48,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [items, setItems] = useState<Application[]>([]);
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
+  const [rounds, setRounds] = useState<Map<string, number> | null>(null);
+  const [roundsError, setRoundsError] = useState(false);
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -54,6 +58,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState(false);
+  const [savedCandidate, setSavedCandidate] = useState(false);
   const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
   const [transitionRequestTarget, setTransitionRequestTarget] = useState<TransitionStage | null>(null);
   const [failedTransition, setFailedTransition] = useState<{ application: Application; targetStage: TransitionStage; message: string } | null>(null);
@@ -67,6 +73,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     const ticket = ++listTicket.current;
     setState("loading");
     setError("");
+    setRounds(null);
+    setRoundsError(false);
     try {
       const [result, offerResult] = await Promise.all([
         nextQuery.trim()
@@ -88,6 +96,15 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       }
       const offerCount = offerResult instanceof Error ? 0 : offerResult.applications.length;
       setState(result.applications.length || offerCount ? "ready" : "empty");
+      const applicationIds = [...result.applications, ...(offerResult instanceof Error ? [] : offerResult.applications.map(({ application }) => application))]
+        .map(({ application_id }) => application_id);
+      void completedInterviewRounds(job.id, applicationIds).then((counts) => {
+        if (ticket === listTicket.current) setRounds(counts);
+      }).catch((cause: unknown) => {
+        if (ticket !== listTicket.current) return;
+        if (cause instanceof ApiError && cause.status === 401) onSessionLost();
+        setRoundsError(true);
+      });
     } catch (cause) {
       if (ticket !== listTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
@@ -115,6 +132,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     setSelected(null);
     onSelectionChange?.(null);
     setDetail(null);
+    setEditingCandidate(false);
+    setSavedCandidate(false);
     setDetailError("");
     setDetailLoading(false);
     setTransitionRequestId(null);
@@ -145,6 +164,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     onSelectionChange?.(application);
     selectedId.current = application.application_id;
     setDetail(null);
+    setEditingCandidate(false);
+    setSavedCandidate(false);
     setDetailError("");
     setTransitionRequestId(null);
     setTransitionRequestTarget(null);
@@ -246,6 +267,17 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     await load(0, "");
   }, [load]);
 
+  function candidateSaved(application: Application, name: string) {
+    if (selectedId.current !== application.application_id) return;
+    const updated = { ...application, candidate_name: name };
+    setSelected(updated);
+    setDetail((current) => current && { ...current, application: updated });
+    setEditingCandidate(false);
+    setSavedCandidate(true);
+    onSelectionChange?.(updated);
+    void load();
+  }
+
   return <section className={styles.root} aria-label={`${copy.pipeline} ${job.title}`}>
     <div className={styles.mainColumn}>
     <div className={styles.summary}>
@@ -285,17 +317,21 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         <colgroup><col className={styles.checkCol}/><col className={styles.candidateCol}/><col className={styles.stageCol}/><col className={styles.roundCol}/><col className={styles.matchCol}/><col className={styles.experienceCol}/><col className={styles.sourceCol}/></colgroup>
         <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
-          {stages.flatMap(([stage, applications]) => applications.map((application) => (
+          {stages.flatMap(([stage, applications]) => applications.map((application) => {
+            const round = rounds?.get(application.application_id) ?? 0;
+            return (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
               <td><button className={styles.candidateLink} type="button" title={application.candidate_name} onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
               <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{copy.stageLabel(stage)}</span></td>
-              <td className={styles.emptyValue} title={en ? "Interview rounds aren’t included in this response" : "Dữ liệu vòng phỏng vấn chưa có trong API hồ sơ"}>—</td>
+              <td className={round ? undefined : styles.emptyValue} title={roundsError ? (en ? "Could not load interview rounds" : "Chưa tải được vòng phỏng vấn") : undefined}>
+                {round ? `${en ? "Round" : "Vòng"} ${round}` : roundsError ? (en ? "Unavailable" : "Chưa tải được") : rounds ? "—" : "…"}
+              </td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>
               <td><span className={styles.sourceText} title={application.source || "—"}>{application.source || "—"}</span></td>
             </tr>
-          )))}
+          ); }))}
         </tbody>
       </table>
       {!items.length && !offerItems.length && <p className={styles.empty}>{copy.emptyPage}</p>}
@@ -309,12 +345,20 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       <div className={styles.detailSticky}>
       <div className={styles.profileHead}>
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
-              <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); onSelectionChange?.(null); }}>×</button>
+        <div className={styles.profileActions}>
+          {canManageApplications && detail && !editingCandidate && <button type="button" className={styles.actionSecondary} onClick={() => { setEditingCandidate(true); setSavedCandidate(false); }}>{en ? "Edit Candidate" : "Sửa ứng viên"}</button>}
+          <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); onSelectionChange?.(null); }}>×</button>
+        </div>
       </div>
       <nav className={styles.profileTabs} aria-label={copy.tabs}><span className={styles.active}>{copy.overviewTab}</span><span>{copy.profile}</span><span>{copy.notes}</span><span>{copy.activityTab}</span></nav>
       </div>
       {detailLoading && <p role="status">{en ? "Loading details…" : "Đang tải chi tiết…"}</p>}
       {detailError && <div className={`${styles.notice} ${styles.error}`} role="alert">{detailError}<button className={styles.retry} onClick={() => void openDetail(selected)}>{copy.retry}</button></div>}
+      {savedCandidate && <p role="status">{en ? "Candidate profile saved." : "Đã lưu hồ sơ ứng viên."}</p>}
+      {detail && canManageApplications && editingCandidate && <CandidateEditForm
+        key={detail.application.application_id} candidateId={detail.application.candidate_id} applicationId={detail.application.application_id}
+        jobId={job.id} en={en} onSessionLost={onSessionLost} onClose={() => setEditingCandidate(false)}
+        onSave={(name) => candidateSaved(detail.application, name)} />}
       {detail && <>
         <div className={styles.profileCard}>
           <CandidateInterviewProgress applicationId={detail.application.application_id} />

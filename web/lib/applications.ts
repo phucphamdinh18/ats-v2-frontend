@@ -75,6 +75,18 @@ export function applicationDetail(jobId: string, applicationId: string) {
   return call<ApplicationDetail>({ action: "detail", job_id: jobId, application_id: applicationId });
 }
 
+export async function completedInterviewRounds(jobId: string, applicationIds: string[]) {
+  const ids = [...new Set(applicationIds)];
+  const results = [];
+  for (let start = 0; start < ids.length; start += 100) {
+    const response = await call<{ rounds: { application_id: string; completed_count: number }[] }>({
+      action: "completed_interview_rounds", job_id: jobId, application_ids: ids.slice(start, start + 100),
+    });
+    results.push(...response.rounds);
+  }
+  return new Map(results.map(({ application_id, completed_count }) => [application_id, completed_count]));
+}
+
 export type ScreenApplicationResult = {
   application: { application_id: string; changed: boolean };
 };

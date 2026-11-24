@@ -1,19 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ApplicationPipeline from "../components/application-pipeline";
 import { ApiError } from "../lib/supabase";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn(), back: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn(), back: vi.fn(), rounds: vi.fn(), worklist: vi.fn(), profile: vi.fn(), saveProfile: vi.fn() }));
 const confirmMock = vi.hoisted(() => vi.fn());
 const randomUuidMock = vi.hoisted(() => vi.fn());
 vi.mock("../lib/applications", () => ({
   listApplications: api.list,
   searchApplications: api.search,
   applicationDetail: api.detail,
+  completedInterviewRounds: api.rounds,
   screenApplication: api.screen,
   interviewApplication: api.interview,
   moveApplicationBack: api.back,
 }));
+vi.mock("../lib/interviews", () => ({ listInterviewWorklist: api.worklist }));
+vi.mock("../lib/candidates", () => ({ candidateProfile: api.profile, updateCandidateProfile: api.saveProfile }));
 vi.mock("../lib/supabase", () => ({
   ApiError: class ApiError extends Error { constructor(message: string, public status?: number) { super(message); } },
   getClient: () => ({
@@ -48,6 +51,8 @@ async function selectCandidate(name = "Ada") {
 
 beforeEach(() => {
   Object.values(api).forEach((fn) => fn.mockReset());
+  api.rounds.mockResolvedValue(new Map());
+  api.worklist.mockResolvedValue([]);
   confirmMock.mockReset().mockReturnValue(true);
   randomUuidMock.mockReset().mockReturnValue(requestId);
   vi.stubGlobal("confirm", confirmMock);
@@ -98,6 +103,47 @@ describe("Bosch list-only hiring pipeline", () => {
     await selectCandidate();
     expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
     expect(screen.queryByRole("button", { name: /Chuyển (về|sang)/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sửa ứng viên" })).toBeNull();
+  });
+
+  it("counts completed interviews in both the row and the sidebar, ignoring scheduled and cancelled appointments", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada", "INTERVIEW"), application("Lin", "INTERVIEW")] });
+    api.detail.mockResolvedValue(detail("Ada", "INTERVIEW"));
+    api.rounds.mockResolvedValue(new Map([["Ada", 1]]));
+    api.worklist.mockResolvedValue([
+      { id: "cancelled", status: "CANCELLED", starts_at: "2026-11-20T09:00:00Z", participants: [{ display_name: "Cancelled only" }] },
+      { id: "completed", status: "COMPLETED", starts_at: "2026-11-20T10:00:00Z", interview_type: "INTERVIEW" },
+      { id: "scheduled", status: "SCHEDULED", starts_at: "2026-11-20T11:00:00Z" },
+    ]);
+    renderPipeline();
+    await selectCandidate();
+    expect(api.rounds).toHaveBeenCalledWith(job.id, ["Ada", "Lin"]);
+    expect(within(await screen.findByRole("row", { name: /Ada/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("Vòng 1");
+    expect(within(screen.getByRole("row", { name: /Lin/ })).getAllByRole("cell")[3].textContent?.trim()).toBe("—");
+    const progress = screen.getByRole("region", { name: "Tiến độ phỏng vấn" });
+    expect(await within(progress).findByText("1 đã hoàn tất")).toBeTruthy();
+    expect(within(progress).getAllByRole("listitem")).toHaveLength(1);
+    expect(api.worklist.mock.calls).toEqual([["COMPLETED", 100, 0, "Ada"]]);
+  });
+
+  it("prefills and saves the selected candidate while reloading the application list", async () => {
+    const version = "2026-11-20T10:00:00Z";
+    api.list.mockResolvedValueOnce({ applications: [application("Ada")] })
+      .mockResolvedValueOnce({ applications: [{ ...application("Ada"), candidate_name: "Ada Nguyen" }] });
+    api.detail.mockResolvedValue(detail("Ada"));
+    api.profile.mockResolvedValue({ candidate: { id: "candidate-Ada", full_name: "Ada", email: "ada@example.test", updated_at: version } });
+    api.saveProfile.mockResolvedValue({ candidate_id: "candidate-Ada", full_name: "Ada Nguyen" });
+    renderPipeline();
+    await selectCandidate();
+    fireEvent.click(screen.getByRole("button", { name: "Sửa ứng viên" }));
+    const input = await screen.findByDisplayValue("Ada");
+    fireEvent.change(input, { target: { value: "Ada Nguyen" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
+    await screen.findByText("Đã lưu hồ sơ ứng viên.");
+    expect(api.saveProfile).toHaveBeenCalledWith(job.id, "Ada", version, {
+      full_name: "Ada Nguyen", email: "ada@example.test", phone: "", current_title: "", current_company: "",
+    });
+    expect(await screen.findByRole("button", { name: "Ada Nguyen" })).toBeTruthy();
   });
 
   it("moves NEW to SCREEN through confirmed button and guarded backend action", async () => {

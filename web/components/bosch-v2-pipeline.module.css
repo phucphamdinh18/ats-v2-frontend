@@ -48,6 +48,11 @@
 .placeholder{min-height:240px}
 .placeholder p{color:var(--b2-muted);line-height:1.65;font-size:var(--ats-font-body);margin-top:16px}
 .profileHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:15px}
+.profileActions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.profileActions .actionSecondary{margin:0;white-space:nowrap}
+.editForm fieldset{display:grid;gap:10px;border:0;padding:0;margin:0;min-width:0}
+.editForm label{display:grid;gap:4px;font-weight:650}
+.editForm input{width:100%;padding:7px 9px;min-width:0;border:1px solid #bdc9d7;border-radius:5px;background:#fff;color:inherit;font:inherit}
 .profileHead p{font-size:var(--ats-font-body);color:#607088;margin:6px 0 0}
 .close{border:1px solid #d4dbe4;border-radius:5px;background:#fff;font-size:22px;color:#48596e;width:32px;height:30px;line-height:1}
 .profileTabs{display:flex;gap:17px;overflow-x:auto;border-bottom:1px solid var(--b2-line);margin-bottom:14px;white-space:nowrap}
