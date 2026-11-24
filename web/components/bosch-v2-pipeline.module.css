@@ -56,7 +56,7 @@
 .profileHead p{font-size:var(--ats-font-body);color:#607088;margin:6px 0 0}
 .close{border:1px solid #d4dbe4;border-radius:5px;background:#fff;font-size:22px;color:#48596e;width:32px;height:30px;line-height:1}
 .profileTabs{display:flex;gap:17px;overflow-x:auto;border-bottom:1px solid var(--b2-line);margin-bottom:14px;white-space:nowrap}
-.profileTabs span{font-size:var(--ats-font-body);font-weight:650;padding:9px 1px 10px;color:#344257}
+.profileTabs button{font-size:var(--ats-font-body);font-weight:650;padding:9px 1px 10px;color:#344257;background:none;border:0;border-bottom:3px solid transparent;cursor:pointer}
 .profileTabs .active{color:var(--b2-red);border-bottom:3px solid var(--b2-red);font-weight:800}
 .profileCard{border:1px solid #dce1e8;border-radius:6px;padding:14px;margin:0 0 12px;min-width:0;overflow-wrap:anywhere}
 .profileCard h3{font-size:var(--ats-font-section);font-weight:800;margin:0 0 10px}
@@ -187,13 +187,22 @@
 .professionalFacts dt svg{flex:0 0 17px;color:#172236;stroke-width:1.8;margin-top:1px}
 .professionalFacts dt span{min-width:0;overflow-wrap:anywhere}
 .professionalFacts dd{margin:0;min-width:0;color:#172236;font-weight:600;overflow-wrap:anywhere}
+.fact{display:contents}
+.profileDocuments{padding-left:20px}
+.profileDocuments a{color:#0756bd;text-decoration:underline}
+.profileDocuments svg{vertical-align:middle}
+.noteForm label{display:grid;gap:6px;font-weight:650}
+.noteForm textarea{width:100%;padding:8px 10px;border:1px solid #bdc9d7;border-radius:5px;background:#fff;color:inherit;font:inherit;resize:vertical}
+.noteList{list-style:none;padding:0;margin:16px 0 0}
+.noteList li{padding:12px 0;border-top:1px solid #e5e7eb}
+.noteList li p{white-space:pre-wrap;margin:0 0 5px}
 @media(max-width:560px){.professionalFacts{grid-template-columns:minmax(115px,42%) minmax(0,1fr);gap:9px 8px;font-size:var(--ats-font-body)}.professionalFacts dt{gap:7px}}
 
 /* Readable, unboxed Candidate detail sections, matching the approved right rail. */
 .side h2{font-size:22px;line-height:1.25;font-weight:700}
 .profileHead p{font-size:var(--ats-font-body);line-height:1.45}
 .profileTabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;overflow-x:auto;margin-bottom:10px}
-.profileTabs span{text-align:center;font-size:var(--ats-font-body);padding:12px 4px}
+.profileTabs button{text-align:center;font-size:var(--ats-font-body);padding:12px 4px}
 .profileCard{border:0;border-radius:0;padding:16px 0;margin:0 0 8px;font-size:var(--ats-font-body);line-height:1.5}
 .side .profileCard h3{font-size:var(--ats-font-section);line-height:1.35;font-weight:700;margin:0 0 12px}
 .side .profileCard p,.side .profileCard dl,.side .profileCard ol{font-size:var(--ats-font-body);line-height:1.5}
@@ -214,8 +223,8 @@
 .emptyValue{font-size:15px}
 .search input,.disclosure summary,.toolbar>.muted,.pagination,.pagination>span,.pagination button{font-size:15px}
 .side h2{font-size:26px;line-height:1.3}
-.profileHead p,.profileTabs span{font-size:16px;line-height:1.5}
-.profileTabs span{white-space:normal;overflow-wrap:anywhere}
+.profileHead p,.profileTabs button{font-size:16px;line-height:1.5}
+.profileTabs button{white-space:normal;overflow-wrap:anywhere}
 .side .profileCard h3{font-size:20px;line-height:1.4}
 .side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileFields,.side .profileMuted{font-size:16px;line-height:1.5}
 .side .timeline small{font-size:var(--ats-font-body)}

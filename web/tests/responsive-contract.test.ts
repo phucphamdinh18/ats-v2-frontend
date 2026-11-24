@@ -91,11 +91,11 @@ test("Bosch identity grows on desktop while sidebar remains compact on mobile", 
 });
 
 
-test("Candidate professional summary includes four icons and bilingual Education label", () => {
-  const source = readFileSync(join(process.cwd(), "components", "application-pipeline.tsx"), "utf8");
-  for (const icon of ["UserRound", "BriefcaseBusiness", "Building2", "GraduationCap"])
-    assert.ok(source.includes(`<${icon} aria-hidden="true" size={17}/>`), `Missing icon ${icon}`);
-  assert.ok(source.includes('en ? "Education" : "Học vấn"'));
+test("Candidate Profile aligns authorized contact and work fields with labelled icons", () => {
+  const source = file("pipeline-candidate-profile.tsx");
+  assert.ok(source.includes('<Icon aria-hidden="true" size={17}/>'));
+  assert.ok(source.includes('en ? "Experience" : "Kinh nghiệm"'));
+  assert.ok(source.includes("candidate.total_experience_years"));
   assert.ok(pipeline.includes(".professionalFacts{display:grid"));
   assert.ok(pipeline.includes(".professionalFacts dt svg{"));
 });

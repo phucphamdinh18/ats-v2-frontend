@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import ApplicationPipeline from "../components/application-pipeline";
 import { ApiError } from "../lib/supabase";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn(), back: vi.fn(), rounds: vi.fn(), worklist: vi.fn(), profile: vi.fn(), saveProfile: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), search: vi.fn(), detail: vi.fn(), screen: vi.fn(), interview: vi.fn(), back: vi.fn(), rounds: vi.fn(), worklist: vi.fn(), profile: vi.fn(), saveProfile: vi.fn(), notes: vi.fn(), addNote: vi.fn() }));
 const confirmMock = vi.hoisted(() => vi.fn());
 const randomUuidMock = vi.hoisted(() => vi.fn());
 vi.mock("../lib/applications", () => ({
@@ -11,6 +11,9 @@ vi.mock("../lib/applications", () => ({
   searchApplications: api.search,
   applicationDetail: api.detail,
   completedInterviewRounds: api.rounds,
+  APPLICATION_NOTE_LIMIT: 1000,
+  listApplicationNotes: api.notes,
+  addApplicationNote: api.addNote,
   screenApplication: api.screen,
   interviewApplication: api.interview,
   moveApplicationBack: api.back,
@@ -46,7 +49,7 @@ function renderPipeline(canManageApplications = true) {
 }
 async function selectCandidate(name = "Ada") {
   fireEvent.click(await screen.findByRole("button", { name }));
-  await screen.findByRole("heading", { name: "Lịch sử" });
+  await screen.findByRole("heading", { name: "Tiến độ phỏng vấn" });
 }
 
 beforeEach(() => {
@@ -104,6 +107,49 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
     expect(screen.queryByRole("button", { name: /Chuyển (về|sang)/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sửa ứng viên" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Hồ sơ" }));
+    expect(screen.getByText(/quyền xem thông tin liên hệ và CV/)).toBeTruthy();
+    expect(api.profile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Ghi chú" }));
+    expect(screen.getByText(/quyền truy cập ghi chú/)).toBeTruthy();
+    expect(api.notes).not.toHaveBeenCalled();
+  });
+
+  it("shows Candidate contact and Drive documents in Profile", async () => {
+    api.list.mockResolvedValue({ applications: [application("Ada")] });
+    api.detail.mockResolvedValue(detail("Ada"));
+    api.profile.mockResolvedValue({
+      candidate: { id: "candidate-Ada", email: "ada@example.test", current_company: "Test Company", total_experience_years: 0 },
+      documents: [{ drive_file_id: "test_cv_file", drive_url: "https://drive.google.com/file/d/test_cv_file/view", original_name: "Test CV.pdf", created_at: "2026-11-24T10:00:00Z" }],
+    });
+    renderPipeline();
+    await selectCandidate();
+    fireEvent.click(screen.getByRole("button", { name: "Hồ sơ" }));
+    expect(await screen.findByText("ada@example.test")).toBeTruthy();
+    expect(screen.getByText("Test Company")).toBeTruthy();
+    expect(screen.getByText("0 năm")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Test CV.pdf" }).getAttribute("href")).toBe("https://drive.google.com/file/d/test_cv_file/view");
+    expect(screen.queryByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeNull();
+  });
+
+  it("adds a Job-scoped note and reuses the request ID after a network error", async () => {
+    const newNote = { id: requestId, body: "Gọi lại vào thứ Sáu", author_name: "TEST Recruiter", created_at: "2026-11-24T10:00:00Z" };
+    api.list.mockResolvedValue({ applications: [application("Ada")] });
+    api.detail.mockResolvedValue(detail("Ada"));
+    api.notes.mockResolvedValue({ notes: [] });
+    api.addNote.mockRejectedValueOnce(new Error("Mạng lỗi")).mockResolvedValueOnce(newNote);
+    renderPipeline();
+    await selectCandidate();
+    fireEvent.click(screen.getByRole("button", { name: "Ghi chú" }));
+    expect(await screen.findByText("Chưa có ghi chú.")).toBeTruthy();
+    expect(api.notes).toHaveBeenCalledWith(job.id, "Ada", undefined);
+    fireEvent.change(screen.getByLabelText("Ghi chú mới"), { target: { value: "  Gọi lại vào thứ Sáu  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Thêm ghi chú" }));
+    await screen.findByText("Mạng lỗi");
+    fireEvent.click(screen.getByRole("button", { name: "Thêm ghi chú" }));
+    expect(await screen.findByText(newNote.body)).toBeTruthy();
+    expect(screen.getByText(/TEST Recruiter/)).toBeTruthy();
+    expect(api.addNote.mock.calls).toEqual([[job.id, "Ada", requestId, newNote.body], [job.id, "Ada", requestId, newNote.body]]);
   });
 
   it("counts completed interviews in both the row and the sidebar, ignoring scheduled and cancelled appointments", async () => {
@@ -131,7 +177,7 @@ describe("Bosch list-only hiring pipeline", () => {
     api.list.mockResolvedValueOnce({ applications: [application("Ada")] })
       .mockResolvedValueOnce({ applications: [{ ...application("Ada"), candidate_name: "Ada Nguyen" }] });
     api.detail.mockResolvedValue(detail("Ada"));
-    api.profile.mockResolvedValue({ candidate: { id: "candidate-Ada", full_name: "Ada", email: "ada@example.test", updated_at: version } });
+    api.profile.mockResolvedValue({ candidate: { id: "candidate-Ada", full_name: "Ada", email: "ada@example.test", updated_at: version }, documents: [], applications: [] });
     api.saveProfile.mockResolvedValue({ candidate_id: "candidate-Ada", full_name: "Ada Nguyen" });
     renderPipeline();
     await selectCandidate();
@@ -254,7 +300,7 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.queryByLabelText("Chi tiết ứng viên")).toBeNull();
   });
 
-  it("renders real audit actor and no fabricated matching context", async () => {
+  it("moves application history from Overview to Activity with the recorded actor", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada")], limit: 25, offset: 0 });
     api.detail.mockResolvedValue({
       ...detail("Ada"),
@@ -266,6 +312,10 @@ describe("Bosch list-only hiring pipeline", () => {
     });
     renderPipeline();
     await selectCandidate();
+    expect(screen.queryByRole("heading", { name: "Lịch sử" })).toBeNull();
+    expect(screen.queryByText(/TEST ONLY Recruiter/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Hoạt động" }));
+    expect(screen.getByRole("heading", { name: "Lịch sử" })).toBeTruthy();
     expect(screen.getByLabelText("Chi tiết ứng viên").textContent).toContain("TEST ONLY Recruiter");
     expect(screen.queryByText("Matching context")).toBeNull();
   });

@@ -75,6 +75,27 @@ export function applicationDetail(jobId: string, applicationId: string) {
   return call<ApplicationDetail>({ action: "detail", job_id: jobId, application_id: applicationId });
 }
 
+export type ApplicationNote = { id: string; body: string; author_name: string | null; created_at: string };
+export const APPLICATION_NOTE_LIMIT = 1000;
+const NOTES_PAGE_SIZE = 25;
+
+export async function listApplicationNotes(jobId: string, applicationId: string, beforeId?: string) {
+  const { notes } = await call<{ notes: ApplicationNote[] }>({
+    action: "notes", job_id: jobId, application_id: applicationId, before_id: beforeId,
+  });
+  return {
+    notes: notes.slice(0, NOTES_PAGE_SIZE),
+    nextBeforeId: notes.length > NOTES_PAGE_SIZE ? notes[NOTES_PAGE_SIZE - 1].id : undefined,
+  };
+}
+
+export async function addApplicationNote(jobId: string, applicationId: string, requestId: string, body: string) {
+  const { note } = await call<{ note: ApplicationNote }>({
+    action: "add_note", job_id: jobId, application_id: applicationId, request_id: requestId, note: body,
+  });
+  return note;
+}
+
 export async function completedInterviewRounds(jobId: string, applicationIds: string[]) {
   const ids = [...new Set(applicationIds)];
   const results = [];
