@@ -48,10 +48,15 @@
 .placeholder{min-height:240px}
 .placeholder p{color:var(--b2-muted);line-height:1.65;font-size:var(--ats-font-body);margin-top:16px}
 .profileHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:15px}
+.profileActions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.profileActions .actionSecondary{margin:0;white-space:nowrap}
+.editForm fieldset{display:grid;gap:10px;border:0;padding:0;margin:0;min-width:0}
+.editForm label{display:grid;gap:4px;font-weight:650}
+.editForm input{width:100%;padding:7px 9px;min-width:0;border:1px solid #bdc9d7;border-radius:5px;background:#fff;color:inherit;font:inherit}
 .profileHead p{font-size:var(--ats-font-body);color:#607088;margin:6px 0 0}
 .close{border:1px solid #d4dbe4;border-radius:5px;background:#fff;font-size:22px;color:#48596e;width:32px;height:30px;line-height:1}
 .profileTabs{display:flex;gap:17px;overflow-x:auto;border-bottom:1px solid var(--b2-line);margin-bottom:14px;white-space:nowrap}
-.profileTabs span{font-size:var(--ats-font-body);font-weight:650;padding:9px 1px 10px;color:#344257}
+.profileTabs button{font-size:var(--ats-font-body);font-weight:650;padding:9px 1px 10px;color:#344257;background:none;border:0;border-bottom:3px solid transparent;cursor:pointer}
 .profileTabs .active{color:var(--b2-red);border-bottom:3px solid var(--b2-red);font-weight:800}
 .profileCard{border:1px solid #dce1e8;border-radius:6px;padding:14px;margin:0 0 12px;min-width:0;overflow-wrap:anywhere}
 .profileCard h3{font-size:var(--ats-font-section);font-weight:800;margin:0 0 10px}
@@ -79,8 +84,6 @@
 @media(max-width:970px){.root{grid-template-columns:minmax(0,1fr)}.mainColumn,.side{grid-column:1}.side{grid-row:auto;position:static;max-height:none;overflow:visible}.stageCell strong{font-size:23px}}
 @media(max-width:580px){.summary{padding:12px}.summaryFilters{flex-wrap:wrap}.stageCell{min-height:75px}.stageCell strong{font-size:19px}.stageCell span{font-size:var(--ats-font-body)}.stageCell small{font-size:var(--ats-font-body)}.toolbar{padding:12px}.search{width:100%}.search input{width:100%;flex:1}}
 
-.profileFields{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px 8px;margin:12px 0;font-size:var(--ats-font-body)}
-.profileFields dt{color:#536276}.profileFields dd{margin:0;font-weight:650;min-width:0;overflow-wrap:anywhere}
 .timeline{padding-left:20px;font-size:var(--ats-font-body)}.timeline li{padding-bottom:9px}.timeline li strong,.timeline li small,.timeline li span{display:block;margin-bottom:3px}.timeline li small{color:#5f6d81}
 
 /* Action and feedback controls are scoped; they no longer rely on legacy globals. */
@@ -130,6 +133,7 @@
 .candidateLink{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;max-width:100%;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:normal;font-size:var(--ats-font-body);font-weight:600;color:#1d4ed8;line-height:1.4;text-align:center;margin-inline:auto}
 .sourceText{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;max-width:100%;overflow:hidden;white-space:normal;overflow-wrap:anywhere;font-size:var(--ats-font-body);font-weight:400;line-height:1.35;color:#374151;text-transform:none;text-align:center;margin-inline:auto}
 .emptyValue{color:#9ca3af!important;font-size:var(--ats-font-body)}
+.roundStatus{display:block;color:#4f5c6c;font-size:var(--ats-font-meta,12px)}
 .stageBadge{display:inline-flex;align-items:center;justify-content:center;max-width:100%;padding:4px 8px;border-radius:999px;font-size:var(--ats-font-body);font-weight:600;white-space:normal;overflow-wrap:normal;line-height:1.3;text-align:center}
 .badgeNew{background:#f3f4f6;color:#374151}
 .badgeScreen{background:#dbeafe;color:#1d4ed8}
@@ -141,16 +145,19 @@
 .pagination button{height:34px;min-height:34px;margin:0;padding:0 14px;font-size:var(--ats-font-body);white-space:nowrap}
 .pagination button:disabled{opacity:1;color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed}
 .side{grid-column:2;grid-row:var(--job-pipeline-side-row,1 / 3);position:relative;top:auto;align-self:stretch;min-width:0;min-height:0;max-height:none;overflow:hidden;padding:0;border:0;border-left:1px solid #e5e7eb;border-radius:0;background:#fff}
-.sideInner{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:0 0 0 20px;overscroll-behavior:contain;scrollbar-width:thin}
+.sideInner{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:0 0 92px 20px;overscroll-behavior:contain;scrollbar-width:thin}
 .detailSticky{position:sticky;top:0;background:#fff;z-index:2;padding-top:1px}
 .detailSticky .profileHead{padding-top:0}
 .detailSticky .profileTabs{background:#fff}
+.stageActions{position:absolute;z-index:4;left:20px;right:0;bottom:0;display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:8px;padding:12px 16px 14px 0;border-top:1px solid #dbe2ea;background:rgba(255,255,255,.98);box-shadow:0 -6px 16px rgba(15,23,42,.06)}
+.stageActions .actionSecondary,.stageActions .actionPrimary{margin:0;min-height:40px;white-space:nowrap}
 @media(max-width:1200px){
   .root{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto}
   .summary{grid-column:1;grid-row:1}
   .listSection{grid-column:1;grid-row:2}
   .side{grid-column:1;grid-row:3;position:relative;top:auto;height:auto;max-height:520px;min-height:240px;overflow:hidden}
-  .sideInner{position:relative;inset:auto;max-height:520px;overflow-y:auto;overflow-x:hidden;padding:16px}
+  .sideInner{position:relative;inset:auto;max-height:520px;overflow-y:auto;overflow-x:hidden;padding:16px 16px 124px}
+  .stageActions{left:16px;right:16px;padding:12px 0 14px;background:rgba(255,255,255,.98)}
   .summaryHeader{flex-wrap:wrap}
 }
 @media(max-width:580px){
@@ -163,7 +170,7 @@
   .search{flex:1 1 100%;max-width:none;min-width:0}
   .toolbar>.muted{margin-left:0;white-space:normal}
   .tableHeading{font-size:22px}
-  .profileCard dl,.profileFields{grid-template-columns:minmax(85px,37%) minmax(0,1fr)}
+  .profileCard dl{grid-template-columns:minmax(85px,37%) minmax(0,1fr)}
   .pagination{padding:12px 10px;gap:4px}
   .pagination button{padding:0 8px}
 }
@@ -182,13 +189,22 @@
 .professionalFacts dt svg{flex:0 0 17px;color:#172236;stroke-width:1.8;margin-top:1px}
 .professionalFacts dt span{min-width:0;overflow-wrap:anywhere}
 .professionalFacts dd{margin:0;min-width:0;color:#172236;font-weight:600;overflow-wrap:anywhere}
+.fact{display:contents}
+.profileDocuments{padding-left:20px}
+.profileDocuments a{color:#0756bd;text-decoration:underline}
+.profileDocuments svg{vertical-align:middle}
+.noteForm label{display:grid;gap:6px;font-weight:650}
+.noteForm textarea{width:100%;padding:8px 10px;border:1px solid #bdc9d7;border-radius:5px;background:#fff;color:inherit;font:inherit;resize:vertical}
+.noteList{list-style:none;padding:0;margin:16px 0 0}
+.noteList li{padding:12px 0;border-top:1px solid #e5e7eb}
+.noteList li p{white-space:pre-wrap;margin:0 0 5px}
 @media(max-width:560px){.professionalFacts{grid-template-columns:minmax(115px,42%) minmax(0,1fr);gap:9px 8px;font-size:var(--ats-font-body)}.professionalFacts dt{gap:7px}}
 
 /* Readable, unboxed Candidate detail sections, matching the approved right rail. */
 .side h2{font-size:22px;line-height:1.25;font-weight:700}
 .profileHead p{font-size:var(--ats-font-body);line-height:1.45}
 .profileTabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;overflow-x:auto;margin-bottom:10px}
-.profileTabs span{text-align:center;font-size:var(--ats-font-body);padding:12px 4px}
+.profileTabs button{text-align:center;font-size:var(--ats-font-body);padding:12px 4px}
 .profileCard{border:0;border-radius:0;padding:16px 0;margin:0 0 8px;font-size:var(--ats-font-body);line-height:1.5}
 .side .profileCard h3{font-size:var(--ats-font-section);line-height:1.35;font-weight:700;margin:0 0 12px}
 .side .profileCard p,.side .profileCard dl,.side .profileCard ol{font-size:var(--ats-font-body);line-height:1.5}
@@ -209,10 +225,10 @@
 .emptyValue{font-size:15px}
 .search input,.disclosure summary,.toolbar>.muted,.pagination,.pagination>span,.pagination button{font-size:15px}
 .side h2{font-size:26px;line-height:1.3}
-.profileHead p,.profileTabs span{font-size:16px;line-height:1.5}
-.profileTabs span{white-space:normal;overflow-wrap:anywhere}
+.profileHead p,.profileTabs button{font-size:16px;line-height:1.5}
+.profileTabs button{white-space:normal;overflow-wrap:anywhere}
 .side .profileCard h3{font-size:20px;line-height:1.4}
-.side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileFields,.side .profileMuted{font-size:16px;line-height:1.5}
+.side .profileCard,.side .profileCard p,.side .profileCard dl,.side .profileCard ol,.side .professionalFacts,.side .timeline,.side .profileMuted{font-size:16px;line-height:1.5}
 .side .timeline small{font-size:var(--ats-font-body)}
 
 

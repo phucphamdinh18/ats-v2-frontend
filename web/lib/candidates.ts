@@ -30,6 +30,7 @@ export type Candidate = {
   location: string | null;
   current_company: string | null;
   created_at: string;
+  updated_at?: string;
 };
 export type CandidateDocument = {
   drive_file_id: string;
@@ -73,6 +74,15 @@ export async function listCandidates(query: string, limit: number, offset: numbe
 
 export async function candidateProfile(candidateId: string) {
   return candidateCall<CandidateProfile>({ action: "detail", candidate_id: candidateId });
+}
+
+export type CandidateEditFields = Record<"full_name" | "email" | "phone" | "current_title" | "current_company", string>;
+
+export async function updateCandidateProfile(jobId: string, applicationId: string, updatedAt: string, fields: CandidateEditFields) {
+  const { result } = await candidateCall<{ result: { candidate_id: string; full_name: string } }>({
+    action: "update_profile", job_id: jobId, application_id: applicationId, expected_updated_at: updatedAt, ...fields,
+  });
+  return result;
 }
 
 export async function createManualCandidateApplication(input: ManualCandidateInput) {

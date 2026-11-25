@@ -1,5 +1,5 @@
 /* ATS V2 — Job ID workspace, isolated from legacy .shell .bosch-* declarations. */
-.root { --b2-red:#e20015;--b2-ink:#121921;--b2-muted:#4f6072;--b2-line:#d9dfe6; font-family:Arial,"Helvetica Neue",sans-serif; font-size:var(--ats-font-body); line-height:1.45; color:var(--b2-ink); background:#fff; min-width:0; width:100%; }
+.root { --b2-red:#e20015;--b2-ink:#121921;--b2-muted:#4f6072;--b2-line:#d9dfe6; font-family:Arial,"Helvetica Neue",sans-serif; font-size:var(--ats-font-body); line-height:1.45; color:var(--b2-ink); background:#fff; min-width:0; width:100%; scroll-margin-top:76px; }
 .root *, .root *::before,.root *::after {box-sizing:border-box}
 .root button,.root select {font:inherit}
 .root button {cursor:pointer}
@@ -14,9 +14,16 @@
 .actions {margin-left:auto;position:relative}
 .outline {display:inline-flex;align-items:center;gap:9px;justify-content:center;border:1px solid #bfc9d6;border-radius:5px;background:#fff;color:#172c43;padding:9px 15px;font-size:var(--ats-font-body);font-weight:700}
 .outline:hover {background:#f4f6f8}
-.actionMenu {position:absolute;right:0;top:calc(100% + 5px);z-index:5;background:#fff;border:1px solid #cad3de;box-shadow:0 9px 22px #13253c22;border-radius:6px;min-width:190px;padding:5px}
-.actionMenu button {display:block;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-radius:3px;color:#1d314a;font-size:var(--ats-font-body)}
+.jobActionsTrigger{display:inline-flex;align-items:center;gap:9px;min-height:42px;padding:8px 15px;border:1px solid #d90018;border-radius:5px;background:#df001b;color:#fff;font-size:var(--ats-font-body);font-weight:750}
+.jobActionsTrigger:hover{background:#bf0017}
+.actionMenu {position:absolute;right:0;top:calc(100% + 5px);z-index:20;background:#fff;border:1px solid #cad3de;box-shadow:0 9px 22px #13253c22;border-radius:6px;min-width:270px;max-width:min(360px,calc(100vw - 28px));padding:5px}
+.actionMenu button {display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px;border:0;background:#fff;border-radius:3px;color:#1d314a;font-size:var(--ats-font-body)}
 .actionMenu button:hover {background:#f1f4f8}
+.actionMenu button:disabled{color:#77869a;cursor:not-allowed;opacity:.7}
+.actionMenu button:disabled:hover{background:#fff}
+.actionMenu button svg{flex:0 0 auto;color:#1765a8}
+.actionMenu button span{min-width:0;font-weight:700}
+.actionMenu button small{display:block;margin-top:3px;color:#6c7a8c;font-size:var(--ats-font-meta);font-weight:500;overflow-wrap:anywhere}
 .metadata {display:flex;flex-wrap:wrap;align-items:center;gap:0;margin-bottom:22px;font-size:var(--ats-font-body);color:#27374d}
 .metadata span {display:inline-flex;align-items:center;gap:8px;padding:0 17px;border-right:1px solid #d1d8e2;min-height:20px}
 .metadata span:first-child {padding-left:0}
@@ -200,6 +207,11 @@
 .bookingPanel p{margin:5px 0 0;color:#5f6f82;font-size:var(--ats-font-body);line-height:1.5}
 .bookingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .bookingField{display:flex;min-width:0;flex-direction:column;gap:6px;color:#273b52;font-size:var(--ats-font-body);font-weight:650}
+.bookingSelectedCandidate{min-height:74px;align-items:flex-start;justify-content:center;padding:8px 11px;border:1px solid #b8cce0;border-radius:5px;background:#f7fbff}
+.bookingSelectedCandidate strong{color:#153d65;font-size:var(--ats-font-body)}
+.bookingSelectedCandidate small{color:#66798e;font-size:var(--ats-font-meta);font-weight:500}
+.changeCandidate{padding:2px 0;border:0;background:none;color:#0755af;font-size:var(--ats-font-meta);font-weight:700;cursor:pointer}
+.changeCandidate:hover{text-decoration:underline}
 .bookingField input,.bookingField select,.bookingField textarea{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#20334a;font:inherit;font-weight:500}
 .bookingField textarea{resize:vertical}
 .bookingParticipants{display:flex;flex-wrap:wrap;gap:9px 16px;margin:0;padding:12px;border:1px solid #d8e1ec;border-radius:6px}
@@ -207,9 +219,15 @@
 .bookingParticipants label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:3px 8px;min-width:min(100%,230px);color:#273b52}
 .bookingParticipants label input{grid-row:span 2}
 .bookingParticipants label small{color:#69798d}
+.bookingParticipants label input{grid-row:span 3}
+.bookingParticipants .bookingCalendarStatus{color:#68798d;font-size:11px}
+.bookingParticipantHint{flex:1 0 100%;margin:0;color:#69798d;font-size:12px;line-height:1.4}
+.bookingParticipantName{display:flex;min-width:0;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bookingParticipantName i{flex:0 0 9px;width:9px;height:9px;border-radius:50%}
 .bookingNotice{padding:10px 12px;border-left:3px solid #2586b8;background:#f2f8fc}
 .bookingAvailabilityRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 12px;border:1px solid #dfe6ed;border-radius:6px;background:#f8fafc;color:#42546a;font-size:var(--ats-font-body)}
 .bookingAvailabilityRow strong{color:#20334a}
+.bookingCandidateMeta{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
 .bookingActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
 .bookButton{min-height:40px;padding:8px 16px;border:1px solid #df001b;border-radius:5px;background:#df001b;color:white;font:inherit;font-weight:700;cursor:pointer}
 .bookButton:disabled{border-color:#cbd5e1;background:#e7ebef;color:#718096;cursor:not-allowed}
@@ -239,9 +257,10 @@
 .weekHeader>span,.weekHeader>strong{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4px;border-right:1px solid #e4e9ef;color:#20334a;font-size:var(--ats-font-body)}
 .weekHeader>span{position:sticky;left:0;z-index:4;background:#f6f8fb;color:#61748a;font-size:11px}
 .weekHeader>strong small{color:#61748a;font-size:11px;font-weight:600;text-transform:uppercase}
-.weekRows{position:relative;user-select:none}
+/* Keep event cards in the calendar body below the sticky day headings. */
+.weekRows{position:relative;isolation:isolate;user-select:none}
 .weekRow{min-height:32px}
-.weekTime{position:sticky;left:0;z-index:1;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;border-right:1px solid #dfe6ed;border-bottom:1px solid #e6ebf0;background:#f8fafc;color:#61748a;font-size:11px}
+.weekTime{position:sticky;left:0;z-index:5;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;border-right:1px solid #dfe6ed;border-bottom:1px solid #e6ebf0;background:#f8fafc;color:#61748a;font-size:11px}
 .weekCell{min-width:0;height:32px;padding:1px 3px;border:0;border-right:1px solid #e5eaf0;border-bottom:1px solid #e5eaf0;background:white;color:#7a2c2c;text-align:left;font-size:10px;line-height:1.15;overflow:hidden;cursor:pointer}
 .weekCell:not(:disabled):hover{background:#eff8f1;box-shadow:inset 0 0 0 1px #44a36b}
 .weekCell:disabled{cursor:not-allowed}
@@ -257,3 +276,267 @@
 .weekSelectedStart{border-top-left-radius:5px;border-top-right-radius:5px;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 2px #1a73e8}
 .weekSelectedEnd{border-bottom-left-radius:5px;border-bottom-right-radius:5px;border-bottom-color:#1a73e8;box-shadow:inset 2px 0 #1a73e8,inset -2px 0 #1a73e8,inset 0 -2px #1a73e8}
 @media(max-width:700px){.bookingGrid{grid-template-columns:minmax(0,1fr)}.bookingActions{justify-content:stretch}.bookingActions button{flex:1}}
+
+/* Interview workspace: calmer SaaS surfaces while keeping Bosch red/blue accents. */
+.interviewWorkspace{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:22px;
+  border-color:#d9e1ea;
+  border-radius:12px;
+  background:#fbfcfe;
+}
+.interviewWorkspace>.sectionHead{
+  align-items:center;
+  margin-bottom:20px;
+}
+.interviewWorkspace>.sectionHead h2{
+  margin:0 0 5px;
+  font-size:24px;
+  letter-spacing:-.02em;
+}
+.bookingPanel{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  gap:18px;
+  margin:0 0 22px;
+  padding:22px;
+  border-color:#dce4ed;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 8px #20334a08;
+}
+.bookingPanel>div:first-child{
+  padding:0 0 15px;
+  border-bottom:1px solid #e7edf3;
+}
+.bookingPanel h3{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:19px;
+  letter-spacing:-.01em;
+}
+.bookingPanel h3::before{
+  content:"01";
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:12px;
+  font-weight:800;
+}
+.bookingGrid{
+  width:100%;
+  min-width:0;
+  grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr);
+  gap:16px;
+  align-items:start;
+}
+.bookingField{gap:8px}
+.bookingField>span{color:#475a70;font-size:14px;font-weight:700}
+.bookingSelectedCandidate{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  justify-content:flex-start;
+  gap:4px;
+  padding:10px 13px 10px 15px;
+  border-color:#bdd4e8;
+  border-radius:8px;
+  background:linear-gradient(115deg,#f2f8fd 0%,#fbfdff 100%);
+}
+.bookingSelectedCandidate::after{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  border-radius:8px 0 0 8px;
+  background:#0878b9;
+}
+.bookingSelectedCandidate strong{font-size:15px;line-height:1.4}
+.bookingSelectedCandidate small{font-size:12px}
+.bookingCandidateMeta{min-height:20px}
+.changeCandidate{font-size:13px}
+.bookingField input,.bookingField select,.bookingField textarea{
+  min-height:44px;
+  border-color:#d4dde7;
+  border-radius:7px;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.bookingField :is(input,select,textarea):focus{
+  outline:0;
+  border-color:#1684c2;
+  box-shadow:0 0 0 3px #1684c21a;
+}
+.bookingParticipants{
+  display:block;
+  padding:12px;
+  border-color:#e0e7ef;
+  border-radius:9px;
+  background:#fbfcfe;
+}
+.bookingParticipants legend{padding:0 8px;font-size:14px}
+.bookingParticipants legend::before{
+  content:"02";
+  display:inline-grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  margin-right:7px;
+  border-radius:7px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:11px;
+  font-weight:800;
+}
+.bookingParticipants .bookingParticipantPicker{
+  display:flex;
+  width:100%;
+  max-width:100%;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 1px 7px;
+  overscroll-behavior-inline:contain;
+  scrollbar-width:thin;
+}
+.bookingParticipants .bookingParticipantPicker>.bookingMemberCard{
+  flex:0 0 220px;
+  min-height:78px;
+  padding:6px 9px 5px;
+  border:1px solid #e2e8ef;
+  border-radius:7px;
+  background:#fff;
+}
+.bookingParticipants .bookingParticipantPicker>.bookingMemberCard:has(input:checked){
+  border-color:#a9c8e2;
+  background:#f3f8fc;
+}
+.bookingParticipants .bookingMemberCard>label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  padding:2px 0;
+  cursor:pointer;
+}
+.bookingParticipants .bookingMemberCard>label input{accent-color:#0878b9}
+.bookingParticipants .bookingMemberCard>label:first-child{flex-wrap:wrap}
+.bookingParticipants .bookingParticipantIdentity{display:flex;flex:1 1 150px;flex-direction:column;gap:1px;min-width:0}
+.bookingParticipants .bookingParticipantEmail{overflow:hidden;color:#63758a;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.bookingParticipants .bookingInviteToggle{margin-left:21px;font-size:11px;color:#52667b}
+.weekAvailability{
+  gap:14px;
+  padding:16px;
+  border-color:#dce4ed;
+  border-radius:10px;
+  background:#f8fafc;
+}
+.weekToolbar{
+  display:grid;
+  grid-template-columns:minmax(140px,1fr) auto auto;
+  gap:10px 14px;
+}
+.weekToolbar>strong{display:flex;align-items:center;gap:9px;font-size:17px}
+.weekToolbar>strong::before{
+  content:"03";
+  display:grid;
+  place-items:center;
+  width:27px;
+  height:27px;
+  border-radius:8px;
+  background:#eaf3fb;
+  color:#0878b9;
+  font-size:11px;
+  font-weight:800;
+}
+.weekToolbar>span{white-space:nowrap}
+.weekControls{margin-left:0}
+.weekControls button{
+  min-height:36px;
+  border-radius:7px;
+  background:#fff;
+}
+.weekTimezone{margin:0!important}
+.weekPeople{gap:8px}
+.weekPerson{border-radius:7px}
+.weekCalendar{max-height:520px;border-color:#d7e0e9;border-radius:8px}
+.weekHeader{box-shadow:0 1px 3px #172b420d}
+.weekRow{min-height:32px}
+.weekTime,.weekCell{height:32px}
+.weekEvent{border-radius:6px}
+.weekEvent strong{font-size:12px}
+.weekEvent small{font-size:11px}
+.bookingNotice{border-left-width:3px;border-radius:0 7px 7px 0}
+.bookingActions{padding-top:4px}
+.bookButton{min-height:44px;border-radius:7px;box-shadow:0 2px 4px #df001b20}
+.weekMiniGoogleBusy{background:#fff0f0;color:#96323c}
+.weekMiniAtsBusy{background:#edf5ff;color:#17659b}
+.weekRows{--week-row-height:32px}
+.weekRow{min-height:var(--week-row-height)}
+.weekTime,.weekCell{height:var(--week-row-height)}
+.weekEventLayer{display:grid;grid-template-columns:58px repeat(7,minmax(104px,1fr));grid-template-rows:1fr;min-width:790px}
+.weekDayEvents{position:relative;grid-row:1;min-width:0;height:100%}
+.weekDayEvents .weekEvent{right:auto;box-sizing:border-box;overflow:hidden}
+.subTabs{
+  gap:8px;
+  margin:0 0 14px;
+  padding:4px;
+  width:max-content;
+  max-width:100%;
+  border:1px solid #e2e8ef;
+  border-radius:9px;
+  background:#f3f6f9;
+}
+.subTabs button{
+  border-color:transparent;
+  border-radius:6px;
+  background:transparent;
+}
+.subTabs button.currentSubTab{
+  border-color:#e4eaf0;
+  background:#fff;
+  color:#c51c2c;
+  box-shadow:0 1px 2px #172b4212;
+}
+.twoColumn{grid-template-columns:minmax(0,1.05fr) minmax(340px,.95fr);gap:18px}
+.interviewWorkspace .tableScroll{max-height:460px;overflow:auto}
+.interviewWorkspace .nativeTable{min-width:560px}
+.interviewWorkspace .nativeTable th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding-block:13px;
+  background:#f4f6f8;
+}
+.interviewWorkspace .nativeTable td{padding-block:13px}
+.interviewWorkspace .nativeTable tbody tr:has(.linkButton[aria-pressed="true"]){background:#f4f8fc}
+.detailPane{
+  padding:19px;
+  border-color:#dce4ed;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 2px 8px #20334a08;
+}
+.detailPane h3{font-size:20px;letter-spacing:-.015em}
+.detailPane .facts dt,.detailPane .facts dd{padding-block:12px}
+.availability{gap:10px;margin-top:20px;padding-top:17px}
+.availability .outline{min-height:40px;border-radius:7px}
+.availabilityPerson{gap:6px;padding:12px;border-radius:8px;background:#f8fafc}
+.bookingParticipants,.weekAvailability,.detailPane,.tableScroll{scroll-margin-top:12px}
+@media(max-width:900px){
+  .twoColumn{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:700px){
+  .interviewWorkspace{padding:14px}
+  .bookingPanel{padding:15px}
+  .weekToolbar{grid-template-columns:minmax(0,1fr) auto}
+  .weekToolbar>span{grid-column:1/-1}
+  .weekControls{margin-left:0}
+}

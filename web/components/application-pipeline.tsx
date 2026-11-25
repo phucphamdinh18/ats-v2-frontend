@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
 import {
   applicationDetail,
+  currentInterviewRounds,
   interviewApplication,
   moveApplicationBack,
   listApplications,
@@ -11,12 +12,15 @@ import {
   searchApplications,
   type Application,
   type ApplicationDetail,
+  type ApplicationInterviewRound,
 } from "@/lib/applications";
 import { ApiError } from "@/lib/supabase";
 import { listOfferBoard, type OfferBoardItem } from "@/lib/offers";
 import ManualCandidateForm from "./manual-candidate-form";
 import CandidateInterviewProgress from "./candidate-interview-progress";
-import { UserRound, BriefcaseBusiness, Building2, GraduationCap } from "lucide-react";
+import CandidateEditForm from "./candidate-edit-form";
+import PipelineCandidateProfile from "./pipeline-candidate-profile";
+import PipelineCandidateNotes from "./pipeline-candidate-notes";
 import { useLanguage } from "./language";
 import styles from "./bosch-v2-pipeline.module.css";
 
@@ -26,26 +30,29 @@ const NEXT_STAGE: Record<string, "SCREEN" | "INTERVIEW" | undefined> = { NEW: "S
 const PREVIOUS_STAGE: Record<string, "NEW" | "SCREEN" | undefined> = { SCREEN: "NEW", INTERVIEW: "SCREEN" };
 type TransitionStage = "NEW" | "SCREEN" | "INTERVIEW";
 type State = "loading" | "ready" | "empty" | "forbidden" | "error";
+type CandidateTab = "overview" | "profile" | "notes" | "activity";
 
 function message(error: unknown, en = false) {
   return error instanceof Error ? error.message : en ? "Could not load the data. Please try again." : "Chưa tải được dữ liệu. Bạn thử lại nhé.";
 }
 
-export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean }) {
+export default function ApplicationPipeline({ job, onSessionLost, canViewOffers = false, canManageApplications = false, onSelectionChange }: { job: Job; onSessionLost: () => void; canViewOffers?: boolean; canManageApplications?: boolean; onSelectionChange?: (application: Application | null) => void }) {
   const { locale } = useLanguage();
   const en = locale === "en";
   const copy = en ? {
     pipeline: "Hiring Pipeline", counts: "Candidate counts by stage", jobPipeline: "Pipeline for this job", candidates: "Candidates", addCandidate: "Add candidate to job", searchCandidates: "Search candidates in this job…", candidatesLabel: "Search candidates in this job", pageCount: (count: number) => `${count} applications on this page`,
-    readOnly: "View only. Only an Admin or a TA assigned to this job can move candidates between stages.", loading: "Loading candidates…", forbidden: "No access. This job’s data has been removed from the screen.", retry: "Try again", loadOffer: "Could not load offer data:", noCandidates: "No candidates yet", noCandidatesBody: "There are no results for this job.", retryMove: "Try moving again", selectAll: "Select all visible candidates", candidate: "Candidate", stage: "Stage", round: "Interview round", matching: "Match", experience: "Experience", source: "Source", activity: "Last activity", emptyPage: "No candidates on this page.", overview: "Candidate overview", selectCandidate: "Select a candidate to see their interview progress, summary and activity.", tabs: "Candidate details", overviewTab: "Overview", profile: "Profile", notes: "Notes", activityTab: "Activity", close: "Close candidate details", summary: "Summary", apiLimit: "The Application API doesn’t provide this candidate’s experience, email or match score.", currentRole: "Current role", company: "Company", history: "History", matchingContext: "Matching details", disabledReadonly: "You can view this pipeline, but only an Admin or an assigned TA can move candidates between stages.", disabledSelect: "Select a candidate to continue.", disabledStage: "Only active candidates in New, Screening or Interview can move between stages.", user: "User", stageLabel: (value: string) => value === "NEW" ? "New" : value === "SCREEN" ? "Screening" : value === "INTERVIEW" ? "Interview" : value === "HIRED" ? "Hired" : value === "OFFER" ? "Offer" : value === "REJECTED" ? "Rejected" : value,
+    readOnly: "View only. Only an Admin or a TA assigned to this job can move candidates between stages.", loading: "Loading candidates…", forbidden: "No access. This job’s data has been removed from the screen.", retry: "Try again", loadOffer: "Could not load offer data:", noCandidates: "No candidates yet", noCandidatesBody: "There are no results for this job.", retryMove: "Try moving again", selectAll: "Select all visible candidates", candidate: "Candidate", stage: "Stage", round: "Interview round", matching: "Match", experience: "Experience", source: "Source", activity: "Last activity", emptyPage: "No candidates on this page.", overview: "Candidate overview", selectCandidate: "Select a candidate to see their interview progress, summary and activity.", tabs: "Candidate details", overviewTab: "Overview", profile: "Profile", notes: "Notes", activityTab: "Activity", close: "Close candidate details", history: "History", matchingContext: "Matching details", disabledReadonly: "You can view this pipeline, but only an Admin or an assigned TA can move candidates between stages.", disabledSelect: "Select a candidate to continue.", disabledStage: "Only active candidates in New, Screening or Interview can move between stages.", moveActions: "Candidate stage actions", user: "User", stageLabel: (value: string) => value === "NEW" ? "New" : value === "SCREEN" ? "Screening" : value === "INTERVIEW" ? "Interview" : value === "HIRED" ? "Hired" : value === "OFFER" ? "Offer" : value === "REJECTED" ? "Rejected" : value,
     previous: (value: string) => `Move back to ${value}`, next: (value: string) => `Move to ${value}`, retryRequest: (value: string) => `Retry request: ${value}`, firstPage: "You’re on the first page", prevPage: "Previous page", nextPage: "Next page", lastPage: "There are no more pages", page: (n: number) => `Page ${n}`, processing: "Saving…", confirm: (name: string, direction: string, value: string) => `Move ${name} ${direction} ${value}?`,
   } : {
     pipeline: "Tiến độ tuyển dụng", counts: "Số hồ sơ theo giai đoạn", jobPipeline: "Pipeline của vị trí này", candidates: "Ứng viên", addCandidate: "Thêm ứng viên vào vị trí", searchCandidates: "Tìm ứng viên trong vị trí này…", candidatesLabel: "Tìm ứng viên trong vị trí này", pageCount: (count: number) => `${count} hồ sơ ở trang này`,
-    readOnly: "Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào vị trí này mới có thể chuyển ứng viên giữa các vòng.", loading: "Đang tải ứng viên…", forbidden: "Không có quyền truy cập. Dữ liệu của vị trí này đã được ẩn.", retry: "Thử lại", loadOffer: "Chưa tải được dữ liệu Offer:", noCandidates: "Chưa có ứng viên", noCandidatesBody: "Chưa có kết quả trong phạm vi vị trí này.", retryMove: "Thử chuyển lại", selectAll: "Chọn tất cả ứng viên đang hiển thị", candidate: "Ứng viên", stage: "Vòng tuyển dụng", round: "Vòng phỏng vấn", matching: "Độ phù hợp", experience: "Kinh nghiệm", source: "Nguồn", activity: "Hoạt động gần nhất", emptyPage: "Không có ứng viên ở trang này.", overview: "Tổng quan ứng viên", selectCandidate: "Chọn một ứng viên để xem tiến độ phỏng vấn, thông tin và lịch sử hoạt động.", tabs: "Thông tin ứng viên", overviewTab: "Tổng quan", profile: "Hồ sơ", notes: "Ghi chú", activityTab: "Hoạt động", close: "Đóng chi tiết ứng viên", summary: "Tóm tắt", apiLimit: "API hồ sơ chưa cung cấp kinh nghiệm, email hoặc điểm phù hợp của ứng viên này.", currentRole: "Vị trí hiện tại", company: "Công ty", history: "Lịch sử", matchingContext: "Chi tiết đối chiếu", disabledReadonly: "Bạn có thể xem Pipeline; chỉ Admin hoặc TA được phân công mới có thể chuyển ứng viên giữa các vòng.", disabledSelect: "Chọn một ứng viên để tiếp tục.", disabledStage: "Chỉ có thể chuyển hồ sơ đang xử lý ở vòng Mới ứng tuyển, Sơ loại hoặc Phỏng vấn.", user: "Người dùng", stageLabel: (value: string) => value === "NEW" ? "Mới ứng tuyển" : value === "SCREEN" ? "Sơ loại" : value === "INTERVIEW" ? "Phỏng vấn" : value === "HIRED" ? "Đã tuyển" : value === "OFFER" ? "Offer" : value === "REJECTED" ? "Từ chối" : value,
+    readOnly: "Chế độ chỉ xem. Chỉ Admin hoặc TA được phân công vào vị trí này mới có thể chuyển ứng viên giữa các vòng.", loading: "Đang tải ứng viên…", forbidden: "Không có quyền truy cập. Dữ liệu của vị trí này đã được ẩn.", retry: "Thử lại", loadOffer: "Chưa tải được dữ liệu Offer:", noCandidates: "Chưa có ứng viên", noCandidatesBody: "Chưa có kết quả trong phạm vi vị trí này.", retryMove: "Thử chuyển lại", selectAll: "Chọn tất cả ứng viên đang hiển thị", candidate: "Ứng viên", stage: "Vòng tuyển dụng", round: "Vòng phỏng vấn", matching: "Độ phù hợp", experience: "Kinh nghiệm", source: "Nguồn", activity: "Hoạt động gần nhất", emptyPage: "Không có ứng viên ở trang này.", overview: "Tổng quan ứng viên", selectCandidate: "Chọn một ứng viên để xem tiến độ phỏng vấn, thông tin và lịch sử hoạt động.", tabs: "Thông tin ứng viên", overviewTab: "Tổng quan", profile: "Hồ sơ", notes: "Ghi chú", activityTab: "Hoạt động", close: "Đóng chi tiết ứng viên", history: "Lịch sử", matchingContext: "Chi tiết đối chiếu", disabledReadonly: "Bạn có thể xem Pipeline; chỉ Admin hoặc TA được phân công mới có thể chuyển ứng viên giữa các vòng.", disabledSelect: "Chọn một ứng viên để tiếp tục.", disabledStage: "Chỉ có thể chuyển hồ sơ đang xử lý ở vòng Mới ứng tuyển, Sơ loại hoặc Phỏng vấn.", moveActions: "Thao tác chuyển vòng ứng viên", user: "Người dùng", stageLabel: (value: string) => value === "NEW" ? "Mới ứng tuyển" : value === "SCREEN" ? "Sơ loại" : value === "INTERVIEW" ? "Phỏng vấn" : value === "HIRED" ? "Đã tuyển" : value === "OFFER" ? "Offer" : value === "REJECTED" ? "Từ chối" : value,
     previous: (value: string) => `Chuyển về ${value}`, next: (value: string) => `Chuyển sang ${value}`, retryRequest: (value: string) => `Gửi lại yêu cầu: ${value}`, firstPage: "Đang ở trang đầu", prevPage: "Trang trước", nextPage: "Trang sau", lastPage: "Không còn trang sau", page: (n: number) => `Trang ${n}`, processing: "Đang lưu…", confirm: (name: string, direction: string, value: string) => `Chuyển ${name} ${direction} ${value}?`,
   };
   const [items, setItems] = useState<Application[]>([]);
   const [offerItems, setOfferItems] = useState<OfferBoardItem[]>([]);
   const [offerError, setOfferError] = useState("");
+  const [rounds, setRounds] = useState<Map<string, ApplicationInterviewRound> | null>(null);
+  const [roundsError, setRoundsError] = useState(false);
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -54,6 +61,9 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [detail, setDetail] = useState<ApplicationDetail | null>(null);
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  const [candidateTab, setCandidateTab] = useState<CandidateTab>("overview");
+  const [editingCandidate, setEditingCandidate] = useState(false);
+  const [savedCandidate, setSavedCandidate] = useState(false);
   const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
   const [transitionRequestTarget, setTransitionRequestTarget] = useState<TransitionStage | null>(null);
   const [failedTransition, setFailedTransition] = useState<{ application: Application; targetStage: TransitionStage; message: string } | null>(null);
@@ -62,11 +72,14 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const listTicket = useRef(0);
   const detailTicket = useRef(0);
   const selectedId = useRef<string | null>(null);
+  const detailScroll = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async (nextOffset = offset, nextQuery = query) => {
     const ticket = ++listTicket.current;
     setState("loading");
     setError("");
+    setRounds(null);
+    setRoundsError(false);
     try {
       const [result, offerResult] = await Promise.all([
         nextQuery.trim()
@@ -88,6 +101,15 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       }
       const offerCount = offerResult instanceof Error ? 0 : offerResult.applications.length;
       setState(result.applications.length || offerCount ? "ready" : "empty");
+      const applicationIds = [...result.applications, ...(offerResult instanceof Error ? [] : offerResult.applications.map(({ application }) => application))]
+        .map(({ application_id }) => application_id);
+      void currentInterviewRounds(job.id, applicationIds).then((current) => {
+        if (ticket === listTicket.current) setRounds(current);
+      }).catch((cause: unknown) => {
+        if (ticket !== listTicket.current) return;
+        if (cause instanceof ApiError && cause.status === 401) onSessionLost();
+        setRoundsError(true);
+      });
     } catch (cause) {
       if (ticket !== listTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
@@ -113,7 +135,10 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     detailTicket.current += 1;
     selectedId.current = null;
     setSelected(null);
+    onSelectionChange?.(null);
     setDetail(null);
+    setEditingCandidate(false);
+    setSavedCandidate(false);
     setDetailError("");
     setDetailLoading(false);
     setTransitionRequestId(null);
@@ -141,8 +166,13 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const openDetail = useCallback(async (application: Application) => {
     const ticket = ++detailTicket.current;
     setSelected(application);
+    onSelectionChange?.(application);
     selectedId.current = application.application_id;
     setDetail(null);
+    setCandidateTab("overview");
+    if (detailScroll.current) detailScroll.current.scrollTop = 0;
+    setEditingCandidate(false);
+    setSavedCandidate(false);
     setDetailError("");
     setTransitionRequestId(null);
     setTransitionRequestTarget(null);
@@ -153,6 +183,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       setDetail(result);
       // Detail is the authoritative post-action state; the screen RPC returns only ID + changed.
       setSelected(result.application);
+      onSelectionChange?.(result.application);
     } catch (cause) {
       if (ticket !== detailTicket.current) return;
       const apiError = cause instanceof ApiError ? cause : undefined;
@@ -172,7 +203,7 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     } finally {
       if (ticket === detailTicket.current) setDetailLoading(false);
     }
-  }, [job.id, onSessionLost]);
+  }, [job.id, onSessionLost, onSelectionChange]);
 
   async function moveApplication(application: Application, targetStage: TransitionStage) {
     if (!canManageApplications) return;
@@ -243,6 +274,24 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     await load(0, "");
   }, [load]);
 
+  function candidateSaved(application: Application, name: string) {
+    if (selectedId.current !== application.application_id) return;
+    const updated = { ...application, candidate_name: name };
+    setSelected(updated);
+    setDetail((current) => current && { ...current, application: updated });
+    setEditingCandidate(false);
+    setSavedCandidate(true);
+    onSelectionChange?.(updated);
+    void load();
+  }
+
+  function openCandidateTab(tab: CandidateTab) {
+    if (tab === candidateTab) return;
+    setCandidateTab(tab);
+    setEditingCandidate(false);
+    if (detailScroll.current) detailScroll.current.scrollTop = 0;
+  }
+
   return <section className={styles.root} aria-label={`${copy.pipeline} ${job.title}`}>
     <div className={styles.mainColumn}>
     <div className={styles.summary}>
@@ -282,17 +331,25 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
         <colgroup><col className={styles.checkCol}/><col className={styles.candidateCol}/><col className={styles.stageCol}/><col className={styles.roundCol}/><col className={styles.matchCol}/><col className={styles.experienceCol}/><col className={styles.sourceCol}/></colgroup>
         <thead><tr><th><input type="checkbox" aria-label={copy.selectAll} checked={false} onChange={() => { /* Bulk mutations intentionally unavailable. */ }} disabled /></th><th>{copy.candidate}</th><th>{copy.stage}</th><th title={copy.round}>{copy.round}</th><th>{copy.matching}</th><th>{copy.experience}</th><th>{copy.source}</th></tr></thead>
         <tbody>
-          {stages.flatMap(([stage, applications]) => applications.map((application) => (
+          {stages.flatMap(([stage, applications]) => applications.map((application) => {
+            const round = rounds?.get(application.application_id);
+            return (
             <tr key={`${stage}:${application.application_id}`} className={selected?.application_id === application.application_id ? styles.selected : ""}>
               <td><input type="checkbox" aria-label={`Select ${application.candidate_name}`} checked={selected?.application_id === application.application_id} onChange={() => void openDetail(application)}/></td>
               <td><button className={styles.candidateLink} type="button" title={application.candidate_name} onClick={() => void openDetail(application)}>{application.candidate_name}</button></td>
               <td><span className={`${styles.stageBadge} ${stage === "NEW" ? styles.badgeNew : stage === "SCREEN" ? styles.badgeScreen : stage === "INTERVIEW" ? styles.badgeInterview : stage === "OFFER" ? styles.badgeOffer : stage === "HIRED" ? styles.badgeHired : stage === "REJECTED" ? styles.badgeRejected : ""}`}>{copy.stageLabel(stage)}</span></td>
-              <td className={styles.emptyValue} title={en ? "Interview rounds aren’t included in this response" : "Dữ liệu vòng phỏng vấn chưa có trong API hồ sơ"}>—</td>
+              <td className={round ? undefined : styles.emptyValue} title={roundsError ? (en ? "Could not load interview rounds" : "Chưa tải được vòng phỏng vấn") : undefined}>
+                {round ? <>
+                  <span>{en ? "Round" : "Vòng"} {round.round_number}</span>
+                  <small className={styles.roundStatus}>{round.interview_status === "COMPLETED"
+                    ? (en ? "Completed" : "Đã hoàn tất") : (en ? "Scheduled" : "Đã lên lịch")}</small>
+                </> : roundsError ? (en ? "Unavailable" : "Chưa tải được") : rounds ? "—" : "…"}
+              </td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return a match score" : "API hồ sơ chưa trả về điểm phù hợp"}>—</td>
               <td className={styles.emptyValue} title={en ? "The Application API doesn’t return experience" : "API hồ sơ chưa trả về kinh nghiệm"}>—</td>
               <td><span className={styles.sourceText} title={application.source || "—"}>{application.source || "—"}</span></td>
             </tr>
-          )))}
+          ); }))}
         </tbody>
       </table>
       {!items.length && !offerItems.length && <p className={styles.empty}>{copy.emptyPage}</p>}
@@ -302,37 +359,53 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     </div>
     {!selected && <aside className={`${styles.side} ${styles.placeholder}`} aria-label={copy.overview}><div className={styles.sideInner}><h2>{copy.overview}</h2><p>{copy.selectCandidate}</p></div></aside>}
     {selected && <aside className={styles.side} aria-label="Chi tiết ứng viên">
-      <div className={styles.sideInner}>
+      <div className={styles.sideInner} ref={detailScroll}>
       <div className={styles.detailSticky}>
       <div className={styles.profileHead}>
         <div><h2>{selected.candidate_name}</h2><p>{job.title}</p></div>
-        <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); }}>×</button>
+        <div className={styles.profileActions}>
+          {canManageApplications && detail && !editingCandidate && <button type="button" className={styles.actionSecondary} onClick={() => { openCandidateTab("profile"); setEditingCandidate(true); setSavedCandidate(false); }}>{en ? "Edit Candidate" : "Sửa ứng viên"}</button>}
+          <button type="button" className={styles.close} aria-label={copy.close} onClick={() => { detailTicket.current += 1; selectedId.current = null; setSelected(null); onSelectionChange?.(null); }}>×</button>
+        </div>
       </div>
-      <nav className={styles.profileTabs} aria-label={copy.tabs}><span className={styles.active}>{copy.overviewTab}</span><span>{copy.profile}</span><span>{copy.notes}</span><span>{copy.activityTab}</span></nav>
+      <nav className={styles.profileTabs} aria-label={copy.tabs}>
+        {([ ["overview", copy.overviewTab], ["profile", copy.profile], ["notes", copy.notes], ["activity", copy.activityTab] ] as const).map(([tab, label]) =>
+          <button key={tab} type="button" className={candidateTab === tab ? styles.active : undefined}
+            aria-current={candidateTab === tab ? "page" : undefined} onClick={() => openCandidateTab(tab)}>{label}</button>)}
+      </nav>
       </div>
       {detailLoading && <p role="status">{en ? "Loading details…" : "Đang tải chi tiết…"}</p>}
       {detailError && <div className={`${styles.notice} ${styles.error}`} role="alert">{detailError}<button className={styles.retry} onClick={() => void openDetail(selected)}>{copy.retry}</button></div>}
-      {detail && <>
-        <div className={styles.profileCard}>
-          <CandidateInterviewProgress applicationId={detail.application.application_id} />
-          <dl className={styles.profileFields}><dt>{copy.stage}</dt><dd>{copy.stageLabel(detail.application.stage)}</dd><dt>{en ? "Status" : "Trạng thái"}</dt><dd>{detail.application.status === "ACTIVE" ? (en ? "In progress" : "Đang xử lý") : detail.application.status}</dd><dt>{copy.source}</dt><dd>{detail.application.source || "—"}</dd></dl>
-        </div>
-        <div className={styles.profileCard}>
-          <h3>{copy.summary}</h3><p className={styles.profileMuted}>{copy.apiLimit}</p>
-          <dl className={styles.professionalFacts}>
-            <dt><UserRound aria-hidden="true" size={17}/><span>{copy.experience}</span></dt><dd>—</dd>
-            <dt><BriefcaseBusiness aria-hidden="true" size={17}/><span>{copy.currentRole}</span></dt><dd>—</dd>
-            <dt><Building2 aria-hidden="true" size={17}/><span>{copy.company}</span></dt><dd>—</dd>
-            <dt><GraduationCap aria-hidden="true" size={17}/><span>{en ? "Education" : "Học vấn"}</span></dt><dd>—</dd>
-          </dl>
-        </div>
-        <div className={styles.profileCard}><h3>{copy.history}</h3><ol className={styles.timeline}>{detail.events.map((event) => <li key={event.event_id}><strong>{event.event_type}</strong><span>{event.from_stage ? copy.stageLabel(event.from_stage) : "—"} → {event.to_stage ? copy.stageLabel(event.to_stage) : "—"}</span><small>{event.actor_display_name || copy.user} · {new Date(event.created_at).toLocaleString(en ? "en-GB" : "vi-VN")}</small></li>)}</ol></div>
-        {detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
-      </>}
-      {canManageApplications && previousStage && <button className={styles.actionSecondary} aria-label={transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.previous(copy.stageLabel(previousStage))} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))}</button>}
-      {canManageApplications && nextStage && <button className={styles.actionPrimary} aria-label={transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.next(copy.stageLabel(nextStage))} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))}</button>}
-      {disabledReason && <p className={styles.disabledExplanation}>{disabledReason}</p>}
+      {savedCandidate && <p role="status">{en ? "Candidate profile saved." : "Đã lưu hồ sơ ứng viên."}</p>}
+      {detail && candidateTab === "overview" && <div className={styles.profileCard}>
+        <CandidateInterviewProgress applicationId={detail.application.application_id} />
+      </div>}
+      {detail && (candidateTab === "overview" || candidateTab === "profile") && (
+        candidateTab === "profile" && canManageApplications && editingCandidate ? <CandidateEditForm
+          key={detail.application.application_id} candidateId={detail.application.candidate_id} applicationId={detail.application.application_id}
+          jobId={job.id} en={en} onSessionLost={onSessionLost} onClose={() => setEditingCandidate(false)}
+          onSave={(name) => candidateSaved(detail.application, name)} />
+          : <PipelineCandidateProfile key={detail.application.candidate_id} view={candidateTab}
+            candidateId={canManageApplications ? detail.application.candidate_id : undefined} en={en} onSessionLost={onSessionLost} />
+      )}
+      {detail && candidateTab === "overview" && detail.matching_context != null && <details><summary>{copy.matchingContext}</summary><pre>{JSON.stringify(detail.matching_context, null, 2)}</pre></details>}
+      {detail && candidateTab === "notes" && (canManageApplications ?
+        <PipelineCandidateNotes key={detail.application.application_id} jobId={job.id} applicationId={detail.application.application_id} en={en} onSessionLost={onSessionLost} />
+        : <p className={styles.profileMuted}>{en ? "Only Admins and TAs assigned to this job can access these notes." : "Chỉ Admin và TA phụ trách Job này có quyền truy cập ghi chú."}</p>)}
+      {detail && candidateTab === "activity" && <section className={styles.profileCard}>
+        <h3>{copy.history}</h3>
+        {detail.events.length ? <ol className={styles.timeline}>{detail.events.map((event) => <li key={event.event_id}>
+          <strong>{event.event_type}</strong>
+          <span>{event.from_stage ? copy.stageLabel(event.from_stage) : "—"} → {event.to_stage ? copy.stageLabel(event.to_stage) : "—"}</span>
+          <small>{event.actor_display_name || copy.user} · {new Date(event.created_at).toLocaleString(en ? "en-GB" : "vi-VN")}</small>
+        </li>)}</ol> : <p>{en ? "No activity yet." : "Chưa có hoạt động."}</p>}
+      </section>}
+      {candidateTab === "overview" && disabledReason && <p className={styles.disabledExplanation}>{disabledReason}</p>}
       </div>
+      {canManageApplications && !editingCandidate && (previousStage || nextStage) && <div className={styles.stageActions} role="group" aria-label={copy.moveActions}>
+        {previousStage && <button className={styles.actionSecondary} aria-label={transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.previous(copy.stageLabel(previousStage))} onClick={() => selected && void moveApplication(selected, previousStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === previousStage ? `${copy.retryMove} ${copy.stageLabel(previousStage)}` : copy.previous(copy.stageLabel(previousStage))}</button>}
+        {nextStage && <button className={styles.actionPrimary} aria-label={transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))} disabled={!eligible || transitionBusy} title={disabledReason || copy.next(copy.stageLabel(nextStage))} onClick={() => selected && void moveApplication(selected, nextStage as TransitionStage)}>{transitionBusy ? copy.processing : transitionRequestTarget === nextStage ? `${copy.retryMove} ${copy.stageLabel(nextStage)}` : copy.next(copy.stageLabel(nextStage))}</button>}
+      </div>}
     </aside>}
   </section>;
 }

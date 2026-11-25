@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import BoschJobInterviews from "../components/bosch-job-interviews";
+import { ApiError } from "../lib/supabase";
 
 const api = vi.hoisted(() => ({ applications: vi.fn(), roster: vi.fn(), availability: vi.fn(), worklist: vi.fn(), create: vi.fn(), connect: vi.fn() }));
 vi.mock("../lib/applications", () => ({ listApplications: api.applications }));
@@ -30,6 +31,46 @@ afterEach(() => {
   vi.setSystemTime(new Date());
 });
 
+it("keeps the ATS session when a role-protected interview request returns 403", async () => {
+  api.worklist.mockRejectedValueOnce(new ApiError("Forbidden", 403));
+  const onAccessLost = vi.fn();
+  render(<BoschJobInterviews jobId="job-1" onAccessLost={onAccessLost} onAllInterviews={vi.fn()} />);
+  expect(await screen.findByRole("alert")).toBeTruthy();
+  expect(onAccessLost).not.toHaveBeenCalled();
+});
+
+it("identifies assigned recruiters and interviewers by email and their Job roles", async () => {
+  const interviewer = { ...roster[0], email: "interviewer@example.test", can_invite: true };
+  const recruiter = {
+    id: "00000000-0000-4000-8000-000000000003",
+    display_name: "Team member",
+    email: "recruiter@example.test",
+    role: "TA_RECRUITER",
+    can_invite: true,
+  };
+  api.roster.mockResolvedValue([interviewer, recruiter]);
+  api.availability.mockResolvedValue({
+    busy_slots: [],
+    google_calendars: [interviewer, recruiter].map((person) => ({
+      participant_id: person.id, status: "AVAILABLE", can_create_events: true,
+    })),
+  });
+
+  render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
+  fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
+  const interviewerLabel = (await screen.findByText(interviewer.email)).closest("label")!;
+  const recruiterLabel = screen.getByText(recruiter.email).closest("label")!;
+  expect(within(interviewerLabel).getByText("Interviewer A")).toBeTruthy();
+  expect(within(interviewerLabel).getByText("Interviewer")).toBeTruthy();
+  expect(within(recruiterLabel).getByText("TA / Recruiter")).toBeTruthy();
+
+  fireEvent.click(within(interviewerLabel).getByRole("checkbox"));
+  fireEvent.click(within(recruiterLabel).getByRole("checkbox"));
+  await waitFor(() => expect(api.availability.mock.lastCall?.[1]).toEqual([interviewer.id, recruiter.id]));
+  expect(screen.getAllByText(recruiter.email)).toHaveLength(2);
+  expect(screen.queryByText("Team member")).toBeNull();
+});
+
 async function prepareFreeSlot() {
   render(<BoschJobInterviews jobId="job-1" onAccessLost={vi.fn()} onAllInterviews={vi.fn()} />);
   fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
@@ -38,7 +79,7 @@ async function prepareFreeSlot() {
   await screen.findByText("Đã kiểm tra Google Calendar");
 }
 
-it("checks Google and ATS availability before creating an ATS interview", async () => {
+it("checks selected participants and creates an ATS interview with invitations", async () => {
   await prepareFreeSlot();
   const calendar = document.querySelector<HTMLElement>("[data-calendar-rows]")?.parentElement;
   const freeSlot = screen.getAllByRole("button", { name: /10:00$/ }).find((button) => !(button as HTMLButtonElement).disabled);

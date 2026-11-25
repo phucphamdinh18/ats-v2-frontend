@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getClient } from "@/lib/supabase";
+import { ApiError, getClient } from "@/lib/supabase";
 import { authRedirect, canManageApplicationStages, canReview, RequestGate, type Job, type JobMembership } from "@/lib/policy";
 import { useLanguage } from "./language";
 import Icon from "./icon";
@@ -150,8 +150,15 @@ export default function Workspace() {
         const rules = await client.from("job_sla_rules")
           .select("level,function_group,hiring_season,target_workdays");
         if (rules.error) throw rules.error;
-        const overview = await jobOverview();
-        const metricsByJob = new Map(overview.jobs.map((row) => [row.job_id, row]));
+        // Job metrics are optional for limited roles such as Interviewer. A 403
+        // from this secondary request must not clear a valid ATS session.
+        let overviewJobs: Awaited<ReturnType<typeof jobOverview>>["jobs"] = [];
+        try {
+          overviewJobs = (await jobOverview()).jobs;
+        } catch (cause) {
+          if (!(cause instanceof ApiError) || cause.status !== 403) throw cause;
+        }
+        const metricsByJob = new Map(overviewJobs.map((row) => [row.job_id, row]));
         const byKey = new Map((rules.data || []).map((rule) =>
           [`${rule.level}:${rule.function_group}:${rule.hiring_season}`, rule.target_workdays],
         ));
@@ -230,6 +237,28 @@ export default function Workspace() {
       cleanup();
     };
   }, [refresh]);
+  useEffect(() => {
+    const calendarRoles = ["ADMIN", "TA_RECRUITER", "HIRING_MANAGER", "INTERVIEWER"];
+    if (!access?.active || !access.roles.some((role) => calendarRoles.includes(role))) {
+      setGoogleCalendarConnected(null);
+      setCalendarPromptOpen(false);
+      return;
+    }
+    let active = true;
+    void getGoogleCalendarConnectionStatus().then((connection) => {
+      if (!active) return;
+      setGoogleCalendarConnected(connection.connected);
+      if (!connection.connected && !calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    }).catch((cause) => {
+      if (!active) return;
+      // Keep login usable if the calendar status endpoint is temporarily unavailable,
+      // but let the member start the connection from the prompt and see the error.
+      setGoogleCalendarConnected(false);
+      setCalendarPromptError(cause instanceof Error ? cause.message : (locale === "en" ? "Could not check Google Calendar connection." : "Không kiểm tra được kết nối Google Calendar."));
+      if (!calendarPromptDismissed.current) setCalendarPromptOpen(true);
+    });
+    return () => { active = false; };
+  }, [access?.active, access?.userId, access?.roles, locale]);
   async function connectCalendar() {
     setCalendarPromptBusy(true);
     setCalendarPromptError("");

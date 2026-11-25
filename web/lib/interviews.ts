@@ -68,7 +68,14 @@ export type InterviewAvailability = {
   google_calendars: InterviewGoogleCalendarStatus[];
 };
 
-export type InterviewRosterMember = { id: string; display_name: string; role: "INTERVIEWER" | "HIRING_MANAGER" };
+export type InterviewRosterMember = {
+  id: string;
+  display_name: string;
+  email?: string | null;
+  role: "INTERVIEWER" | "HIRING_MANAGER" | "TA_RECRUITER";
+  can_invite?: boolean;
+  is_current_actor?: boolean;
+};
 
 export async function listInterviewRoster(applicationId: string): Promise<InterviewRosterMember[]> {
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
