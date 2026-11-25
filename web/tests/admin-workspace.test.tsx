@@ -185,7 +185,7 @@ it("classifies existing TAs explicitly and confirms replacement of the current p
  render(<JobTeamAccess job={job} onAccessLost={noop}/>);
  await screen.findByText("TA · Chưa phân loại");
  const supportRow=screen.getByRole("row",{name:/support@test.invalid/});
- const openActions=()=>fireEvent.click(within(supportRow).getByRole("button",{name:"Thao tác support@test.invalid"}));
+ const openActions=()=>fireEvent.click(supportRow.querySelector("summary")!);
  openActions();
  fireEvent.click(within(supportRow).getByRole("button",{name:"Đặt TA chính"}));
  expect(confirm).toHaveBeenCalled();expect(api.recruiter).not.toHaveBeenCalled();
