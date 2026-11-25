@@ -92,6 +92,18 @@ export default function OfferApprovalWorkspace({
     !!identity?.active &&
     identity.roles.some((r) => r === "ADMIN" || r === "TA_RECRUITER");
   const admin = !!identity?.active && identity.roles.includes("ADMIN");
+  const clearProtectedOfferData = useCallback(() => {
+    epoch.current++;
+    candidateTicket.current++;
+    detailTicket.current++;
+    setRows([]);
+    setSelected(null);
+    setJobs([]);
+    setCandidates([]);
+    setSetup({ approvers: [], templates: [] });
+    setPending(null);
+    setSaving(false);
+  }, []);
   const loseAccess = useCallback(() => {
     epoch.current++;
     candidateTicket.current++;
@@ -211,8 +223,8 @@ export default function OfferApprovalWorkspace({
         await refreshRows(0, initialOffer.current || undefined);
       } catch (e) {
         if (mounted) {
-          if (e instanceof ApiError && (e.status === 401 || e.status === 403))
-            loseAccess();
+          if (e instanceof ApiError && e.status === 401) loseAccess();
+          else if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
           setError(offerError(e, en));
         }
       } finally {
@@ -278,8 +290,8 @@ export default function OfferApprovalWorkspace({
       })
       .catch((e) => {
         if (ticket === candidateTicket.current) {
-          if (e instanceof ApiError && (e.status === 401 || e.status === 403))
-            loseAccess();
+          if (e instanceof ApiError && e.status === 401) loseAccess();
+          else if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
           setError(e instanceof Error ? e.message : "Không tải được Job.");
         }
       });
@@ -306,8 +318,8 @@ export default function OfferApprovalWorkspace({
       }
     } catch (e) {
       if (ticket !== epoch.current) return;
-      if (e instanceof ApiError && (e.status === 401 || e.status === 403))
-        loseAccess();
+      if (e instanceof ApiError && e.status === 401) loseAccess();
+      else if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
       setError(offerError(e, en));
     }
   }
@@ -343,10 +355,11 @@ export default function OfferApprovalWorkspace({
           if (ticket === epoch.current) setSetup(config);
         }
       } catch (e) {
-        if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        if (e instanceof ApiError && e.status === 401) {
           loseAccess();
           return;
         }
+        if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
         if (ticket === epoch.current)
           setError(
             tr(
@@ -359,7 +372,8 @@ export default function OfferApprovalWorkspace({
       if (ticket !== epoch.current) return;
       if (e instanceof ApiError && e.status && e.status < 500) {
         setPending(null);
-        if (e.status === 401 || e.status === 403) loseAccess();
+        if (e.status === 401) loseAccess();
+        else if (e.status === 403) clearProtectedOfferData();
       }
       setError(offerError(e, en));
     } finally {
@@ -371,8 +385,8 @@ export default function OfferApprovalWorkspace({
     try {
       await refreshRows(offset, selected?.id);
     } catch (e) {
-      if (e instanceof ApiError && (e.status === 401 || e.status === 403))
-        loseAccess();
+      if (e instanceof ApiError && e.status === 401) loseAccess();
+      else if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
       setError(offerError(e, en));
     }
   }
@@ -394,8 +408,8 @@ export default function OfferApprovalWorkspace({
       setApplicationId("");
     } catch (e) {
       if (ticket === candidateTicket.current) {
-        if (e instanceof ApiError && (e.status === 401 || e.status === 403))
-          loseAccess();
+        if (e instanceof ApiError && e.status === 401) loseAccess();
+        else if (e instanceof ApiError && e.status === 403) clearProtectedOfferData();
         setError(offerError(e, en));
       }
     }

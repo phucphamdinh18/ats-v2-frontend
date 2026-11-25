@@ -164,7 +164,8 @@ it("requires explicit confirmation before revoking and clears roster on forbidde
   expect(api.remove).not.toHaveBeenCalled();
   api.remove.mockRejectedValueOnce(new ApiError("revoked", 403));
   fireEvent.click(screen.getByRole("button", { name: "Xác nhận thu hồi" }));
-  await waitFor(() => expect(lost).toHaveBeenCalledOnce());
+  await screen.findByRole("alert");
+  expect(lost).not.toHaveBeenCalled();
   expect(api.remove).toHaveBeenCalledWith(job.id, "u", "HIRING_MANAGER");
   expect(screen.queryByRole("cell", { name: "hm@example.invalid" })).toBeNull();
 });

@@ -238,14 +238,14 @@ describe("Offer approval workflow", () => {
       ).toBe(true),
     );
   });
-  it("revoked access clears sensitive data", async () => {
+  it("keeps signed-in identity but clears offer data after a 403", async () => {
     mock.api.mockImplementation(async (body: { action: string }) => {
       if (body.action === "detail")
         throw new ApiError("OFFER_APPROVAL_REQUIRED", 403);
       return [proposal()];
     });
     renderPage();
-    await screen.findByRole("button", { name: "Đăng nhập bằng Google" });
+    await screen.findByRole("alert");
     expect(screen.queryByText("TEST Candidate")).toBeNull();
   });
   it("refresh failure after save never offers to resubmit", async () => {

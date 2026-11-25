@@ -20,7 +20,7 @@ export default function JobEdit({jobId,onSaved,onCancel,onAccessLost}:{jobId:str
  const load=useCallback(async()=>{
   const ticket=++epoch.current;setLoading(true);setError("");setJob(null);setForm(null);setConflict(false);setPending(null);setSaved(false);
   try {const r=await getJobEdit(jobId);if(ticket!==epoch.current)return;setJob(r.job);setForm(fields(r.job));}
-  catch(e){if(ticket!==epoch.current)return;setError(e instanceof Error?e.message:"Không tải được Job.");if(e instanceof ApiError&&[401,403].includes(e.status||0))onAccessLost();}
+  catch(e){if(ticket!==epoch.current)return;setError(e instanceof Error?e.message:"Không tải được Job.");if(e instanceof ApiError&&e.status===401)onAccessLost();}
   finally{if(ticket===epoch.current)setLoading(false);}
  },[jobId,onAccessLost]);
  useEffect(()=>{void load();return()=>{epoch.current++;};},[load]);
@@ -35,7 +35,7 @@ export default function JobEdit({jobId,onSaved,onCancel,onAccessLost}:{jobId:str
   }catch(e){if(ticket!==epoch.current)return;if(e instanceof ApiError&&e.status&&e.status<500)setPending(null);
    if(e instanceof ApiError&&e.status===409)setConflict(true);
    setError(e instanceof Error?e.message:tr("Không lưu được Job.","Could not save Job."));
-   if(e instanceof ApiError&&[401,403].includes(e.status||0))onAccessLost();
+   if(e instanceof ApiError&&e.status===401)onAccessLost();
   }finally{lock.current=false;if(ticket===epoch.current)setBusy(false);}
  }
  function submit(e:FormEvent){e.preventDefault();if(frozen||!job||!Object.keys(changes).length)return;

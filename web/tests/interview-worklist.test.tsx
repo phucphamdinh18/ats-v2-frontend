@@ -38,11 +38,12 @@ it("switches worklist status using existing backend API, without any write", asy
   fireEvent.click(screen.getByRole("button", { name: "Đã hoàn tất" }));
   await waitFor(() => expect(api.worklist).toHaveBeenCalledWith("COMPLETED", 25, 0));
 });
-it("clears private worklist data when the server revokes access", async () => {
+it("keeps the ATS session when the server denies this worklist", async () => {
   api.worklist.mockRejectedValue(new ApiError("No access", 403));
   const onAccessLost = vi.fn();
   render(<InterviewWorklist onAccessLost={onAccessLost} />);
-  await waitFor(() => expect(onAccessLost).toHaveBeenCalledTimes(1));
+  await screen.findByRole("alert");
+  expect(onAccessLost).not.toHaveBeenCalled();
   expect(screen.queryByText("Candidate A")).toBeNull();
 });
 it("blocks non-https meeting URLs without hiding the appointment", async () => {

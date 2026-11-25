@@ -32,7 +32,7 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
       setUsers(Array.isArray(result.users) ? result.users : []);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : tr("Không tải được danh sách tài khoản.", "Could not load user accounts."));
-      if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
       await refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : tr("Không cập nhật được tài khoản.", "Could not update this account."));
-      if (cause instanceof ApiError && [401, 403].includes(cause.status || 0)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     } finally {
       setBusyUser(null);
     }

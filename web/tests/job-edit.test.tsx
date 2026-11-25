@@ -29,14 +29,14 @@ it("retries the exact edit after an unknown outcome and cannot alter the payload
  fireEvent.click(retry);await waitFor(()=>expect(api.update).toHaveBeenCalledTimes(2));
  expect(api.update.mock.calls[0][0]).toEqual(api.update.mock.calls[1][0]);
 });
-it("blocks a stale edit until explicitly reloaded and denies unauthorized reads",async()=>{
+it("blocks a stale edit until explicitly reloaded and keeps session on forbidden read",async()=>{
  api.update.mockRejectedValueOnce(new ApiError("Changed",409));render(<JobEdit {...props}/>);await screen.findByDisplayValue(job.title);
  fireEvent.change(screen.getByLabelText("Địa điểm"),{target:{value:"Hanoi"}});
  fireEvent.click(screen.getByRole("button",{name:"Lưu thay đổi"}));
  const reload=await screen.findByRole("button",{name:"Tải bản mới nhất"});
  expect(screen.getByRole("button",{name:"Lưu thay đổi"}).hasAttribute("disabled")).toBe(true);
  api.get.mockRejectedValueOnce(new ApiError("Denied",403));fireEvent.click(reload);
- await waitFor(()=>expect(props.onAccessLost).toHaveBeenCalledOnce());expect(screen.queryByDisplayValue(job.title)).toBeNull();
+ await screen.findByRole("alert");expect(props.onAccessLost).not.toHaveBeenCalled();expect(screen.queryByDisplayValue(job.title)).toBeNull();
 });
 it("does not offer write retry when only the refresh after successful save failed",async()=>{
  render(<JobEdit {...props} onSaved={async()=>{throw Error("offline");}}/>);await screen.findByDisplayValue(job.title);

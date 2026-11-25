@@ -104,7 +104,7 @@ export default function AdminConsole({
           ? e.message
           : tr("Không tải được Job nháp.", "Could not load draft."),
       );
-      if (e instanceof ApiError && [401, 403].includes(e.status || 0))
+      if (e instanceof ApiError && e.status === 401)
         onAccessLost();
     } finally {
       if (seq === ticket.current) setLoading(false);
@@ -147,7 +147,7 @@ export default function AdminConsole({
           ? e.message
           : tr("Không lưu được Job.", "Could not save Job."),
       );
-      if (e instanceof ApiError && [401, 403].includes(e.status || 0))
+      if (e instanceof ApiError && e.status === 401)
         onAccessLost();
     } finally {
       lock.current = false;

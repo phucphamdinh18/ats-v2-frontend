@@ -113,11 +113,12 @@ describe("review request lifecycle", () => {
       call.mock.calls.filter(([input]) => input.action === "list"),
     ).toHaveLength(2);
   });
-  it("calls access reset when backend rejects current session with 403", async () => {
+  it("keeps the signed-in session when the review API denies access with 403", async () => {
     call.mockRejectedValue(new ApiError("Role revoked", 403));
     const onAccessLost = vi.fn();
     render(<ReviewQueue onAccessLost={onAccessLost} />);
-    await waitFor(() => expect(onAccessLost).toHaveBeenCalledTimes(1));
+    await screen.findByRole("alert");
+    expect(onAccessLost).not.toHaveBeenCalled();
   });
   it("keeps duplicate drafts unapprovable and requires rejection reason", async () => {
     call.mockImplementation((input) =>

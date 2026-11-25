@@ -74,7 +74,7 @@ export default function JobTeamAccess({
         setMembers([]);
         const e = membersResult.reason;
         setError(e instanceof Error ? e.message : "Không tải được đội ngũ.");
-        if (e instanceof ApiError && [401, 403].includes(e.status || 0))
+        if (e instanceof ApiError && e.status === 401)
           onAccessLost();
       }
       if (approversResult.status === "fulfilled") {
@@ -157,10 +157,13 @@ export default function JobTeamAccess({
               "Could not update assignments.",
             ),
       );
-      if (e instanceof ApiError && [401, 403].includes(e.status || 0)) {
+      if (e instanceof ApiError && e.status === 401) {
         setMembers([]);
         setApprovers([]);
         onAccessLost();
+      } else if (e instanceof ApiError && e.status === 403) {
+        setMembers([]);
+        setApprovers([]);
       }
     } finally {
       lock.current = false;

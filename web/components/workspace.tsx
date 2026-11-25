@@ -186,7 +186,7 @@ export default function Workspace() {
       }
     } catch (err) {
       if (gate.current.current(ticket)) {
-        setAccess(null);
+        if (!quiet) setAccess(null);
         setError(err instanceof Error ? err.message : "requestFailed");
       }
     } finally {

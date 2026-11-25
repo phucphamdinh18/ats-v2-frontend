@@ -50,10 +50,11 @@ it("shows API errors and permits a retry without inventing results", async () =>
   await waitFor(() => expect(api.list).toHaveBeenCalledTimes(2));
 });
 
-it("invalidates restricted workspace when job permissions are revoked", async () => {
+it("keeps the signed-in workspace when this Job scope is forbidden", async () => {
   api.list.mockRejectedValue(new ApiError("Forbidden", 403));
   const onAccessLost = vi.fn();
   render(<RecruitmentOperations mode="interviews" jobs={jobs} onAccessLost={onAccessLost} />);
-  await waitFor(() => expect(onAccessLost).toHaveBeenCalledTimes(1));
+  await screen.findByRole("alert");
+  expect(onAccessLost).not.toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: "Test Candidate" })).toBeNull();
 });

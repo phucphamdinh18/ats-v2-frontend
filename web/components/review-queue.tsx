@@ -69,7 +69,7 @@ export default function ReviewQueue({
       if (!alive.current) return;
       if (
         err instanceof ApiError &&
-        (err.status === 401 || err.status === 403)
+        err.status === 401
       ) {
         onAccessLost();
         return;

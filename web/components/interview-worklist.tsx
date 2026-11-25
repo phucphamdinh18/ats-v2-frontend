@@ -51,7 +51,7 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
       setRows([]);
       setSelectedId(null);
       setError(cause instanceof Error ? cause.message : (en ? "Could not load interview schedule." : "Không tải được lịch phỏng vấn."));
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) onAccessLost();
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => {
       if (version === requestVersion.current) setLoading(false);
     });

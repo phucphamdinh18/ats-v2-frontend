@@ -32,7 +32,7 @@ export default function BoschJobActivity({ jobId, onAccessLost }: { jobId: strin
     }).catch((reason: unknown) => {
       if (id !== revision.current) return;
       setError(reason instanceof Error ? reason.message : (en ? "Could not load application history." : "Không tải được lịch sử hồ sơ."));
-      if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) onAccessLost();
+      if (reason instanceof ApiError && reason.status === 401) onAccessLost();
     }).finally(() => { if (id === revision.current) setLoading(false); });
     return () => { revision.current += 1; detailRevision.current += 1; };
   }, [jobId, offset, onAccessLost]);
@@ -46,7 +46,7 @@ export default function BoschJobActivity({ jobId, onAccessLost }: { jobId: strin
     } catch (reason) {
       if (id !== detailRevision.current) return;
       setDetailError(reason instanceof Error ? reason.message : (en ? "Could not load timeline." : "Không tải được lịch sử."));
-      if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) onAccessLost();
+      if (reason instanceof ApiError && reason.status === 401) onAccessLost();
     } finally { if (id === detailRevision.current) setDetailLoading(false); }
   }
 
