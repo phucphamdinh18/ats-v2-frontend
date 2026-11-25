@@ -165,6 +165,6 @@ it("shows real per-Job TA responsibility and replaces revoked team data after re
  expect(screen.queryByText("Job hiring team")).toBeNull();
  mock.recruiters.mockRejectedValue(new Error("offline"));
  fireEvent.focus(window);
- await screen.findByText("Chưa tải được phân công");
+ await screen.findByText("Chưa tải được phân công TA");
  expect(screen.queryByText(/Phuc \(TA chính\)/)).toBeNull();
 });
