@@ -44,7 +44,7 @@ export type HomeTask = {
   priority: boolean;
 };
 export function jobRecruitingOwner(jobId: string, recruiters: JobRecruiter[] | undefined, en: boolean) {
- if (!recruiters) return { owner: en ? "Assignment unavailable" : "Chưa tải được phân công", role: en ? "Job recruiting team" : "Nhóm TA của Job" };
+ if (!recruiters) return { owner: en ? "Could not load TA assignment" : "Chưa tải được phân công TA", role: en ? "Job recruiting team" : "Nhóm TA của Job" };
  const rank = (r: JobRecruiter) => r.ta_assignment === "PRIMARY" ? 0 : r.ta_assignment === "SUPPORT" ? 1 : 2;
  const team = recruiters.filter(r => r.job_id === jobId).sort((a,b) => rank(a)-rank(b) || a.email.localeCompare(b.email));
  const label = (r: JobRecruiter) => r.ta_assignment === "PRIMARY" ? (en ? "Primary TA" : "TA chính") : r.ta_assignment === "SUPPORT" ? (en ? "Support TA" : "TA hỗ trợ") : (en ? "TA · Not classified" : "TA · Chưa phân loại");

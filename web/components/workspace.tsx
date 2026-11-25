@@ -126,7 +126,7 @@ export default function Workspace() {
       let jobs: Job[] = [];
       let memberships: JobMembership[] = [];
       if (active && roleNames.length) {
-        if (roleNames.includes("TA_RECRUITER") && !roleNames.includes("ADMIN")) {
+        if (!roleNames.includes("ADMIN") && roleNames.some((role) => ["TA_RECRUITER", "HIRING_MANAGER"].includes(role))) {
           const membershipResult = await client.from("job_memberships")
             .select("job_id,role")
             .eq("user_id", session.user.id);
@@ -648,7 +648,7 @@ export default function Workspace() {
           ) : (
             <>
               {tab === "home" ? (
-                <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
+                <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} memberships={access.memberships} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
                   onAccessLost={invalidate}
                   onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}
                   onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}

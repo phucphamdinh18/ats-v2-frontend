@@ -14,7 +14,7 @@ import {
   Video,
 } from "lucide-react";
 import { listJobRecruiters, type JobRecruiter } from "@/lib/admin-jobs";
-import type { Job } from "@/lib/policy";
+import type { Job, JobMembership } from "@/lib/policy";
 import type { InterviewWorklistItem } from "@/lib/interviews";
 import { approvalReturnPath, type WorkflowOffer } from "@/lib/offer-approval";
 import { ApiError } from "@/lib/supabase";
@@ -40,6 +40,7 @@ import HomeWorkDialog from "./home-work-dialog";
 import styles from "./bosch-home-dashboard.module.css";
 type Props = {
   jobs: Job[];
+  memberships?: JobMembership[];
   roles: string[];
   userName: string;
   userId?: string;
@@ -75,6 +76,7 @@ const icons = {
 };
 export default function BoschHomeDashboard({
   jobs,
+  memberships = [],
   roles,
   userName,
   userId = "",
@@ -93,7 +95,16 @@ export default function BoschHomeDashboard({
     [errors, setErrors] = useState<Record<string, boolean>>({}),
     [now, setNow] = useState(Date.now());
   const [recruiters, setRecruiters] = useState<JobRecruiter[] | undefined>(undefined);
-  const jobIdsKey = [...new Set(jobs.map(j => j.id))].sort().join(",");
+  // The scoped roster RPC rejects a whole batch if it contains even one Job
+  // the caller can only access as an Interviewer. Send only Jobs where this
+  // user has TA/Hiring Manager access; Admin may read every authorized Job.
+  const recruiterJobIds = roles.includes("ADMIN")
+    ? jobs.map((job) => job.id)
+    : jobs.filter((job) => memberships.some(
+        (membership) => membership.job_id === job.id &&
+          ["TA_RECRUITER", "HIRING_MANAGER"].includes(membership.role),
+      )).map((job) => job.id);
+  const jobIdsKey = [...new Set(recruiterJobIds)].sort().join(",");
   const [proposalId, setProposalId] = useState("");
   const [selected, setPerspective] = useState<HomePerspective | null>(null),
     [page, setPage] = useState(0),
@@ -452,8 +463,8 @@ export default function BoschHomeDashboard({
         <div className={styles.inlineError} role="alert">
           <span>
             {tr(
-              "Một số công việc chưa tải được. Dấu — nghĩa là chưa có tổng chính xác.",
-              "Some work could not be loaded. A dash means its exact total is unavailable.",
+              "Một số dữ liệu trên Home chưa tải được. Dấu — nghĩa là chưa có tổng chính xác.",
+              "Some Home data could not be loaded. A dash means its exact total is unavailable.",
             )}{" "}
             {Object.keys(errors)
               .map(
@@ -462,6 +473,7 @@ export default function BoschHomeDashboard({
                     tasks: tr("Công việc", "Tasks"),
                     offers: tr("Đề xuất", "Proposals"),
                     interviews: tr("Phỏng vấn", "Interviews"),
+                    assignments: tr("Phân công TA", "TA assignments"),
                   })[k],
               )
               .join(" · ")}
