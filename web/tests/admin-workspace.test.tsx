@@ -157,10 +157,9 @@ it("requires explicit confirmation before revoking and clears roster on forbidde
   const lost = vi.fn();
   render(<JobTeamAccess job={job} onAccessLost={lost} />);
   fireEvent.click(
-    await screen.findByRole("button", {
-      name: "Thu hồi hm@example.invalid Hiring Manager",
-    }),
+    await screen.findByLabelText("Thao tác hm@example.invalid"),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Thu hồi quyền" }));
   expect(api.remove).not.toHaveBeenCalled();
   api.remove.mockRejectedValueOnce(new ApiError("revoked", 403));
   fireEvent.click(screen.getByRole("button", { name: "Xác nhận thu hồi" }));
