@@ -6,7 +6,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { UsersRound, UserPlus, ShieldCheck, RefreshCw } from "lucide-react";
+import { UsersRound, UserPlus, ShieldCheck, RefreshCw, ChevronDown } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { ApiError } from "@/lib/supabase";
 import {
@@ -253,24 +253,38 @@ export default function JobTeamAccess({
                           {m.role === "TA_RECRUITER" ? m.ta_assignment === "PRIMARY" ? tr("TA chính", "Primary TA") : m.ta_assignment === "SUPPORT" ? tr("TA hỗ trợ", "Support TA") : tr("TA · Chưa phân loại", "TA · Not classified") : names[m.role] || m.role}
                         </span>
                       </td>
-                      <td>
-                        {m.role === "TA_RECRUITER" && <>
-                          {m.ta_assignment !== "PRIMARY" && <button disabled={frozen || loading || !assignable || !!error}
-                            onClick={() => changeRecruiter(m.email, "PRIMARY")}
-                            aria-label={`${tr("Đặt TA chính", "Make primary TA")} ${m.email}`}>
-                            {tr("Đặt TA chính", "Make primary TA")}</button>}
-                          {m.ta_assignment !== "SUPPORT" && <button disabled={frozen || loading || !assignable || !!error}
-                            onClick={() => changeRecruiter(m.email, "SUPPORT")}
-                            aria-label={`${tr("Đặt TA hỗ trợ", "Make support TA")} ${m.email}`}>
-                            {tr("Đặt TA hỗ trợ", "Make support TA")}</button>}
-                        </>}
-                        <button
-                          disabled={frozen}
-                          onClick={() => setConfirm(m)}
-                          aria-label={`${tr("Thu hồi", "Revoke")} ${m.email} ${names[m.role] || m.role}`}
-                        >
-                          {tr("Thu hồi", "Revoke")}
-                        </button>
+                      <td className={styles.actionCell}>
+                        <details className={styles.actionDropdown}>
+                          <summary aria-label={`${tr("Thao tác", "Actions")} ${m.email}`}>
+                            {tr("Thao tác", "Actions")}
+                            <ChevronDown size={15} aria-hidden="true" />
+                          </summary>
+                          <div className={styles.actionMenu}>
+                            {m.role === "TA_RECRUITER" && m.ta_assignment !== "PRIMARY" && <button type="button"
+                              disabled={frozen || loading || !assignable || !!error}
+                              onClick={(event) => {
+                                event.currentTarget.closest("details")?.removeAttribute("open");
+                                changeRecruiter(m.email, "PRIMARY");
+                              }}>
+                              {tr("Đặt TA chính", "Make primary TA")}
+                            </button>}
+                            {m.role === "TA_RECRUITER" && m.ta_assignment !== "SUPPORT" && <button type="button"
+                              disabled={frozen || loading || !assignable || !!error}
+                              onClick={(event) => {
+                                event.currentTarget.closest("details")?.removeAttribute("open");
+                                changeRecruiter(m.email, "SUPPORT");
+                              }}>
+                              {tr("Đặt TA hỗ trợ", "Make support TA")}
+                            </button>}
+                            <button type="button" disabled={frozen}
+                              onClick={(event) => {
+                                event.currentTarget.closest("details")?.removeAttribute("open");
+                                setConfirm(m);
+                              }}>
+                              {tr("Thu hồi quyền", "Revoke access")}
+                            </button>
+                          </div>
+                        </details>
                       </td>
                     </tr>
                   ))}
