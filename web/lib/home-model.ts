@@ -37,12 +37,15 @@ export type HomeTask = {
   context: string;
   owner: string;
   role: string;
+  slaTargetWorkdays: number | null;
   due: string | null;
   action: "task" | "interview" | "offer" | "job";
   target: string;
   job?: Job;
   priority: boolean;
 };
+// Kept for non-Home consumers and existing task models; Home now displays the
+// Job SLA in this slot instead of a person assignment.
 export function jobRecruitingOwner(jobId: string, recruiters: JobRecruiter[] | undefined, en: boolean) {
  if (!recruiters) return { owner: en ? "Could not load TA assignment" : "Chưa tải được phân công TA", role: en ? "Job recruiting team" : "Nhóm TA của Job" };
  const rank = (r: JobRecruiter) => r.ta_assignment === "PRIMARY" ? 0 : r.ta_assignment === "SUPPORT" ? 1 : 2;
@@ -72,6 +75,8 @@ export function buildHomeTasks(input: {
     offers,
     en,
   } = input;
+  const slaFor = (jobId?: string | null) =>
+    jobs.find((job) => job.id === jobId)?.sla_target_workdays ?? null;
   const result: HomeTask[] = tasks.map((t) => ({
     id: `task-${t.id}`,
     group: "assigned",
@@ -80,6 +85,7 @@ export function buildHomeTasks(input: {
     owner: userName,
     role: en ? "Assigned to you" : "Được giao cho bạn",
     due: t.due_at,
+    slaTargetWorkdays: slaFor(t.job_id),
     action: "task",
     target: t.id,
     priority: t.priority === "HIGH",
@@ -99,6 +105,7 @@ export function buildHomeTasks(input: {
             : `Xem ${count} hồ sơ ${p === "HIRING_MANAGER" ? "sơ loại" : "mới"}`,
           context: job.title,
           ...jobRecruitingOwner(job.id, input.recruiters, en),
+          slaTargetWorkdays: slaFor(job.id),
           due: null,
           action: "job",
           target: job.id,
@@ -118,6 +125,7 @@ export function buildHomeTasks(input: {
           owner: userName,
           role: en ? "Interviewer" : "Người phỏng vấn",
           due: null,
+          slaTargetWorkdays: slaFor(i.job_id),
           action: "interview",
           target: i.id,
           priority: true,
@@ -137,6 +145,7 @@ export function buildHomeTasks(input: {
           owner: i.participants.map((x) => x.display_name).join(", ") || "—",
           role: en ? "Interview team" : "Nhóm phỏng vấn",
           due: null,
+          slaTargetWorkdays: slaFor(i.job_id),
           action: "interview",
           target: i.id,
           priority: false,
@@ -165,6 +174,7 @@ export function buildHomeTasks(input: {
             : "Người duyệt được chỉ định",
         role: en ? "Approver" : "Người duyệt",
         due: null,
+        slaTargetWorkdays: slaFor(o.job_id),
         action: "offer",
         target: o.id,
         priority: mine,
@@ -194,6 +204,7 @@ export function buildHomeTasks(input: {
             : "Job ưu tiên cao / khẩn cấp",
         context: job.title,
         ...jobRecruitingOwner(job.id, input.recruiters, en),
+        slaTargetWorkdays: slaFor(job.id),
         due: null,
         action: "job",
         target: job.id,
