@@ -10,11 +10,11 @@ import {
   FileText,
   MapPin,
   RefreshCw,
+  Target,
   UserRound,
   Video,
 } from "lucide-react";
-import { listJobRecruiters, type JobRecruiter } from "@/lib/admin-jobs";
-import type { Job, JobMembership } from "@/lib/policy";
+import type { Job } from "@/lib/policy";
 import type { InterviewWorklistItem } from "@/lib/interviews";
 import { approvalReturnPath, type WorkflowOffer } from "@/lib/offer-approval";
 import { ApiError } from "@/lib/supabase";
@@ -40,7 +40,8 @@ import HomeWorkDialog from "./home-work-dialog";
 import styles from "./bosch-home-dashboard.module.css";
 type Props = {
   jobs: Job[];
-  memberships?: JobMembership[];
+  sourceVersion: number;
+  onSyncSources: () => Promise<void>;
   roles: string[];
   userName: string;
   userId?: string;
@@ -76,7 +77,8 @@ const icons = {
 };
 export default function BoschHomeDashboard({
   jobs,
-  memberships = [],
+  sourceVersion,
+  onSyncSources,
   roles,
   userName,
   userId = "",
@@ -94,17 +96,6 @@ export default function BoschHomeDashboard({
   const [busy, setBusy] = useState(true),
     [errors, setErrors] = useState<Record<string, boolean>>({}),
     [now, setNow] = useState(Date.now());
-  const [recruiters, setRecruiters] = useState<JobRecruiter[] | undefined>(undefined);
-  // The scoped roster RPC rejects a whole batch if it contains even one Job
-  // the caller can only access as an Interviewer. Send only Jobs where this
-  // user has TA/Hiring Manager access; Admin may read every authorized Job.
-  const recruiterJobIds = roles.includes("ADMIN")
-    ? jobs.map((job) => job.id)
-    : jobs.filter((job) => memberships.some(
-        (membership) => membership.job_id === job.id &&
-          ["TA_RECRUITER", "HIRING_MANAGER"].includes(membership.role),
-      )).map((job) => job.id);
-  const jobIdsKey = [...new Set(recruiterJobIds)].sort().join(",");
   const [proposalId, setProposalId] = useState("");
   const [selected, setPerspective] = useState<HomePerspective | null>(null),
     [page, setPage] = useState(0),
@@ -122,7 +113,6 @@ export default function BoschHomeDashboard({
       current = () => ticket.current === id;
     setBusy(true);
     setErrors({});
-    setRecruiters(undefined);
     const r = await Promise.allSettled([
       Promise.all([
         allInterviews("SCHEDULED", current),
@@ -131,13 +121,12 @@ export default function BoschHomeDashboard({
       ]).then((p) => [...new Map(p.flat().map((i) => [i.id, i])).values()]),
       allMyTasks(current),
       allHomeOffers(current),
-      listJobRecruiters(jobIdsKey ? jobIdsKey.split(",") : []),
     ]);
     if (!current()) return;
     const failed: Record<string, boolean> = {};
     r.forEach((x, index) => {
       if (x.status === "rejected") {
-        failed[["interviews", "tasks", "offers", "assignments"][index]] = true;
+        failed[["interviews", "tasks", "offers"][index]] = true;
         if (x.reason instanceof ApiError && x.reason.status === 401)
           onAccessLost();
       }
@@ -145,12 +134,11 @@ export default function BoschHomeDashboard({
     setInterviews(r[0].status === "fulfilled" ? r[0].value : []);
     setTasks(r[1].status === "fulfilled" ? r[1].value : []);
     setOffers(r[2].status === "fulfilled" ? r[2].value : []);
-    setRecruiters(r[3].status === "fulfilled" ? r[3].value : undefined);
     setErrors(failed);
     setNow(Date.now());
     setBusy(false);
     inflight.current = false;
-  }, [onAccessLost, jobIdsKey]);
+  }, [onAccessLost]);
   useEffect(() => {
     void load();
     const focus = () => {
@@ -166,7 +154,7 @@ export default function BoschHomeDashboard({
       document.removeEventListener("visibilitychange", focus);
       window.clearInterval(timer);
     };
-  }, [load]);
+  }, [load, sourceVersion]);
   const mine = offers.filter((o) => o.approver_id === userId),
     perspectives = homePerspectives(roles, mine);
   const perspective =
@@ -188,7 +176,6 @@ export default function BoschHomeDashboard({
     () =>
       buildHomeTasks({
         perspective,
-        recruiters,
         userId,
         userName,
         jobs,
@@ -197,7 +184,7 @@ export default function BoschHomeDashboard({
         offers,
         en,
       }),
-    [perspective, recruiters, userId, userName, jobs, tasks, interviews, offers, en],
+    [perspective, userId, userName, jobs, tasks, interviews, offers, en],
   );
   const taskError =
     !!errors.tasks ||
@@ -399,7 +386,7 @@ export default function BoschHomeDashboard({
           <button
             type="button"
             className={styles.outlineAction}
-            onClick={() => void load()}
+            onClick={() => void onSyncSources()}
             disabled={busy}
           >
             <RefreshCw size={16} />
@@ -473,12 +460,11 @@ export default function BoschHomeDashboard({
                     tasks: tr("Công việc", "Tasks"),
                     offers: tr("Đề xuất", "Proposals"),
                     interviews: tr("Phỏng vấn", "Interviews"),
-                    assignments: tr("Phân công TA", "TA assignments"),
                   })[k],
               )
               .join(" · ")}
           </span>
-          <button type="button" onClick={() => void load()} disabled={busy}>
+          <button type="button" onClick={() => void onSyncSources()} disabled={busy}>
             {tr("Thử lại", "Retry")}
           </button>
         </div>
@@ -545,11 +531,12 @@ export default function BoschHomeDashboard({
                         <CalendarClock size={16} />
                         {due(t.due)}
                       </span>
-                      <span className={styles.taskOwner}>
-                        <UserRound size={18} />
+                      <span className={styles.taskSla}>
+                        <Target size={16} />
                         <span>
-                          {t.owner}
-                          <small>{t.role}</small>
+                          {t.slaTargetWorkdays == null
+                            ? "—"
+                            : tr(`SLA: ${t.slaTargetWorkdays} ngày làm việc`, `SLA: ${t.slaTargetWorkdays} workdays`)}
                         </span>
                       </span>
                       <button
