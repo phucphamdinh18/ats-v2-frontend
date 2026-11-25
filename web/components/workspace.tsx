@@ -45,6 +45,7 @@ export default function Workspace() {
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
   const [calendarPromptError, setCalendarPromptError] = useState("");
   const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews" | "users">("jobs");
+  const [homeSourceVersion, setHomeSourceVersion] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
@@ -185,6 +186,10 @@ export default function Workspace() {
       if (gate.current.current(ticket)) setLoading(false);
     }
   }, []);
+  const syncHomeSources = useCallback(async () => {
+    await refresh(true);
+    setHomeSourceVersion((version) => version + 1);
+  }, [refresh]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cleanup = () => {};
@@ -520,7 +525,7 @@ export default function Workspace() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTitle}>{locale === "en" ? "Recruitment" : "Tuyển dụng"}</div>
         <nav className={styles.nav} aria-label={t.navigation}>
-          <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => setTab("home")}><Icon name="dashboard"/><span className={styles.navLabel}>Home</span></button>
+          <button type="button" className={`${styles.navButton} ${tab === "home" ? styles.active : ""}`} aria-current={tab === "home" ? "page" : undefined} onClick={() => { setTab("home"); void syncHomeSources(); }}><Icon name="dashboard"/><span className={styles.navLabel}>Home</span></button>
           <button type="button" className={`${styles.navButton} ${tab === "jobs" ? styles.active : ""}`} aria-current={tab === "jobs" ? "page" : undefined} onClick={() => { setTab("jobs"); setJobView("master"); }}><Icon name="jobs"/><span className={styles.navLabel}>{t.jobs}</span></button>
           {reviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "talent" ? styles.active : ""}`} aria-current={tab === "talent" ? "page" : undefined} onClick={() => setTab("talent")}><Icon name="team"/><span className={styles.navLabel}>{locale === "en" ? "Candidates / Talent Pool" : "Ứng viên / Talent Pool"}</span></button>}
           {interviewAllowed && <button type="button" className={`${styles.navButton} ${tab === "interviews" ? styles.active : ""}`} aria-current={tab === "interviews" ? "page" : undefined} onClick={() => setTab("interviews")}><Icon name="review"/><span className={styles.navLabel}>{locale === "en" ? "Interviews" : "Phỏng vấn"}</span></button>}
@@ -648,7 +653,7 @@ export default function Workspace() {
           ) : (
             <>
               {tab === "home" ? (
-                <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} memberships={access.memberships} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
+                <BoschHomeDashboard key={access.userId} userId={access.userId} jobs={access.jobs} sourceVersion={homeSourceVersion} onSyncSources={syncHomeSources} roles={access.roles} userName={access.email.split("@")[0].split(/[._-]/)[0]}
                   onAccessLost={invalidate}
                   onOpenJob={(job) => { setSelectedJob(job); setTab("jobs"); setJobView("pipeline"); }}
                   onOpenJobs={() => { setTab("jobs"); setJobView("master"); }}
