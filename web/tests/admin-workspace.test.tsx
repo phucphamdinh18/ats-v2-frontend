@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import AdminConsole from "../components/admin-console";
 import JobTeamAccess from "../components/job-team-access";
@@ -183,10 +184,14 @@ it("classifies existing TAs explicitly and confirms replacement of the current p
  const confirm=vi.spyOn(window,"confirm").mockReturnValue(false);
  render(<JobTeamAccess job={job} onAccessLost={noop}/>);
  await screen.findByText("TA · Chưa phân loại");
- fireEvent.click(screen.getByRole("button",{name:"Đặt TA chính support@test.invalid"}));
+ const supportRow=screen.getByRole("row",{name:/support@test.invalid/});
+ const openActions=()=>fireEvent.click(within(supportRow).getByRole("button",{name:"Thao tác support@test.invalid"}));
+ openActions();
+ fireEvent.click(within(supportRow).getByRole("button",{name:"Đặt TA chính"}));
  expect(confirm).toHaveBeenCalled();expect(api.recruiter).not.toHaveBeenCalled();
  confirm.mockReturnValue(true);
- fireEvent.click(screen.getByRole("button",{name:"Đặt TA chính support@test.invalid"}));
+ openActions();
+ fireEvent.click(within(supportRow).getByRole("button",{name:"Đặt TA chính"}));
  await waitFor(()=>expect(api.recruiter).toHaveBeenCalledOnce());
  expect(api.recruiter.mock.calls[0][0]).toMatchObject({jobId:job.id,email:"support@test.invalid",assignment:"PRIMARY",expectedPrimary:"one"});
  confirm.mockRestore();
