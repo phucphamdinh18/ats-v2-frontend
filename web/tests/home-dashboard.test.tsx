@@ -157,14 +157,11 @@ it("multi-role Home switches perspective without granting privileges or fabricat
 });
 
 
-it("shows real per-Job TA responsibility and replaces revoked team data after refresh", async () => {
+it("shows the Job SLA instead of TA assignment in Home tasks", async () => {
  mock.tasks.mockResolvedValue([]);mock.interviews.mockResolvedValue([]);
  mock.recruiters.mockResolvedValue([{job_id:"j",user_id:"p",display_name:"Phuc",email:"p@test.invalid",ta_assignment:"PRIMARY"},{job_id:"j",user_id:"s",display_name:"Linh",email:"l@test.invalid",ta_assignment:"SUPPORT"}]);
- render(<Home {...props} roles={["ADMIN"]} jobs={[{id:"j",title:"Engineer",job_code:"J",status:"OPEN",metrics:{new_count:1} as never}]}/>);
- await screen.findByText(/Phuc \(TA chính\).*Linh \(TA hỗ trợ\)/);
- expect(screen.queryByText("Job hiring team")).toBeNull();
- mock.recruiters.mockRejectedValue(new Error("offline"));
- fireEvent.focus(window);
- await screen.findByText("Chưa tải được phân công TA");
- expect(screen.queryByText(/Phuc \(TA chính\)/)).toBeNull();
+ render(<Home {...props} roles={["ADMIN"]} jobs={[{id:"j",title:"Engineer",job_code:"J",status:"OPEN",sla_target_workdays:35,metrics:{new_count:1} as never}]}/>);
+ await screen.findByText("SLA: 35 ngày làm việc");
+ expect(screen.queryByText(/Phuc \\(TA chính\\)/)).toBeNull();
+ expect(screen.queryByText(/Linh \\(TA hỗ trợ\\)/)).toBeNull();
 });
