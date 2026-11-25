@@ -40,8 +40,8 @@ import HomeWorkDialog from "./home-work-dialog";
 import styles from "./bosch-home-dashboard.module.css";
 type Props = {
   jobs: Job[];
-  sourceVersion: number;
-  onSyncSources: () => Promise<void>;
+  sourceVersion?: number;
+  onSyncSources?: () => Promise<void>;
   roles: string[];
   userName: string;
   userId?: string;
@@ -77,8 +77,8 @@ const icons = {
 };
 export default function BoschHomeDashboard({
   jobs,
-  sourceVersion,
-  onSyncSources,
+  sourceVersion = 0,
+  onSyncSources = async () => {},
   roles,
   userName,
   userId = "",
