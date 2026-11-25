@@ -10,6 +10,7 @@ import type { Job } from "@/lib/policy";
 import { ArrowLeft, CalendarDays, CalendarPlus, ChevronDown, Layers3, MapPin, Pencil, Target } from "lucide-react";
 import styles from "./bosch-v2-job-detail.module.css";
 import type { Application } from "@/lib/applications";
+import { getCopy, roleLabel } from "@/lib/i18n";
 
 type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team" | "activity";
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
   children: ReactNode;
   onAccessLost?: () => void;
   roles?: string[];
+  membershipLoadFailed?: boolean;
   canManageApplications?: boolean;
 };
 const tabs: { id: Tab; label: string }[] = [
@@ -41,9 +43,10 @@ function readableDate(value: string | null | undefined, locale: "vi" | "en") {
 }
 
 /** New composition only; no API/stage/role changes. */
-export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], canManageApplications = false, children }: Props) {
+export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewOffers, canAdmin, onAccessLost, roles = [], membershipLoadFailed = false, canManageApplications = false, children }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
+  const copy = getCopy(locale);
   const [tab, setTab] = useState<Tab>("pipeline");
   const [actionsOpen, setActionsOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
@@ -137,8 +140,8 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
     {tab === "team" && (canAdmin ? <JobTeamAccess key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/> : <section className={styles.aux} aria-label={en ? "Team & Access" : "Nhóm & Phân quyền"}>
       <div className={styles.sectionHead}><div><h2>{en ? "Team & Access" : "Nhóm & Phân quyền"}</h2><p>{en ? "Your current permissions for this Job." : "Quyền truy cập của tài khoản hiện tại đối với Job này."}</p></div></div>
       <div className={styles.detailsGrid}>
-        <section className={styles.detailPane}><h3>{en ? "Your roles" : "Vai trò tài khoản"}</h3>
-          <p>{roles.length ? roles.join(", ") : "—"}</p></section>
+        <section className={styles.detailPane}><h3>{en ? "Your roles on this Job" : "Vai trò trên Job này"}</h3>
+          <p>{roles.length ? roles.map((role) => roleLabel(role, copy)).join(", ") : membershipLoadFailed ? (en ? "Could not verify Job role assignments" : "Không xác minh được phân công vai trò trên Job") : (en ? "No Job role assignment found" : "Không tìm thấy phân công vai trò trên Job này")}</p></section>
         <section className={styles.detailPane}><h3>{en ? "Available actions" : "Quyền thao tác"}</h3><dl className={styles.facts}>
           <dt>{en ? "Read Job" : "Xem Job"}</dt><dd>{en ? "Authorized" : "Được cấp quyền"}</dd>
           <dt>{en ? "Move applications" : "Chuyển stage"}</dt><dd>{canManageApplications ? (en ? "Allowed" : "Được phép") : (en ? "Read-only" : "Chỉ xem")}</dd>

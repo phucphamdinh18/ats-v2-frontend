@@ -239,7 +239,7 @@ export default function JobTeamAccess({
             <p role="status">{tr("Đang tải đội ngũ…", "Loading team…")}</p>
           ) : members.length ? (
             <div className={styles.tableScroll}>
-              <table>
+              <table className={styles.assignedTeamTable}>
                 <thead>
                   <tr>
                     <th>{tr("Thành viên", "Member")}</th>

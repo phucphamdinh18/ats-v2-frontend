@@ -53,7 +53,7 @@ it("Team and Access only exposes the current role's verified permissions, not a 
  render(<BoschJobDetail job={job} onBack={vi.fn()} onModule={vi.fn()}
    canViewOffers={false} canManageApplications={false} roles={["HIRING_MANAGER"]} canAdmin={false}><span>Pipeline</span></BoschJobDetail>);
  fireEvent.click(screen.getByRole("button",{name:"Nhóm & Quyền"}));
- expect(screen.getByText("HIRING_MANAGER")).toBeTruthy();
+ expect(screen.getByText("Quản lý tuyển dụng")).toBeTruthy();
  expect(screen.getByText("Chỉ xem")).toBeTruthy();
  expect(screen.queryByRole("button",{name:"Quản lý phân quyền"})).toBeNull();
  expect(screen.getByText(/Liên hệ Admin để thay đổi phân công/)).toBeTruthy();

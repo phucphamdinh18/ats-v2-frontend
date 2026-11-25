@@ -28,7 +28,7 @@ function interview(n: number, status = "SCHEDULED") {
   const start = new Date();
   const vietnamToday = new Date(Date.now() + 7 * 60 * 60 * 1000);
   start.setUTCFullYear(vietnamToday.getUTCFullYear(), vietnamToday.getUTCMonth(), vietnamToday.getUTCDate());
-  start.setUTCHours(1, n, 0, 0);
+  start.setUTCHours(3, n, 0, 0);
   return {
     id: `i-${n}`,
     application_id: "a",
@@ -66,6 +66,7 @@ function task(n: number) {
   };
 }
 beforeEach(() => {
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-17T00:00:00Z"));
   mock.interviews.mockImplementation(async (status: string) =>
     status === "SCHEDULED"
       ? Array.from({ length: 12 }, (_, i) => interview(i))
@@ -76,7 +77,7 @@ beforeEach(() => {
   mock.recruiters.mockResolvedValue([]);
   localStorage.clear();
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const props = {
   jobs: [],
   roles: ["INTERVIEWER"],
@@ -95,7 +96,7 @@ it("keeps all today's interviews in a scroll region and exposes every assigned t
   });
   expect(within(agenda).getAllByRole("button")).toHaveLength(12);
   expect(agenda.textContent).toContain("Minh");
-  expect(agenda.textContent).toContain("08:00–09:00");
+  expect(agenda.textContent).toContain("10:00–11:00");
   expect(screen.queryByText("Assigned task 6")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Tiếp" }));
   expect(screen.getByText("Assigned task 6")).toBeTruthy();

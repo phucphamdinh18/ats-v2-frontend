@@ -108,7 +108,14 @@ export function localDay(value: string | number | Date): string {
 export function todaysInterviews(rows: InterviewWorklistItem[], now: number) {
   const today = localDay(now);
   return rows
-    .filter((x) => localDay(x.starts_at) === today)
+    // The Home agenda is an active schedule, not a history list. Completed
+    // and cancelled records stay available in the interview history views.
+    .filter(
+      (x) =>
+        x.status === "SCHEDULED" &&
+        localDay(x.starts_at) === today &&
+        Date.parse(x.ends_at) > now,
+    )
     .sort(
       (a, b) =>
         Date.parse(a.starts_at) - Date.parse(b.starts_at) ||

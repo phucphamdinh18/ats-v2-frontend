@@ -66,18 +66,20 @@ test("incomplete, repeated or cancelled scans never return an apparently exact p
     /CANCELLED/,
   );
 });
-test("today is the complete GMT+7 calendar day, including earlier/completed/cancelled interviews", () => {
+test("today agenda includes only active scheduled interviews in GMT+7", () => {
   const now = Date.parse("2026-11-17T08:00:00Z");
   const rows = [
-    base,
+    { ...base, id: "upcoming", starts_at: "2026-11-17T10:00:00Z", ends_at: "2026-11-17T11:00:00Z" },
+    { ...base, id: "in-progress", starts_at: "2026-11-17T07:30:00Z", ends_at: "2026-11-17T08:30:00Z" },
+    { ...base, id: "elapsed", starts_at: "2026-11-17T02:00:00Z", ends_at: "2026-11-17T03:00:00Z" },
     { ...base, id: "done", status: "COMPLETED" as const },
     { ...base, id: "cancel", status: "CANCELLED" as const },
     { ...base, id: "midnight", starts_at: "2026-11-16T17:00:00Z" },
     { ...base, id: "tomorrow", starts_at: "2026-11-17T17:00:00Z" },
   ];
-  assert.equal(todaysInterviews(rows, now).length, 4);
+  assert.deepEqual(todaysInterviews(rows, now).map(({ id }) => id), ["in-progress", "upcoming"]);
   assert.equal(localDay("2026-11-16T17:00:00Z"), "2026-11-17");
-  assert.equal(todaysInterviews([base], now)[0].status, "SCHEDULED");
+  assert.equal(todaysInterviews([base], now).length, 0);
 });
 test("all 38 assigned tasks remain accessible without inventing owner or deadline", () => {
   const tasks = Array.from({ length: 38 }, (_, i) => ({

@@ -28,6 +28,7 @@ type Access = {
   active: boolean;
   jobs: Job[];
   memberships: JobMembership[];
+  membershipLoadFailed: boolean;
 };
 export default function Workspace() {
   const { t, locale, setLocale } = useLanguage();
@@ -126,13 +127,14 @@ export default function Workspace() {
         : [];
       let jobs: Job[] = [];
       let memberships: JobMembership[] = [];
+      let membershipLoadFailed = false;
       if (active && roleNames.length) {
-        if (!roleNames.includes("ADMIN") && roleNames.some((role) => ["TA_RECRUITER", "HIRING_MANAGER"].includes(role))) {
+        if (!roleNames.includes("ADMIN")) {
           const membershipResult = await client.from("job_memberships")
             .select("job_id,role")
             .eq("user_id", session.user.id);
-          if (membershipResult.error) throw membershipResult.error;
-          memberships = (membershipResult.data || []) as JobMembership[];
+          if (membershipResult.error) membershipLoadFailed = true;
+          else memberships = (membershipResult.data || []) as JobMembership[];
         }
         const jobRows: Job[] = [];
         for (let offset = 0; ; offset += 100) {
@@ -182,6 +184,7 @@ export default function Workspace() {
           roles: roleNames,
           jobs,
           memberships,
+          membershipLoadFailed,
         });
       }
     } catch (err) {
@@ -343,6 +346,13 @@ export default function Workspace() {
   }, [jobs]);
   const reviewAllowed = !!allowed && canReview(access.roles);
   const adminAllowed = !!allowed && access.roles.includes("ADMIN");
+  const selectedJobMemberships = selectedJob
+    ? access?.memberships.filter((membership) => membership.job_id === selectedJob.id) || []
+    : [];
+  const selectedJobRoles = selectedJobMemberships.map((membership) => membership.role);
+  const canViewSelectedJobOffers = adminAllowed || selectedJobMemberships.some(
+    (membership) => membership.role === "TA_RECRUITER" || membership.role === "OFFER_APPROVER",
+  );
   useEffect(() => {
     if (!globalSearchOpen) return;
     const frame = window.requestAnimationFrame(() => globalSearchRef.current?.focus());
@@ -773,12 +783,13 @@ export default function Workspace() {
                     onModule={setTab}
                     onEdit={adminAllowed ? job=>{setSelectedJob(job);setJobView("edit");} : undefined}
                     canAdmin={adminAllowed}
-                    canViewOffers={reviewAllowed}
+                    canViewOffers={canViewSelectedJobOffers}
                     canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)}
-                    roles={access.roles}
+                    roles={selectedJobRoles}
+                    membershipLoadFailed={access.membershipLoadFailed}
                     onAccessLost={invalidate}
                   >
-                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={access.roles.some((role) => role === "ADMIN" || role === "TA_RECRUITER")} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
+                    <ApplicationPipeline key={selectedJob.id} job={selectedJob} onSessionLost={invalidate} canViewOffers={canViewSelectedJobOffers} canManageApplications={canManageApplicationStages(access.roles, access.memberships, selectedJob.id)} />
                   </BoschJobDetail> : <div className="empty"><h3>Chưa có Job được cấp quyền</h3><p>Job sẽ xuất hiện tại đây khi được chia sẻ cho tài khoản của bạn.</p></div>}
                 </>
               )}
