@@ -1,6 +1,7 @@
 "use client";
 
 import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
+import { readViewState, writeViewState } from "@/lib/view-state";
 import { useLanguage } from "./language";
 import JobTeamAccess from "./job-team-access";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
@@ -47,10 +48,11 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
   const { locale } = useLanguage();
   const en = locale === "en";
   const copy = getCopy(locale);
-  const [tab, setTab] = useState<Tab>("pipeline");
+  const [tab, setTab] = useState<Tab>(() => readViewState<Tab>(`ats-v2:job-detail-tab:${job.id}`, "pipeline", ["pipeline", "details", "sourcing", "interviews", "offers", "team", "activity"]));
   const [actionsOpen, setActionsOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [initialBookingApplicationId, setInitialBookingApplicationId] = useState<string | undefined>();
+  useEffect(() => { writeViewState(`ats-v2:job-detail-tab:${job.id}`, tab); }, [job.id, tab]);
   const actionsRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLElement | null>(null);
   const canInviteSelected = canManageApplications && selectedApplication?.status === "ACTIVE" && selectedApplication.stage === "INTERVIEW";
