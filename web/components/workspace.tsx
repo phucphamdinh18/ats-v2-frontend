@@ -22,6 +22,24 @@ import AtsNotificationCenter from "./ats-notification-center";
 import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
+type WorkspaceTab = "home" | "jobs" | "talent" | "interviews" | "users";
+
+function readSavedWorkspaceTab(userId: string, roles: string[]): WorkspaceTab {
+  try {
+    const saved = window.sessionStorage.getItem(`ats-v2:last-workspace-tab:${userId}`);
+    const validTabs: WorkspaceTab[] = ["home", "jobs", "talent", "interviews", "users"];
+    let restored: WorkspaceTab = validTabs.includes(saved as WorkspaceTab) ? saved as WorkspaceTab : "jobs";
+    if (
+      (restored === "talent" && !canReview(roles)) ||
+      (restored === "interviews" && !roles.length) ||
+      (restored === "users" && !roles.includes("ADMIN"))
+    ) restored = "jobs";
+    return restored;
+  } catch {
+    return "jobs";
+  }
+}
+
 type Access = {
   userId: string;
   email: string;
@@ -49,7 +67,6 @@ export default function Workspace() {
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
   const [calendarPromptError, setCalendarPromptError] = useState("");
   const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews" | "users">("jobs");
-  const [restoredTabUser, setRestoredTabUser] = useState<string | null>(null);
   const [homeSourceVersion, setHomeSourceVersion] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -186,10 +203,10 @@ export default function Workspace() {
         }));
       }
       if (gate.current.current(ticket)) {
+        if (active) setTab(roleNames.length ? readSavedWorkspaceTab(session.user.id, roleNames) : "home");
         setSelectedJob((current) =>
           jobs.find((job) => job.id === current?.id) || jobs[0] || null,
         );
-        if (active && !roleNames.length) setTab("home");
         setAccess({
           userId: session.user.id,
           email: session.user.email || "",
@@ -346,25 +363,6 @@ export default function Workspace() {
   const allowed = access?.active;
   useEffect(() => {
     if (!access?.active || !access.userId) return;
-    const storageKey = `ats-v2:last-workspace-tab:${access.userId}`;
-    try {
-      const saved = window.sessionStorage.getItem(storageKey);
-      const validTabs = ["home", "jobs", "talent", "interviews", "users"];
-      let restored = validTabs.includes(saved || "") ? saved! : "jobs";
-      if (
-        (restored === "talent" && !canReview(access.roles)) ||
-        (restored === "interviews" && !access.roles.length) ||
-        (restored === "users" && !access.roles.includes("ADMIN"))
-      ) restored = "jobs";
-      setTab(restored as typeof tab);
-    } catch {
-      // Keep the default tab if browser storage is unavailable.
-    }
-    setRestoredTabUser(access.userId);
-  }, [access?.active, access?.userId, access?.roles]);
-
-  useEffect(() => {
-    if (!access?.active || restoredTabUser !== access.userId) return;
     try {
       window.sessionStorage.setItem(
         `ats-v2:last-workspace-tab:${access.userId}`,
@@ -373,7 +371,7 @@ export default function Workspace() {
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [access?.active, access?.userId, restoredTabUser, tab]);
+  }, [access?.active, access?.userId, tab]);
   const interviewAllowed = !!allowed && !!access?.roles.length;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
