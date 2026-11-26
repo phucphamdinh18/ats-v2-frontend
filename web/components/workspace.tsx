@@ -40,6 +40,15 @@ function readSavedWorkspaceTab(userId: string, roles: string[]): WorkspaceTab {
   }
 }
 
+
+type SavedWorkspaceView = { selectedJobId?: string; jobView?: "master" | "pipeline"; search?: string; status?: string };
+function readSavedWorkspaceView(userId: string): SavedWorkspaceView {
+  try {
+    const value = JSON.parse(window.sessionStorage.getItem("ats-v2:last-workspace-view:" + userId) || "{}") as SavedWorkspaceView;
+    return value && typeof value === "object" ? value : {};
+  } catch { return {}; }
+}
+
 type Access = {
   userId: string;
   email: string;
@@ -203,9 +212,16 @@ export default function Workspace() {
         }));
       }
       if (gate.current.current(ticket)) {
+        const savedView = active ? readSavedWorkspaceView(session.user.id) : {};
         if (active) setTab(roleNames.length ? readSavedWorkspaceTab(session.user.id, roleNames) : "home");
-        setSelectedJob((current) =>
-          jobs.find((job) => job.id === current?.id) || jobs[0] || null,
+        if (active) {
+          setSearch(savedView.search || "");
+          setStatus(savedView.status || "ALL");
+          setJobView(savedView.jobView === "pipeline" ? "pipeline" : "master");
+        }
+        setSelectedJob(
+          jobs.find((job) => job.id === savedView.selectedJobId) ||
+          jobs.find((job) => job.id === selectedJob?.id) || jobs[0] || null,
         );
         setAccess({
           userId: session.user.id,
@@ -364,14 +380,17 @@ export default function Workspace() {
   useEffect(() => {
     if (!access?.active || !access.userId) return;
     try {
-      window.sessionStorage.setItem(
-        `ats-v2:last-workspace-tab:${access.userId}`,
-        tab,
-      );
+      window.sessionStorage.setItem(`ats-v2:last-workspace-tab:${access.userId}`, tab);
+      window.sessionStorage.setItem(`ats-v2:last-workspace-view:${access.userId}`, JSON.stringify({
+        selectedJobId: selectedJob?.id || undefined,
+        jobView: jobView === "pipeline" ? "pipeline" : "master",
+        search,
+        status,
+      }));
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [access?.active, access?.userId, tab]);
+  }, [access?.active, access?.userId, tab, selectedJob?.id, jobView, search, status]);
   const interviewAllowed = !!allowed && !!access?.roles.length;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
