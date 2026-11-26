@@ -52,6 +52,18 @@ export default function JobTeamAccess({
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState<Command | null>(null),
     [confirm, setConfirm] = useState<JobMember | null>(null);
+  useEffect(() => {
+    const closeActionDropdowns = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) return;
+      document
+        .querySelectorAll<HTMLDetailsElement>("details." + styles.actionDropdown + "[open]")
+        .forEach((dropdown) => {
+          if (!dropdown.contains(event.target as Node)) dropdown.open = false;
+        });
+    };
+    document.addEventListener("pointerdown", closeActionDropdowns);
+    return () => document.removeEventListener("pointerdown", closeActionDropdowns);
+  }, []);
   const epoch = useRef(0),
     lock = useRef(false),
     read = useRef(0);
