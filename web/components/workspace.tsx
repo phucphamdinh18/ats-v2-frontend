@@ -18,6 +18,7 @@ import RecruitmentOperations from "./recruitment-operations";
 import InterviewWorklist from "./interview-worklist";
 import AdminConsole from "./admin-console";
 import AdminUserAccess from "./admin-user-access";
+import AtsNotificationCenter from "./ats-notification-center";
 import JobEdit from "./job-edit";
 import { format, friendlyError, jobStatusLabel, roleLabel } from "@/lib/i18n";
 
@@ -41,6 +42,8 @@ export default function Workspace() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [error, setError] = useState("");
+  const [accessRequestStatus, setAccessRequestStatus] = useState<"ACTIVE" | "PENDING" | "REJECTED" | "DISABLED" | null>(null);
+  const [accessRequestBusy, setAccessRequestBusy] = useState(false);
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState<boolean | null>(null);
   const [calendarPromptOpen, setCalendarPromptOpen] = useState(false);
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
@@ -109,6 +112,15 @@ export default function Workspace() {
       authUser.current = session?.user.id || null;
       if (!session) {
         setAccess(null);
+        setAccessRequestStatus(null);
+        return;
+      }
+      const request = await client.rpc("ats_request_access", { p_resubmit: false });
+      if (request.error) throw request.error;
+      const requestStatus = request.data?.status as "ACTIVE" | "PENDING" | "REJECTED" | "DISABLED";
+      setAccessRequestStatus(requestStatus);
+      if (requestStatus !== "ACTIVE") {
+        setAccess({ userId: session.user.id, email: session.user.email || "", active: false, roles: [], jobs: [], memberships: [], membershipLoadFailed: false });
         return;
       }
       const [profile, roles] = await Promise.all([
@@ -530,6 +542,7 @@ export default function Workspace() {
                 </>
               ) : <button className={styles.searchTrigger} type="button" onClick={() => setGlobalSearchOpen(true)}><Icon name="search" size={17} /><span>{locale === "en" ? "Search" : "Tìm nhanh"}</span><kbd>⌘ K</kbd></button>}
             </div>
+            {access?.active && <AtsNotificationCenter locale={locale} />}
             <label className={styles.language}>
               <select
                 aria-label={t.language}
@@ -682,12 +695,9 @@ export default function Workspace() {
               <span className="welcome-icon">
                 <Icon name="clock" size={28} />
               </span>
-              <h1>{t.waiting}</h1>
-              <p>{t.waitingBody}</p>
-              <button className="primary" onClick={() => void refresh()}>
-                <Icon name="refresh" size={17} />
-                {t.checkAccess}
-              </button>
+              <h1>{accessRequestStatus === "REJECTED" ? (locale === "en" ? "Access request declined" : "Yêu cầu truy cập chưa được duyệt") : accessRequestStatus === "DISABLED" ? (locale === "en" ? "Account access is disabled" : "Tài khoản đang bị vô hiệu hóa") : t.waiting}</h1>
+              <p>{accessRequestStatus === "REJECTED" ? (locale === "en" ? "You can submit a new request if you still need ATS access." : "Bạn có thể gửi lại yêu cầu nếu vẫn cần dùng ATS.") : accessRequestStatus === "DISABLED" ? (locale === "en" ? "Contact an ATS administrator to restore your account." : "Liên hệ Admin ATS để được mở lại tài khoản.") : accessRequestStatus === "PENDING" ? (locale === "en" ? "Your request was sent to the ATS administrator. This page will check again when you refresh." : "Yêu cầu đã được gửi đến Admin ATS. Tải lại trang để kiểm tra sau khi được duyệt.") : t.waitingBody}</p>
+              {accessRequestStatus === "REJECTED" ? <button className="primary" disabled={accessRequestBusy} onClick={async () => { setAccessRequestBusy(true); setError(""); try { const { data, error: rpcError } = await getClient().rpc("ats_request_access", { p_resubmit: true }); if (rpcError) throw rpcError; setAccessRequestStatus(data?.status || "PENDING"); } catch (cause) { setError(cause instanceof Error ? cause.message : "Không gửi lại được yêu cầu."); } finally { setAccessRequestBusy(false); } }}>{accessRequestBusy ? (locale === "en" ? "Sending…" : "Đang gửi…") : (locale === "en" ? "Send a new request" : "Gửi yêu cầu lại")}</button> : accessRequestStatus !== "DISABLED" ? <button className="primary" onClick={() => void refresh()}><Icon name="refresh" size={17} />{t.checkAccess}</button> : null}
             </section>
           ) : (
             <>

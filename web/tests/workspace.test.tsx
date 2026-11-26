@@ -12,6 +12,7 @@ import Workspace from "../components/workspace";
 import { LanguageProvider } from "../components/language";
 const mocks = vi.hoisted(() => ({
   from: vi.fn(),
+  rpc: vi.fn(),
   session: vi.fn(),
   oauth: vi.fn(),
   signOut: vi.fn(),
@@ -23,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../lib/supabase", () => ({
   getClient: () => ({
     from: mocks.from,
+    rpc: mocks.rpc,
     functions: { invoke: mocks.functionInvoke },
     auth: {
       getSession: mocks.session,
@@ -42,6 +44,9 @@ vi.mock("../lib/supabase", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.review.mockResolvedValue({ drafts: [] });
+  mocks.rpc.mockImplementation((name: string) => Promise.resolve({
+    data: name === "ats_request_access" ? { status: "ACTIVE" } : [], error: null,
+  }));
   mocks.functionInvoke.mockImplementation((_name: string, options: { body?: { action?: string } }) =>
     Promise.resolve({ data: options.body?.action === "overview"
       ? { jobs: [] }
@@ -52,6 +57,15 @@ beforeEach(() => {
     },
     error: null,
   });
+});
+it("sends a new account to the access request gate without loading Jobs", async () => {
+  mocks.rpc.mockImplementation((name: string) => Promise.resolve({
+    data: name === "ats_request_access" ? { status: "PENDING" } : [], error: null,
+  }));
+  scope(false, []);
+  render(<Workspace />);
+  await screen.findByText("Yêu cầu đã được gửi đến Admin ATS. Tải lại trang để kiểm tra sau khi được duyệt.");
+  expect(mocks.from.mock.calls.some(([table]) => table === "jobs")).toBe(false);
 });
 afterEach(cleanup);
 function scope(active: boolean, roles: string[], jobs: unknown[] = [], memberships: unknown[] = []) {
