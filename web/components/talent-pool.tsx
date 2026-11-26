@@ -1,4 +1,5 @@
 "use client";
+import { readViewState, writeViewState } from "@/lib/view-state";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Job } from "@/lib/policy";
@@ -17,7 +18,7 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
   const { locale } = useLanguage();
   const en = locale === "en";
   const tr = (vi: string, english: string) => en ? english : vi;
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => readViewState("ats-v2:candidate-database-query", ""));
   const [offset, setOffset] = useState(0);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [attributionByCandidate, setAttributionByCandidate] = useState<Record<string, CandidateAttribution>>({});
@@ -38,6 +39,8 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
   const listRevision = useRef(0);
   const profileRevision = useRef(0);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => { writeViewState("ats-v2:candidate-database-query", query); }, [query]);
+
   const openJobs = jobs.filter((job) => job.status === "OPEN");
 
   useEffect(() => {
