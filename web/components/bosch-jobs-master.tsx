@@ -1,4 +1,5 @@
 "use client";
+import { readViewState, writeViewState } from "@/lib/view-state";
 
 import { useMemo, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
@@ -53,9 +54,11 @@ export default function BoschJobsMaster({
 }: Props) {
   const { locale } = useLanguage();
   const en = locale === "en";
-  const [priority, setPriority] = useState("ALL");
+  const [priority, setPriority] = useState(() => readViewState("ats-v2:jobs-priority-filter", "ALL"));
   const [page, setPage] = useState(0);
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
+
+  useEffect(() => { writeViewState("ats-v2:jobs-priority-filter", priority); }, [priority]);
 
   const labels = en ? {
     title: "Job Openings", subtitle: "Manage requisitions, hiring priorities and job-level performance.",
