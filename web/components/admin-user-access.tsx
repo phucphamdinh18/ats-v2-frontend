@@ -1,4 +1,5 @@
 "use client";
+import { readViewState, writeViewState } from "@/lib/view-state";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Search, ShieldCheck, UserRoundCheck, UserRoundX } from "lucide-react";
 import { ApiError } from "@/lib/supabase";
@@ -21,11 +22,13 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
   const [users, setUsers] = useState<AdminUserAccess[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyUser, setBusyUser] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => readViewState("ats-v2:accounts-query", ""));
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [requests, setRequests] = useState<Array<{ id: string; user_id: string; email: string; display_name: string | null; requested_at: string }>>([]);
   const [busyRequest, setBusyRequest] = useState<string | null>(null);
+
+  useEffect(() => { writeViewState("ats-v2:accounts-query", query); }, [query]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
