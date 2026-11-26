@@ -1,4 +1,5 @@
 "use client";
+import { readViewState, writeViewState } from "@/lib/view-state";
 
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/supabase";
@@ -28,13 +29,14 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
     { id: "COMPLETED", label: en ? "Completed" : "Đã hoàn tất" },
     { id: "CANCELLED", label: en ? "Cancelled" : "Đã hủy" },
   ];
-  const [status, setStatus] = useState<InterviewStatus>("SCHEDULED");
+  const [status, setStatus] = useState<InterviewStatus>(() => readViewState<InterviewStatus>("ats-v2:interview-status", "SCHEDULED", ["SCHEDULED", "COMPLETED", "CANCELLED"]));
   const [offset, setOffset] = useState(0);
   const [rows, setRows] = useState<InterviewWorklistItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshVersion, setRefreshVersion] = useState(0);
+  useEffect(() => { writeViewState("ats-v2:interview-status", status); }, [status]);
   const requestVersion = useRef(0);
   const active = rows.find((row) => row.id === selectedId) || null;
 
