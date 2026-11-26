@@ -318,9 +318,9 @@
   min-width: 680px;
   table-layout: fixed;
 }
-.assignedTeamTable :is(th, td):nth-child(1) { width: 52%; }
-.assignedTeamTable :is(th, td):nth-child(2) { width: 28%; }
-.assignedTeamTable :is(th, td):nth-child(3) { width: 20%; }
+.assignedTeamTable :is(th, td):nth-child(1) { width: 54%; }
+.assignedTeamTable :is(th, td):nth-child(2) { width: 23%; }
+.assignedTeamTable :is(th, td):nth-child(3) { width: 23%; }
 .actionDropdown {
   position: relative;
   display: inline-block;
@@ -446,9 +446,9 @@
 .root .tableScroll .assignedTeamTable { min-width: 680px; table-layout: fixed; white-space: normal; }
 .root .tableScroll th { position: static; top: auto; z-index: auto; }
 .root .tableScroll :is(th, td) { white-space: normal; vertical-align: middle; overflow-wrap: anywhere; }
-.root .tableScroll :is(th, td):nth-child(1) { width: 52%; }
-.root .tableScroll :is(th, td):nth-child(2) { width: 28%; }
-.root .tableScroll :is(th, td):nth-child(3) { width: 20%; }
+.root .tableScroll :is(th, td):nth-child(1) { width: 54%; }
+.root .tableScroll :is(th, td):nth-child(2) { width: 23%; }
+.root .tableScroll :is(th, td):nth-child(3) { width: 23%; }
 .root .role { white-space: normal; }
 .root .teamLayout h3 { margin-top: 18px; }
 .root .teamLayout .formHead h3 { margin-top: 0; }
