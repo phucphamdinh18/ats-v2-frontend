@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readViewState, writeViewState } from "@/lib/view-state";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -96,10 +97,13 @@ export default function BoschHomeDashboard({
   const [busy, setBusy] = useState(true),
     [errors, setErrors] = useState<Record<string, boolean>>({}),
     [now, setNow] = useState(Date.now());
+  const savedHomeView = useRef(readViewState<{ perspective: HomePerspective | null; page: number; jobPage: number }>(
+    "ats-v2:home-view:" + userId, { perspective: null, page: 0, jobPage: 0 },
+  ));
   const [proposalId, setProposalId] = useState("");
-  const [selected, setPerspective] = useState<HomePerspective | null>(null),
-    [page, setPage] = useState(0),
-    [jobPage, setJobPage] = useState(0);
+  const [selected, setPerspective] = useState<HomePerspective | null>(() => savedHomeView.current.perspective),
+    [page, setPage] = useState(() => savedHomeView.current.page),
+    [jobPage, setJobPage] = useState(() => savedHomeView.current.jobPage);
   const [chosen, setChosen] = useState<{
     taskId?: string;
     interview?: InterviewWorklistItem;
@@ -159,6 +163,12 @@ export default function BoschHomeDashboard({
     perspectives = homePerspectives(roles, mine);
   const perspective =
     selected && perspectives.includes(selected) ? selected : perspectives[0];
+  useEffect(() => {
+    writeViewState("ats-v2:home-view:" + userId, {
+      perspective: selected && perspectives.includes(selected) ? selected : null,
+      page, jobPage,
+    });
+  }, [userId, selected, page, jobPage, perspectives]);
   const isPersonal = roles.length === 0 && !mine.length;
   const today = useMemo(
     () => todaysInterviews(interviews, now),
