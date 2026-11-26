@@ -76,6 +76,7 @@ beforeEach(() => {
   mock.offers.mockResolvedValue([]);
   mock.recruiters.mockResolvedValue([]);
   localStorage.clear();
+  window.sessionStorage.clear();
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const props = {
