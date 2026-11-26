@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Search, ShieldCheck, UserRoundCheck, UserRoundX } from "lucide-react";
 import { ApiError } from "@/lib/supabase";
+import { getClient } from "@/lib/supabase";
 import { listAdminUserAccess, setAdminUserActive, type AdminUserAccess } from "@/lib/admin-jobs";
 import { useLanguage } from "./language";
 import styles from "./admin-user-access.module.css";
@@ -23,6 +24,8 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [requests, setRequests] = useState<Array<{ id: string; user_id: string; email: string; display_name: string | null; requested_at: string }>>([]);
+  const [busyRequest, setBusyRequest] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -30,6 +33,9 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
     try {
       const result = await listAdminUserAccess();
       setUsers(Array.isArray(result.users) ? result.users : []);
+      const requestResult = await getClient().rpc("ats_list_access_requests");
+      if (requestResult.error) throw requestResult.error;
+      setRequests(Array.isArray(requestResult.data) ? requestResult.data : []);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : tr("Không tải được danh sách tài khoản.", "Could not load user accounts."));
       if (cause instanceof ApiError && cause.status === 401) onAccessLost();
@@ -70,6 +76,21 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
     }
   }
 
+  async function reviewRequest(id: string, decision: "APPROVE" | "REJECT") {
+    setBusyRequest(id); setError(""); setNotice("");
+    try {
+      const { error: rpcError } = await getClient().rpc("ats_review_access_request", { p_request_id: id, p_decision: decision, p_note: null });
+      if (rpcError) throw rpcError;
+      setNotice(decision === "APPROVE"
+        ? tr("Đã duyệt tài khoản. Tiếp theo, hãy gán người này vào từng Job trong Team & Access.", "Account approved. Next, assign this person to each Job under Team & Access.")
+        : tr("Đã từ chối yêu cầu truy cập.", "Access request declined."));
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : tr("Không xử lý được yêu cầu.", "Could not review the request."));
+      if (cause instanceof ApiError && cause.status === 401) onAccessLost();
+    } finally { setBusyRequest(null); }
+  }
+
   function formatDate(value: string | null) {
     if (!value) return "—";
     const date = new Date(value);
@@ -90,6 +111,18 @@ export default function AdminUserAccess({ userId, onAccessLost }: { userId: stri
     <div className={styles.notice}><strong>{tr("Vô hiệu hóa sẽ:", "Deactivation will:")}</strong> {tr("chặn người này dùng ATS và mọi Job được phân công. Các phân công được giữ lại để có thể khôi phục nếu kích hoạt lại.", "block ATS and all assigned Jobs. Existing assignments are retained so they can be restored if the account is reactivated.")}</div>
     {error && <p className={styles.error} role="alert">{error}</p>}
     {notice && <p className={styles.success} role="status">{notice}</p>}
+
+    <section className={styles.requests} aria-label={tr("Yêu cầu truy cập mới", "New access requests")}>
+      <h2>{tr("Yêu cầu truy cập mới", "New access requests")} <span>{requests.length}</span></h2>
+      {requests.length ? requests.map((request) => <div className={styles.requestRow} key={request.id}>
+        <div><strong>{request.display_name || request.email}</strong><small>{request.email} · {formatDate(request.requested_at)}</small></div>
+        <div className={styles.requestActions}>
+          <button type="button" className={styles.activate} disabled={!!busyRequest} onClick={() => void reviewRequest(request.id,"APPROVE")}>{busyRequest === request.id ? tr("Đang lưu…","Saving…") : tr("Duyệt","Approve")}</button>
+          <button type="button" className={styles.deactivate} disabled={!!busyRequest} onClick={() => void reviewRequest(request.id,"REJECT")}>{tr("Từ chối","Decline")}</button>
+        </div>
+      </div>) : <p className={styles.empty}>{tr("Chưa có yêu cầu nào đang chờ.", "No pending requests.")}</p>}
+      <p className={styles.requestHelp}>{tr("Duyệt tài khoản chỉ mở quyền đăng nhập ATS. Quyền Job vẫn cần gán riêng trong Team & Access.", "Approval only enables ATS sign-in. Job access must still be assigned separately under Team & Access.")}</p>
+    </section>
 
     <div className={styles.toolbar}>
       <label className={styles.search}><Search size={17}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tr("Tìm theo tên hoặc email", "Search name or email")}/></label>

@@ -33,4 +33,11 @@
 .deactivate:hover:not(:disabled){background:#fff1f2}.activate:hover:not(:disabled){background:#eff8fd}
 .deactivate:disabled,.activate:disabled{opacity:.5;cursor:not-allowed}
 .empty{text-align:center!important;padding:30px!important;color:#71819a!important}
+.requests{display:grid;gap:12px;padding:16px;border:1px solid #d2dcea;border-radius:8px;background:#fff}
+.requests h2{display:flex;align-items:center;gap:9px;margin:0;color:#17243b;font-size:18px}
+.requests h2 span{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#eaf2f8;color:#34516f;font-size:12px}
+.requestRow{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px;border:1px solid #e1e8f0;border-radius:6px}
+.requestRow strong,.requestRow small{display:block}.requestRow strong{color:#17365f}.requestRow small{margin-top:4px;color:#647791;font-size:12px}
+.requestActions{display:flex;gap:7px}.requestHelp{margin:0;color:#647791;font-size:12px;line-height:1.5}
+@media(max-width:600px){.requestRow{align-items:flex-start;flex-direction:column}.requestActions{width:100%}.requestActions button{flex:1}}
 @media(max-width:760px){.root{padding:20px 14px}.header{align-items:flex-start;flex-wrap:wrap}.refresh{margin-left:64px}.header h1{font-size:24px}.toolbar{align-items:flex-start;flex-direction:column}}
