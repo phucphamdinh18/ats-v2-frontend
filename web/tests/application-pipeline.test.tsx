@@ -53,6 +53,7 @@ async function selectCandidate(name = "Ada") {
 }
 
 beforeEach(() => {
+  window.sessionStorage.clear();
   Object.values(api).forEach((fn) => fn.mockReset());
   api.rounds.mockResolvedValue(new Map());
   api.worklist.mockResolvedValue([]);
