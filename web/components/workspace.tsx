@@ -62,6 +62,7 @@ export default function Workspace() {
   const { t, locale, setLocale } = useLanguage();
   const [guideOpen, setGuideOpen] = useState(false);
   const [access, setAccess] = useState<Access | null>(null);
+  const [workspaceReadyUser, setWorkspaceReadyUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authBusy, setAuthBusy] = useState(false);
   const [localLoginVisible, setLocalLoginVisible] = useState(false);
@@ -118,6 +119,7 @@ export default function Workspace() {
   const invalidate = useCallback(() => {
     gate.current.invalidate();
     setAccess(null);
+    setWorkspaceReadyUser(null);
     setSelectedJob(null);
     setTab("jobs");
     setError("scopeChanged");
@@ -127,6 +129,7 @@ export default function Workspace() {
     if (!quiet) {
       setLoading(true);
       setAccess(null);
+      setWorkspaceReadyUser(null);
     }
     setError("");
     try {
@@ -140,6 +143,7 @@ export default function Workspace() {
       authUser.current = session?.user.id || null;
       if (!session) {
         workspaceHydratedUser.current = null;
+        setWorkspaceReadyUser(null);
         setAccess(null);
         setAccessRequestStatus(null);
         return;
@@ -149,6 +153,7 @@ export default function Workspace() {
       const requestStatus = request.data?.status as "ACTIVE" | "PENDING" | "REJECTED" | "DISABLED";
       setAccessRequestStatus(requestStatus);
       if (requestStatus !== "ACTIVE") {
+        setWorkspaceReadyUser(null);
         setAccess({ userId: session.user.id, email: session.user.email || "", active: false, roles: [], jobs: [], memberships: [], membershipLoadFailed: false });
         return;
       }
@@ -226,7 +231,12 @@ export default function Workspace() {
           jobs.find((job) => job.id === (restoreSavedView ? savedView.selectedJobId : current?.id)) ||
           jobs[0] || null,
         );
-        if (active) workspaceHydratedUser.current = session.user.id;
+        if (active) {
+          workspaceHydratedUser.current = session.user.id;
+          // Do not let the persistence effect overwrite the saved route with
+          // initial defaults before the saved nested view has been restored.
+          setWorkspaceReadyUser(session.user.id);
+        }
         setAccess({
           userId: session.user.id,
           email: session.user.email || "",
@@ -382,7 +392,7 @@ export default function Workspace() {
   }
   const allowed = access?.active;
   useEffect(() => {
-    if (!access?.active || !access.userId) return;
+    if (!access?.active || !access.userId || workspaceReadyUser !== access.userId) return;
     try {
       window.sessionStorage.setItem(`ats-v2:last-workspace-tab:${access.userId}`, tab);
       window.sessionStorage.setItem(`ats-v2:last-workspace-view:${access.userId}`, JSON.stringify({
@@ -394,7 +404,7 @@ export default function Workspace() {
     } catch {
       // Navigation still works when browser storage is unavailable.
     }
-  }, [access?.active, access?.userId, tab, selectedJob?.id, jobView, search, status]);
+  }, [access?.active, access?.userId, workspaceReadyUser, tab, selectedJob?.id, jobView, search, status]);
   const interviewAllowed = !!allowed && !!access?.roles.length;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
