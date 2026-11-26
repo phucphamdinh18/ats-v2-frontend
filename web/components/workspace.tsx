@@ -49,6 +49,7 @@ export default function Workspace() {
   const [calendarPromptBusy, setCalendarPromptBusy] = useState(false);
   const [calendarPromptError, setCalendarPromptError] = useState("");
   const [tab, setTab] = useState<"home" | "jobs" | "talent" | "interviews" | "users">("jobs");
+  const [restoredTabUser, setRestoredTabUser] = useState<string | null>(null);
   const [homeSourceVersion, setHomeSourceVersion] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -343,6 +344,36 @@ export default function Workspace() {
     }
   }
   const allowed = access?.active;
+  useEffect(() => {
+    if (!access?.active || !access.userId) return;
+    const storageKey = `ats-v2:last-workspace-tab:${access.userId}`;
+    try {
+      const saved = window.sessionStorage.getItem(storageKey);
+      const validTabs = ["home", "jobs", "talent", "interviews", "users"];
+      let restored = validTabs.includes(saved || "") ? saved! : "jobs";
+      if (
+        (restored === "talent" && !canReview(access.roles)) ||
+        (restored === "interviews" && !access.roles.length) ||
+        (restored === "users" && !access.roles.includes("ADMIN"))
+      ) restored = "jobs";
+      setTab(restored as typeof tab);
+    } catch {
+      // Keep the default tab if browser storage is unavailable.
+    }
+    setRestoredTabUser(access.userId);
+  }, [access?.active, access?.userId, access?.roles]);
+
+  useEffect(() => {
+    if (!access?.active || restoredTabUser !== access.userId) return;
+    try {
+      window.sessionStorage.setItem(
+        `ats-v2:last-workspace-tab:${access.userId}`,
+        tab,
+      );
+    } catch {
+      // Navigation still works when browser storage is unavailable.
+    }
+  }, [access?.active, access?.userId, restoredTabUser, tab]);
   const interviewAllowed = !!allowed && !!access?.roles.length;
   const jobs = useMemo(() => (access?.jobs || []).filter(
     (job) =>
