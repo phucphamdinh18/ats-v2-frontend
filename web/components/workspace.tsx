@@ -88,6 +88,7 @@ export default function Workspace() {
   const gate = useRef(new RequestGate());
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
+  const globalSearchContainerRef = useRef<HTMLDivElement>(null);
   const authUser = useRef<string | null>(null);
   const workspaceHydratedUser = useRef<string | null>(null);
   const calendarPromptDismissed = useRef(false);
@@ -433,6 +434,17 @@ export default function Workspace() {
     return () => window.cancelAnimationFrame(frame);
   }, [globalSearchOpen]);
   useEffect(() => {
+    if (!globalSearchOpen) return;
+    const handleOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !globalSearchContainerRef.current?.contains(event.target)) {
+        setGlobalSearchOpen(false);
+        setGlobalSearchQuery("");
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [globalSearchOpen]);
+  useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
         event.preventDefault();
@@ -588,7 +600,7 @@ export default function Workspace() {
             <div className={styles.productContext}><strong>ATS V2</strong><span>{locale === "en" ? "Daily recruitment overview" : "Tổng quan tuyển dụng hằng ngày"}</span></div>
           </div>
           <div className={styles.headerActions}>
-            <div className={styles.searchContainer}>
+            <div className={styles.searchContainer} ref={globalSearchContainerRef}>
               {globalSearchOpen ? (
                 <>
                   <label className={styles.searchInput}>
