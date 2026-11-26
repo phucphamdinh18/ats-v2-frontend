@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Check, ChevronDown } from "lucide-react";
 import { getClient } from "@/lib/supabase";
 import styles from "./ats-notification-center.module.css";
@@ -10,6 +10,7 @@ export default function AtsNotificationCenter({ locale }: { locale: "vi" | "en" 
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
   const load = useCallback(async () => {
     try {
       const { data, error: rpcError } = await getClient().rpc("ats_list_notifications");
@@ -18,6 +19,16 @@ export default function AtsNotificationCenter({ locale }: { locale: "vi" | "en" 
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not load notifications."); }
   }, []);
   useEffect(() => { void load(); const onFocus = () => void load(); window.addEventListener("focus",onFocus); return () => window.removeEventListener("focus",onFocus); },[load]);
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [open]);
   const unread = items.filter((item) => !item.read_at).length;
   async function markRead(item: Notification) {
     if (item.read_at) return;
@@ -25,7 +36,7 @@ export default function AtsNotificationCenter({ locale }: { locale: "vi" | "en" 
     if (rpcError) { setError(locale === "en" ? "Could not mark this notification as read." : "Không đánh dấu đã đọc được."); return; }
     setItems((current) => current.map((row) => row.id === item.id ? { ...row, read_at: new Date().toISOString() } : row));
   }
-  return <div className={styles.root}>
+  return <div className={styles.root} ref={rootRef}>
     <button type="button" className={styles.trigger} aria-label={locale === "en" ? `Notifications, ${unread} unread` : `Thông báo, ${unread} chưa đọc`} aria-expanded={open} onClick={() => { setOpen((value) => !value); if (!open) void load(); }}>
       <Bell size={18}/>{unread > 0 && <span className={styles.badge}>{unread > 99 ? "99+" : unread}</span>}<ChevronDown size={13}/>
     </button>
