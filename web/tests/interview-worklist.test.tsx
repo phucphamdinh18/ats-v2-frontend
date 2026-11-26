@@ -20,7 +20,7 @@ const appointment = {
   feedback_submitted: false, feedback_count: 1,
   participants: [{ id: "user-1", display_name: "Interviewer One", role: "INTERVIEWER" }],
 };
-beforeEach(() => { api.worklist.mockReset(); });
+beforeEach(() => { window.sessionStorage.clear(); api.worklist.mockReset(); });
 afterEach(cleanup);
 it("renders actual schedule rows and participant information from backend worklist", async () => {
   api.worklist.mockResolvedValue([appointment]);
