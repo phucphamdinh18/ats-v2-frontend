@@ -1,7 +1,7 @@
 "use client";
 import { readViewState, writeViewState } from "@/lib/view-state";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import type { Job } from "@/lib/policy";
 import { useLanguage } from "./language";
