@@ -29,14 +29,19 @@ export default function InterviewWorklist({ onAccessLost }: { onAccessLost: () =
     { id: "COMPLETED", label: en ? "Completed" : "Đã hoàn tất" },
     { id: "CANCELLED", label: en ? "Cancelled" : "Đã hủy" },
   ];
-  const [status, setStatus] = useState<InterviewStatus>(() => readViewState<InterviewStatus>("ats-v2:interview-status", "SCHEDULED", ["SCHEDULED", "COMPLETED", "CANCELLED"]));
-  const [offset, setOffset] = useState(0);
+  const savedInterviewView = useRef(readViewState<{ status: InterviewStatus; offset: number; selectedId: string | null }>(
+    "ats-v2:interview-worklist", { status: "SCHEDULED", offset: 0, selectedId: null },
+  ));
+  const [status, setStatus] = useState<InterviewStatus>(() => savedInterviewView.current.status);
+  const [offset, setOffset] = useState(() => savedInterviewView.current.offset);
   const [rows, setRows] = useState<InterviewWorklistItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => savedInterviewView.current.selectedId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshVersion, setRefreshVersion] = useState(0);
-  useEffect(() => { writeViewState("ats-v2:interview-status", status); }, [status]);
+  useEffect(() => {
+    writeViewState("ats-v2:interview-worklist", { status, offset, selectedId });
+  }, [status, offset, selectedId]);
   const requestVersion = useRef(0);
   const active = rows.find((row) => row.id === selectedId) || null;
 
