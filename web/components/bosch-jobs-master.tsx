@@ -55,8 +55,9 @@ export default function BoschJobsMaster({
   const { locale } = useLanguage();
   const en = locale === "en";
   const [priority, setPriority] = useState(() => readViewState("ats-v2:jobs-priority-filter", "ALL"));
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(() => readViewState("ats-v2:jobs-list-page", 0));
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
+  useEffect(() => { writeViewState("ats-v2:jobs-list-page", page); }, [page]);
 
   useEffect(() => { writeViewState("ats-v2:jobs-priority-filter", priority); }, [priority]);
 
