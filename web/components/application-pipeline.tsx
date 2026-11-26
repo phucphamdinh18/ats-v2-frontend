@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { readViewState, writeViewState } from "@/lib/view-state";
 import type { Job } from "@/lib/policy";
 import {
   applicationDetail,
@@ -62,6 +63,8 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
   const [detailError, setDetailError] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
   const [candidateTab, setCandidateTab] = useState<CandidateTab>("overview");
+  const restoreCandidateView = useRef(readViewState<{ applicationId: string | null; tab: CandidateTab }>(`ats-v2:pipeline-view:${job.id}`, { applicationId: null, tab: "overview" }));
+  const candidateViewRestored = useRef(false);
   const [editingCandidate, setEditingCandidate] = useState(false);
   const [savedCandidate, setSavedCandidate] = useState(false);
   const [transitionRequestId, setTransitionRequestId] = useState<string | null>(null);
@@ -163,13 +166,13 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
     return stages.map((stage) => [stage, stage === "OFFER" ? visibleOffers.map((offer) => offer.application) : (grouped[stage] ?? []).filter((application) => !offeredApplicationIds.has(application.application_id))] as [string, Application[]]);
   }, [items, offerItems, canViewOffers, query]);
 
-  const openDetail = useCallback(async (application: Application) => {
+  const openDetail = useCallback(async (application: Application, restoredTab?: CandidateTab) => {
     const ticket = ++detailTicket.current;
     setSelected(application);
     onSelectionChange?.(application);
     selectedId.current = application.application_id;
     setDetail(null);
-    setCandidateTab("overview");
+    setCandidateTab(restoredTab || "overview");
     if (detailScroll.current) detailScroll.current.scrollTop = 0;
     setEditingCandidate(false);
     setSavedCandidate(false);
@@ -204,6 +207,19 @@ export default function ApplicationPipeline({ job, onSessionLost, canViewOffers 
       if (ticket === detailTicket.current) setDetailLoading(false);
     }
   }, [job.id, onSessionLost, onSelectionChange]);
+
+  useEffect(() => {
+    if (candidateViewRestored.current || (state !== "ready" && state !== "empty")) return;
+    candidateViewRestored.current = true;
+    const saved = restoreCandidateView.current;
+    const application = saved.applicationId ? items.find((item) => item.application_id === saved.applicationId) : undefined;
+    if (application) void openDetail(application, saved.tab);
+  }, [state, items, openDetail]);
+
+  useEffect(() => {
+    if (!candidateViewRestored.current) return;
+    writeViewState(`ats-v2:pipeline-view:${job.id}`, { applicationId: selected?.application_id || null, tab: candidateTab });
+  }, [job.id, selected?.application_id, candidateTab]);
 
   async function moveApplication(application: Application, targetStage: TransitionStage) {
     if (!canManageApplications) return;
