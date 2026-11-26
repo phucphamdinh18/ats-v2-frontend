@@ -88,6 +88,7 @@ export default function Workspace() {
   const loginStarted = useRef(false);
   const globalSearchRef = useRef<HTMLInputElement>(null);
   const authUser = useRef<string | null>(null);
+  const workspaceHydratedUser = useRef<string | null>(null);
   const calendarPromptDismissed = useRef(false);
   useEffect(() => {
     const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(
@@ -138,6 +139,7 @@ export default function Workspace() {
       if (!gate.current.current(ticket)) return;
       authUser.current = session?.user.id || null;
       if (!session) {
+        workspaceHydratedUser.current = null;
         setAccess(null);
         setAccessRequestStatus(null);
         return;
@@ -212,17 +214,19 @@ export default function Workspace() {
         }));
       }
       if (gate.current.current(ticket)) {
-        const savedView = active ? readSavedWorkspaceView(session.user.id) : {};
-        if (active) setTab(roleNames.length ? readSavedWorkspaceTab(session.user.id, roleNames) : "home");
-        if (active) {
+        const restoreSavedView = active && workspaceHydratedUser.current !== session.user.id;
+        const savedView = restoreSavedView ? readSavedWorkspaceView(session.user.id) : {};
+        if (restoreSavedView) setTab(roleNames.length ? readSavedWorkspaceTab(session.user.id, roleNames) : "home");
+        if (restoreSavedView) {
           setSearch(savedView.search || "");
           setStatus(savedView.status || "ALL");
           setJobView(savedView.jobView === "pipeline" ? "pipeline" : "master");
         }
-        setSelectedJob(
-          jobs.find((job) => job.id === savedView.selectedJobId) ||
-          jobs.find((job) => job.id === selectedJob?.id) || jobs[0] || null,
+        setSelectedJob((current) =>
+          jobs.find((job) => job.id === (restoreSavedView ? savedView.selectedJobId : current?.id)) ||
+          jobs[0] || null,
         );
+        if (active) workspaceHydratedUser.current = session.user.id;
         setAccess({
           userId: session.user.id,
           email: session.user.email || "",
