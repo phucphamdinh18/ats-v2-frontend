@@ -23,7 +23,7 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [attributionByCandidate, setAttributionByCandidate] = useState<Record<string, CandidateAttribution>>({});
   const [attributionError, setAttributionError] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => readViewState("ats-v2:candidate-database-selection", null));
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -40,6 +40,7 @@ export default function TalentPool({ jobs, onAccessLost, onOpenJob }: { jobs: Jo
   const profileRevision = useRef(0);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { writeViewState("ats-v2:candidate-database-query", query); }, [query]);
+  useEffect(() => { writeViewState("ats-v2:candidate-database-selection", selectedId); }, [selectedId]);
 
   const openJobs = jobs.filter((job) => job.status === "OPEN");
 
