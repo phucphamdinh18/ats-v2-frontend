@@ -43,6 +43,7 @@ vi.mock("../lib/supabase", () => ({
 }));
 beforeEach(() => {
   vi.clearAllMocks();
+  window.sessionStorage.clear();
   mocks.review.mockResolvedValue({ drafts: [] });
   mocks.rpc.mockImplementation((name: string) => Promise.resolve({
     data: name === "ats_request_access" ? { status: "ACTIVE" } : [], error: null,
@@ -215,6 +216,7 @@ it("signed-out login starts only one OAuth request on repeated clicks", async ()
 
 it("same-user auth refresh preserves the new Job form",async()=>{
  scope(true,["ADMIN"]);render(<Workspace/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Để sau"}));
  fireEvent.click(await screen.findByRole("button",{name:"Thao tác Job"})); fireEvent.click(screen.getByRole("menuitem",{name:"Thêm Job"}));
  fireEvent.change(screen.getByLabelText("Tên vị trí"),{target:{value:"Unsaved role"}});
  const before=mocks.session.mock.calls.length;
@@ -311,6 +313,16 @@ it("Jobs Overview displays the six-column table and keeps requisition details in
   expect(screen.getByRole("complementary", { name: "Tóm tắt Job" }).textContent).toContain("ATS-102");
 });
 
+
+it("restores the last authorized workspace page after reload", async () => {
+  scope(true, ["HIRING_MANAGER"], [
+    { id: "restore-home", title: "Restore Home Job", status: "OPEN", job_code: "RESTORE-1" },
+  ]);
+  window.sessionStorage.setItem("ats-v2:last-workspace-tab:synthetic", "home");
+  render(<Workspace />);
+  expect(await screen.findByRole("heading", { name: /Xin chào/, level: 1 })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
+});
 
 it("Home is a dedicated Bosch Dashboard, not a duplicate Jobs Master", async () => {
   scope(true, ["HIRING_MANAGER"], [
