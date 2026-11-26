@@ -32,6 +32,7 @@ const profile = (name: string, apps: unknown[] = []) => ({
 });
 const job = { id: "job-test-1", title: "Test Job", job_code: "TEST-1", status: "OPEN" };
 beforeEach(() => {
+  window.sessionStorage.clear();
   Object.values(api).forEach((fn) => fn.mockReset());
   api.list.mockResolvedValue({ candidates: [c("Ada")], limit: 25, offset: 0 });
   api.detail.mockResolvedValue(profile("Ada"));
