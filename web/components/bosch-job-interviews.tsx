@@ -115,7 +115,6 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
   const [bookingType, setBookingType] = useState<"PHONE_SCREEN" | "INTERVIEW" | "FINAL">("INTERVIEW");
   const [bookingLocation, setBookingLocation] = useState("");
   const [bookingMeetingUrl, setBookingMeetingUrl] = useState("");
-  const [bookingNote, setBookingNote] = useState("");
   const [weekAvailability, setWeekAvailability] = useState<{ signature: string; slots: InterviewBusySlot[]; calendars: InterviewGoogleCalendarStatus[] } | null>(null);
   const [weekAvailabilityBusy, setWeekAvailabilityBusy] = useState(false);
   const [weekAvailabilityError, setWeekAvailabilityError] = useState("");
@@ -296,7 +295,6 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
         starts_at: new Date(bookingStartMs).toISOString(), ends_at: new Date(bookingEndMs).toISOString(),
         interview_type: bookingType, timezone: bookingTimezone,
         location: bookingLocation.trim() || undefined, meeting_url: bookingMeetingUrl.trim() || undefined,
-        notes: bookingNote.trim() || undefined,
       });
       const startsAt = new Date(bookingStartMs).toISOString();
       const endsAt = new Date(bookingEndMs).toISOString();
@@ -489,7 +487,11 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
   return <section className={`${styles.aux} ${styles.interviewWorkspace}`} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
     <div className={styles.sectionHead}><div><h2>{en ? "Interview scheduling" : "Lập lịch phỏng vấn"}</h2><p>{en ? "Choose a candidate and interviewers, then select an available calendar slot." : "Chọn ứng viên, người phỏng vấn rồi chọn khung giờ còn trống."}</p></div>
       {showWorklist && <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button>}</div>
-    <aside className={styles.interviewFlowNotice} aria-label={en ? "Shared calendar workflow" : "Luồng đặt lịch nội bộ"}><strong>{en ? "FLOW 2 · SHARED CALENDAR" : "LUỒNG 2 · ĐẶT LỊCH CHUNG"}</strong><p>{en ? "This creates a calendar event for the candidate and the selected internal interviewers. It does not use or send the candidate email template." : "Luồng này tạo sự kiện lịch cho ứng viên và interviewer nội bộ bạn chọn. Luồng này không dùng và không gửi mẫu email ở tab Thư mời ứng viên."}</p></aside>
+
+    <aside className={styles.interviewFlowNotice} aria-label={en ? "Shared calendar workflow" : "Luồng đặt lịch nội bộ"}>
+      <strong>{en ? "FLOW 2 · SHARED CALENDAR" : "LUỒNG 2 · ĐẶT LỊCH CHUNG"}</strong>
+      <p>{en ? "This creates a calendar event for the candidate and the selected internal interviewers. It does not use or send the candidate email template." : "Luồng này tạo sự kiện lịch cho ứng viên và interviewer nội bộ bạn chọn. Luồng này không dùng và không gửi mẫu email ở tab Thư mời ứng viên."}</p>
+    </aside>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
       <div><h3>{en ? "Book an interview" : "Đặt lịch phỏng vấn"}</h3><p>{en ? "Choose a candidate and interviewers first. The week calendar shows their Google and ATS busy times so you can pick a free slot." : "Chọn ứng viên và người phỏng vấn trước. Lịch tuần sẽ hiện giờ bận từ Google và ATS để bạn chọn khung giờ trống."}</p></div>
       {applicationsError && <p role="alert" className={styles.error}>{applicationsError}</p>}
@@ -570,7 +572,6 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
             </div>
           </div> : <p className={styles.empty}>{en ? "Select one or more Job member calendars to load the week." : "Chọn ít nhất một lịch thành viên Job để xem lịch tuần."}</p>}
         </section>
-        <label className={styles.bookingField}><span>{en ? "Notes (optional)" : "Ghi chú (không bắt buộc)"}</span><textarea maxLength={4000} rows={3} value={bookingNote} onChange={(event) => setBookingNote(event.target.value)} /></label>
         <p className={styles.bookingNotice}>{en ? "Google Calendar creates the event on the first selected interviewer’s primary calendar. The backend checks the chosen time again before saving." : "Google Calendar sẽ tạo sự kiện trên lịch chính của người phỏng vấn đầu tiên. Backend kiểm tra lại khung giờ ngay trước khi lưu."}</p>
         {bookingError && <p role="alert" className={styles.error}>{bookingError}</p>}{bookingSuccess && <p role="status" className={styles.bookingSuccess}>{bookingSuccess}</p>}
         {bookingWriteScopeRequired && <p role="alert" className={styles.error}>{en ? "The first selected interviewer must reconnect Google and grant permission to create events." : "Người phỏng vấn đầu tiên cần kết nối lại Google và cấp quyền tạo sự kiện."}</p>}
