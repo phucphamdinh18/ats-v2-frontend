@@ -202,6 +202,7 @@
 .availabilityPerson span{font-size:var(--ats-font-body);color:#58697d;overflow-wrap:anywhere}
 
 /* Interview booking in the Job detail workspace. */
+.interviewFlowNotice{display:grid;gap:5px;margin:0 0 16px;padding:12px 15px;border:1px solid #bfdbef;border-radius:7px;background:#f1f8fd;color:#35546c}.interviewFlowNotice strong{color:#135b83;font-size:11px;letter-spacing:.06em}.interviewFlowNotice p{margin:0;line-height:1.5}
 .bookingPanel{display:flex;flex-direction:column;gap:14px;margin:16px 0;padding:18px;border:1px solid #d8e1ec;border-radius:8px;background:#fff}
 .bookingPanel h3{margin:0;color:#1d3047;font-size:18px}
 .bookingPanel p{margin:5px 0 0;color:#5f6f82;font-size:var(--ats-font-body);line-height:1.5}
