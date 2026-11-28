@@ -18,8 +18,10 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  expect(onBack).toHaveBeenCalledTimes(1);
  expect(screen.queryByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Phỏng vấn"}));
- fireEvent.click(screen.getByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/}));
- expect(onModule).toHaveBeenCalledWith("interviews");
+ expect(screen.getByRole("heading",{name:"Lập lịch phỏng vấn"})).toBeTruthy();
+ expect(screen.getByRole("heading",{name:"Đặt lịch phỏng vấn"})).toBeTruthy();
+ expect(screen.queryByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/})).toBeNull();
+ expect(onModule).not.toHaveBeenCalled();
 });
 it("hides unauthorized Offer navigation on Job Detail",()=>{
  render(<BoschJobDetail job={job} onBack={vi.fn()} onModule={vi.fn()} canViewOffers={false} canAdmin={false}><span>Work</span></BoschJobDetail>);
