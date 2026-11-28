@@ -489,6 +489,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
   return <section className={`${styles.aux} ${styles.interviewWorkspace}`} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
     <div className={styles.sectionHead}><div><h2>{en ? "Interview scheduling" : "Lập lịch phỏng vấn"}</h2><p>{en ? "Choose a candidate and interviewers, then select an available calendar slot." : "Chọn ứng viên, người phỏng vấn rồi chọn khung giờ còn trống."}</p></div>
       {showWorklist && <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button>}</div>
+    <aside className={styles.interviewFlowNotice} aria-label={en ? "Shared calendar workflow" : "Luồng đặt lịch nội bộ"}><strong>{en ? "FLOW 2 · SHARED CALENDAR" : "LUỒNG 2 · ĐẶT LỊCH CHUNG"}</strong><p>{en ? "This creates a calendar event for the candidate and the selected internal interviewers. It does not use or send the candidate email template." : "Luồng này tạo sự kiện lịch cho ứng viên và interviewer nội bộ bạn chọn. Luồng này không dùng và không gửi mẫu email ở tab Thư mời ứng viên."}</p></aside>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
       <div><h3>{en ? "Book an interview" : "Đặt lịch phỏng vấn"}</h3><p>{en ? "Choose a candidate and interviewers first. The week calendar shows their Google and ATS busy times so you can pick a free slot." : "Chọn ứng viên và người phỏng vấn trước. Lịch tuần sẽ hiện giờ bận từ Google và ATS để bạn chọn khung giờ trống."}</p></div>
       {applicationsError && <p role="alert" className={styles.error}>{applicationsError}</p>}
@@ -574,7 +575,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
         {bookingError && <p role="alert" className={styles.error}>{bookingError}</p>}{bookingSuccess && <p role="status" className={styles.bookingSuccess}>{bookingSuccess}</p>}
         {bookingWriteScopeRequired && <p role="alert" className={styles.error}>{en ? "The first selected interviewer must reconnect Google and grant permission to create events." : "Người phỏng vấn đầu tiên cần kết nối lại Google và cấp quyền tạo sự kiện."}</p>}
         <div className={styles.bookingActions}>
-          <button className={styles.bookButton} type="button" disabled={bookingBusy || !canCreateBooking} onClick={() => void submitBooking()}>{bookingBusy ? (en ? "Booking…" : "Đang đặt lịch…") : (en ? "Book & send invitation" : "Đặt lịch và gửi thư mời")}</button>
+          <button className={styles.bookButton} type="button" disabled={bookingBusy || !canCreateBooking} onClick={() => void submitBooking()}>{bookingBusy ? (en ? "Booking…" : "Đang đặt lịch…") : (en ? "Block calendar & invite participants" : "Block lịch & mời người tham dự")}</button>
         </div>
         {calendarSyncRetryId && <button className={styles.outline} type="button" disabled={calendarSyncBusy} onClick={() => void retryGoogleSync()}>{calendarSyncBusy ? (en ? "Retrying…" : "Đang đồng bộ lại…") : (en ? "Retry Google Calendar sync" : "Thử đồng bộ Google Calendar lại")}</button>}
       </>}
