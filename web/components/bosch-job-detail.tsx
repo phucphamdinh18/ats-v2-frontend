@@ -137,7 +137,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
       <p className={styles.footnote}>{en ? "Counts are Job applications, not unique candidates or source effectiveness scores." : "Các số này là lượt hồ sơ theo Job, không phải ứng viên duy nhất hay điểm hiệu quả nguồn."}</p>
     </section>}
     {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} initialApplicationId={initialBookingApplicationId} showWorklist={false} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
-    {tab === "templates" && <BoschInterviewTemplates key={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
+    {tab === "templates" && <BoschInterviewTemplates key={job.id} jobId={job.id} initialApplication={selectedApplication} jobTitle={job.title} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <BoschOffersWorkspace key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
