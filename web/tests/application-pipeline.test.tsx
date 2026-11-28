@@ -104,6 +104,7 @@ describe("Bosch list-only hiring pipeline", () => {
   it("does not expose stage actions to read-only users", async () => {
     api.list.mockResolvedValue({ applications: [application("Ada", "SCREEN")], limit: 25, offset: 0 });
     api.detail.mockResolvedValue(detail("Ada", "SCREEN"));
+    api.notes.mockResolvedValue({ notes: [] });
     renderPipeline(false);
     await selectCandidate();
     expect(screen.getByRole("status").textContent).toContain("Chế độ chỉ xem");
@@ -113,8 +114,11 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.getByText(/quyền xem thông tin liên hệ và CV/)).toBeTruthy();
     expect(api.profile).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Ghi chú" }));
-    expect(screen.getByText(/quyền truy cập ghi chú/)).toBeTruthy();
-    expect(api.notes).not.toHaveBeenCalled();
+    expect(await screen.findByText("Chưa có ghi chú.")).toBeTruthy();
+    expect(api.notes).toHaveBeenLastCalledWith(job.id, "Ada", undefined, "SHARED");
+    fireEvent.click(screen.getByRole("button", { name: "Chỉ mình tôi" }));
+    expect(await screen.findByText("Chưa có ghi chú.")).toBeTruthy();
+    expect(api.notes).toHaveBeenLastCalledWith(job.id, "Ada", undefined, "PRIVATE");
   });
 
   it("restores the Overview summary and reuses the candidate data in Profile", async () => {
@@ -138,9 +142,10 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.getByText("Học vấn").closest("dt")?.nextElementSibling?.textContent).toBe("—");
     expect(screen.queryByText("ada@example.test")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Lịch sử" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Tóm tắt" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Tiến độ phỏng vấn" }));
     expect(await screen.findByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Tóm tắt" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Tóm tắt" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Hồ sơ" }));
     expect(await screen.findByText("ada@example.test")).toBeTruthy();
     expect(screen.getByText("Test Company")).toBeTruthy();
@@ -160,14 +165,14 @@ describe("Bosch list-only hiring pipeline", () => {
     await selectCandidate();
     fireEvent.click(screen.getByRole("button", { name: "Ghi chú" }));
     expect(await screen.findByText("Chưa có ghi chú.")).toBeTruthy();
-    expect(api.notes).toHaveBeenCalledWith(job.id, "Ada", undefined);
+    expect(api.notes).toHaveBeenCalledWith(job.id, "Ada", undefined, "SHARED");
     fireEvent.change(screen.getByLabelText("Ghi chú mới"), { target: { value: "  Gọi lại vào thứ Sáu  " } });
     fireEvent.click(screen.getByRole("button", { name: "Thêm ghi chú" }));
     await screen.findByText("Mạng lỗi");
     fireEvent.click(screen.getByRole("button", { name: "Thêm ghi chú" }));
     expect(await screen.findByText(newNote.body)).toBeTruthy();
     expect(screen.getByText(/TEST Recruiter/)).toBeTruthy();
-    expect(api.addNote.mock.calls).toEqual([[job.id, "Ada", requestId, newNote.body], [job.id, "Ada", requestId, newNote.body]]);
+    expect(api.addNote.mock.calls).toEqual([[job.id, "Ada", requestId, newNote.body, "SHARED"], [job.id, "Ada", requestId, newNote.body, "SHARED"]]);
   });
 
   it("shows the current round and status in the table, using the same scheduled and completed rounds as the sidebar", async () => {
