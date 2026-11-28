@@ -17,7 +17,7 @@ it("shows the reference Job ID layout and navigates with actual Job data",()=>{
  fireEvent.click(screen.getByRole("button",{name:"Quay lại Bảng Master"}));
  expect(onBack).toHaveBeenCalledTimes(1);
  expect(screen.queryByRole("combobox",{name:"Chọn Job cho Hiring Pipeline"})).toBeNull();
- fireEvent.click(screen.getByRole("button",{name:"Phỏng vấn"}));
+ fireEvent.click(screen.getByRole("button",{name:"Đặt lịch"}));
  expect(screen.getByRole("heading",{name:"Lập lịch phỏng vấn"})).toBeTruthy();
  expect(screen.getByRole("heading",{name:"Đặt lịch phỏng vấn"})).toBeTruthy();
  expect(screen.queryByRole("button",{name:/Mở lịch phỏng vấn|Full interview worklist/})).toBeNull();
