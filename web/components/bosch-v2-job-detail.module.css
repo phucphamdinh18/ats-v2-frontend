@@ -297,6 +297,25 @@
   font-size:24px;
   letter-spacing:-.02em;
 }
+.interviewFlowNotice{
+  display:grid;
+  gap:5px;
+  margin:0 0 16px;
+  padding:12px 15px;
+  border:1px solid #bfdbef;
+  border-radius:7px;
+  background:#f1f8fd;
+  color:#35546c;
+}
+.interviewFlowNotice strong{
+  color:#135b83;
+  font-size:11px;
+  letter-spacing:.06em;
+}
+.interviewFlowNotice p{
+  margin:0;
+  line-height:1.5;
+}
 .bookingPanel{
   width:100%;
   min-width:0;
