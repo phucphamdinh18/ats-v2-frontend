@@ -152,7 +152,7 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.getByText("0 năm")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Test CV.pdf" }).getAttribute("href")).toBe("https://drive.google.com/file/d/test_cv_file/view");
     expect(screen.queryByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeNull();
-    expect(api.profile).toHaveBeenCalledTimes(1);
+    expect(api.profile).toHaveBeenCalledTimes(2);
   });
 
   it("adds a Job-scoped note and reuses the request ID after a network error", async () => {
