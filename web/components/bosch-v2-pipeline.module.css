@@ -12,13 +12,19 @@
 .summaryFilters{display:flex;gap:10px;color:#33465f;font-size:var(--ats-font-body)}
 .summaryFilters span{padding:8px 10px;border:1px solid #cbd3dc;border-radius:5px;background:#fff;white-space:nowrap}
 .stageSummary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--b2-line);border-radius:7px;overflow:hidden}
-.stageCell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:104px;padding:12px 4px;border-right:1px solid var(--b2-line);text-align:center;background:#fbfcfd}
+.stageCell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:104px;padding:12px 4px;border:0;border-right:1px solid var(--b2-line);border-radius:0;text-align:center;background:#fbfcfd;color:inherit;font:inherit;cursor:pointer}
 .stageCell:last-child{border-right:0}
+.stageCell:hover{background:#eef4fb}
+.stageCell:disabled{cursor:not-allowed;opacity:.58}
+.stageCell:focus-visible{position:relative;z-index:1;outline:3px solid #0876d1;outline-offset:-3px}
+.stageSelected{background:#e5efff!important;box-shadow:inset 0 -3px 0 #0057b8}
 .stageCell strong{font-size:28px;line-height:1.1;font-weight:800;color:#121920}
 .stageCell span{font-size:var(--ats-font-body);font-weight:750;color:#18283a}
 .stageCell small{font-size:var(--ats-font-body);color:#657489}
 .stageHighlight{background:#fde9eb}
-.rejected{padding-top:10px;color:#53637b;font-size:var(--ats-font-body)}
+.rejected{display:inline-flex;width:max-content;padding:10px 0 0;border:0;background:transparent;color:#53637b;font-size:var(--ats-font-body);cursor:pointer}
+.rejected:hover,.rejectedSelected{color:#0057b8;text-decoration:underline}
+.filterStatus{color:#53637b;font-size:var(--ats-font-body);font-weight:700}
 .listSection{min-width:0;border:1px solid var(--b2-line);border-radius:8px;background:white;overflow:hidden}
 .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--b2-line)}
 .tableHeading{font-size:22px;line-height:1.2;font-weight:800;margin:0;margin-right:auto}

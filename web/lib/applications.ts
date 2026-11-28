@@ -15,6 +15,7 @@ export type JobOverview = {
   job_id: string; total_candidates: number; new_count: number; screening_count: number;
   interview_count: number; hired_count: number; rejected_count: number; source_summary: JobSourceMetric[];
 };
+export type ApplicationStage = "NEW" | "SCREEN" | "INTERVIEW" | "HIRED" | "REJECTED";
 
 export async function jobOverview() {
   return call<{ jobs: JobOverview[] }>({ action: "overview" });
@@ -63,12 +64,12 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export function listApplications(jobId: string, limit: number, offset: number) {
-  return call<ListResponse>({ action: "list", job_id: jobId, limit, offset });
+export function listApplications(jobId: string, limit: number, offset: number, stage?: ApplicationStage | null) {
+  return call<ListResponse>({ action: "list", job_id: jobId, limit, offset, stage });
 }
 
-export function searchApplications(jobId: string, query: string, limit: number, offset: number) {
-  return call<ListResponse>({ action: "search", job_id: jobId, query, limit, offset });
+export function searchApplications(jobId: string, query: string, limit: number, offset: number, stage?: ApplicationStage | null) {
+  return call<ListResponse>({ action: "search", job_id: jobId, query, limit, offset, stage });
 }
 
 export function applicationDetail(jobId: string, applicationId: string) {
