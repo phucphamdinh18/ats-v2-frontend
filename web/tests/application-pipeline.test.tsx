@@ -49,7 +49,7 @@ function renderPipeline(canManageApplications = true) {
 }
 async function selectCandidate(name = "Ada") {
   fireEvent.click(await screen.findByRole("button", { name }));
-  await screen.findByRole("heading", { name: "Tiến độ phỏng vấn" });
+  await screen.findByLabelText("Chi tiết ứng viên");
 }
 
 beforeEach(() => {
@@ -126,10 +126,9 @@ describe("Bosch list-only hiring pipeline", () => {
     });
     renderPipeline();
     await selectCandidate();
-    const progress = screen.getByRole("heading", { name: "Tiến độ phỏng vấn" });
     const summary = screen.getByRole("heading", { name: "Tóm tắt" });
-    expect(progress.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const overview = within(screen.getByLabelText("Chi tiết ứng viên"));
+    expect(overview.queryByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeNull();
     for (const label of ["Vòng tuyển dụng", "Trạng thái", "Nguồn"]) {
       expect(overview.queryByText(label, { exact: true })).toBeNull();
     }
@@ -139,6 +138,9 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(screen.getByText("Học vấn").closest("dt")?.nextElementSibling?.textContent).toBe("—");
     expect(screen.queryByText("ada@example.test")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Lịch sử" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tiến độ phỏng vấn" }));
+    expect(await screen.findByRole("heading", { name: "Tiến độ phỏng vấn" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Tóm tắt" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Hồ sơ" }));
     expect(await screen.findByText("ada@example.test")).toBeTruthy();
     expect(screen.getByText("Test Company")).toBeTruthy();
@@ -193,6 +195,7 @@ describe("Bosch list-only hiring pipeline", () => {
     expect(within(roundCell("Lin")).getByText("Đã lên lịch")).toBeTruthy();
     expect(within(roundCell("Min")).getByText("Đã hoàn tất")).toBeTruthy();
     expect(roundCell("Sam").textContent?.trim()).toBe("—");
+    fireEvent.click(screen.getByRole("button", { name: "Tiến độ phỏng vấn" }));
     const progress = screen.getByRole("region", { name: "Tiến độ phỏng vấn" });
     expect(await within(progress).findByText("1/2 đã hoàn tất")).toBeTruthy();
     const rounds = within(progress).getAllByRole("listitem");
@@ -204,6 +207,7 @@ describe("Bosch list-only hiring pipeline", () => {
 
     api.detail.mockResolvedValue(detail("Lin", "INTERVIEW"));
     await selectCandidate("Lin");
+    fireEvent.click(screen.getByRole("button", { name: "Tiến độ phỏng vấn" }));
     expect(await screen.findByText("0/1 đã hoàn tất")).toBeTruthy();
   });
 
