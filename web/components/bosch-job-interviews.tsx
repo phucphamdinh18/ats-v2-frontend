@@ -78,8 +78,8 @@ export function InterviewLifecycleActions({ item, en, onChanged, onAccessLost }:
   </section>;
 }
 
-export default function BoschJobInterviews({ jobId, initialApplicationId, onAccessLost, onAllInterviews }: {
-  jobId: string; initialApplicationId?: string; onAccessLost: () => void; onAllInterviews: () => void;
+export default function BoschJobInterviews({ jobId, initialApplicationId, onAccessLost, onAllInterviews, showWorklist = true }: {
+  jobId: string; initialApplicationId?: string; onAccessLost: () => void; onAllInterviews: () => void; showWorklist?: boolean;
 }) {
   const { locale } = useLanguage();
   const en = locale === "en";
@@ -224,6 +224,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     return () => { active = false; };
   }, [bookingApplicationId, reloadWorklist, en, onAccessLost]);
   useEffect(() => {
+    if (!showWorklist) { setBusy(false); setItems([]); setError(""); setHasNext(false); setSelectedId(null); return; }
     const ticket = ++version.current;
     setBusy(true); setError(""); setHasNext(false);
     void listInterviewWorklist(status, LIMIT, offset).then((rows) => {
@@ -238,7 +239,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       if (cause instanceof ApiError && cause.status === 401) onAccessLost();
     }).finally(() => { if (ticket === version.current) setBusy(false); });
     return () => { version.current += 1; };
-  }, [jobId, status, offset, onAccessLost, reloadWorklist]);
+  }, [jobId, status, offset, onAccessLost, reloadWorklist, showWorklist]);
   const active = items.find((item) => item.id === selectedId);
   const date = (value: string) => {
     const d = new Date(value);
@@ -486,8 +487,8 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
     }));
   }
   return <section className={`${styles.aux} ${styles.interviewWorkspace}`} aria-label={en ? "Job interviews" : "Phỏng vấn theo Job"}>
-    <div className={styles.sectionHead}><div><h2>{en ? "Interview Schedule" : "Lịch phỏng vấn theo Job"}</h2><p>{en ? "Read-only schedule records from your authorized worklist." : "Lịch theo quyền truy cập của bạn; không thay đổi lịch hay feedback."}</p></div>
-      <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button></div>
+    <div className={styles.sectionHead}><div><h2>{en ? "Interview scheduling" : "Lập lịch phỏng vấn"}</h2><p>{en ? "Choose a candidate and interviewers, then select an available calendar slot." : "Chọn ứng viên, người phỏng vấn rồi chọn khung giờ còn trống."}</p></div>
+      {showWorklist && <button className={styles.outline} type="button" onClick={onAllInterviews}>{en ? "Full interview worklist" : "Mở lịch phỏng vấn"} </button>}</div>
     <section className={styles.bookingPanel} aria-label={en ? "Book an interview" : "Đặt lịch phỏng vấn"}>
       <div><h3>{en ? "Book an interview" : "Đặt lịch phỏng vấn"}</h3><p>{en ? "Choose a candidate and interviewers first. The week calendar shows their Google and ATS busy times so you can pick a free slot." : "Chọn ứng viên và người phỏng vấn trước. Lịch tuần sẽ hiện giờ bận từ Google và ATS để bạn chọn khung giờ trống."}</p></div>
       {applicationsError && <p role="alert" className={styles.error}>{applicationsError}</p>}
@@ -578,6 +579,7 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
         {calendarSyncRetryId && <button className={styles.outline} type="button" disabled={calendarSyncBusy} onClick={() => void retryGoogleSync()}>{calendarSyncBusy ? (en ? "Retrying…" : "Đang đồng bộ lại…") : (en ? "Retry Google Calendar sync" : "Thử đồng bộ Google Calendar lại")}</button>}
       </>}
     </section>
+    {showWorklist && <>
     <div className={styles.subTabs} role="group" aria-label={en ? "Interview status" : "Trạng thái phỏng vấn"}>
       {statuses.map((value) => <button key={value} type="button" aria-pressed={status === value} className={status === value ? styles.currentSubTab : ""}
         onClick={() => { setStatus(value); setOffset(0); }}>{statusText(value)}</button>)}
@@ -638,5 +640,6 @@ export default function BoschJobInterviews({ jobId, initialApplicationId, onAcce
       <button className={styles.outline} type="button" disabled={busy || !hasNext} onClick={() => setOffset(offset + LIMIT)}>{en ? "Next" : "Tiếp"}</button>
     </div>
     <p className={styles.footnote}>{en ? "The API only paginates the global authorized worklist, not by Job. This tab may omit other Job appointments; use Full interview worklist for a complete search." : "API hiện phân trang lịch tổng, chưa lọc theo Job tại máy chủ. Tab này có thể thiếu lịch; hãy mở lịch tổng để kiểm tra đầy đủ."}</p>
+    </>}
   </section>;
 }

@@ -6,6 +6,7 @@ import { useLanguage } from "./language";
 import JobTeamAccess from "./job-team-access";
 import BoschOffersWorkspace from "./bosch-offers-workspace";
 import BoschJobInterviews from "./bosch-job-interviews";
+import BoschInterviewTemplates from "./bosch-interview-templates";
 import BoschJobActivity from "./bosch-job-activity";
 import type { Job } from "@/lib/policy";
 import { ArrowLeft, CalendarDays, CalendarPlus, ChevronDown, Layers3, MapPin, Pencil, Target } from "lucide-react";
@@ -13,7 +14,7 @@ import styles from "./bosch-v2-job-detail.module.css";
 import type { Application } from "@/lib/applications";
 import { getCopy, roleLabel } from "@/lib/i18n";
 
-type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "offers" | "team" | "activity";
+type Tab = "pipeline" | "details" | "sourcing" | "interviews" | "templates" | "offers" | "team" | "activity";
 type Props = {
   job: Job;
   onBack: () => void;
@@ -32,6 +33,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "details", label: "Job Details" },
   { id: "sourcing", label: "Sourcing" },
   { id: "interviews", label: "Interviews" },
+  { id: "templates", label: "Templates" },
   { id: "offers", label: "Offers" },
   { id: "team", label: "Team & Access" },
   { id: "activity", label: "Activity" },
@@ -48,7 +50,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
   const { locale } = useLanguage();
   const en = locale === "en";
   const copy = getCopy(locale);
-  const [tab, setTab] = useState<Tab>(() => readViewState<Tab>(`ats-v2:job-detail-tab:${job.id}`, "pipeline", ["pipeline", "details", "sourcing", "interviews", "offers", "team", "activity"]));
+  const [tab, setTab] = useState<Tab>(() => readViewState<Tab>(`ats-v2:job-detail-tab:${job.id}`, "pipeline", ["pipeline", "details", "sourcing", "interviews", "templates", "offers", "team", "activity"]));
   const [actionsOpen, setActionsOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [initialBookingApplicationId, setInitialBookingApplicationId] = useState<string | undefined>();
@@ -76,7 +78,6 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
     setInitialBookingApplicationId(selectedApplication.application_id);
     setActionsOpen(false);
     setTab("interviews");
-    requestAnimationFrame(() => rootRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
   }
   return <section ref={rootRef} className={`${styles.root} ${tab === "pipeline" ? styles.pipelineLayout : ""}`} aria-label={`${en ? "Job detail" : "Chi tiết Job"}: ${job.title}`}>
     <div className={styles.crumb}><button type="button" aria-label={en ? "Back to Jobs Overview" : "Quay lại Bảng Master"} onClick={onBack}>{en ? "Jobs" : "Vị trí tuyển dụng"}</button></div>
@@ -99,7 +100,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
       <span><Target size={16}/>{en ? "SLA target" : "Mục tiêu SLA"}: {job.sla_target_workdays == null ? "—" : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</span>
     </div>
     <nav className={styles.tabs} aria-label={en ? "Job sections" : "Các tab của Job"}>
-      {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? x.label : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Phỏng vấn", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
+      {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? x.label : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Phỏng vấn", templates:"Mẫu thư mời", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
     </nav>
     {tab === "pipeline" && <div className={styles.content}>{pipelineChildren}</div>}
     {tab === "details" && <section className={styles.aux} aria-label={en ? "Job Details" : "Chi tiết Job"}>
@@ -135,7 +136,8 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
       </tbody></table></div> : <p className={styles.empty}>{en ? "Sourcing data is not available for this Job." : "Job này chưa có dữ liệu nguồn tuyển dụng được API trả về."}</p>}
       <p className={styles.footnote}>{en ? "Counts are Job applications, not unique candidates or source effectiveness scores." : "Các số này là lượt hồ sơ theo Job, không phải ứng viên duy nhất hay điểm hiệu quả nguồn."}</p>
     </section>}
-    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} initialApplicationId={initialBookingApplicationId} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
+    {tab === "interviews" && <BoschJobInterviews key={job.id} jobId={job.id} initialApplicationId={initialBookingApplicationId} showWorklist={false} onAccessLost={onAccessLost || NOOP_ACCESS} onAllInterviews={() => onModule("interviews")}/>}
+    {tab === "templates" && <BoschInterviewTemplates key={job.id} onAccessLost={onAccessLost || NOOP_ACCESS}/>}
     {tab === "offers" && canViewOffers && <section className={styles.embedded} aria-label="Job Offers">
       <BoschOffersWorkspace key={job.id} job={job} onAccessLost={onAccessLost || NOOP_ACCESS}/>
     </section>}
