@@ -104,10 +104,14 @@ export default function BoschJobsMaster({
   const onHoldCount = allJobs.filter((job) => job.status === "ON_HOLD").length;
   const closedCount = allJobs.filter((job) => job.status === "CLOSED").length;
   const summary = [
-    [labels.total, allJobs.length, false], [labels.open, openCount, true],
-    [labels.draft, draftCount, false], [labels.onHold, onHoldCount, false],
-    [labels.closed, closedCount, false],
+    [labels.total, allJobs.length, "ALL"], [labels.open, openCount, "OPEN"],
+    [labels.draft, draftCount, "DRAFT"], [labels.onHold, onHoldCount, "ON_HOLD"],
+    [labels.closed, closedCount, "CLOSED"],
   ] as const;
+  const chooseStatus = (nextStatus: string) => {
+    onStatus(nextStatus !== "ALL" && status === nextStatus ? "ALL" : nextStatus);
+    setPage(0);
+  };
   const choose = (job: Job) => { setSnapshotId(job.id); onSelect(job); };
   const clear = () => { onQuery(""); onStatus("ALL"); setPriority("ALL"); setPage(0); };
 
@@ -123,9 +127,13 @@ export default function BoschJobsMaster({
         <section className={styles.panel} aria-label={labels.summary}>
           <div className={styles.panelHead}><h2>{labels.summary}</h2><span className={styles.count}>{en ? "Authorized Jobs" : "Job được phân quyền"}</span></div>
           <div className={styles.summary}>
-            {summary.map(([label, count, active]) => <div key={label} className={`${styles.metric} ${active ? styles.metricActive : ""}`}>
+            {summary.map(([label, count, filterStatus]) => <button key={label} type="button"
+              aria-label={en ? `Filter jobs by ${label}` : `Lọc Job theo ${label}`}
+              aria-pressed={status === filterStatus}
+              className={`${styles.metric} ${status === filterStatus ? styles.metricActive : ""}`}
+              onClick={() => chooseStatus(filterStatus)}>
               <strong>{count}</strong><span>{label}</span>
-            </div>)}
+            </button>)}
           </div>
         </section>
         <section className={`${styles.panel} ${styles.jobsPanel}`}>
