@@ -100,7 +100,7 @@ export default function BoschJobDetail({ job, onBack, onEdit, onModule, canViewO
       <span><Target size={16}/>{en ? "SLA target" : "Mục tiêu SLA"}: {job.sla_target_workdays == null ? "—" : `${job.sla_target_workdays} ${en ? "workdays" : "ngày làm việc"}`}</span>
     </div>
     <nav className={styles.tabs} aria-label={en ? "Job sections" : "Các tab của Job"}>
-      {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? x.label : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Phỏng vấn", templates:"Mẫu thư mời", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
+      {tabs.filter(x=>x.id!=="offers" || canViewOffers).map(x=><button type="button" key={x.id} className={tab===x.id?styles.active:""} aria-current={tab===x.id?"page":undefined} onClick={() => setTab(x.id)}>{en ? (x.id === "templates" ? "Candidate email" : x.label) : ({pipeline:"Pipeline", details:"Chi tiết Job", sourcing:"Nguồn tuyển", interviews:"Đặt lịch", templates:"Thư mời ứng viên", offers:"Offers", team:"Nhóm & Quyền", activity:"Hoạt động"} as Record<Tab, string>)[x.id]}</button>)}
     </nav>
     {tab === "pipeline" && <div className={styles.content}>{pipelineChildren}</div>}
     {tab === "details" && <section className={styles.aux} aria-label={en ? "Job Details" : "Chi tiết Job"}>
