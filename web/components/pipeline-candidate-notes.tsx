@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { addApplicationNote, APPLICATION_NOTE_LIMIT, listApplicationNotes, type ApplicationNote } from "@/lib/applications";
+import { addApplicationNote, APPLICATION_NOTE_LIMIT, listApplicationNotes, type ApplicationNote, type ApplicationNoteScope } from "@/lib/applications";
 import { ApiError } from "@/lib/supabase";
 import styles from "./bosch-v2-pipeline.module.css";
 
-export default function PipelineCandidateNotes({ jobId, applicationId, en, onSessionLost }: {
+export default function PipelineCandidateNotes({ jobId, applicationId, en, onSessionLost, canWriteShared }: {
   jobId: string;
   applicationId: string;
   en: boolean;
   onSessionLost: () => void;
+  canWriteShared: boolean;
 }) {
+  const [scope, setScope] = useState<ApplicationNoteScope>("SHARED");
   const [notes, setNotes] = useState<ApplicationNote[] | null>(null);
   const [nextBeforeId, setNextBeforeId] = useState<string>();
   const [draft, setDraft] = useState("");
@@ -37,7 +39,7 @@ export default function PipelineCandidateNotes({ jobId, applicationId, en, onSes
     setLoading(true);
     setError(null);
     try {
-      const page = await listApplicationNotes(jobId, applicationId, beforeId);
+      const page = await listApplicationNotes(jobId, applicationId, beforeId, scope);
       if (ticket.current !== current) return;
       setNextBeforeId(page.nextBeforeId);
       setNotes((previous) => beforeId && previous ? [...previous, ...page.notes] : page.notes);
@@ -46,9 +48,13 @@ export default function PipelineCandidateNotes({ jobId, applicationId, en, onSes
     } finally {
       if (ticket.current === current) setLoading(false);
     }
-  }, [jobId, applicationId, showError]);
+  }, [jobId, applicationId, showError, scope]);
 
   useEffect(() => {
+    setNotes(null);
+    setNextBeforeId(undefined);
+    setDraft("");
+    request.current = null;
     void load();
     return () => { ticket.current += 1; };
   }, [load]);
@@ -56,7 +62,7 @@ export default function PipelineCandidateNotes({ jobId, applicationId, en, onSes
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = draft.trim();
-    if (!body || body.length > APPLICATION_NOTE_LIMIT || saving || loading || !notes) return;
+    if (!body || body.length > APPLICATION_NOTE_LIMIT || saving || loading || !notes || (scope === "SHARED" && !canWriteShared)) return;
     const retry = request.current?.body === body ? request.current : { id: crypto.randomUUID(), body };
     request.current = retry;
     const current = ticket.current;
@@ -64,7 +70,7 @@ export default function PipelineCandidateNotes({ jobId, applicationId, en, onSes
     setError(null);
     setSaved(false);
     try {
-      const note = await addApplicationNote(jobId, applicationId, retry.id, body);
+      const note = await addApplicationNote(jobId, applicationId, retry.id, body, scope);
       if (ticket.current !== current) return;
       setNotes((previous) => [note, ...(previous ?? []).filter((item) => item.id !== note.id)]);
       setDraft("");
@@ -78,12 +84,17 @@ export default function PipelineCandidateNotes({ jobId, applicationId, en, onSes
   }
 
   return <section className={styles.profileCard}>
+    <nav className={styles.profileTabs} aria-label={en ? "Note visibility" : "Phạm vi ghi chú"}>
+      <button type="button" className={scope === "SHARED" ? styles.active : undefined} aria-pressed={scope === "SHARED"} onClick={() => { if (scope !== "SHARED") { setNotes(null); setDraft(""); request.current = null; setScope("SHARED"); } }}>{en ? "Shared with job team" : "Ghi chú chung cho team"}</button>
+      <button type="button" className={scope === "PRIVATE" ? styles.active : undefined} aria-pressed={scope === "PRIVATE"} onClick={() => { if (scope !== "PRIVATE") { setNotes(null); setDraft(""); request.current = null; setScope("PRIVATE"); } }}>{en ? "Only me" : "Chỉ mình tôi"}</button>
+    </nav>
+    <p className={styles.profileMuted}>{scope === "SHARED" ? (en ? "Visible to people who can access this Job." : "Người có quyền truy cập Job này có thể xem.") : (en ? "Private to your account. Other ATS users cannot view it." : "Chỉ tài khoản của bạn xem được; người khác trong ATS không thể xem.")}</p>
     {notes && <form className={styles.noteForm} onSubmit={(event) => void save(event)}>
       <label>{en ? "New note" : "Ghi chú mới"}
         <textarea rows={4} maxLength={APPLICATION_NOTE_LIMIT} value={draft} disabled={saving}
           onChange={(event) => { setDraft(event.target.value); setSaved(false); }}/>
       </label>
-      <button type="submit" className={styles.actionPrimary} disabled={!draft.trim() || loading || saving}>
+      <button type="submit" className={styles.actionPrimary} disabled={!draft.trim() || loading || saving || (scope === "SHARED" && !canWriteShared)}>
         {saving ? (en ? "Saving…" : "Đang lưu…") : (en ? "Add note" : "Thêm ghi chú")}
       </button>
       {saved && <p role="status">{en ? "Note saved." : "Đã lưu ghi chú."}</p>}
