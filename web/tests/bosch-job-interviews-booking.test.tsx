@@ -85,7 +85,7 @@ it("checks selected participants and creates an ATS interview with invitations",
   const freeSlot = screen.getAllByRole("button", { name: /10:00$/ }).find((button) => !(button as HTMLButtonElement).disabled);
   expect(freeSlot).toBeTruthy();
   fireEvent.click(freeSlot!);
-  const book = screen.getByRole("button", { name: "Đặt lịch và gửi thư mời" });
+  const book = screen.getByRole("button", { name: "Block lịch & mời người tham dự" });
   expect((book as HTMLButtonElement).disabled).toBe(false);
   fireEvent.click(book);
   await screen.findByRole("status");
@@ -153,7 +153,7 @@ it("requires event permission for the first selected interviewer before booking"
   fireEvent.click(await screen.findByLabelText(/Interviewer A/));
   await screen.findByText(/cần kết nối lại Google và cấp quyền tạo sự kiện/);
   await screen.findByText(/cần kết nối lại Google và cấp quyền tạo sự kiện/);
-  expect((screen.getByRole("button", { name: "Đặt lịch và gửi thư mời" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "Block lịch & mời người tham dự" }) as HTMLButtonElement).disabled).toBe(true);
   expect(api.create).not.toHaveBeenCalled();
 });
 
@@ -163,7 +163,7 @@ it("does not allow booking when Google cannot be verified", async () => {
   fireEvent.change(await screen.findByRole("combobox", { name: "Ứng viên" }), { target: { value: application.application_id } });
   fireEvent.click(await screen.findByLabelText(/Interviewer A/));
   await screen.findByText("Chưa kết nối Google");
-  expect((screen.getByRole("button", { name: "Đặt lịch và gửi thư mời" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "Block lịch & mời người tham dự" }) as HTMLButtonElement).disabled).toBe(true);
   expect(api.create).not.toHaveBeenCalled();
 });
 
@@ -186,6 +186,6 @@ it("does not allow booking when an ATS appointment overlaps the selected slot", 
   await screen.findByText(/Đã kiểm tra Google Calendar/);
   const busySlot = screen.getAllByRole("button").find((button) => (button as HTMLButtonElement).disabled && button.getAttribute("title")?.includes("ATS bận"));
   expect(busySlot).toBeTruthy();
-  expect((screen.getByRole("button", { name: "Đặt lịch và gửi thư mời" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "Block lịch & mời người tham dự" }) as HTMLButtonElement).disabled).toBe(true);
   expect(api.create).not.toHaveBeenCalled();
 });
